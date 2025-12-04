@@ -1,0 +1,204 @@
+From 9f00719ef8c8afb905cb9b0acffaffa6029f95b9 Mon Sep 17 00:00:00 2001
+From: affggh <879632264@qq.com>
+Date: Sat, 29 Nov 2025 20:11:06 +0800
+Subject: [PATCH 2/2] Revert "Add a function to log with a timestamp."
+
+This reverts commit 763e629f0df59af2c051c6edf042a8f6a12bb30d.
+
+diff --git a/liblog/include/android/log.h b/liblog/include/android/log.h
+index a26d2c4f..1bae47ab 100644
+--- a/liblog/include/android/log.h
++++ b/liblog/include/android/log.h
+@@ -59,7 +59,6 @@
+ #include <stddef.h>
+ #include <stdint.h>
+ #include <sys/cdefs.h>
+-#include <sys/time.h>
+ 
+ #if !defined(__BIONIC__) && !defined(__INTRODUCED_IN)
+ #define __INTRODUCED_IN(x)
+@@ -291,22 +290,6 @@ void __android_log_set_logger(__android_logger_function logger) __INTRODUCED_IN(
+  */
+ void __android_log_logd_logger(const struct __android_log_message* log_message) __INTRODUCED_IN(30);
+ 
+-/**
+- * Writes the log message to logd using the passed in timestamp.  The messages are stored
+- * in logd in the order received not in order by timestamp.  When displaying the log, there is no
+- * guarantee that messages are in timestamp order and might cause messages with different times to
+- * be interleaved.  Filtering the log using a timestamp will work properly even if out of time
+- * order messages are present.
+- *
+- * @param log_message the log message to write, see {@link __android_log_message}.
+- * @param timestamp the time to use for this log message. The value is interpreted as a
+- * CLOCK_REALTIME value.
+- *
+- * Available since API level 37.
+- */
+-void __android_log_logd_logger_with_timestamp(const struct __android_log_message* log_message,
+-                                              struct timespec* timestamp) __INTRODUCED_IN(37);
+-
+ /**
+  * Writes the log message to stderr.  This is an {@link __android_logger_function} and can be provided to
+  * __android_log_set_logger().  It is the default logger when running liblog on host.
+diff --git a/liblog/liblog.map.txt b/liblog/liblog.map.txt
+index 7e265c51..440e7df9 100644
+--- a/liblog/liblog.map.txt
++++ b/liblog/liblog.map.txt
+@@ -80,11 +80,6 @@ LIBLOG_R { # introduced=30
+     __android_log_write_log_message;
+ };
+ 
+-LIBLOG_37 { # introduced=37
+-  global:
+-    __android_log_logd_logger_with_timestamp;
+-};
+-
+ LIBLOG_PRIVATE {
+   global:
+     __android_log_pmsg_file_read;
+diff --git a/liblog/logger_write.cpp b/liblog/logger_write.cpp
+index bf6ad1d5..677e9ab1 100644
+--- a/liblog/logger_write.cpp
++++ b/liblog/logger_write.cpp
+@@ -196,24 +196,22 @@ void __android_log_call_aborter(const char* abort_message) {
+ }
+ 
+ #ifdef __ANDROID__
+-static int write_to_log(log_id_t log_id, struct iovec* vec, size_t nr,
+-                        struct timespec* timestamp = nullptr) {
++static int write_to_log(log_id_t log_id, struct iovec* vec, size_t nr) {
++  int ret;
++  struct timespec ts;
++
+   if (log_id == LOG_ID_KERNEL) {
+     return -EINVAL;
+   }
+ 
+-  struct timespec ts;
+-  if (LIKELY(timestamp == nullptr)) {
+-    clock_gettime(CLOCK_REALTIME, &ts);
+-    timestamp = &ts;
+-  }
++  clock_gettime(CLOCK_REALTIME, &ts);
+ 
+   if (log_id == LOG_ID_SECURITY) {
+     if (vec[0].iov_len < 4) {
+       return -EINVAL;
+     }
+ 
+-    int ret = check_log_uid_permissions();
++    ret = check_log_uid_permissions();
+     if (ret < 0) {
+       return ret;
+     }
+@@ -227,13 +225,13 @@ static int write_to_log(log_id_t log_id, struct iovec* vec, size_t nr,
+     }
+   }
+ 
+-  int ret = LogdWrite(log_id, timestamp, vec, nr);
+-  PmsgWrite(log_id, timestamp, vec, nr);
++  ret = LogdWrite(log_id, &ts, vec, nr);
++  PmsgWrite(log_id, &ts, vec, nr);
+ 
+   return ret;
+ }
+ #else
+-static int write_to_log(log_id_t, struct iovec*, size_t, struct timespec* = nullptr) {
++static int write_to_log(log_id_t, struct iovec*, size_t) {
+   // Non-Android text logs should go to __android_log_stderr_logger, not here.
+   // Non-Android binary logs are always dropped.
+   return 1;
+@@ -335,11 +333,6 @@ void __android_log_stderr_logger(const struct __android_log_message* log_message
+ }
+ 
+ void __android_log_logd_logger(const struct __android_log_message* log_message) {
+-  __android_log_logd_logger_with_timestamp(log_message, nullptr);
+-}
+-
+-void __android_log_logd_logger_with_timestamp(const struct __android_log_message* log_message,
+-                                              struct timespec* timestamp) {
+   if (log_to_file_if_overridden(log_message)) return;
+ 
+   int buffer_id = log_message->buffer_id == LOG_ID_DEFAULT ? LOG_ID_MAIN : log_message->buffer_id;
+@@ -353,7 +346,7 @@ void __android_log_logd_logger_with_timestamp(const struct __android_log_message
+   vec[2].iov_base = const_cast<void*>(static_cast<const void*>(log_message->message));
+   vec[2].iov_len = strlen(log_message->message) + 1;
+ 
+-  write_to_log(static_cast<log_id_t>(buffer_id), vec, 3, timestamp);
++  write_to_log(static_cast<log_id_t>(buffer_id), vec, 3);
+ }
+ 
+ int __android_log_write(int prio, const char* tag, const char* msg) {
+diff --git a/liblog/tests/liblog_test.cpp b/liblog/tests/liblog_test.cpp
+index 9f1c8cd9..fb05c12e 100644
+--- a/liblog/tests/liblog_test.cpp
++++ b/liblog/tests/liblog_test.cpp
+@@ -25,7 +25,6 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include <sys/types.h>
+-#include <time.h>
+ #include <unistd.h>
+ 
+ #include <memory>
+@@ -498,57 +497,6 @@ TEST(liblog, __android_log_buf_write_and_print__newline_space_prefix) {
+   buf_write_test("\n Hello World \n");
+ }
+ 
+-TEST(liblog, __android_log_logd_logger_with_timestamp) {
+-#ifdef __ANDROID__
+-  static std::string kTestTag("liblog");
+-  static std::string kTestMessage("Test message");
+-
+-  struct timespec ts = {};
+-  clock_gettime(CLOCK_REALTIME, &ts);
+-  // Subtract some time to make sure that this can't pass by accident.
+-  ASSERT_GE(ts.tv_sec, 360);
+-  ts.tv_sec -= 360;
+-
+-  RunLogTests(
+-      LOG_ID_MAIN,
+-      [&ts]() {
+-        __android_log_message msg = {.struct_size = sizeof(__android_log_message),
+-                                     .buffer_id = LOG_ID_MAIN,
+-                                     .priority = ANDROID_LOG_ERROR,
+-                                     .tag = kTestTag.c_str(),
+-                                     .message = kTestMessage.c_str()};
+-        __android_log_logd_logger_with_timestamp(&msg, &ts);
+-      },
+-      [&ts](log_msg log_msg, bool* found) {
+-        if (log_msg.entry.sec != static_cast<uint32_t>(ts.tv_sec)) {
+-          return;
+-        }
+-        if (log_msg.entry.nsec != static_cast<uint32_t>(ts.tv_nsec)) {
+-          return;
+-        }
+-        char* msg = log_msg.msg();
+-        if (msg == nullptr) {
+-          return;
+-        }
+-
+-        if (msg[0] != ANDROID_LOG_ERROR) {
+-          return;
+-        }
+-        ++msg;
+-        if (std::string(&msg[0]) != kTestTag) {
+-          return;
+-        }
+-        msg = &msg[kTestTag.length() + 1];
+-        if (std::string(msg) != kTestMessage) {
+-          return;
+-        }
+-        *found = true;
+-      });
+-#else
+-  GTEST_LOG_(INFO) << "This test does nothing.\n";
+-#endif
+-}
+-
+ #ifdef ENABLE_FLAKY_TESTS
+ #ifdef __ANDROID__
+ static unsigned signaled;
+-- 
+2.47.3
+

@@ -1,0 +1,102 @@
+From 608def0dcc41044cde1d05ef59e34ff56e65db3b Mon Sep 17 00:00:00 2001
+From: affggh <879632264@qq.com>
+Date: Sat, 29 Nov 2025 20:10:13 +0800
+Subject: [PATCH 1/2] Revert "Make timespec const for new timestamp function."
+
+This reverts commit 85724ad8179c1f28f7239400ff82a0eedf138fa3.
+
+diff --git a/liblog/include/android/log.h b/liblog/include/android/log.h
+index 9131364b..a26d2c4f 100644
+--- a/liblog/include/android/log.h
++++ b/liblog/include/android/log.h
+@@ -305,7 +305,7 @@ void __android_log_logd_logger(const struct __android_log_message* log_message)
+  * Available since API level 37.
+  */
+ void __android_log_logd_logger_with_timestamp(const struct __android_log_message* log_message,
+-                                              const struct timespec* timestamp) __INTRODUCED_IN(37);
++                                              struct timespec* timestamp) __INTRODUCED_IN(37);
+ 
+ /**
+  * Writes the log message to stderr.  This is an {@link __android_logger_function} and can be provided to
+diff --git a/liblog/logd_writer.cpp b/liblog/logd_writer.cpp
+index 0910fc09..0a3d0e7c 100644
+--- a/liblog/logd_writer.cpp
++++ b/liblog/logd_writer.cpp
+@@ -117,7 +117,7 @@ void LogdClose() {
+   LogdSocket::NonBlockingSocket().Close();
+ }
+ 
+-int LogdWrite(log_id_t logId, const struct timespec* ts, const struct iovec* vec, size_t nr) {
++int LogdWrite(log_id_t logId, struct timespec* ts, struct iovec* vec, size_t nr) {
+   ssize_t ret;
+   static const unsigned headerLength = 1;
+   struct iovec newVec[nr + headerLength];
+diff --git a/liblog/logd_writer.h b/liblog/logd_writer.h
+index 966f523e..41197b59 100644
+--- a/liblog/logd_writer.h
++++ b/liblog/logd_writer.h
+@@ -20,5 +20,5 @@
+ 
+ #include <android/log.h>
+ 
+-int LogdWrite(log_id_t logId, const struct timespec* ts, const struct iovec* vec, size_t nr);
++int LogdWrite(log_id_t logId, struct timespec* ts, struct iovec* vec, size_t nr);
+ void LogdClose();
+diff --git a/liblog/logger_write.cpp b/liblog/logger_write.cpp
+index 3752fb76..bf6ad1d5 100644
+--- a/liblog/logger_write.cpp
++++ b/liblog/logger_write.cpp
+@@ -197,7 +197,7 @@ void __android_log_call_aborter(const char* abort_message) {
+ 
+ #ifdef __ANDROID__
+ static int write_to_log(log_id_t log_id, struct iovec* vec, size_t nr,
+-                        const struct timespec* timestamp = nullptr) {
++                        struct timespec* timestamp = nullptr) {
+   if (log_id == LOG_ID_KERNEL) {
+     return -EINVAL;
+   }
+@@ -233,7 +233,7 @@ static int write_to_log(log_id_t log_id, struct iovec* vec, size_t nr,
+   return ret;
+ }
+ #else
+-static int write_to_log(log_id_t, struct iovec*, size_t, const struct timespec* = nullptr) {
++static int write_to_log(log_id_t, struct iovec*, size_t, struct timespec* = nullptr) {
+   // Non-Android text logs should go to __android_log_stderr_logger, not here.
+   // Non-Android binary logs are always dropped.
+   return 1;
+@@ -339,7 +339,7 @@ void __android_log_logd_logger(const struct __android_log_message* log_message)
+ }
+ 
+ void __android_log_logd_logger_with_timestamp(const struct __android_log_message* log_message,
+-                                              const struct timespec* timestamp) {
++                                              struct timespec* timestamp) {
+   if (log_to_file_if_overridden(log_message)) return;
+ 
+   int buffer_id = log_message->buffer_id == LOG_ID_DEFAULT ? LOG_ID_MAIN : log_message->buffer_id;
+diff --git a/liblog/pmsg_writer.cpp b/liblog/pmsg_writer.cpp
+index fb59b4cc..774cf964 100644
+--- a/liblog/pmsg_writer.cpp
++++ b/liblog/pmsg_writer.cpp
+@@ -69,7 +69,7 @@ void PmsgClose() {
+   pmsg_fd = 0;
+ }
+ 
+-int PmsgWrite(log_id_t logId, const struct timespec* ts, const struct iovec* vec, size_t nr) {
++int PmsgWrite(log_id_t logId, struct timespec* ts, struct iovec* vec, size_t nr) {
+   static const unsigned headerLength = 2;
+   struct iovec newVec[nr + headerLength];
+   android_log_header_t header;
+diff --git a/liblog/pmsg_writer.h b/liblog/pmsg_writer.h
+index 59443c34..d5e1a1c2 100644
+--- a/liblog/pmsg_writer.h
++++ b/liblog/pmsg_writer.h
+@@ -20,5 +20,5 @@
+ 
+ #include <android/log.h>
+ 
+-int PmsgWrite(log_id_t logId, const struct timespec* ts, const struct iovec* vec, size_t nr);
++int PmsgWrite(log_id_t logId, struct timespec* ts, struct iovec* vec, size_t nr);
+ void PmsgClose();
+-- 
+2.47.3
+
