@@ -32,6 +32,10 @@ add_custom_target(gen_lz4diff_protos_srcs ALL DEPENDS ${lz4diff_protos_srcs})
 
 add_library(update_metadata-protos STATIC ${update_metadata_protos_srcs})
 target_compile_options(update_metadata-protos PRIVATE "-Wall")
+target_include_directories(update_metadata-protos PUBLIC 
+    ${protobuf_headers}
+    ${absl_headers}
+)
 target_link_libraries(update_metadata-protos PUBLIC 
     protobuf-cpp-full
 )
@@ -40,6 +44,7 @@ add_library(lz4diff-protos STATIC ${lz4diff_protos_srcs})
 target_compile_options(lz4diff-protos PRIVATE ${cflags} ${cppflags})
 target_include_directories(lz4diff-protos PUBLIC 
     ${protobuf_headers}
+    ${absl_headers}
 )
 
 set(cflags
@@ -78,6 +83,7 @@ set(common_headers
     ${libgtest_prod_headers}
     ${update_engine_dir}
     ${protobuf_headers}
+    ${absl_headers}
     "${update_engine_dir}/client_library/include"
     "${update_engine_dir}/aosp"
     "${update_engine_dir}/common"

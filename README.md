@@ -8,6 +8,6 @@
 ### build for x86_64
 > ./build.sh  
 ### build for android arm64-v8a
-> ./build.sh android 31  
+> ./build.sh android  
 ### out
 > build/bin

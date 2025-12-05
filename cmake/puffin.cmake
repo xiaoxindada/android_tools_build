@@ -1,6 +1,16 @@
 
 set(puffin_dir "${CMAKE_SOURCE_DIR}/src/puffin")
 
+set(common_headers
+    ${libchrome_dir}
+    ${puffin_dir}
+    ${libzucchini_headers}
+    ${libbrotli_headers}
+    ${protobuf_headers}
+    ${absl_headers}
+    "${puffin_dir}/src/include"
+)
+
 set(cflags
         "-DUSE_BRILLO=1"
         "-D_FILE_OFFSET_BITS=64"
@@ -48,12 +58,7 @@ add_custom_target(gen_puffin_protos_srcs ALL DEPENDS ${puffin_protos_srcs})
 add_library(puffpatch STATIC ${libpuffpatch_srcs})
 target_compile_options(puffpatch PRIVATE ${cflags})
 target_include_directories(puffpatch PUBLIC
-    ${libchrome_dir}
-    ${puffin_dir}
-    ${libzucchini_headers}
-    ${libbrotli_headers}
-    ${protobuf_headers}
-    "${puffin_dir}/src/include"
+    ${common_headers}
 )
 target_link_libraries(puffpatch PUBLIC
     bsdiff
@@ -65,12 +70,7 @@ target_link_libraries(puffpatch PUBLIC
 add_library(puffdiff STATIC ${libpuffdiff_srcs})
 target_compile_options(puffdiff PRIVATE ${cflags})
 target_include_directories(puffdiff PUBLIC
-    ${libchrome_dir}
-    ${puffin_dir}
-    ${libzucchini_headers}
-    ${libbsdiff_headers}
-    ${puffin_headers}
-    ${protobuf_headers}
+    ${common_headers}
 )
 target_link_libraries(puffdiff PUBLIC
     bsdiff

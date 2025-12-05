@@ -1,6 +1,6 @@
 # The libchrome C and C++ versions must be set, taking care not to pollute the versions of other components
 set(CMAKE_C_STANDARD 17)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 set(target_name "chrome")
 set(libchrome_srcs_dir "${CMAKE_SOURCE_DIR}/src/libchrome")
@@ -739,10 +739,7 @@ if(HAVE_BIONIC)
 endif()
 
 if(HAVE_GLIBC)
-    message(STATUS "libchrome use glibc sources")
-    list(APPEND libchrome_defaults_cflags "-fno-exceptions")
-    list(APPEND libchrome_defaults_cflags "-DDISABLE_ALLOCATOR_SHIM")
-    
+    message(STATUS "libchrome use glibc sources")    
     list(REMOVE_ITEM libchromeGlibcSrc 
         "${libchrome_srcs_dir}/base/allocator/allocator_shim.cc"
     )
@@ -768,8 +765,7 @@ set(libchrome_defaults_cflags
         # sys_string_conversions_posix.cc:122, and
         # icu_utf.cc:161,165 have -Wno-implicit-fallthrough.
         "-Wno-missing-field-initializers"
-        "-Wno-unused-parameter"
-        "-Wno-nonnull"
+        "-Wno-unused-parameter"      
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Android")

@@ -5,6 +5,10 @@ project(delta_generator_build LANGUAGES C CXX)
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_CXX_STANDARD 23)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    message("This is Android cross compile")
+endif()
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     message("This is use clang build")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
@@ -41,20 +45,22 @@ endfunction()
 set(prebuilt_protoc "${CMAKE_SOURCE_DIR}/prebuilt/x86_64/aprotoc")
 check_x86_64_aprotoc("${CMAKE_SOURCE_DIR}/prebuilt/x86_64")
 
+# fix absl dll test link dir not defined 
+link_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 # include headers
 include("cmake/include.cmake")
 
 # libs
+include("cmake/googletest.cmake")
 include("cmake/fmtlib.cmake")
+include("cmake/zlib.cmake")
 include("cmake/liblog.cmake")
 include("cmake/libbase.cmake")
 include("cmake/libcutils.cmake")
 include("cmake/libjsoncpp.cmake")
-include("cmake/libgtest.cmake")
-include("cmake/zlib.cmake")
 include("cmake/libsparse.cmake")
 include("cmake/libprocessgroup.cmake")
-include("cmake/aprotoc.cmake")
 include("cmake/boringssl.cmake")
 include("cmake/libzstd.cmake")
 include("cmake/libbz.cmake")
@@ -85,6 +91,11 @@ include("cmake/libzucchini.cmake")
 include("cmake/puffin.cmake")
 include("cmake/libverity_tree.cmake")
 include("cmake/libsnapshot_cow.cmake")
+
+# protobuf
+include("cmake/absl.cmake")
+include("cmake/protobuf.cmake")
+include("cmake/aprotoc.cmake")
 
 # delta_generator
 include("cmake/update_engine.cmake")

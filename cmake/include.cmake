@@ -39,6 +39,7 @@ set(libprocessgroup_headers
 set(libprocessgroup_util_headers "${CMAKE_SOURCE_DIR}/src/core/libprocessgroup/util/include" CACHE STRING "" FORCE)
 set(libsparse_headers "${CMAKE_SOURCE_DIR}/src/core/libsparse/include" CACHE STRING "" FORCE)
 set(libgtest_prod_headers "${CMAKE_SOURCE_DIR}/src/googletest/googletest/include" CACHE STRING "" FORCE)
+set(libgmock_headers "${CMAKE_SOURCE_DIR}/src/googletest/googlemock/include" CACHE STRING "" FORCE)
 set(libfs_mgr_headers "${CMAKE_SOURCE_DIR}/src/core/libfs_mgr/include" CACHE STRING "" FORCE)
 set(libfscrypt_headers "${CMAKE_SOURCE_DIR}/src/libfscrypt/include" CACHE STRING "" FORCE)
 set(libmodpb64_headers "${CMAKE_SOURCE_DIR}/src/modp_b64" CACHE STRING "" FORCE)
@@ -76,9 +77,13 @@ set(libxz_headers
 set(libsparse_headers "${CMAKE_SOURCE_DIR}/src/core/libsparse/include" CACHE STRING "" FORCE)
 
 set(protobuf_headers 
-    "${CMAKE_SOURCE_DIR}/src/protobuf/android"
     "${CMAKE_SOURCE_DIR}/src/protobuf/src"
-    "${CMAKE_SOURCE_DIR}/src/protobuf/config"
+    "${CMAKE_SOURCE_DIR}/src/protobuf/third_party"
+    "${CMAKE_SOURCE_DIR}/src/protobuf/third_party/utf8_range"
+    "${CMAKE_SOURCE_DIR}/src/abseil-cpp"
+    CACHE STRING "" FORCE)
+set(absl_headers
+    "${CMAKE_SOURCE_DIR}/src/abseil-cpp"
     CACHE STRING "" FORCE)
 set(libzucchini_headers
     "${CMAKE_SOURCE_DIR}/src/zucchini/aosp/include/components"

@@ -47,10 +47,12 @@ GIT_CLONE_REPOS=(
     "platform/external/googletest"
     "platform/external/pcre"
     "platform/system/tools/mkbootimg"
+    "platform/external/abseil-cpp"
+    "platform/external/protobuf"
 )
 
 GIT_CLONE_VERSION_REPOS=(
-    "platform/external/protobuf fb270b849039134cd2aadd86ccbff67252221287"
+    
 )
 
 echo "Sync all repos from: ${FETCH_FROM}"
@@ -61,7 +63,7 @@ function clone() {
     local repo=$1
     local clone_dir=$2
     local repo_name="${repo##*/}"
-
+    
     echo "Clone repo: ${repo} to ${clone_dir}/${repo_name} ..."
     if [ -d "${clone_dir}/${repo_name}" ]; then
         echo "Directory ${clone_dir}/${repo_name} already exists, skipping clone."
@@ -80,7 +82,7 @@ function clone_version() {
     local version=$2
     local clone_dir=$3
     local repo_name="${repo##*/}"
-
+    
     echo "Clone repo: ${repo} to ${clone_dir}/${repo_name} ..."
     if [ -d "${clone_dir}/${repo_name}" ]; then
         echo "Directory ${clone_dir}/${repo_name} already exists, skipping clone."
@@ -91,6 +93,9 @@ function clone_version() {
         git fetch --unshallow
         if git reset --hard ${version}; then
             echo "Clone version repo: ${repo} ver: ${version} success."
+        else
+            echo "Clone version repo: ${repo} ver: ${version} failed."
+            exit 1
         fi
         cd ${LOCALDIR}
     else

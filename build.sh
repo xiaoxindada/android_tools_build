@@ -28,11 +28,11 @@ function builld_x86_64_aprotoc() {
     local target="aprotoc"
     local target_dir="prebuilt/x86_64"
     local cmake_gen_args="-DCMAKE_C_COMPILER=$cc -DCMAKE_CXX_COMPILER=$cxx -DMY_TARGET=\"$target\""
-
+    
     rm -rf "build"
     cmake $cmake_gen_args -G "Ninja" -B "build" -DCMAKE_BUILD_TYPE="Release"
     cmake --build "build" --target="$target" -j$(nproc --all)
-
+    
     if [[ -e "build/aprotoc" ]]; then
         mkdir -p "$target_dir"
         cp "build/aprotoc" "$target_dir/aprotoc"
@@ -42,19 +42,19 @@ function builld_x86_64_aprotoc() {
 function build() {
     local cmake_gen_args=
     local target=
-
+    
     if [[ $1 == "android" ]]; then
         cmake_gen_args="\
-            -DCMAKE_C_COMPILER=$cc \
-            -DCMAKE_CXX_COMPILER=$cxx \
-            -DCMAKE_TOOLCHAIN_FILE=$LOCALDIR/ndk/build/cmake/android.toolchain.cmake \
-            -DANDROID_ABI=arm64-v8a \
-            -DANDROID_PLATFORM=android-$2 \
-            -DANDROID_STL=c++_static"
-    elif [[ $(uname) == "Linux" ]]; then
+        -DCMAKE_C_COMPILER=$cc \
+        -DCMAKE_CXX_COMPILER=$cxx \
+        -DCMAKE_TOOLCHAIN_FILE=$LOCALDIR/ndk/build/cmake/android.toolchain.cmake \
+        -DANDROID_ABI=arm64-v8a \
+        -DANDROID_PLATFORM=android-31 \
+        -DANDROID_STL=c++_static"
+        elif [[ $(uname) == "Linux" ]]; then
         cmake_gen_args="-DCMAKE_C_COMPILER=$cc -DCMAKE_CXX_COMPILER=$cxx"
     fi
-
+    
     rm -rf "build"
     echo "cmake $cmake_gen_args -G Ninja"
     cmake $cmake_gen_args -G "Ninja" -B "build" -DCMAKE_INSTALL_PREFIX="build" -DCMAKE_BUILD_TYPE="Release"

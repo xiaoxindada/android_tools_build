@@ -1,5 +1,3 @@
-include("cmake/protobuf.cmake")
-
 set(target_name "aprotoc")
 
 set(aprotoc_srcs
@@ -15,6 +13,7 @@ target_include_directories(${target_name} PUBLIC
     ${absl_headers}
 )
 target_link_libraries(${target_name} PRIVATE
+    absl_log_initialize
     protoc
     zlib
 )
