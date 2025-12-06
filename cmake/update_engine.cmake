@@ -62,6 +62,7 @@ set(cflags
         "-fstack-protector-strong"
         "-fvisibility=hidden"
         "-g3"
+        "-Wno-macro-redefined"
 )
 
 set(cppflags
