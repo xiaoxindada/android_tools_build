@@ -263,10 +263,7 @@ target_link_libraries(protobuf-cpp-lite PUBLIC
     log
 )
 
-add_library(protobuf-cpp-full STATIC 
-    ${protobuf_cpp_lite_srcs} 
-    ${protobuf_cpp_full_srcs}
-)
+add_library(protobuf-cpp-full STATIC ${protobuf_cpp_full_srcs})
 target_compile_options(protobuf-cpp-full PRIVATE ${protobuf_cflags} "-DHAVE_ZLIB=1")
 target_include_directories(protobuf-cpp-full PUBLIC
     ${protobuf_dir}
