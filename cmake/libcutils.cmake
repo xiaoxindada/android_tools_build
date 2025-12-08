@@ -64,9 +64,15 @@ set(libcutils_host_sources
     "${libcutils_dir}/ashmem-host.cpp"
 )
 
+set(libcutils_linux_sources
+    "${libcutils_dir}/canned_fs_config.cpp"
+    "${libcutils_dir}/fs_config.cpp"
+)
+
 if(NOT WIN32)
     list(APPEND libcutils_sources
         ${libcutils_nonwindows_sources}
+        ${libcutils_linux_sources}
     )
     if(NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
         list(APPEND libcutils_sources
