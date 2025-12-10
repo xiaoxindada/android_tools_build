@@ -21,14 +21,21 @@ set(libbase_srcs
         "${libbase_dir}/test_utils.cpp"
 )
 
-
-list(APPEND libbase_srcs "${libbase_dir}/errors_unix.cpp")
-
 set(cflags
         "-Wall"
         "-Wextra"
         "-Wexit-time-destructors"
 )
+
+if(NOT WIN32)
+    list(APPEND libbase_srcs "${libbase_dir}/errors_unix.cpp")
+else()
+    list(APPEND libbase_srcs 
+        "${libbase_dir}/errors_windows.cpp"
+        "${libbase_dir}/utf8.cpp"
+    )
+    list(REMOVE_ITEM libbase_srcs "${libbase_dir}/cmsg.cpp")
+endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Android")
     list(APPEND cflags "-D_FILE_OFFSET_BITS=64")

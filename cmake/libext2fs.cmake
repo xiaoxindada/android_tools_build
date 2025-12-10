@@ -83,6 +83,7 @@ set(libext2fs_srcs
     "${libext2fs_dir}/newdir.c"
     "${libext2fs_dir}/nls_utf8.c"
     "${libext2fs_dir}/openfs.c"
+    "${libext2fs_dir}/orphan.c"
     "${libext2fs_dir}/progress.c"
     "${libext2fs_dir}/punch.c"
     "${libext2fs_dir}/qcow2.c"

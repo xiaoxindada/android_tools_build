@@ -42,7 +42,7 @@ else()
     )
 endif()
 
-set(libcutils_srcs
+set(libcutils_sources
     "${libcutils_dir}/config_utils.cpp"
     "${libcutils_dir}/iosched_policy.cpp"
     "${libcutils_dir}/load_file.cpp"
