@@ -15,13 +15,13 @@ function set_toolchains() {
 	local ondk_version="r29.3"
 
 	if grep -qo "debian" /etc/os-release; then
-		if [[ ! -e "ondk-$ondk_version-linux.tar.xz" ]] && [[ ! -e "android-ndk-$ndk_version-linux.zip" ]]; then
-			wget https://github.com/topjohnwu/ondk/releases/download/$ndk_version/ondk-$ndk_version-linux.tar.xz
+		if [[ ! -e "ondk-$ondk_version-linux.tar.xz" ]] && [[ ! -e "android-ndk-$ndk_version-linux.zip" ]] && [[ ! -e "ndk" ]]; then
+			wget https://github.com/topjohnwu/ondk/releases/download/$ondk_version/ondk-$ondk_version-linux.tar.xz
 		fi
 		if [[ ! -e "ndk" ]]; then
-			if [[ -e "ondk-$ndk_version-linux.tar.xz" ]]; then
-				tar -xf "ondk-$ndk_version-linux.tar.xz" -C "."
-				mv "ondk-$ndk_version" "ndk"
+			if [[ -e "ondk-$ondk_version-linux.tar.xz" ]]; then
+				tar -xf "ondk-$ondk_version-linux.tar.xz" -C "."
+				mv "ondk-$ondk_version" "ndk"
 			elif [[ -e "android-ndk-$ndk_version-linux.zip" ]]; then
 				unzip -q -o "android-ndk-$ndk_version-linux.zip" -d "."
 				mv "android-ndk-$ndk_version" "ndk"
