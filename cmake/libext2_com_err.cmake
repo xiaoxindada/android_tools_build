@@ -1,6 +1,6 @@
-set(target_name "ext2fs_com_err")
+set(target_name "ext2_com_err")
 
-set(libext2fs_com_err_srcs_dir "${CMAKE_SOURCE_DIR}/src/e2fsprogs/lib/et")
+set(libext2_com_err_srcs_dir "${CMAKE_SOURCE_DIR}/src/e2fsprogs/lib/et")
 
 set(e2fsprogs_cflags
         "-Wall"
@@ -18,17 +18,17 @@ set(e2fsprogs_cflags
         "-Wno-sign-compare" #Better keep compare
 )
 
-set(libext2fs_com_err_srcs
-        "${libext2fs_com_err_srcs_dir}/error_message.c"
-        "${libext2fs_com_err_srcs_dir}/et_name.c"
-        "${libext2fs_com_err_srcs_dir}/init_et.c"
-        "${libext2fs_com_err_srcs_dir}/com_err.c"
-        "${libext2fs_com_err_srcs_dir}/com_right.c"
+set(libext2_com_err_srcs
+        "${libext2_com_err_srcs_dir}/error_message.c"
+        "${libext2_com_err_srcs_dir}/et_name.c"
+        "${libext2_com_err_srcs_dir}/init_et.c"
+        "${libext2_com_err_srcs_dir}/com_err.c"
+        "${libext2_com_err_srcs_dir}/com_right.c"
 )
 
-add_library(${target_name} STATIC ${libext2fs_com_err_srcs})
+add_library(${target_name} STATIC ${libext2_com_err_srcs})
 target_compile_options(${target_name} PUBLIC ${e2fsprogs_cflags})
 target_include_directories(${target_name} PUBLIC
     ${e2fsprogs_lib_headers}
-    ${libext2fs_com_err_srcs_dir}
+    ${libext2_com_err_srcs_dir}
 )

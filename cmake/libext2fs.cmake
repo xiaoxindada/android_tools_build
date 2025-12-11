@@ -121,7 +121,7 @@ target_include_directories(${target_name} PUBLIC
 
 target_link_libraries(${target_name} PUBLIC 
     sparse
-    ext2fs_com_err
+    ext2_com_err
     ext2_uuid
     zlib
 )
