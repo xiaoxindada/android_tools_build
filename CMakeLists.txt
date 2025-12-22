@@ -60,6 +60,7 @@ include("cmake/liblog.cmake")
 include("cmake/libbase.cmake")
 include("cmake/libcutils.cmake")
 include("cmake/libjsoncpp.cmake")
+include("cmake/libjsonpbparse.cmake")
 include("cmake/libsparse.cmake")
 include("cmake/libprocessgroup.cmake")
 include("cmake/boringssl.cmake")
@@ -86,8 +87,8 @@ include("cmake/libdivsufsort.cmake")
 include("cmake/libbsdiff.cmake")
 include("cmake/libzucchini.cmake")
 include("cmake/puffin.cmake")
+include("cmake/fs_mgr.cmake")
 include("cmake/libverity_tree.cmake")
-include("cmake/libsnapshot_cow.cmake")
 
 # protobuf
 include("cmake/absl.cmake")
@@ -108,6 +109,9 @@ include("cmake/mkbootfs.cmake")
 # dtc
 include("cmake/dtc.cmake")
 
+# partition_tools
+include("cmake/partition_tools.cmake")
+
 # libchrome fuck
 include("cmake/libchrome.cmake")
 
@@ -116,6 +120,10 @@ set(install_e2fsprogs_targets mke2fs e2fsdroid e2fsck resize debugfs)
 set(install_erofs_targets mkfs.erofs fsck.erofs dump.erofs)
 set(install_update_engine_targets delta_generator)
 set(install_dtc_targets dtc mkdtimg fdtget fdtput fdtdump fdtoverlay)
+set(install_partition_tools_targets lpmake lpunpack lpadd lpflash lpdump)
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(REMOVE_ITEM install_partition_tools_targets lpdump)
+endif()
 
 install(
     TARGETS ${install_mkbootfs_targets}
@@ -136,4 +144,8 @@ install(
 install(
     TARGETS ${install_dtc_targets}
     RUNTIME DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/bin/dtc_progs"
+)
+install(
+    TARGETS ${install_partition_tools_targets}
+    RUNTIME DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/bin/partition_tools"
 )

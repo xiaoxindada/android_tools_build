@@ -231,9 +231,7 @@ add_library(cow_operation_convert STATIC ${libcow_operation_convert_srcs})
 target_compile_options(cow_operation_convert PRIVATE ${cflags} ${cppflags})
 target_include_directories(cow_operation_convert PUBLIC
     ${common_headers}
-    "${fs_mgr_dir}/libstorage_literals"
-    "${fs_mgr_dir}/include"
-    "${fs_mgr_dir}/libsnapshot/include"
+    ${fs_mgr_headers}
 )
 target_link_libraries(cow_operation_convert PUBLIC
     ${common_libs}
@@ -244,9 +242,7 @@ add_library(cow_size_estimator STATIC ${libbcow_size_estimator_srcs})
 target_compile_options(cow_size_estimator PRIVATE ${cflags} ${cppflags})
 target_include_directories(cow_size_estimator PUBLIC
     ${common_headers}
-    "${fs_mgr_dir}/libstorage_literals"
-    "${fs_mgr_dir}/include"
-    "${fs_mgr_dir}/libsnapshot/include"
+    ${fs_mgr_headers}
 )
 target_link_libraries(cow_size_estimator PUBLIC
     ${common_libs}
@@ -309,9 +305,7 @@ target_include_directories(payload_consumer PUBLIC
     ${boringssl_headers}
     ${libcrypto_utils_headers}
     ${libevent_headers}
-    "${fs_mgr_dir}/libstorage_literals"
-    "${fs_mgr_dir}/include"
-    "${fs_mgr_dir}/libsnapshot/include"
+    ${fs_mgr_headers}
 )
 target_link_libraries(payload_consumer PUBLIC
         protobuf-cpp-full
@@ -387,9 +381,7 @@ target_include_directories(payload_generator PUBLIC
     ${liberofs_headers}
     ${libavb_headers}
     ${bootimg_headers}
-    "${fs_mgr_dir}/libstorage_literals"
-    "${fs_mgr_dir}/include"
-    "${fs_mgr_dir}/libsnapshot/include"
+    ${fs_mgr_headers}
 )
 target_link_libraries(payload_generator PUBLIC
         ${common_libs}
@@ -444,9 +436,7 @@ target_include_directories(delta_generator PRIVATE
     ${libavb_headers}
     ${bootimg_headers}
     ${libgflags_headers}
-    "${fs_mgr_dir}/libstorage_literals"
-    "${fs_mgr_dir}/include"
-    "${fs_mgr_dir}/libsnapshot/include"
+    ${fs_mgr_headers}
 )
 target_link_libraries(delta_generator PRIVATE
     ${common_libs}

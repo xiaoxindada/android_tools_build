@@ -1,5 +1,3 @@
-set(target_name "snapshot_cow")
-
 set(fs_mgr_dir "${CMAKE_SOURCE_DIR}/src/core/fs_mgr")
 set(libsnapshot_cow_srcs_dir "${fs_mgr_dir}/libsnapshot/libsnapshot_cow")
 
@@ -22,24 +20,17 @@ set(libsnapshot_cow_srcs
         "${libsnapshot_cow_srcs_dir}/writer_v3.cpp"
 )
 
-add_library(${target_name} STATIC ${libsnapshot_cow_srcs})
-target_compile_options(${target_name} PRIVATE ${cflags})
-target_include_directories(${target_name} PUBLIC
-    ${libsnapshot_cow_headers}
+add_library(snapshot_cow STATIC ${libsnapshot_cow_srcs})
+target_compile_options(snapshot_cow PRIVATE ${cflags})
+target_include_directories(snapshot_cow PUBLIC
+    ${fs_mgr_headers}
     ${libbase_headers}
     ${liblog_headers}
     ${libbrotli_headers}
     ${liblz4_headers}
     ${libzstd_headers}
-    ${fs_mgr_dir}
     ${update_engine_headers}
     ${libselinux_headers}
-    ${libsnapshot_srcs_dir}
-    "${fs_mgr_dir}/libstorage_literals"
-    "${fs_mgr_dir}/include"
-    "${fs_mgr_dir}/libsnapshot/include"
-    "${libsnapshot_cow_srcs_dir}/include"
-    "${libsnapshot_cow_srcs_dir}/.."
 )
 target_link_libraries(snapshot_cow PUBLIC
         base
@@ -48,4 +39,41 @@ target_link_libraries(snapshot_cow PUBLIC
         zlib
         lz4
         zstd
+)
+
+set(liblp_srcs_dir "${fs_mgr_dir}/liblp")
+
+
+set(liblp_srcs
+        "${liblp_srcs_dir}/builder.cpp"
+        "${liblp_srcs_dir}/super_layout_builder.cpp"
+        "${liblp_srcs_dir}/images.cpp"
+        "${liblp_srcs_dir}/partition_opener.cpp"
+        "${liblp_srcs_dir}/property_fetcher.cpp"
+        "${liblp_srcs_dir}/reader.cpp"
+        "${liblp_srcs_dir}/utility.cpp"
+        "${liblp_srcs_dir}/writer.cpp"
+)
+
+add_library(lp STATIC ${liblp_srcs})
+target_compile_options(lp PRIVATE ${cflags})
+target_include_directories(lp PUBLIC 
+    ${fs_mgr_headers}
+    ${libbase_headers}
+    ${libcutils_headers}
+    ${boringssl_headers}
+    ${liblog_headers}
+    ${libsparse_headers}
+    ${e2fsprogs_lib_headers}
+    ${zlib_headers}
+)
+target_link_libraries(lp PUBLIC 
+    crypto
+    cutils
+    base
+    log
+    crypto_utils
+    sparse
+    ext4_utils
+    zlib
 )
