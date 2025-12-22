@@ -55,11 +55,12 @@ namespace skkk {
 			bool isPrintAllNode = false;
 			bool isPrintTarget = false;
 			bool check_decomp = false;
+			bool print_comp_ratio = false;
 			bool isExtractAllNode = false;
 			bool isExtractTarget = false;
 			bool isExtractTargetConfig = false;
 			bool targetConfigRecurse = false;
-			unsigned int threadNum = 0;
+			unsigned int threadNum = 1;
 			unsigned int hardwareConcurrency = thread::hardware_concurrency();
 			unsigned int limitHardwareConcurrency = hardwareConcurrency * 2;
 			bool overwrite = false;
@@ -67,7 +68,9 @@ namespace skkk {
 			string targetConfigPath;
 			bool extractOnlyConfAndSeLabel = false;
 			bool isSilent = false;
-
+			u64 physical_blocks = 0;
+			u64 logical_blocks = 0;
+			
 		public:
 
 			static inline ExtractOperation *getInstance() {

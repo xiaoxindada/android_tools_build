@@ -2,6 +2,7 @@
 #define _EXTRACT_LOGGING_H
 
 #include <stdarg.h>
+#include <stdio.h>
 
 /**
  *	Partial code reference：https://blog.csdn.net/m_pfly_fish/article/details/118541894

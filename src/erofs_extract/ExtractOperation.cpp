@@ -1,6 +1,7 @@
 #include <algorithm>
-
-#include "../lib/liberofs_uuid.h"
+#include <stdio.h>
+#include <erofs/config.h>
+#include <liberofs_uuid.h>
 #include "ExtractOperation.h"
 #include "ExtractState.h"
 #include "ExtractHelper.h"
@@ -8,6 +9,18 @@
 #include "Logging.h"
 #include "Utils.h"
 #include "threadpool.h"
+
+void erofs_uuid_unparse_lower(const unsigned char *buf, char *out) {
+	sprintf(out, "%04x%04x-%04x-%04x-%04x-%04x%04x%04x",
+			(buf[0] << 8) | buf[1],
+			(buf[2] << 8) | buf[3],
+			(buf[4] << 8) | buf[5],
+			(buf[6] << 8) | buf[7],
+			(buf[8] << 8) | buf[9],
+			(buf[10] << 8) | buf[11],
+			(buf[12] << 8) | buf[13],
+			(buf[14] << 8) | buf[15]);
+}
 
 namespace skkk {
 	void ExtractOperation::setImgPath(const char *path) {
@@ -17,7 +30,7 @@ namespace skkk {
 		handleWinFilePath(imgPath);
 #endif
 
-		LOGD("config: imagePath=%s", imgPath.c_str());
+		LOGCD("config: imagePath=%s", imgPath.c_str());
 		imgBaseName = path;
 		if (!imgPath.empty()) {
 			auto ps = imgPath.rfind('/');
@@ -25,7 +38,7 @@ namespace skkk {
 				imgBaseName = imgPath.substr(ps + 1, imgPath.size());
 			ps = imgBaseName.find('.');
 			if (ps != string::npos) imgBaseName.erase(ps, imgBaseName.size());
-			LOGD("config: imgBaseName=%s", imgBaseName.c_str());
+			LOGCD("config: imgBaseName=%s", imgBaseName.c_str());
 		}
 	}
 
@@ -67,7 +80,7 @@ namespace skkk {
 				isRoot = oDir[i] == '/';
 			}
 			if (isRoot) {
-				LOGE("Not allow extracting to root: '%s'", outDir.c_str());
+				LOGCE("Not allow extracting to root: '%s'", outDir.c_str());
 				rc = RET_EXTRACT_OUTDIR_ROOT;
 			} else {
 				configDir = outDir + "/config";
@@ -90,7 +103,7 @@ namespace skkk {
 			err = mkdirs(outDir.c_str(), 0700);
 			if (err) {
 				rc = RET_EXTRACT_CREATE_DIR_FAIL;
-				LOGE("create out dir fail: '%s'", outDir.c_str());
+				LOGCE("create out dir fail: '%s'", outDir.c_str());
 			}
 		}
 		return rc;
@@ -102,7 +115,7 @@ namespace skkk {
 			err = mkdirs(configDir.c_str(), 0700);
 			if (err) {
 				rc = RET_EXTRACT_CREATE_DIR_FAIL;
-				LOGE("create config dir fail: '%s'", configDir.c_str());
+				LOGCE("create config dir fail: '%s'", configDir.c_str());
 			}
 		}
 		return rc;
@@ -123,7 +136,7 @@ namespace skkk {
 			if (fileExists(targetConfigPath)) {
 				return initErofsNodeByTargetConfig(targetConfigPath, targetConfigRecurse);
 			} else {
-				LOGE("target config '%s' does not exist! ", targetConfigPath.c_str());
+				LOGCE("target config '%s' does not exist! ", targetConfigPath.c_str());
 			}
 		}
 		return initErofsNodeByTargetPath(targetPath);
@@ -150,7 +163,7 @@ namespace skkk {
 				if (erofsHardlinkFind(nid) == nullptr) {
 					int ret = erofsHardlinkInsert(eNode->getNid(), eNode->getPath().c_str());
 					if (ret < 0) {
-						LOGE("erofsHardlinkInsert: err=%d[%s] path=%s",
+						LOGCE("erofsHardlinkInsert: err=%d[%s] path=%s",
 							  ret,
 							  strerror(abs(ret)),
 							  eNode->getPath().c_str());
@@ -161,7 +174,7 @@ namespace skkk {
 				nodeOther.push_back(eNode);
 			}
 		}
-		LOGD("erofsNodeClassification done");
+		LOGCD("erofsNodeClassification done");
 	}
 
 	void ExtractOperation::addErofsNode(ErofsNode *eNode) { erofsNodes.push_back(eNode); }
@@ -169,7 +182,7 @@ namespace skkk {
 	const vector<ErofsNode *> &ExtractOperation::getErofsNodes() { return erofsNodes; }
 
 	static inline void printFsConfWithColor(const ErofsNode *eNode) {
-		LOGI("type=%s dataLayout=%s fsConfig=[%s] seLabel=[%s]",
+		LOGCI("type=%s dataLayout=%s fsConfig=[%s] seLabel=[%s]",
 			  eNode->getTypeIdCStr(),
 			  eNode->getDataLayoutCStr(),
 			  eNode->getFsConfig().c_str(),
@@ -199,7 +212,7 @@ namespace skkk {
 		FILE *mkfsOptionFile = nullptr;
 		char uuid[37] = {0};
 		const char *mountPoint = imgBaseName.c_str();
-		LOGI("fs_config|file_contexts|fs_options saving...");
+		LOGCI(BROWN "fs_config|file_contexts|fs_options" LOG_RESET_COLOR "  " GREEN2_BOLD "saving..." LOG_RESET_COLOR);
 		if (fsConfigFile && selinuxLabelsFile) {
 			for (auto &eNode: erofsNodes) {
 				if (otherPathsInRootDir.count(eNode->getPath()) > 0) continue;
@@ -219,7 +232,8 @@ namespace skkk {
 					fprintf(mkfsOptionFile, "mkfs.erofs options:        "
 										  "-zlz4hc "               // default: lz4hc
 										  "%s"
-										  "-T %" PRIu32 " -U %s "
+										  "-T %lu "
+										  "-U %s "
 										  "--mount-point=/%s "
 										  "--fs-config-file=%s "
 										  "--file-contexts=%s "
@@ -233,9 +247,9 @@ namespace skkk {
 							outDir.c_str());
 				}
 			}
-			LOGI("fs_config|file_contexts|fs_options done.");
+			LOGCI(BROWN "fs_config|file_contexts|fs_options" LOG_RESET_COLOR "  " GREEN2_BOLD "done." LOG_RESET_COLOR);
 		} else
-			LOGE("fs_config|file_contexts|fs_options fail!");
+			LOGCE(BROWN "fs_config|file_contexts|fs_options" LOG_RESET_COLOR "  " RED2_BOLD "fail!" LOG_RESET_COLOR);
 		if (fsConfigFile) fclose(fsConfigFile);
 		if (selinuxLabelsFile) fclose(selinuxLabelsFile);
 		if (mkfsOptionFile) fclose(mkfsOptionFile);
@@ -247,7 +261,7 @@ namespace skkk {
 			for (const auto &eNode: erofsNodes) {
 				eNode->writeExceptionInfo2FileIfExists(infoFile);
 			}
-			LOGE(RED2 "An exception occurred while fetching, the info has been saved!" COLOR_NONE);
+			LOGCE(RED2 "An exception occurred while fetching, the info has been saved!" COLOR_NONE);
 		}
 	}
 
@@ -265,12 +279,16 @@ namespace skkk {
 	static inline void printExtractProgress(int totalSize, int index, int perPrint, bool hasEnter) {
 		if (index % perPrint == 0 || index == totalSize) {
 			float p = (float) index / (float) totalSize * 100.0f;
+			printf(BROWN2_BOLD "Extract: " COLOR_NONE
+				   GREEN2_BOLD "[ " COLOR_NONE RED2   "%.2f%%" LOG_RESET_COLOR GREEN2_BOLD " ]" COLOR_NONE
+				   "\r",
+				   p
+			);
 			fflush(stdout);
 			if (hasEnter && p == 100) [[unlikely]] {
 				printf("\n");
 			}
 		}
-
 	}
 
 	void ExtractOperation::extractNodeDirs() const {
@@ -283,7 +301,6 @@ namespace skkk {
 	}
 
 	void ExtractOperation::extractErofsNode(bool isSilent) const {
-		printf("Extracting...\n");
 		extractNodeDirs();
 		if (!nodeOther.empty()) {
 			int nodeOtherSize = nodeOther.size();
@@ -294,19 +311,18 @@ namespace skkk {
 		}
 		// If there is an exception
 		writeExceptionInfo2File();
-		printf("done\n");
 	}
 
 	void ExtractOperation::extractErofsNodeMultiThread(bool isSilent) const {
 		extractNodeDirs();
-		LOGI("Using %d threads", threadNum);
+		LOGCI(GREEN2_BOLD "Using " COLOR_NONE RED2 "%d" COLOR_NONE GREEN2_BOLD " threads" COLOR_NONE, threadNum);
+
 		int nodeOtherSize = nodeOther.size();
 		threadpool tp(threadNum);
 		for (const auto &eNode: nodeOther) {
 			tp.commit(extractNodeTaskMultiThread, eNode, outDir);
 		}
-		
-		printf("Extracting...\n");
+
 		if (!isSilent) {
 			int i = 0;
 			while (extractTaskRunCount < nodeOtherSize) {
@@ -317,8 +333,7 @@ namespace skkk {
 				sleep(0);
 			}
 			printExtractProgress(1, 1, 1, true);
-			printf("done\n");
-			LOGD("extractTaskRunCount=%d nodeFilesSize=%d", i, nodeOtherSize, nodeOther.size());
+			LOGCD("extractTaskRunCount=%d nodeFilesSize=%d", i, nodeOtherSize, nodeOther.size());
 		}
 
 		writeExceptionInfo2File();

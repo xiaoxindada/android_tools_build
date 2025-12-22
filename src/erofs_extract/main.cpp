@@ -3,6 +3,8 @@
  * Copyright (C) 2023 skkk
  */
 
+#include <stdio.h>
+#include <unistd.h>
 #include <getopt.h>
 #include <erofs/io.h>
 #include <erofs/config.h>
@@ -10,8 +12,8 @@
 #include <iostream>
 #include <sys/time.h>
 
-#include "../lib/compressor.h"
-#include "../lib/liberofs_compress.h"
+#include <compressor.h>
+#include <erofs/compress.h>
 
 #include "ExtractState.h"
 #include "ExtractOperation.h"
@@ -105,50 +107,50 @@ static int parseAndCheckExtractCfg(int argc, char **argv) {
 				if (optarg) {
 					eo->setImgPath(optarg);
 				}
-				LOGD("imgPath=%s", eo->getImgPath().c_str());
+				LOGCD("imgPath=%s", eo->getImgPath().c_str());
 				break;
 			case 'o':
 				if (optarg) {
 					eo->setOutDir(optarg);
 				}
-				LOGD("outDir=%s", eo->getOutDir().c_str());
+				LOGCD("outDir=%s", eo->getOutDir().c_str());
 				break;
 			case 'p':
 				eo->isPrintAllNode = true;
-				LOGD("isPrintAllNode=%d", eo->isPrintAllNode);
+				LOGCD("isPrintAllNode=%d", eo->isPrintAllNode);
 				break;
 			case 'P':
 				eo->isPrintTarget = true;
 				if (optarg) eo->targetPath = optarg;
-				LOGD("isPrintTarget=%d targetPath=%s", eo->isPrintTarget, eo->targetPath.c_str());
+				LOGCD("isPrintTarget=%d targetPath=%s", eo->isPrintTarget, eo->targetPath.c_str());
 				break;
 			case 'f':
 				eo->overwrite = true;
-				LOGD("overwrite=%d", eo->overwrite);
+				LOGCD("overwrite=%d", eo->overwrite);
 				break;
 			case 'x':
 				eo->check_decomp = true;
 				eo->isExtractAllNode = true;
-				LOGD("isExtractAllNode=%d check_decomp=%d", eo->isExtractAllNode, eo->check_decomp);
+				LOGCD("isExtractAllNode=%d check_decomp=%d", eo->isExtractAllNode, eo->check_decomp);
 				break;
 			case 'X':
 				eo->check_decomp = true;
 				eo->isExtractTarget = true;
 				if (optarg) eo->targetPath = optarg;
-				LOGD("isExtractTarget=%d targetPath=%s", eo->isExtractTarget, eo->targetPath.c_str());
+				LOGCD("isExtractTarget=%d targetPath=%s", eo->isExtractTarget, eo->targetPath.c_str());
 				break;
 			case 'c':
 				eo->isExtractTargetConfig = true;
 				if (optarg) eo->targetConfigPath = optarg;
-				LOGD("targetConfig=%s", eo->targetConfigPath.c_str());
+				LOGCD("targetConfig=%s", eo->targetConfigPath.c_str());
 				break;
 			case 's':
 				eo->isSilent = true;
-				LOGD("isSilent=%d", eo->isSilent);
+				LOGCD("isSilent=%d", eo->isSilent);
 				break;
 			case 'r':
 				eo->targetConfigRecurse = true;
-				LOGD("targetConfigRecurse=%d", eo->targetConfigRecurse);
+				LOGCD("targetConfigRecurse=%d", eo->targetConfigRecurse);
 				break;
 			case 'T':
 				if (optarg) {
@@ -161,7 +163,7 @@ static int parseAndCheckExtractCfg(int argc, char **argv) {
 				break;
 			case 1:
 				eo->extractOnlyConfAndSeLabel = true;
-				LOGD("extractOnlyConfAndSeLabel=%d", eo->extractOnlyConfAndSeLabel);
+				LOGCD("extractOnlyConfAndSeLabel=%d", eo->extractOnlyConfAndSeLabel);
 				break;
 			case 2:
 				if (optarg) {
@@ -169,7 +171,7 @@ static int parseAndCheckExtractCfg(int argc, char **argv) {
 					uint64_t n = strtoull(optarg, &endPtr, 0);
 					if (*endPtr == '\0') {
 						g_sbi.bdev.offset = n;
-						LOGD("offset=%lu", g_sbi.bdev.offset);
+						LOGCD("offset=%lu", g_sbi.bdev.offset);
 					}
 				}
 				break;
@@ -185,23 +187,23 @@ static int parseAndCheckExtractCfg(int argc, char **argv) {
 		// check needed arg
 		err = !eo->getImgPath().empty() && fileExists(eo->getImgPath());
 		if (!err) {
-			LOGE("img file '%s' does not exist", eo->getImgPath().c_str());
+			LOGCE("img file '%s' does not exist", eo->getImgPath().c_str());
 			goto exit;
 		}
 		rc = !eo->initOutDir();
 		if (!rc) {
 			goto exit;
 		}
-		LOGD("outDir=%s confDir=%s", eo->getOutDir().c_str(), eo->getConfDir().c_str());
+		LOGCD("outDir=%s confDir=%s", eo->getOutDir().c_str(), eo->getConfDir().c_str());
 
 		if (eo->threadNum > eo->limitHardwareConcurrency) {
 			rc = RET_EXTRACT_THREAD_NUM_ERROR;
-			LOGE("Threads min: 1 , max: %u", eo->limitHardwareConcurrency);
+			LOGCE("Threads min: 1 , max: %u", eo->limitHardwareConcurrency);
 			goto exit;
 		} else if (eo->threadNum == 0) {
 			eo->threadNum = eo->hardwareConcurrency;
 		}
-		LOGD("Threads num=%u", eo->threadNum);
+		LOGCD("Threads num=%u", eo->threadNum);
 
 		rc = RET_EXTRACT_CONFIG_DONE;
 	} else {
@@ -213,8 +215,9 @@ exit:
 }
 
 static inline void printOperationTime(struct timeval *start, struct timeval *end) {
-	LOGI("The operation took: %3f second(s)\n",
-		  (end->tv_sec - start->tv_sec) + static_cast<float>(end->tv_usec - start->tv_usec) / 1000000
+	LOGCI(GREEN2_BOLD "The operation took: " COLOR_NONE RED2 "%.3f" COLOR_NONE "%s",
+		  (end->tv_sec - start->tv_sec) + static_cast<float>(end->tv_usec - start->tv_usec) / 1000000,
+		  GREEN2_BOLD " second(s)." COLOR_NONE
 	);
 }
 
@@ -274,14 +277,14 @@ int main(int argc, char **argv) {
 	err = erofs_dev_open(&g_sbi, eo->getImgPath().c_str(), O_RDONLY);
 	if (err) {
 		ret = RET_EXTRACT_INIT_FAIL;
-		LOGE("failed to open '%s'", eo->getImgPath().c_str());
+		LOGCE("failed to open '%s'", eo->getImgPath().c_str());
 		goto exit;
 	}
 
 	err = erofs_read_superblock(&g_sbi);
 	if (err) {
 		ret = RET_EXTRACT_INIT_FAIL;
-		LOGE("failed to read superblock");
+		LOGCE("failed to read superblock");
 		goto exit_dev_close;
 	}
 
@@ -299,7 +302,7 @@ int main(int argc, char **argv) {
 		goto exit_dev_close;
 	}
 
-	LOGI("Starting... \n");
+	LOGCI(GREEN2_BOLD "Starting..." COLOR_NONE);
 
 	if ((eo->isExtractTarget || eo->isExtractAllNode) && eo->extractOnlyConfAndSeLabel) {
 		err = eo->createExtractConfigDir();
@@ -320,9 +323,9 @@ int main(int argc, char **argv) {
 #if defined(__CYGWIN__) || defined(_WIN32)
 		// Dir must exist and empty.
 		if (EnsureCaseSensitive(eo->getOutDir().c_str()) == 0)
-			LOGI("Success change case sensitive.");
+			LOGCI("Success change case sensitive.");
 		else
-			LOGW("Failed change case sensitive.");
+			LOGCW("Failed change case sensitive.");
 #endif
 		eo->extractFsConfigAndSelinuxLabelAndFsOptions();
 		if (eo->threadNum == 1) {
@@ -340,8 +343,8 @@ end:
 
 exit_dev_close:
 	erofs_dev_close(&g_sbi);
-	LOGD("ErofsNode size=%lu", eo->getErofsNodes().size());
-	LOGD("main exit ret=%d", ret);
+	LOGCD("ErofsNode size=%lu", eo->getErofsNodes().size());
+	LOGCD("main exit ret=%d", ret);
 
 exit:
 	erofs_blob_closeall(&g_sbi);

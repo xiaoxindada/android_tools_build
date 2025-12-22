@@ -12,7 +12,13 @@ target_link_libraries(${target_name} PRIVATE
     ${erofs_common_libs}
     erofs
 )
-target_compile_options(${target_name} PRIVATE ${erofs_cflags} "-Wno-unused-result")
+target_compile_options(${target_name} PRIVATE 
+    ${erofs_cflags} 
+    "-Wno-unused-result"
+	"-D_FILE_OFFSET_BITS=64"
+	"-D_LARGEFILE_SOURCE"
+	"-D_LARGEFILE64_SOURCE"
+)
 set(ENV{TZ} UTF-8)
 execute_process(
 	COMMAND date "+%y%m%d%H%M"

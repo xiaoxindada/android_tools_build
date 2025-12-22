@@ -1,8 +1,17 @@
 #include <mutex>
-#include <sys/stat.h>
 #include <utime.h>
-#include "../lib/liberofs_compress.h"
+#include <time.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <erofs/compress.h>
+#include <erofs/decompress.h>
+#include <compressor.h>
 #include <erofs/dir.h>
+#include <erofs/xattr.h>
+#include <erofs/config.h>
+#include <erofs/print.h>
+#include <erofs/internal.h>
 #include <erofs/fragments.h>
 #include <private/fs_config.h>
 #include <unordered_set>
@@ -206,27 +215,52 @@ namespace skkk {
 	 * @param outfd
 	 * @return
 	 */
-	static int erofs_verify_inode_data(struct erofs_inode *inode, int outfd) {
+	static int erofs_verify_inode_data(struct erofs_inode *inode, int outfd)
+	{
 		struct erofs_map_blocks map = {
-			.buf = __EROFS_BUF_INITIALIZER,
+			.index = UINT_MAX,
 		};
-		bool needdecode = eo->check_decomp && !erofs_is_packed_inode(inode);
 		int ret = 0;
 		bool compressed;
 		erofs_off_t pos = 0;
+		u64 pchunk_len = 0;
 		unsigned int raw_size = 0, buffer_size = 0;
-		char *raw = nullptr, *buffer = nullptr;
+		char *raw = NULL, *buffer = NULL;
 
-		compressed = erofs_inode_is_data_compressed(inode->datalayout);
+		erofs_dbg("verify data chunk of nid(%llu): type(%d)",
+			inode->nid | 0ULL, inode->datalayout);
+
+		switch (inode->datalayout) {
+		case EROFS_INODE_FLAT_PLAIN:
+		case EROFS_INODE_FLAT_INLINE:
+		case EROFS_INODE_CHUNK_BASED:
+			compressed = false;
+			break;
+		case EROFS_INODE_COMPRESSED_FULL:
+		case EROFS_INODE_COMPRESSED_COMPACT:
+			compressed = true;
+			break;
+		default:
+			erofs_err("unknown datalayout");
+			return -EINVAL;
+		}
+
 		while (pos < inode->i_size) {
 			unsigned int alloc_rawsize;
 
 			map.m_la = pos;
-			ret = erofs_map_blocks(inode, &map, EROFS_GET_BLOCKS_FIEMAP);
+			if (compressed)
+				ret = z_erofs_map_blocks_iter(inode, &map,
+						EROFS_GET_BLOCKS_FIEMAP);
+			else
+				ret = erofs_map_blocks(inode, &map,
+						EROFS_GET_BLOCKS_FIEMAP);
 			if (ret)
 				goto out;
 
 			if (!compressed && map.m_llen != map.m_plen) {
+				erofs_err("broken chunk length m_la %" PRIu64 " m_llen %" PRIu64 " m_plen %" PRIu64,
+					map.m_la, map.m_llen, map.m_plen);
 				ret = -EFSCORRUPTED;
 				goto out;
 			}
@@ -235,10 +269,11 @@ namespace skkk {
 			if (map.m_la + map.m_llen > inode->i_size)
 				map.m_llen = inode->i_size - map.m_la;
 
+			pchunk_len += map.m_plen;
 			pos += map.m_llen;
 
 			/* should skip decomp? */
-			if (map.m_la >= inode->i_size || !needdecode)
+			if (map.m_la >= inode->i_size || !eo->check_decomp)
 				continue;
 
 			if (outfd >= 0 && !(map.m_flags & EROFS_MAP_MAPPED)) {
@@ -251,7 +286,10 @@ namespace skkk {
 			}
 
 			if (map.m_plen > Z_EROFS_PCLUSTER_MAX_SIZE) {
-				if (compressed && !(map.m_flags & __EROFS_MAP_FRAGMENT)) {
+				if (compressed) {
+					erofs_err("invalid pcluster size %" PRIu64 " @ offset %" PRIu64 " of nid %" PRIu64,
+						map.m_plen, map.m_la,
+						inode->nid | 0ULL);
 					ret = -EFSCORRUPTED;
 					goto out;
 				}
@@ -261,7 +299,7 @@ namespace skkk {
 			}
 
 			if (alloc_rawsize > raw_size) {
-				char *newraw = static_cast<char *>(realloc(raw, alloc_rawsize));
+				char *newraw = (char*)realloc(raw, alloc_rawsize);
 
 				if (!newraw) {
 					ret = -ENOMEM;
@@ -274,8 +312,9 @@ namespace skkk {
 			if (compressed) {
 				if (map.m_llen > buffer_size) {
 					char *newbuffer;
+
 					buffer_size = map.m_llen;
-					newbuffer = static_cast<char *>(realloc(buffer, buffer_size));
+					newbuffer = (char*)realloc(buffer, buffer_size);
 					if (!newbuffer) {
 						ret = -ENOMEM;
 						goto out;
@@ -283,7 +322,7 @@ namespace skkk {
 					buffer = newbuffer;
 				}
 				ret = z_erofs_read_one_data(inode, &map, raw, buffer,
-				                            0, map.m_llen, false);
+								0, map.m_llen, false);
 				if (ret)
 					goto out;
 
@@ -294,7 +333,7 @@ namespace skkk {
 
 				do {
 					u64 count = min_t(u64, alloc_rawsize,
-					                  map.m_llen);
+							map.m_llen);
 
 					ret = erofs_read_one_data(inode, &map, raw, p, count);
 					if (ret)
@@ -308,6 +347,11 @@ namespace skkk {
 			}
 		}
 
+		if (eo->print_comp_ratio) {
+			if (!erofs_is_packed_inode(inode))
+				eo->logical_blocks += BLK_ROUND_UP(inode->sbi, inode->i_size);
+			eo->physical_blocks += BLK_ROUND_UP(inode->sbi, pchunk_len);
+		}
 	out:
 		if (raw)
 			free(raw);
@@ -316,6 +360,8 @@ namespace skkk {
 		return ret < 0 ? ret : 0;
 
 	fail_eio:
+		erofs_err("I/O error occurred when verifying data chunk @ nid %llu",
+			inode->nid | 0ULL);
 		ret = -EIO;
 		goto out;
 	}
@@ -418,7 +464,7 @@ namespace skkk {
 		write(fd, CYGLINK_MAGIC, strlen(CYGLINK_MAGIC));
 		write(fd, "\xFF\xFE", 2); //UTF16 BOM (little endian)
 		write(fd, utf16LEBuf, PATH_MAX - utf16Len);
-		write(fd, "\x00\x00", 2);
+		write(fd, "\x0\x0", 2);
 		close(fd);
 		SetFileAttributesA(to, FILE_ATTRIBUTE_SYSTEM);
 		return 0;
@@ -434,23 +480,29 @@ namespace skkk {
 	 * @param inode
 	 * @return
 	 */
-	int erofs_extract_symlink(erofs_inode *inode, const char *filePath) {
-		struct erofs_vfile vf;
+	int erofs_extract_symlink(struct erofs_inode *inode, const char *filePath)
+	{
 		bool tryagain = true;
 		int ret;
+		char *buf = NULL;
 
-		char *buf = static_cast<char *>(malloc(inode->i_size + 1));
+		erofs_dbg("extract symlink to path: %s", filePath);
+
+		/* verify data chunk layout */
+		ret = erofs_verify_inode_data(inode, -1);
+		if (ret)
+			return ret;
+
+		buf = (char *)malloc(inode->i_size + 1);
 		if (!buf) {
 			ret = -ENOMEM;
 			goto out;
 		}
 
-		ret = erofs_iopen(&vf, inode);
-		if (ret)
-			goto out;
-
-		ret = erofs_pread(&vf, buf, inode->i_size, 0);
+		ret = erofs_pread(inode, buf, inode->i_size, 0);
 		if (ret) {
+			erofs_err("I/O error occurred when reading symlink @ nid %llu: %d",
+				inode->nid | 0ULL, ret);
 			goto out;
 		}
 
@@ -462,16 +514,19 @@ namespace skkk {
 		if (symlink_cygwin(buf, filePath) < 0) {
 #endif
 			if (errno == EEXIST && eo->overwrite && tryagain) {
+				erofs_warn("try to forcely remove file %s",
+					filePath);
 				if (unlink(filePath) < 0) {
+					erofs_err("failed to remove: %s",
+						filePath);
 					ret = -errno;
 					goto out;
 				}
 				tryagain = false;
 				goto again;
 			}
-			if (errno == EEXIST && !eo->overwrite) {
-				return RET_EXTRACT_FAIL_SKIP;
-			}
+			erofs_err("failed to create symlink: %s",
+				filePath);
 			ret = -errno;
 		}
 	out:
