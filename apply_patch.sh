@@ -1,7 +1,12 @@
 #!/bin/bash
 LOCALDIR=$(pwd)
 
-cd $LOCALDIR/src/logging
-    git apply $LOCALDIR/patches/logging/*.patch
-cd $LOCALDIR
+function apply() {
+	cd $1
+	for p in $(find . -type f -name "*.patch"); do
+		patch --directory $2 --batch -f -N -s -p1 < $p
+	done
+	cd $LOCALDIR
+}
+apply $LOCALDIR/patches/logging $LOCALDIR/src/logging
 echo "apply patch done!"

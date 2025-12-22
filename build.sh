@@ -6,7 +6,7 @@ cxx="clang++"
 
 function install_deps() {
 	if grep -qo "debian" /etc/os-release; then
-		sudo apt install -y cmake gcc clang build-essential binutils nasm llvm lld libc6-dev libc++-dev libc++abi-dev ninja-build git unzip wget
+		sudo apt install -y cmake gcc clang build-essential binutils nasm llvm lld libc6-dev libc++-dev libc++abi-dev ninja-build git unzip wget patch
 	fi
 }
 
