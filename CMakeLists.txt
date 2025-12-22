@@ -105,6 +105,9 @@ include("cmake/erofs.cmake")
 # mkbootfs
 include("cmake/mkbootfs.cmake")
 
+# dtc
+include("cmake/dtc.cmake")
+
 # libchrome fuck
 include("cmake/libchrome.cmake")
 
@@ -112,6 +115,7 @@ set(install_mkbootfs_targets mkbootfs)
 set(install_e2fsprogs_targets mke2fs e2fsdroid e2fsck resize debugfs)
 set(install_erofs_targets mkfs.erofs fsck.erofs dump.erofs)
 set(install_update_engine_targets delta_generator)
+set(install_dtc_targets dtc mkdtimg fdtget fdtput fdtdump fdtoverlay)
 
 install(
     TARGETS ${install_mkbootfs_targets}
@@ -128,4 +132,8 @@ install(
 install(
     TARGETS ${install_update_engine_targets}
     RUNTIME DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/bin/update_engine"
+)
+install(
+    TARGETS ${install_dtc_targets}
+    RUNTIME DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/bin/dtc_progs"
 )

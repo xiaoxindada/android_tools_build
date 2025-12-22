@@ -47,6 +47,8 @@ GIT_CLONE_REPOS=(
     "platform/system/tools/mkbootimg"
     "platform/external/abseil-cpp"
     "platform/external/protobuf"
+	"platform/external/dtc"
+	"platform/system/libufdt"
 )
 
 GIT_CLONE_VERSION_REPOS=(
