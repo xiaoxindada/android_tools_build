@@ -464,7 +464,7 @@ namespace skkk {
 		write(fd, CYGLINK_MAGIC, strlen(CYGLINK_MAGIC));
 		write(fd, "\xFF\xFE", 2); //UTF16 BOM (little endian)
 		write(fd, utf16LEBuf, PATH_MAX - utf16Len);
-		write(fd, "\x0\x0", 2);
+		write(fd, "\x00\x00", 2);
 		close(fd);
 		SetFileAttributesA(to, FILE_ATTRIBUTE_SYSTEM);
 		return 0;
@@ -525,8 +525,9 @@ namespace skkk {
 				tryagain = false;
 				goto again;
 			}
-			erofs_err("failed to create symlink: %s",
-				filePath);
+			if (errno == EEXIST && !eo->overwrite) {
+				return RET_EXTRACT_FAIL_SKIP;
+			}
 			ret = -errno;
 		}
 	out:
