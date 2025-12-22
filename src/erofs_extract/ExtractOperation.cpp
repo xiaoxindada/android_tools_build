@@ -279,7 +279,6 @@ namespace skkk {
 	static inline void printExtractProgress(int totalSize, int index, int perPrint, bool hasEnter) {
 		if (index % perPrint == 0 || index == totalSize) {
 			float p = (float) index / (float) totalSize * 100.0f;
-			printf("Extract: %0.2f \n", p);
 			fflush(stdout);
 			if (hasEnter && p == 100) [[unlikely]] {
 				printf("\n");
@@ -297,6 +296,7 @@ namespace skkk {
 	}
 
 	void ExtractOperation::extractErofsNode(bool isSilent) const {
+		printf("Extracting ... \n");
 		extractNodeDirs();
 		if (!nodeOther.empty()) {
 			int nodeOtherSize = nodeOther.size();
@@ -307,12 +307,13 @@ namespace skkk {
 		}
 		// If there is an exception
 		writeExceptionInfo2File();
+		printf("done \n");
 	}
 
 	void ExtractOperation::extractErofsNodeMultiThread(bool isSilent) const {
-		extractNodeDirs();
 		LOGI("Using %d threads", threadNum);
-
+		printf("Extracting ... \n");
+		extractNodeDirs();
 		int nodeOtherSize = nodeOther.size();
 		threadpool tp(threadNum);
 		for (const auto &eNode: nodeOther) {
@@ -331,7 +332,7 @@ namespace skkk {
 			printExtractProgress(1, 1, 1, true);
 			LOGD("extractTaskRunCount=%d nodeFilesSize=%d", i, nodeOtherSize, nodeOther.size());
 		}
-
 		writeExceptionInfo2File();
+		printf("done \n");
 	}
 }
