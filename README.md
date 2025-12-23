@@ -11,3 +11,7 @@
 > ./build.sh android  
 ### out
 > build/bin
+### Contributors
+- extract.erofs: [skkk](https://github.com/sekaiacg/erofs-utils)  
+- e2fsextract: [affggh](https://github.com/CircleCashTeam/e2fsprogs_build)  
+- [android aosp project](https://android.googlesource.com/)  
