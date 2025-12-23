@@ -11,4 +11,5 @@ function apply() {
 
 apply $LOCALDIR/patches/logging $LOCALDIR/src/logging
 apply $LOCALDIR/patches/libchrome $LOCALDIR/src/libchrome
+apply $LOCALDIR/patches/core $LOCALDIR/src/core
 echo "apply patch done!"
