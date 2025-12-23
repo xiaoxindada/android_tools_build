@@ -70,10 +70,11 @@ static inline void usage() {
 static inline void print_version() {
 	string compressors;
 	get_available_compressors(compressors);
-	printf("erofs-utils:%s\n", cfg.c_version);
+	printf("erofs-utils: %s\n", cfg.c_version);
 	printf("extract.erofs: 1.0.7\n");
-	printf("Available compressors:  %s\n", compressors.c_str());
+	printf("Available compressors: %s\n", compressors.c_str());
 	printf("extract author: skkk\n");
+	printf("extract modify for android aosp tag: xiaoxindada\n");
 }
 
 static struct option arg_options[] = {
