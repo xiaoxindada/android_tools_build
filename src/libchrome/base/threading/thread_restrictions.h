@@ -147,6 +147,7 @@ namespace internal {
 class TaskTracker;
 }
 
+class FileDescriptorWatcher;
 class GetAppOutputScopedAllowBaseSyncPrimitives;
 class SimpleThread;
 class StackSamplingProfiler;
@@ -478,6 +479,9 @@ class BASE_EXPORT ThreadRestrictions {
   friend class ui::CommandBufferClientImpl;
   friend class ui::CommandBufferLocal;
   friend class ui::GpuState;
+
+  // Chrome OS libchrome
+  friend class base::FileDescriptorWatcher;
 
   // END ALLOWED USAGE.
   // BEGIN USAGE THAT NEEDS TO BE FIXED.
