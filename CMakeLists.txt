@@ -143,7 +143,7 @@ install(
 )
 install(
     TARGETS ${install_erofs_targets}
-    RUNTIME DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/bin/erofs"
+    RUNTIME DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/bin/erofsprogs"
 )
 install(
     TARGETS ${install_update_engine_targets}
