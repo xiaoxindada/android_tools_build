@@ -55,6 +55,11 @@
 #include "snapshot_metadata_updater.h"
 #include "utility.h"
 
+#include <sys/ioctl.h>
+#include <sys/xattr.h>
+#undef XATTR_NAME_SELINUX
+#define XATTR_NAME_SELINUX "security.selinux"
+
 namespace android {
 namespace snapshot {
 

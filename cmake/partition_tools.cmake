@@ -1,25 +1,12 @@
 set(partition_tools_dir "${CMAKE_SOURCE_DIR}/src/extras/partition_tools")
+set(fs_mgr_dir "${CMAKE_SOURCE_DIR}/src/core/fs_mgr")
+set(libsnapshot_srcs_dir "${fs_mgr_dir}/libsnapshot")
+set(update_engine_dir "${CMAKE_SOURCE_DIR}/src/update_engine")
 
 set(cflags
     "-Wextra"
     "-D_FILE_OFFSET_BITS=64"
 )
-
-set(dynamic_partitions_device_info_srcs
-    "${partition_tools_dir}/dynamic_partitions_device_info.pb.cc"
-    "${partition_tools_dir}/dynamic_partitions_device_info.pb.h"
-)
-
-add_custom_command(
-    OUTPUT
-        ${dynamic_partitions_device_info_srcs}
-    COMMAND
-        ${prebuilt_protoc} dynamic_partitions_device_info.proto -I${partition_tools_dir} --cpp_out=${partition_tools_dir} 
-    DEPENDS
-        ${partition_tools_dir}/dynamic_partitions_device_info.proto
-)
-add_custom_target(gen_dynamic_partitions_device_info_srcs ALL DEPENDS ${dynamic_partitions_device_info_srcs})
-
 
 set(lpmake_srcs
     "${partition_tools_dir}/lpmake.cc"
@@ -31,14 +18,9 @@ set(lpunpack_srcs
 
 set(lpdump_srcs
     "${partition_tools_dir}/lpdump.cc"
+    "${partition_tools_dir}/lpdump_host.cc"
     ${dynamic_partitions_device_info_srcs}
 )
-
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
-    list(APPEND lpdump_srcs "${partition_tools_dir}/lpdump_host.cc")
-else()
-    list(APPEND lpdump_srcs "${partition_tools_dir}/lpdump_target.cc")
-endif()
 
 set(lpadd_srcs
     "${partition_tools_dir}/lpadd.cc"
@@ -108,7 +90,6 @@ target_link_libraries(lpunpack PRIVATE
     sparse
 )
 
-if (NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
 add_executable(lpdump ${lpdump_srcs})
 target_compile_options(lpdump PRIVATE ${cflags})
 target_include_directories(lpdump PRIVATE
@@ -116,6 +97,9 @@ target_include_directories(lpdump PRIVATE
     ${liblog_headers}
     ${liblp_headers}
     ${libjsonpbparse_headers}
+    ${fs_mgr_headers}
+    ${update_engine_dir}
+    "${libsnapshot_srcs_dir}/android/snapshot"
 )
 target_link_libraries(lpdump PRIVATE
     base
@@ -124,5 +108,7 @@ target_link_libraries(lpdump PRIVATE
     lp
     protobuf-cpp-full
     jsonpbparse
+    cutils
+    # fs_mgr
+    snapshot
 )
-endif()

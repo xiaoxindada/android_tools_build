@@ -19,11 +19,6 @@ set(cflags
         "-Wimplicit-fallthrough"
 )
 
-set(puffin_protos_srcs
-    "${puffin_dir}/src/puffin.pb.cc"
-    "${puffin_dir}/src/puffin.pb.h"
-)
-
 set(libpuffdiff_srcs
         "${puffin_dir}/src/file_stream.cc"
         "${puffin_dir}/src/puffdiff.cc"
@@ -44,16 +39,6 @@ set(libpuffpatch_srcs
         "${puffin_dir}/src/puffin_stream.cc"
         "${puffin_dir}/src/puffpatch.cc"
 )
-
-add_custom_command(
-    OUTPUT
-        ${puffin_protos_srcs}
-    COMMAND
-        ${prebuilt_protoc} puffin.proto -I${puffin_dir}/src --cpp_out=${puffin_dir}/src
-    DEPENDS
-        ${puffin_dir}/src/puffin.proto
-)
-add_custom_target(gen_puffin_protos_srcs ALL DEPENDS ${puffin_protos_srcs})
 
 add_library(puffpatch STATIC ${libpuffpatch_srcs})
 target_compile_options(puffpatch PRIVATE ${cflags})

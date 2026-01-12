@@ -1,51 +1,7 @@
-
+set(partition_tools_dir "${CMAKE_SOURCE_DIR}/src/extras/partition_tools")
+set(fs_mgr_dir "${CMAKE_SOURCE_DIR}/src/core/fs_mgr")
+set(libsnapshot_srcs_dir "${fs_mgr_dir}/libsnapshot")
 set(update_engine_dir "${CMAKE_SOURCE_DIR}/src/update_engine")
-
-set(update_metadata_protos_srcs
-    "${update_engine_dir}/update_engine/update_metadata.pb.cc"
-    "${update_engine_dir}/update_engine/update_metadata.pb.h"
-)
-set(lz4diff_protos_srcs
-    "${update_engine_dir}/lz4diff/lz4diff.pb.cc"
-    "${update_engine_dir}/lz4diff/lz4diff.pb.h"
-)
-
-add_custom_command(
-    OUTPUT
-        ${update_metadata_protos_srcs}
-    COMMAND
-        ${prebuilt_protoc} update_metadata.proto -I${update_engine_dir}/update_engine --cpp_out=${update_engine_dir}/update_engine
-    DEPENDS
-        ${update_engine_dir}/update_engine/update_metadata.proto
-)
-add_custom_target(gen_update_metadata_srcs ALL DEPENDS ${update_metadata_protos_srcs})
-
-add_custom_command(
-    OUTPUT
-        ${lz4diff_protos_srcs}
-    COMMAND
-        ${prebuilt_protoc} lz4diff.proto -I${update_engine_dir}/lz4diff --cpp_out=${update_engine_dir}/lz4diff
-    DEPENDS
-        ${update_engine_dir}/lz4diff/lz4diff.proto
-)
-add_custom_target(gen_lz4diff_protos_srcs ALL DEPENDS ${lz4diff_protos_srcs})
-
-add_library(update_metadata-protos STATIC ${update_metadata_protos_srcs})
-target_compile_options(update_metadata-protos PRIVATE "-Wall")
-target_include_directories(update_metadata-protos PUBLIC 
-    ${protobuf_headers}
-    ${absl_headers}
-)
-target_link_libraries(update_metadata-protos PUBLIC 
-    protobuf-cpp-full
-)
-
-add_library(lz4diff-protos STATIC ${lz4diff_protos_srcs})
-target_compile_options(lz4diff-protos PRIVATE ${cflags} ${cppflags})
-target_include_directories(lz4diff-protos PUBLIC 
-    ${protobuf_headers}
-    ${absl_headers}
-)
 
 set(cflags
         "-DBASE_VER=576279"

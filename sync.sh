@@ -49,6 +49,7 @@ GIT_CLONE_REPOS=(
 	"platform/external/protobuf"
 	"platform/external/dtc"
 	"platform/system/libufdt"
+	"platform/system/gsid"
 )
 
 GIT_CLONE_VERSION_REPOS=(

@@ -52,8 +52,13 @@ link_directories(${CMAKE_CURRENT_BINARY_DIR})
 # include headers
 include("cmake/include.cmake")
 
-# libs
+# protobuf
 include("cmake/googletest.cmake")
+include("cmake/absl.cmake")
+include("cmake/protobuf.cmake")
+include("cmake/proto_targets.cmake")
+
+# libs
 include("cmake/fmtlib.cmake")
 include("cmake/zlib.cmake")
 include("cmake/liblog.cmake")
@@ -78,6 +83,7 @@ include("cmake/pcre2.cmake")
 include("cmake/libselinux.cmake")
 include("cmake/libcrypto_utils.cmake")
 include("cmake/libavb.cmake")
+include("cmake/libgsi.cmake")
 include("cmake/libevent.cmake")
 include("cmake/libext4_utils.cmake")
 include("cmake/libsquashfs_utils.cmake")
@@ -94,12 +100,11 @@ include("cmake/libverity_tree.cmake")
 # sparse_img_tools
 include("cmake/sparse_img_tools.cmake")
 
-# protobuf
-include("cmake/absl.cmake")
-include("cmake/protobuf.cmake")
-
 # update_engine
 include("cmake/update_engine.cmake")
+
+# partition_tools
+include("cmake/partition_tools.cmake")
 
 # e2fsprogs
 include("cmake/e2fsprogs.cmake")
@@ -115,9 +120,6 @@ include("cmake/mkbootfs.cmake")
 # dtc
 include("cmake/dtc.cmake")
 
-# partition_tools
-include("cmake/partition_tools.cmake")
-
 set(install_mkbootfs_targets mkbootfs)
 set(install_sparse_img_tools_targets simg2img img2simg)
 set(install_e2fsprogs_targets mke2fs e2fsdroid e2fsextract e2fsck resize debugfs)
@@ -125,9 +127,6 @@ set(install_erofs_targets mkfs.erofs extract.erofs fsck.erofs dump.erofs)
 set(install_update_engine_targets delta_generator)
 set(install_dtc_targets dtc mkdtimg fdtget fdtput fdtdump fdtoverlay)
 set(install_partition_tools_targets lpmake lpunpack lpadd lpflash lpdump)
-if(CMAKE_SYSTEM_NAME STREQUAL "Android")
-    list(REMOVE_ITEM install_partition_tools_targets lpdump)
-endif()
 
 install(
     TARGETS ${install_mkbootfs_targets}

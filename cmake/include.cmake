@@ -39,7 +39,6 @@ set(libprocessgroup_util_headers "${CMAKE_SOURCE_DIR}/src/core/libprocessgroup/u
 set(libsparse_headers "${CMAKE_SOURCE_DIR}/src/core/libsparse/include" CACHE STRING "" FORCE)
 set(libgtest_prod_headers "${CMAKE_SOURCE_DIR}/src/googletest/googletest/include" CACHE STRING "" FORCE)
 set(libgmock_headers "${CMAKE_SOURCE_DIR}/src/googletest/googlemock/include" CACHE STRING "" FORCE)
-set(libfs_mgr_headers "${CMAKE_SOURCE_DIR}/src/core/libfs_mgr/include" CACHE STRING "" FORCE)
 set(libfscrypt_headers "${CMAKE_SOURCE_DIR}/src/libfscrypt/include" CACHE STRING "" FORCE)
 set(libmodpb64_headers "${CMAKE_SOURCE_DIR}/src/modp_b64" CACHE STRING "" FORCE)
 set(libevent_headers 
@@ -100,6 +99,10 @@ set(libzucchini_headers
 set(libbsdiff_headers "${CMAKE_SOURCE_DIR}/src/bsdiff/include" CACHE STRING "" FORCE)
 set(libjsoncpp_headers "${CMAKE_SOURCE_DIR}/src/jsoncpp/include" CACHE STRING "" FORCE)
 set(libjsonpbparse_headers "${CMAKE_SOURCE_DIR}/src/extras/libjsonpb/parse/include" CACHE STRING "" FORCE)
+set(libgsi_headers
+    "${CMAKE_SOURCE_DIR}/src/gsid"
+    "${CMAKE_SOURCE_DIR}/src/gsid/include"
+    CACHE STRING "" FORCE)
 set(libavb_headers 
     "${CMAKE_SOURCE_DIR}/src/avb"
     "${CMAKE_SOURCE_DIR}/src/avb/libavb"
@@ -113,9 +116,14 @@ set(fs_mgr_headers
     "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/include"
     "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libsnapshot"
     "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libsnapshot/include"
+    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libsnapshot/snapuserd/include"
     "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/ibsnapshot/libsnapshot_cow"
     "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/ibsnapshot/libsnapshot_cow/include" 
     "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/liblp/include"
+    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libfstab/include"
+    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libfs_avb/include"
+    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libdm/include"
+    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libfiemap/include"
     CACHE STRING "" FORCE)
 set(libziparchive_headers 
     "${CMAKE_SOURCE_DIR}/src/libziparchive/include"

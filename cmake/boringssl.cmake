@@ -14,7 +14,6 @@ set(common_cflags
 
 if (WIN32)
     list(APPEND ldflags "-ws2_32")
-    list(REMOVE_ITEM android_cflags "-DBORINGSSL_FIPS")
     list(APPEND crypto_sources ${crypto_sources_nasm})
 else()
     enable_language(ASM)

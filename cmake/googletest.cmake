@@ -10,7 +10,7 @@ set(libgmock_srcs
         "${libgmock_srcs_dir}/src/gmock-all.cc"
 )
 
-set(cflags
+set(gtest_flags
     "-std=c++14"
     "-Wall"
     "-frtti"
@@ -18,7 +18,7 @@ set(cflags
 )
 
 add_library(gtest STATIC ${libgtest_srcs})
-target_compile_options(gtest PRIVATE ${cflags})
+target_compile_options(gtest PRIVATE ${gtest_flags})
 target_include_directories(gtest PUBLIC
     ${libgtest_srcs_dir}
     ${libgtest_prod_headers}
@@ -26,7 +26,7 @@ target_include_directories(gtest PUBLIC
 
 add_library(gmock STATIC ${libgmock_srcs})
 target_compile_options(gmock PRIVATE
-     ${cflags}
+     ${gtest_flags}
     "-Wno-missing-field-initializers"
     "-Wno-sign-compare"
     "-Wno-unused-parameter"
