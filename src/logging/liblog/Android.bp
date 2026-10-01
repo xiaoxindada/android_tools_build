@@ -122,9 +122,6 @@ cc_defaults {
     export_header_lib_headers: ["liblog_headers"],
 
     cflags: [
-        "-Wall",
-        "-Werror",
-        "-Wextra",
         "-Wexit-time-destructors",
         // This is what we want to do:
         //  liblog_cflags := $(shell \
@@ -203,6 +200,9 @@ ndk_library {
     symbol_file: "liblog.map.txt",
     first_version: "9",
     unversioned_until: "current",
+    // liblog does not depend on ART at all, so the full library is allowed.
+    // The denylist stub also depends on liblog to print assertion messages.
+    bypass_artless_denylist: true,
 }
 
 rust_bindgen {

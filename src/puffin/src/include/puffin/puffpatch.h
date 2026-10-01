@@ -32,6 +32,19 @@ bool PuffPatch(UniqueStreamPtr src,
                size_t patch_length,
                size_t max_cache_size = kDefaultCacheSize);
 
+// Same as above, except puffdiff patch data is located at
+// |patch_offset| offset on |patch_fd|
+// This will attempt to stream data from file descriptor.
+// For large patch files, this overload avoids loading
+// the entire patch into memory, useful for memory constraint
+// situations.
+bool PuffPatch(UniqueStreamPtr src,
+               UniqueStreamPtr dst,
+               int patch_fd,
+               size_t patch_offset,
+               size_t patch_length,
+               size_t max_cache_size = kDefaultCacheSize);
+
 }  // namespace puffin
 
 #endif  // SRC_INCLUDE_PUFFIN_PUFFPATCH_H_

@@ -58,7 +58,7 @@ pub use arch::android::*;
 /// Records prefetch data for the given configuration
 pub fn record(args: &RecordArgs) -> Result<(), Error> {
     #[cfg(target_os = "android")]
-    if !ensure_record_is_ready(
+    if !can_perform_record(
         &args.get_ready_path(),
         &args.get_pack_path(),
         &args.build_fingerprint_path,
@@ -123,7 +123,7 @@ pub fn record(args: &RecordArgs) -> Result<(), Error> {
 
     // Write build-finger-print file
     #[cfg(target_os = "android")]
-    write_build_fingerprint(args)?;
+    write_build_fingerprint(&args.build_fingerprint_path)?;
 
     Ok(())
 }

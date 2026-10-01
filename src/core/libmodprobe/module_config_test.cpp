@@ -87,7 +87,8 @@ TEST(module_config, ParsingConfigWorks) {
     const std::string modules_options =
             "options test7.ko param1=4\n"
             "options test9.ko param_x=1 param_y=2 param_z=3\n"
-            "options test100.ko param_1=1\n";
+            "options test100.ko param_1=1\n"
+            "options test12 softdep pre: test14\n";
 
     const std::string modules_blocklist =
             "blocklist test9.ko\n"
@@ -136,7 +137,7 @@ TEST(module_config, ParsingConfigWorks) {
 
     EXPECT_THAT(config.module_pre_softdep,
                 UnorderedElementsAre(Pair("test7", "test8"), Pair("test11", "test12"),
-                                     Pair("test3", "test141516")));
+                                     Pair("test3", "test141516"), Pair("test12", "test14")));
 
     EXPECT_THAT(config.module_post_softdep,
                 UnorderedElementsAre(Pair("test9", "test10"), Pair("test11", "test13")));

@@ -72,7 +72,7 @@ use std::io::{ErrorKind, Result};
 use std::os::unix::prelude::AsRawFd;
 use std::path::Path;
 use std::thread;
-use std::time;
+use std::time::{Duration, SystemTime};
 
 mod sys;
 
@@ -158,16 +158,18 @@ impl TipcChannel {
         //let connect_timeout = libc::timeval {tv_sec: 60, tv_usec: 0};
         // TODO: Set AF_VSOCK/SO_VM_SOCKETS_CONNECT_TIMEOUT sockopt.
 
-        let mut retry = 10;
-        loop {
+        // Attempt to connect, retrying for up to 50 seconds. (The actual time
+        // may be slightly longer if `connect` blocks, but the extra time is
+        // limited to `SO_VM_SOCKETS_CONNECT_TIMEOUT`, which defaults to 2s.)
+        let end_time = SystemTime::now() + Duration::from_secs(50);
+        while SystemTime::now() < end_time {
             let res = socket::connect(s.as_raw_fd(), &sa);
-            if res.is_ok() || retry <= 0 {
+            if res.is_ok() {
                 res?;
                 break;
             }
-            warn!("vsock:{cid}:{port} connect failed {res:?}, {retry} retries remaining");
-            retry -= 1;
-            thread::sleep(time::Duration::from_secs(5));
+            warn!("vsock:{cid}:{port} connect failed {res:?}");
+            thread::sleep(Duration::from_millis(100));
         }
         trace!("connected");
         // TODO: Current vsock tipc bridge in trusty expects a port name in the

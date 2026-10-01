@@ -77,4 +77,44 @@ rust_binary {
     ],
 }
 
+rust_test_host {
+    name: "libprefetch_rs_host_test",
+    crate_name: "prefetch_rs_test",
+    srcs: ["src/lib.rs"],
+    test_suites: ["general-tests"],
+    auto_gen_config: true,
+    prefer_rlib: true,
+    rustlibs: [
+        "libargh",
+        "libchrono",
+        "libcrc32fast",
+        "libcsv",
+        "libenv_logger",
+        "liblibc",
+        "liblog_rust",
+        "liblru_cache",
+        "libnix",
+        "librand",
+        "librayon",
+        "libregex",
+        "libserde_cbor",
+        "libserde_json",
+        "libserde",
+        "libtempfile",
+        "libthiserror",
+        "libwalkdir",
+        "librustutils",
+        "liblog_rust",
+    ],
+    features: [
+        "default",
+        "derive",
+        "error-context",
+        "help",
+        "std",
+        "usage",
+        "use_argh",
+    ],
+}
+
 // TODO: Add rust_test to enable unit testing - b/378554334

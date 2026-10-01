@@ -33,7 +33,6 @@
 #include <processgroup/setup.h>
 #include <processgroup/util.h>
 
-#include "../build_flags.h"
 #include "../internal.h"
 
 static constexpr const char* CGROUPS_DESC_FILE = "/etc/cgroups.json";
@@ -296,19 +295,15 @@ bool CgroupSetup() {
         }
     }
 
-    // System / app isolation.
-    // This really belongs in early-init in init.rc, but we cannot use the flag there.
-    if (android::libprocessgroup_flags::cgroup_v2_sys_app_isolation()) {
-        const auto it = descriptors.find(CGROUPV2_HIERARCHY_NAME);
-        const std::string cgroup_v2_root = (it == descriptors.end())
-                                                   ? CGROUP_V2_ROOT_DEFAULT
-                                                   : it->second.controller()->path();
+    const auto it = descriptors.find(CGROUPV2_HIERARCHY_NAME);
+    const std::string cgroup_v2_root = (it == descriptors.end())
+                                               ? CGROUP_V2_ROOT_DEFAULT
+                                               : it->second.controller()->path();
 
-        LOG(INFO) << "Using system/app isolation under: " << cgroup_v2_root;
-        if (!CreateV2SubHierarchy(cgroup_v2_root + "/apps", descriptors) ||
-            !CreateV2SubHierarchy(cgroup_v2_root + "/system", descriptors)) {
-            return false;
-        }
+    LOG(INFO) << "Using system/app isolation under: " << cgroup_v2_root;
+    if (!CreateV2SubHierarchy(cgroup_v2_root + "/apps", descriptors) ||
+        !CreateV2SubHierarchy(cgroup_v2_root + "/system", descriptors)) {
+        return false;
     }
 
     return true;

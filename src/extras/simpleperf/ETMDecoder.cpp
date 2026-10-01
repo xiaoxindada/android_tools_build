@@ -199,47 +199,56 @@ class MapLocator : public PacketCallback {
         if (data.tid != new_tid) {
           data.tid = new_tid;
           data.thread = nullptr;
-          data.userspace_map = nullptr;
+          data.cached_map = nullptr;
         }
       }
     } else if (op == OCSD_OP_RESET) {
       data.tid = -1;
       data.thread = nullptr;
-      data.userspace_map = nullptr;
+      data.cached_map = nullptr;
     }
     return OCSD_RESP_CONT;
   }
 
   const MapEntry* FindMap(uint8_t trace_id, uint64_t addr) {
     TraceData& data = trace_data_[trace_id];
-    if (data.userspace_map != nullptr && data.userspace_map->Contains(addr)) {
-      return data.userspace_map;
+    if (data.cached_map != nullptr && data.cached_map->Contains(addr)) {
+      return data.cached_map;
     }
-    if (data.tid == -1) {
-      return nullptr;
-    }
-    if (data.thread == nullptr) {
-      data.thread = thread_tree_.FindThread(data.tid);
+    // Look for a userspace map.
+    if (data.tid != -1) {
       if (data.thread == nullptr) {
-        return nullptr;
+        data.thread = thread_tree_.FindThread(data.tid);
+      }
+      if (data.thread != nullptr) {
+        data.cached_map = data.thread->maps->FindMapByAddr(addr);
+        if (data.cached_map != nullptr) {
+          return data.cached_map;
+        }
       }
     }
-    data.userspace_map = data.thread->maps->FindMapByAddr(addr);
-    if (data.userspace_map != nullptr) {
-      return data.userspace_map;
+
+    // Look for a kernel space map.
+    const MapEntry* map = thread_tree_.GetKernelMaps().FindMapByAddr(addr);
+    if (map != nullptr && CanCacheKernelMap(*map)) {
+      data.cached_map = map;
     }
-    // We don't cache kernel map. Because kernel map can start from 0 and overlap all userspace
-    // maps.
-    return thread_tree_.GetKernelMaps().FindMapByAddr(addr);
+    return map;
   }
 
   void SetUseVmid(uint8_t trace_id, bool value) { trace_data_[trace_id].use_vmid = value; }
+
+  bool CanCacheKernelMap(const MapEntry& map) {
+    // We don't cache the following kernel maps, which can overlap other maps.
+    return (!android::base::StartsWith(map.dso->FileName(), DEFAULT_KERNEL_MMAP_NAME)) &&
+           (map.dso->FileName() != DEFAULT_KERNEL_BPF_MMAP_NAME);
+  }
 
  private:
   struct TraceData {
     int32_t tid = -1;  // thread id, -1 if invalid
     const ThreadEntry* thread = nullptr;
-    const MapEntry* userspace_map = nullptr;
+    const MapEntry* cached_map = nullptr;
     bool use_vmid = false;  // use vmid for PID
   };
 
@@ -276,6 +285,7 @@ class MemAccess : public ITargetMemAccess {
             opt_offset) {
           uint64_t offset = opt_offset.value();
           size_t file_size = memory->getBufferSize();
+
           copy_size = file_size > offset ? std::min<size_t>(file_size - offset, *num_bytes) : 0;
           if (copy_size > 0) {
             memcpy(p_buffer, memory->getBufferStart() + offset, copy_size);
@@ -285,6 +295,7 @@ class MemAccess : public ITargetMemAccess {
       // Update the last buffer cache.
       // Don't cache for the kernel map. Because simpleperf doesn't record an accurate kernel end
       // addr.
+      // TODO: Cache kernel module maps and vmlinux map.
       if (!map->in_kernel) {
         data.buffer_map = map;
         data.buffer_start = map->start_addr;
@@ -435,8 +446,8 @@ class DataDumper : public ElementCallback {
   ocsdMsgLogger stdout_logger_;
 };
 
-// It decodes each ETMV4IPacket into TraceElements, and generates ETMInstrRanges from TraceElements.
-// Decoding each packet is slow, but ensures correctness.
+// It decodes each ETMV4IPacket into TraceElements, and generates ETMInstrRanges from
+// TraceElements. Decoding each packet is slow, but ensures correctness.
 class InstrRangeParser : public ElementCallback {
  private:
   struct TraceData {
@@ -590,8 +601,8 @@ class BranchListParser : public PacketCallback {
       }
 
       if (IsAtomPacket(pkt)) {
-        // An atom packet contains a branch list. We may receive one or more atom packets in a row,
-        // and need to concatenate them.
+        // An atom packet contains a branch list. We may receive one or more atom packets in a
+        // row, and need to concatenate them.
         ProcessAtomPacket(trace_id, data, pkt);
       }
 
@@ -768,7 +779,8 @@ class ETMDecoderImpl : public ETMDecoder {
     // Reset decoders before processing each data block. Because:
     // 1. Data blocks are not continuous. So decoders shouldn't keep previous states when
     //    processing a new block.
-    // 2. The beginning part of a data block may be truncated if kernel buffer is temporarily full.
+    // 2. The beginning part of a data block may be truncated if kernel buffer is temporarily
+    // full.
     //    So we may see garbage data, which can cause decoding errors if we don't reset decoders.
     LOG(DEBUG) << "Processing " << (!formatted ? "un" : "") << "formatted data with size " << size;
     auto& decoder = formatted ? decode_tree_.GetFormattedDataIn()
@@ -969,6 +981,18 @@ class BranchDecoder {
   InstructionDecoder instruction_decoder_;
 };
 
+static uint64_t ConvertToVaddrInFile(Dso* dso, uint64_t addr) {
+  if (dso->type() == DSO_KERNEL_MODULE) {
+    // For a kernel module, we may or may not have converted ip addresses to vaddr in file, based on
+    // whether the kernel module file is accessible on device. So we need to handle both cases.
+    auto module_dso = static_cast<KernelModuleDso*>(dso);
+    if (addr >= module_dso->GetMemoryStart() && addr < module_dso->GetMemoryEnd()) {
+      return module_dso->IpToVaddrInFile(addr, module_dso->GetMemoryStart(), 0);
+    }
+  }
+  return addr;
+}
+
 android::base::expected<void, std::string> ConvertETMBranchMapToInstrRanges(
     Dso* dso, const ETMBranchMap& branch_map, const ETMDecoder::InstrRangeCallbackFn& callback) {
   BranchDecoder decoder;
@@ -989,11 +1013,14 @@ android::base::expected<void, std::string> ConvertETMBranchMapToInstrRanges(
   std::unordered_map<uint64_t, MapEntry> cache;
 
   for (const auto& addr_p : branch_map) {
+    const uint64_t init_start_addr = ConvertToVaddrInFile(dso, addr_p.first & ~1ULL);
+
     for (const auto& branch_p : addr_p.second) {
       const std::vector<bool>& branch = branch_p.first;
       uint64_t count = branch_p.second;
-      uint64_t start_addr = addr_p.first & ~1ULL;
+      uint64_t start_addr = init_start_addr;
       bool is_thumb = addr_p.first & 1;
+
       for (bool b : branch) {
         auto it = cache.find(start_addr);
         if (it == cache.end()) {

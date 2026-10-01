@@ -1,7 +1,9 @@
 load("@bazel_skylib//lib:versions.bzl", "versions")
 load("@rules_cc//cc:defs.bzl", "objc_library")
-load("@rules_proto//proto:defs.bzl", "ProtoInfo")
 load("@rules_python//python:defs.bzl", "py_library")
+load("//bazel/common:proto_common.bzl", "proto_common")
+load("//bazel/common:proto_info.bzl", "ProtoInfo")
+load("//bazel/private:toolchain_helpers.bzl", "toolchains")
 
 def _GetPath(ctx, path):
     if ctx.label.workspace_root:
@@ -71,6 +73,26 @@ def _CsharpOuts(srcs):
         for src in srcs
     ]
 
+_PROTOC_ATTRS = toolchains.if_legacy_toolchain({
+    "_proto_compiler": attr.label(
+        cfg = "exec",
+        executable = True,
+        allow_files = True,
+        default = configuration_field("proto", "proto_compiler"),
+    ),
+})
+_PROTOC_FRAGMENTS = ["proto"]
+_PROTOC_TOOLCHAINS = toolchains.use_toolchain(toolchains.PROTO_TOOLCHAIN)
+
+def _protoc_files_to_run(ctx):
+    if proto_common.INCOMPATIBLE_ENABLE_PROTO_TOOLCHAIN_RESOLUTION:
+        toolchain = ctx.toolchains[toolchains.PROTO_TOOLCHAIN]
+        if not toolchain:
+            fail("Protocol compiler toolchain could not be resolved.")
+        return toolchain.proto.proto_compiler
+    else:
+        return ctx.attr._proto_compiler[DefaultInfo].files_to_run
+
 ProtoGenInfo = provider(
     fields = ["srcs", "import_flags", "deps"],
 )
@@ -80,6 +102,7 @@ def _proto_gen_impl(ctx):
     srcs = ctx.files.srcs
     langs = ctx.attr.langs or []
     out_type = ctx.attr.out_type
+    enable_editions = ctx.attr.enable_editions
     deps = depset(direct = ctx.files.srcs)
     source_dir = _SourceDir(ctx)
     gen_dir = _GenDir(ctx).rstrip("/")
@@ -88,17 +111,21 @@ def _proto_gen_impl(ctx):
     if source_dir:
         has_sources = any([src.is_source for src in srcs])
         if has_sources:
-            import_flags += ["-I" + source_dir]
+            import_flags.append("-I" + source_dir)
     else:
-        import_flags += ["-I."]
+        import_flags.append("-I.")
 
     has_generated = any([not src.is_source for src in srcs])
     if has_generated:
-        import_flags += ["-I" + gen_dir]
+        import_flags.append("-I" + gen_dir)
 
     if ctx.attr.includes:
         for include in ctx.attr.includes:
-            import_flags += ["-I" + _GetPath(ctx, include)]
+            if include == ".":
+                # This is effectively source_dir, which has already been handled,
+                # and may be generated incorrectly here.
+                continue
+            import_flags.append("-I" + _GetPath(ctx, include))
 
     import_flags = depset(direct = import_flags)
 
@@ -130,6 +157,8 @@ def _proto_gen_impl(ctx):
     generated_files = []
     for src in srcs:
         args = []
+        if enable_editions:
+            args.append("--experimental_editions")
 
         in_gen_dir = src.root.path == gen_dir
         if in_gen_dir:
@@ -153,7 +182,7 @@ def _proto_gen_impl(ctx):
                 outs.extend(_RubyOuts([src.basename]))
 
             # Otherwise, rely on user-supplied outs.
-            args += [("--%s_out=" + path_tpl) % (lang, gen_dir)]
+            args.append(("--%s_out=" + path_tpl) % (lang, gen_dir))
 
         if ctx.attr.outs:
             outs.extend(ctx.attr.outs)
@@ -174,8 +203,8 @@ def _proto_gen_impl(ctx):
 
             if ctx.attr.plugin_options:
                 outdir = ",".join(ctx.attr.plugin_options) + ":" + outdir
-            args += [("--plugin=protoc-gen-%s=" + path_tpl) % (lang, plugin.path)]
-            args += ["--%s_out=%s" % (lang, outdir)]
+            args.append(("--plugin=protoc-gen-%s=" + path_tpl) % (lang, plugin.path))
+            args.append("--%s_out=%s" % (lang, outdir))
             tools.append(plugin)
 
         if not in_gen_dir:
@@ -231,6 +260,7 @@ Args:
   srcs: Protocol Buffers definition files (.proto) to run the protocol compiler
     against.
   deps: a list of dependency labels; must be other proto libraries.
+  enable_editions: if true, sets the --experimental_editions flag.
   includes: a list of include paths to .proto files.
   protoc: the label of the protocol compiler to generate the sources.
   plugin: the label of the protocol compiler plugin to be passed to the protocol
@@ -247,6 +277,7 @@ _proto_gen = rule(
     attrs = {
         "srcs": attr.label_list(allow_files = True),
         "deps": attr.label_list(providers = [ProtoGenInfo]),
+        "enable_editions": attr.bool(),
         "includes": attr.string_list(),
         "protoc": attr.label(
             cfg = "exec",
@@ -267,7 +298,6 @@ _proto_gen = rule(
             default = "all",
         ),
     },
-    output_to_genfiles = True,
     implementation = _proto_gen_impl,
 )
 
@@ -302,7 +332,7 @@ def _internal_gen_well_known_protos_java_impl(ctx):
             args.add_all([src.path[offset:] for src in dep.direct_sources])
 
     ctx.actions.run(
-        executable = ctx.executable._protoc,
+        executable = _protoc_files_to_run(ctx),
         inputs = descriptors,
         outputs = [srcjar],
         arguments = [args],
@@ -326,12 +356,9 @@ internal_gen_well_known_protos_java = rule(
         "javalite": attr.bool(
             default = False,
         ),
-        "_protoc": attr.label(
-            executable = True,
-            cfg = "exec",
-            default = "//:protoc",
-        ),
-    },
+    } | _PROTOC_ATTRS,
+    fragments = _PROTOC_FRAGMENTS,
+    toolchains = _PROTOC_TOOLCHAINS,
 )
 
 def _internal_gen_kt_protos(ctx):
@@ -365,7 +392,7 @@ def _internal_gen_kt_protos(ctx):
             args.add_all([src.path[offset:] for src in dep.direct_sources])
 
     ctx.actions.run(
-        executable = ctx.executable._protoc,
+        executable = _protoc_files_to_run(ctx),
         inputs = descriptors,
         outputs = [srcjar],
         arguments = [args],
@@ -389,12 +416,9 @@ internal_gen_kt_protos = rule(
         "lite": attr.bool(
             default = False,
         ),
-        "_protoc": attr.label(
-            executable = True,
-            cfg = "exec",
-            default = "//:protoc",
-        ),
-    },
+    } | _PROTOC_ATTRS,
+    fragments = _PROTOC_FRAGMENTS,
+    toolchains = _PROTOC_TOOLCHAINS,
 )
 
 def internal_objc_proto_library(
@@ -409,8 +433,7 @@ def internal_objc_proto_library(
         testonly = None,
         visibility = ["//visibility:public"],
         **kwargs):
-    """Bazel rule to create a Objective-C protobuf library from proto source
-    files
+    """Bazel rule to create a Objective-C protobuf library from proto sources
 
     NOTE: the rule is only an internal workaround to generate protos. The
     interface may change and the rule may be removed when bazel has introduced
@@ -423,7 +446,7 @@ def internal_objc_proto_library(
       outs: a list of expected output files.
       proto_deps: a list of proto file dependencies that don't have a
         objc_proto_library rule.
-      include: a string indicating the include path of the .proto files.
+      includes: a string indicating the include path of the .proto files.
       default_runtime: the Objective-C Protobuf runtime
       protoc: the label of the protocol compiler to generate the sources.
       testonly: common rule attribute (see:
@@ -489,7 +512,7 @@ def internal_objc_proto_library(
 
 def internal_ruby_proto_library(
         name,
-        ruby_library,
+        rb_library,
         srcs = [],
         deps = [],
         includes = ["."],
@@ -506,7 +529,7 @@ def internal_ruby_proto_library(
 
     Args:
       name: the name of the ruby_proto_library.
-      ruby_library: the ruby library rules to use.
+      rb_library: the ruby library rules to use.
       srcs: the .proto files to compile.
       deps: a list of dependency labels; must be a internal_ruby_proto_library.
       includes: a string indicating the include path of the .proto files.
@@ -515,7 +538,7 @@ def internal_ruby_proto_library(
       testonly: common rule attribute (see:
           https://bazel.build/reference/be/common-definitions#common-attributes)
       visibility: the visibility of the generated files.
-      **kwargs: other keyword arguments that are passed to ruby_library.
+      **kwargs: other keyword arguments that are passed to rb_library.
 
     """
 
@@ -536,13 +559,12 @@ def internal_ruby_proto_library(
     deps = []
     if default_runtime:
         deps.append(default_runtime)
-    ruby_library(
+    rb_library(
         name = name,
         srcs = [name + "_genproto"],
         deps = deps,
         testonly = testonly,
         visibility = visibility,
-        includes = includes,
         **kwargs
     )
 
@@ -569,9 +591,9 @@ def internal_py_proto_library(
         **kargs):
     """Bazel rule to create a Python protobuf library from proto source files
 
-    NOTE: the rule is only an internal workaround to generate protos. The
-    interface may change and the rule may be removed when bazel has introduced
-    the native rule.
+    NOTE: the rule is is only an internal workaround to generate protos.  It is deprecated and will
+    be removed in the next minor release.  Users should migrate to the py_proto_library rule from
+    bazel/py_proto_library.bzl instead.
 
     Args:
       name: the name of the py_proto_library.
@@ -631,21 +653,6 @@ def internal_py_proto_library(
         **kargs
     )
 
-def py_proto_library(
-        *args,
-        **kwargs):
-    """Deprecated alias for use before Bazel 5.3.
-
-    Args:
-      *args: the name of the py_proto_library.
-      **kwargs: other keyword arguments that are passed to py_library.
-
-    Deprecated:
-      This is provided for backwards compatibility only.  Bazel 5.3 will
-      introduce support for py_proto_library, which should be used instead.
-    """
-    internal_py_proto_library(*args, **kwargs)
-
 def _source_proto_library(
         name,
         srcs = [],
@@ -657,6 +664,7 @@ def _source_proto_library(
         protoc = Label("//:protoc"),
         testonly = None,
         visibility = ["//visibility:public"],
+        enable_editions = False,
         **kwargs):
     """Bazel rule to create generated protobuf code from proto source files for
     languages not well supported by Bazel yet.  This will output the generated
@@ -701,6 +709,7 @@ def _source_proto_library(
             srcs = proto_deps,
             protoc = protoc,
             includes = includes,
+            enable_editions = enable_editions,
         )
         full_deps.append(":%s_deps_genproto" % name)
 
@@ -714,6 +723,7 @@ def _source_proto_library(
         protoc = protoc,
         testonly = testonly,
         visibility = visibility,
+        enable_editions = enable_editions,
     )
 
     native.filegroup(

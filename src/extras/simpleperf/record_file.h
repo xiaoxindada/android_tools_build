@@ -159,6 +159,7 @@ class RecordFileReader {
   const PerfFileFormat::FileHeader& FileHeader() const { return header_; }
 
   const EventAttrIds& AttrSection() const { return event_attrs_; }
+  void SortEventAttrsForSpe();
 
   const std::unordered_map<uint64_t, size_t>& EventIdMap() const { return event_id_to_attr_map_; }
 

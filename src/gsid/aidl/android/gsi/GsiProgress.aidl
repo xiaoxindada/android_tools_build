@@ -16,7 +16,7 @@
 
 package android.gsi;
 
-/** {@hide} */
+/** @hide */
 parcelable GsiProgress {
     /* String containing which step of the installation is in progress. */
     @utf8InCpp String step;

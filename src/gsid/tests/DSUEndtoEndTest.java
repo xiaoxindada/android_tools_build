@@ -21,15 +21,17 @@ import com.android.tradefed.build.IDeviceBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.util.CommandResult;
+import com.android.tradefed.util.CommandStatus;
 import com.android.tradefed.util.FileUtil;
+import com.android.tradefed.util.RunUtil;
 import com.android.tradefed.util.SparseImageUtil;
-import com.android.tradefed.util.StreamUtil;
 import com.android.tradefed.util.ZipUtil2;
 
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.junit.Before;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -37,21 +39,20 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Test Dynamic System Updates by booting in and out of a supplied system image
- */
+/** Test Dynamic System Updates by booting in and out of a supplied system image */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class DSUEndtoEndTest extends DsuTestBase {
-    private static final long kDefaultUserdataSize = 4L * 1024 * 1024 * 1024;
     private static final String LPUNPACK_PATH = "bin/lpunpack";
 
     // Example: atest -v DSUEndtoEndTest -- --test-arg \
     // com.android.tradefed.testtype.HostTest:set-option:system_image_path:/full/path/to/system.img
-    @Option(name="system_image_path",
-            shortName='s',
-            description="full path to the system image to use. If not specified, attempt " +
-                        "to download the image from the test infrastructure",
-            importance=Importance.ALWAYS)
+    @Option(
+            name = "system_image_path",
+            shortName = 's',
+            description =
+                    "full path to the system image to use. If not specified, attempt to download"
+                            + " the image from the test infrastructure",
+            importance = Importance.ALWAYS)
     private String mSystemImagePath;
 
     private File mTempDir;
@@ -77,9 +78,7 @@ public class DSUEndtoEndTest extends DsuTestBase {
                 return systemImg;
             }
             superImg = new File(imgZip, "super.img");
-            Assert.assertTrue(
-                    "No system.img or super.img in img zip.",
-                    superImg.exists());
+            Assert.assertTrue("No system.img or super.img in img zip.", superImg.exists());
         } else {
             try (ZipFile zip = new ZipFile(imgZip)) {
                 File systemImg = getTempPath("system.img");
@@ -106,15 +105,20 @@ public class DSUEndtoEndTest extends DsuTestBase {
         String lpunpackPath = new File(otaToolsDir, LPUNPACK_PATH).getAbsolutePath();
         File outputDir = getTempPath("lpunpack_output");
         outputDir.mkdirs();
-        String[] cmd = {
-            lpunpackPath, "-p", "system_a", superImg.getAbsolutePath(), outputDir.getAbsolutePath()
-        };
-        Process p = Runtime.getRuntime().exec(cmd);
-        p.waitFor();
-        if (p.exitValue() != 0) {
-            String stderr = StreamUtil.getStringFromStream(p.getErrorStream());
-            Assert.fail(String.format("lpunpack returned %d. (%s)", p.exitValue(), stderr));
-        }
+        RunUtil runUtil = new RunUtil();
+        // Tradefed inserts an LD_LIBRARY_PATH that points to an outdated libc++. We want to link to
+        // the libc++ that coms with the otatools.zip instead, so unset LD_LIBRARY_PATH.
+        runUtil.unsetEnvVariable("LD_LIBRARY_PATH");
+        CommandResult result =
+                runUtil.runTimedCmd(
+                        30_000,
+                        lpunpackPath,
+                        "-p",
+                        "system_a",
+                        superImg.getAbsolutePath(),
+                        outputDir.getAbsolutePath());
+        Assert.assertEquals(
+                "lpunpack failed: " + result, CommandStatus.SUCCESS, result.getStatus());
         return new File(outputDir, "system_a.img");
     }
 
@@ -145,8 +149,9 @@ public class DSUEndtoEndTest extends DsuTestBase {
         }
 
         boolean wasRoot = getDevice().isAdbRoot();
-        if (!wasRoot)
+        if (!wasRoot) {
             Assert.assertTrue("Test requires root", getDevice().enableAdbRoot());
+        }
 
         assertDsuStatus("normal");
 
@@ -158,7 +163,7 @@ public class DSUEndtoEndTest extends DsuTestBase {
                                 "gsi_tool install --userdata-size %d"
                                         + " --gsi-size %d"
                                         + " && sleep 10000000",
-                                getDsuUserdataSize(kDefaultUserdataSize), systemImage.length()),
+                                getDsuUserdataSize(), systemImage.length()),
                         systemImage,
                         null,
                         10,
@@ -194,4 +199,3 @@ public class DSUEndtoEndTest extends DsuTestBase {
         }
     }
 }
-

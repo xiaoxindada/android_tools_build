@@ -14,9 +14,14 @@
 #ifndef GOOGLE_PROTOBUF_COMPILER_JAVA_GENERATOR_H__
 #define GOOGLE_PROTOBUF_COMPILER_JAVA_GENERATOR_H__
 
+#include <cstdint>
 #include <string>
+#include <vector>
 
+#include "google/protobuf/compiler/java/java_features.pb.h"
 #include "google/protobuf/compiler/code_generator.h"
+#include "google/protobuf/descriptor.pb.h"
+#include "google/protobuf/port.h"
 
 // Must be included last.
 #include "google/protobuf/port_def.inc"
@@ -43,12 +48,19 @@ class PROTOC_EXPORT JavaGenerator : public CodeGenerator {
 
   uint64_t GetSupportedFeatures() const override;
 
-  void set_opensource_runtime(bool opensource) {
-    opensource_runtime_ = opensource;
+  Edition GetMinimumEdition() const override { return Edition::EDITION_PROTO2; }
+  Edition GetMaximumEdition() const override {
+    return Edition::EDITION_2024;
   }
 
- private:
-  bool opensource_runtime_ = PROTO2_IS_OSS;
+  std::vector<const FieldDescriptor*> GetFeatureExtensions() const override {
+    return {GetExtensionReflection(pb::java)};
+  }
+
+  using CodeGenerator::GetEdition;
+  using CodeGenerator::GetResolvedSourceFeatureExtension;
+  using CodeGenerator::GetResolvedSourceFeatures;
+  using CodeGenerator::GetUnresolvedSourceFeatures;
 };
 
 }  // namespace java

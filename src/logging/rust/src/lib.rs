@@ -142,6 +142,12 @@ pub fn init(config: Config) -> bool {
     true
 }
 
+/// C wrapper for initializing logging on device. Returns false if logging is already initialized.
+#[no_mangle]
+pub extern "C" fn rust_android_logger_init() -> bool {
+    init(Config::default().with_max_level(log::LevelFilter::Trace))
+}
+
 /// Note that the majority of tests checking behavior are under the tests/ folder, as they all
 /// require independent initialization steps. The local test module just performs some basic crash
 /// testing without performing initialization.

@@ -21,7 +21,6 @@
 #include <android-base/logging.h>
 #include <android-base/properties.h>
 #include <android-base/unique_fd.h>
-#include <cutils/sockets.h>
 #include <linux/vm_sockets.h>
 #include "util.h"
 

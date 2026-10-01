@@ -122,6 +122,10 @@ ResultOrAgain WriteInternal(const FuseMessage<T>* self, int fd, int sockflag, co
                         return ResultOrAgain::kFailure;
                     }
                 case EAGAIN:
+                    LOG(WARNING) << "Failed to write a FUSE message: EAGAIN"
+                                << "fd=" << fd << " "
+                                << "sockflag=" << sockflag << " "
+                                << "data=" << data;
                     return ResultOrAgain::kAgain;
                 default:
                     PLOG(ERROR) << "Failed to write a FUSE message: "

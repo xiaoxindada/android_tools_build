@@ -14,6 +14,7 @@
 
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
+    default_team: "trendy_team_android_kernel",
 }
 
 prebuilt_etc {
@@ -113,17 +114,31 @@ prebuilt_root {
     test_harness_ramdisk: true,
 }
 
+ADB_DEBUG_TEST_HARNESS_PROPERTIES = select(soong_config_variable("adb", "debug_test_harness_properties"), {
+    any @ props: props,
+    default: "ro.audio.silent=1 ro.test_harness=1",
+})
+
 genrule {
     name: "adb_debug.test_harness.prop.gen",
     srcs: [":adb_debug.prop.gen"],
     out: ["adb_debug.prop"],
-    cmd: "cp -f $(in) $(out) && " +
-        "echo \"\" >> $(out) && " + // empty line
-        "echo \"#\" >> $(out) && " +
-        "echo \"# ADDITIONAL TEST HARNESS PROPERTIES\" >> $(out) && " +
-        "echo \"#\" >> $(out) && " +
-        "echo \"ro.audio.silent=1\" >> $(out) && " +
-        "echo \"ro.test_harness=1\" >> $(out)",
+    // Unfortunately there is no `args` string list parameter for `genrule` and
+    // there is no shell quote / string list concat methods we can use from
+    // blueprint, so the best we can do is hope that
+    // ADB_DEBUG_TEST_HARNESS_PROPERTIES doesn't contain any special shell
+    // characters.
+    cmd: "ADB_DEBUG_TEST_HARNESS_PROPERTIES='" + ADB_DEBUG_TEST_HARNESS_PROPERTIES + "';" +
+    "cp -f $(in) $(out) && " +
+    "if [ -n \"$${ADB_DEBUG_TEST_HARNESS_PROPERTIES}\" ]; then " +
+    "echo \"\" >> $(out) && " + // empty line
+    "echo \"#\" >> $(out) && " +
+    "echo \"# ADDITIONAL TEST HARNESS PROPERTIES\" >> $(out) && " +
+    "echo \"#\" >> $(out) && " +
+    "for prop in $${ADB_DEBUG_TEST_HARNESS_PROPERTIES}; do " +
+    "echo \"$${prop}\" >> $(out); " +
+    "done; " +
+    "fi",
 }
 
 prebuilt_etc {
@@ -165,12 +180,6 @@ prebuilt_etc {
 prebuilt_etc {
     name: "init-debug.rc",
     src: "init-debug.rc",
-    sub_dir: "init",
-}
-
-prebuilt_etc {
-    name: "init-mmd-prop.rc",
-    src: "init-mmd-prop.rc",
     sub_dir: "init",
 }
 

@@ -1,17 +1,11 @@
-# `libjsonpbparse`
+# Difference between `libjsoncpp` and `libprotobuf-cpp-full`
 
-This library provides functions to parse a JSON file to a structured Protobuf
-message.
+It is recommended to use `libprotobuf-cpp-full` to parse the JSON file and
+turn it into a Protobuf message to be read.
 
-At this time of writing, `libprotobuf-cpp-full` is at version 3.0.0-beta, and
-unknown fields in a JSON file cannot be ignored. Do **NOT** use this library in
-vendor / recovery until `libprotobuf-cpp-full` is updated.
-
-## Using `libjsoncpp` in parser code
-
-Since `libjsonpbparse` cannot be used in vendor / recovery processes yet,
-`libjsoncpp` is used instead. However, there are notable differences in the
-logic of `libjsoncpp` and `libprotobuf` when parsing JSON files.
+If you use `libjsoncpp` to parse the JSON file, instead of relying on functions
+from `libprotobuf-cpp-full`, note these differences in the
+logic of `libjsoncpp` and `libprotobuf-cpp-full` when parsing JSON files.
 
 - There are no implicit string to integer conversion in `libjsoncpp`. Hence:
   - If the Protobuf schema uses 64-bit integers (`(s|fixed|u|)int64`):

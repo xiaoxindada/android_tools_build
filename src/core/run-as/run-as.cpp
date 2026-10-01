@@ -36,6 +36,11 @@
 #include <private/android_filesystem_config.h>
 #include <selinux/android.h>
 
+#include <android/app/IActivityManagerStructured.h>
+#include <binder/IServiceManager.h>
+#include <binder/Parcel.h>
+#include <utils/StrongPointer.h>
+
 // The purpose of this program is to run a command as a specific
 // application user-id. Typical usage is:
 //
@@ -158,6 +163,43 @@ std::vector<gid_t> get_supplementary_gids(uid_t userAppId) {
   return gids;
 }
 
+// If sysprop debug.run-as.use_current_user=true, then return current user; otherwise return user 0.
+int defaultUser() {
+  if (!android::base::GetBoolProperty("debug.run-as.use_current_user", false)) {
+    return 0;
+  }
+
+  android::sp<android::IServiceManager> sm = android::defaultServiceManager();
+  if (sm == nullptr) {
+    error(1, 0, "getCurrentUserId: Failed to get ServiceManager");
+    return -1;
+  }
+
+  android::sp<android::IBinder> binder = sm->checkService(android::String16("activity_structured"));
+  if (binder == nullptr) {
+    error(1, 0, "getCurrentUserId: Failed to get activity service");
+    return -1;
+  }
+
+  android::sp<android::app::IActivityManagerStructured> am =
+      android::interface_cast<android::app::IActivityManagerStructured>(binder);
+  if (am == nullptr) {
+    error(1, 0, "getCurrentUserId: Failed to cast to IActivityManager");
+    return -1;
+  }
+
+  int32_t user = 0;
+  const android::binder::Status status = am->getCurrentUserId(&user);
+  if (!status.isOk()) {
+    error(1, 0, "getCurrentUserId: Failed to get current user ID: %s (exception code: %d)",
+          status.exceptionMessage().c_str(), status.exceptionCode());
+  }
+  if (user < 0) {
+    error(1, 0, "getCurrentUserId: invalid current user id: %d", user);
+  }
+  return user;
+}
+
 int main(int argc, char* argv[]) {
   // Check arguments.
   if (argc < 2) {
@@ -180,7 +222,7 @@ int main(int argc, char* argv[]) {
   int cmd_argv_offset = 2;
 
   // Get user_id from command line if provided.
-  int userId = 0;
+  int userId = defaultUser();
   if ((argc >= 4) && !strcmp(argv[2], "--user")) {
     userId = atoi(argv[3]);
     if (userId < 0) error(1, 0, "negative user id: %d", userId);

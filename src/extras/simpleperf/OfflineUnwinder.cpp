@@ -97,11 +97,9 @@ unwindstack::Regs* OfflineUnwinderImpl::GetBacktraceRegs(const RegSet& regs) {
       static_assert(
           static_cast<int>(unwindstack::ARM64_REG_R0) == static_cast<int>(PERF_REG_ARM64_X0), "");
       static_assert(
-          static_cast<int>(unwindstack::ARM64_REG_R30) == static_cast<int>(PERF_REG_ARM64_LR), "");
+          static_cast<int>(unwindstack::ARM64_REG_PC) == static_cast<int>(PERF_REG_ARM64_PC), "");
       memcpy(&arm64_user_regs.regs[unwindstack::ARM64_REG_R0], &regs.data[PERF_REG_ARM64_X0],
-             sizeof(uint64_t) * (PERF_REG_ARM64_LR - PERF_REG_ARM64_X0 + 1));
-      arm64_user_regs.sp = regs.data[PERF_REG_ARM64_SP];
-      arm64_user_regs.pc = regs.data[PERF_REG_ARM64_PC];
+             sizeof(uint64_t) * (PERF_REG_ARM64_PC - PERF_REG_ARM64_X0 + 1));
       auto regs =
           static_cast<unwindstack::RegsArm64*>(unwindstack::RegsArm64::Read(&arm64_user_regs));
       regs->SetPACMask(arm64_pac_mask_);

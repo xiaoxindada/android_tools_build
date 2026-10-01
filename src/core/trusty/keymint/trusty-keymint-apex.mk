@@ -20,7 +20,7 @@
 
 PRODUCT_PACKAGES += \
     android.hardware.security.keymint-service.trusty_tee.cpp \
-    android.hardware.security.keymint-service.trusty_tee \
+    android.hardware.security.keymint-service.trusty_tee.nonsecure \
 
 ifeq ($(findstring enabled, $(TRUSTY_SYSTEM_VM)),enabled)
     PRODUCT_PACKAGES += \

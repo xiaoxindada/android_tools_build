@@ -90,6 +90,7 @@ uint64_t GetMemorySize();
 ArchType GetMachineArch();
 void PrepareVdsoFile();
 
+std::string GetAppPackageNameForPid(pid_t pid, const std::string& proc_dir = "/proc");
 std::set<pid_t> WaitForAppProcesses(const std::string& package_name);
 void SetRunInAppToolForTesting(bool run_as, bool simpleperf_app_runner);  // for testing only
 bool RunInAppContext(const std::string& app_package_name, const std::string& cmd,
@@ -125,6 +126,7 @@ enum {
   kAndroidVersionT = 13,
   kAndroidVersionU = 14,
   kAndroidVersionV = 15,
+  kAndroidVersion16 = 16,
 };
 
 // Return 0 if no android version.
@@ -135,7 +137,7 @@ std::string GetHardwareFromCpuInfo(const std::string& cpu_info);
 
 bool MappedFileOnlyExistInMemory(const char* filename);
 
-std::string GetCompleteProcessName(pid_t pid);
+std::string GetCompleteProcessName(pid_t pid, const std::string& proc_dir = "/proc");
 const char* GetTraceFsDir();
 
 #if defined(__linux__)

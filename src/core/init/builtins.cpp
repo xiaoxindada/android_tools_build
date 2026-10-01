@@ -144,6 +144,7 @@ inline ErrorIgnoreEnoent ErrnoErrorIgnoreEnoent() {
 
 [[clang::no_destroy]] std::vector<std::string> late_import_paths;
 
+static constexpr int kTpmClearedStatus = 1;
 static constexpr std::chrono::nanoseconds kCommandRetryTimeout = 5s;
 
 static Result<void> reboot_into_recovery(const std::vector<std::string>& options) {
@@ -1001,11 +1002,11 @@ static Result<void> do_chown(const BuiltinArguments& args) {
     return {};
 }
 
-static mode_t get_mode(const char *s) {
+static mode_t get_mode(const char* s) {
     mode_t mode = 0;
     while (*s) {
         if (*s >= '0' && *s <= '7') {
-            mode = (mode<<3) | (*s-'0');
+            mode = (mode << 3) | (*s - '0');
         } else {
             return -1;
         }
@@ -1115,8 +1116,18 @@ static Result<void> do_wait_for_prop(const BuiltinArguments& args) {
     return {};
 }
 
+// Check the hwsec-ownership-id from gscutil to see if the TPM has been cleared.
+static bool CheckIfTpmCleared() {
+    const std::array<const char*, 2> args = {"/system/bin/check_tpm_clear", nullptr};
+    return (kTpmClearedStatus == ForkExecveAndWaitForCompletion(args[0], (char**)args.data()));
+}
+
 static bool is_file_crypto() {
     return android::base::GetProperty("ro.crypto.type", "") == "file";
+}
+
+static bool IsDeviceDesktop() {
+    return android::base::GetProperty("ro.hardware", "") == "android-desktop";
 }
 
 static Result<void> ExecWithFunctionOnFailure(const std::vector<std::string>& args,
@@ -1143,9 +1154,17 @@ static Result<void> ExecVdcRebootOnFailure(const std::string& vdc_arg) {
     auto reboot = [reboot_reason](const std::string& message) {
         // TODO (b/122850122): support this in gsi
         if (IsFbeEnabled() && !android::gsi::IsGsiRunning()) {
+            std::string wipe_option = "--prompt_and_wipe_data";
+            // TODO (b/456474148) Change this code to run as a vendor specific extension in
+            // recovery, flag will change to --wipe_data_with_tpm_check
+            if (IsDeviceDesktop() && reboot_reason == "init_user0_failed" && CheckIfTpmCleared()) {
+                wipe_option = "--wipe_data";
+            }
+            // If vdc has failed to mount the initial userdata partition and the gsc keys
+            // have been changed, we can perform a factory data reset on behalf of the user
+            // automatically.
             LOG(ERROR) << message << ": Rebooting into recovery, reason: " << reboot_reason;
-            if (auto result = reboot_into_recovery(
-                        {"--prompt_and_wipe_data", "--reason="s + reboot_reason});
+            if (auto result = reboot_into_recovery({wipe_option, "--reason="s + reboot_reason});
                 !result.ok()) {
                 LOG(FATAL) << "Could not reboot into recovery: " << result.error();
             }
@@ -1178,7 +1197,11 @@ static Result<void> do_mark_post_data(const BuiltinArguments& args) {
 }
 
 static Result<void> GenerateLinkerConfiguration() {
+#if defined(RELEASE_DEPRECATE_RUNTIME_APEX)
+    const char* linkerconfig_binary = "/system/bin/linkerconfig";
+#else
     const char* linkerconfig_binary = "/apex/com.android.runtime/bin/linkerconfig";
+#endif
     const char* linkerconfig_target = "/linkerconfig";
     const char* arguments[] = {linkerconfig_binary, "--target", linkerconfig_target};
 
@@ -1233,7 +1256,7 @@ static Result<void> do_perform_apex_config(const BuiltinArguments& args) {
 
     MountNamespace current_mnt_ns = GetCurrentMountNamespace().value_or(NS_BOOTSTRAP);
     // We don't want to parse the same apexes twice in the same mount namespace.
-    static std::map<MountNamespace, bool> apex_parsed;
+    [[clang::no_destroy]] static std::map<MountNamespace, bool> apex_parsed;
     if (!std::exchange(apex_parsed[current_mnt_ns], true)) {
         if (auto st = ParseRcScriptsFromAllApexes(current_mnt_ns == NS_DEFAULT); !st.ok()) {
             LOG(ERROR) << st.error();
@@ -1276,6 +1299,7 @@ static Result<void> do_swapoff(const BuiltinArguments& args) {
 const BuiltinFunctionMap& GetBuiltinFunctionMap() {
     constexpr std::size_t kMax = std::numeric_limits<std::size_t>::max();
     // clang-format off
+    [[clang::no_destroy]]
     static const BuiltinFunctionMap builtin_functions = {
         {"bootchart",               {1,     1,    {false,  do_bootchart}}},
         {"chmod",                   {2,     2,    {true,   do_chmod}}},

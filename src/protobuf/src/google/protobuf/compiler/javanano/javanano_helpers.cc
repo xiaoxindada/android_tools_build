@@ -37,13 +37,15 @@
 #include <unordered_set>
 #include <vector>
 
-#include <absl/strings/ascii.h>
-#include <absl/strings/match.h>
-#include <absl/strings/strip.h>
-#include <absl/strings/str_cat.h>
-#include <google/protobuf/compiler/javanano/javanano_helpers.h>
-#include <google/protobuf/compiler/javanano/javanano_params.h>
-#include <google/protobuf/descriptor.pb.h>
+#include "absl/strings/ascii.h"
+#include "absl/strings/match.h"
+#include "absl/strings/string_view.h"
+#include "absl/strings/strip.h"
+#include "absl/strings/str_cat.h"
+#include "google/protobuf/compiler/javanano/javanano_helpers.h"
+#include "google/protobuf/compiler/javanano/javanano_params.h"
+#include "google/protobuf/descriptor.h"
+#include "google/protobuf/io/printer.h"
 
 namespace google {
 namespace protobuf {
@@ -83,8 +85,8 @@ class RenameKeywords {
   // Used to rename the a field name if it's a java keyword.  Specifically
   // this is used to rename the ["name"] or ["capitalized_name"] field params.
   // (http://docs.oracle.com/javase/tutorial/java/nutsandbolts/_keywords.html)
-  std::string RenameJavaKeywordsImpl(const std::string& input) {
-    std::string result = input;
+  std::string RenameJavaKeywordsImpl(absl::string_view input) {
+    std::string result(input);
 
     if (java_keywords_set_.find(result) != java_keywords_set_.end()) {
       result += "_";
@@ -101,7 +103,7 @@ namespace {
 
 const char* kDefaultPackage = "";
 
-const std::string& FieldName(const FieldDescriptor* field) {
+const absl::string_view FieldName(const FieldDescriptor* field) {
   // Groups are hacky:  The name of the field is just the lower-cased name
   // of the group type.  In Java, though, we would like to retain the original
   // capitalization of the type name.
@@ -112,7 +114,7 @@ const std::string& FieldName(const FieldDescriptor* field) {
   }
 }
 
-std::string UnderscoresToCamelCaseImpl(const std::string& input, bool cap_next_letter) {
+std::string UnderscoresToCamelCaseImpl(absl::string_view input, bool cap_next_letter) {
   std::string result;
   // Note:  I distrust ctype.h due to locales.
   for (int i = 0; i < input.size(); i++) {
@@ -165,7 +167,7 @@ std::string UnderscoresToCapitalizedCamelCase(const OneofDescriptor* oneof) {
   return UnderscoresToCamelCaseImpl(oneof->name(), true);
 }
 
-std::string RenameJavaKeywords(const std::string& input) {
+std::string RenameJavaKeywords(absl::string_view input) {
   return sRenameKeywords.RenameJavaKeywordsImpl(input);
 }
 
@@ -233,7 +235,7 @@ bool IsOuterClassNeeded(const Params& params, const FileDescriptor* file) {
   return false;
 }
 
-std::string ToJavaName(const Params& params, const std::string& name, bool is_class,
+std::string ToJavaName(const Params& params, absl::string_view name, bool is_class,
     const Descriptor* parent, const FileDescriptor* file) {
   std::string result;
   if (parent != NULL) {

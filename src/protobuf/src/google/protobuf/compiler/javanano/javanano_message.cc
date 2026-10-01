@@ -33,17 +33,18 @@
 //  Sanjay Ghemawat, Jeff Dean, and others.
 
 #include <algorithm>
+#include <memory>
+#include <string>
 
-#include <absl/strings/ascii.h>
-#include <absl/strings/str_cat.h>
-#include <google/protobuf/compiler/javanano/javanano_message.h>
-#include <google/protobuf/compiler/javanano/javanano_enum.h>
-#include <google/protobuf/compiler/javanano/javanano_extension.h>
-#include <google/protobuf/compiler/javanano/javanano_helpers.h>
-#include <google/protobuf/io/printer.h>
-#include <google/protobuf/io/coded_stream.h>
-#include <google/protobuf/wire_format.h>
-#include <google/protobuf/descriptor.pb.h>
+#include "absl/strings/ascii.h"
+#include "absl/strings/str_cat.h"
+#include "google/protobuf/compiler/javanano/javanano_message.h"
+#include "google/protobuf/compiler/javanano/javanano_enum.h"
+#include "google/protobuf/compiler/javanano/javanano_extension.h"
+#include "google/protobuf/compiler/javanano/javanano_helpers.h"
+#include "google/protobuf/io/printer.h"
+#include "google/protobuf/wire_format.h"
+#include "google/protobuf/descriptor.h"
 
 namespace google {
 namespace protobuf {
@@ -115,7 +116,7 @@ void MessageGenerator::Generate(io::Printer* printer) {
         "'store_unknown_fields' generator option is 'true'\n";
   }
 
-  const std::string& file_name = descriptor_->file()->name();
+  const auto file_name = descriptor_->file()->name();
   bool is_own_file =
     params_.java_multiple_files(file_name)
       && descriptor_->containing_type() == NULL;

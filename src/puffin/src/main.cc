@@ -78,7 +78,8 @@ FileType StringToFileType(const string& file_type) {
     return FileType::kZlib;
   } else if (file_type == "gzip" || file_type == "gz" || file_type == "tgz") {
     return FileType::kGzip;
-  } else if (file_type == "zip" || file_type == "apk" || file_type == "jar") {
+  } else if (file_type == "zip" || file_type == "apk" || file_type == "jar" ||
+             file_type == "apex") {
     return FileType::kZip;
   }
   return FileType::kUnknown;

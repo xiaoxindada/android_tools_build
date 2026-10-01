@@ -4,38 +4,38 @@
 
 #include "bsdiff/brotli_decompressor.h"
 
+#include <unistd.h>
+
 #include "bsdiff/logging.h"
+
 
 namespace bsdiff {
 
-BrotliDecompressor::~BrotliDecompressor() {
-  if (brotli_decoder_state_)
-    BrotliDecoderDestroyInstance(brotli_decoder_state_);
-}
 
-bool BrotliDecompressor::SetInputData(const uint8_t* input_data, size_t size) {
-  brotli_decoder_state_ =
-      BrotliDecoderCreateInstance(nullptr, nullptr, nullptr);
-  if (brotli_decoder_state_ == nullptr) {
-    LOG(ERROR) << "Failed to initialize brotli decoder.";
-    return false;
-  }
-  next_in_ = input_data;
-  available_in_ = size;
-  return true;
-}
-
-bool BrotliDecompressor::Read(uint8_t* output_data, size_t bytes_to_output) {
+bool BrotliDecompressorCommon::Read(uint8_t* output_data,
+                                    size_t bytes_to_output) {
   if (!brotli_decoder_state_) {
-    LOG(ERROR) << "BrotliDecompressor not initialized";
-    return false;
+    brotli_decoder_state_ =
+        BrotliDecoderCreateInstance(nullptr, nullptr, nullptr);
+    if (brotli_decoder_state_ == nullptr) {
+      LOG(ERROR) << "Failed to initialize brotli decoder.";
+      return false;
+    }
   }
-  auto next_out = output_data;
+
+  uint8_t* next_out = output_data;
   size_t available_out = bytes_to_output;
 
   while (available_out > 0) {
-    // The brotli decoder will update |available_in_|, |available_in_|,
-    // |next_out| and |available_out|.
+    if (available_in_ == 0 && RemainingInputSize() > 0) {
+      std::string_view chunk = GetNextInputChunk();
+      if (chunk.empty()) {
+        return false;
+      }
+      next_in_ = reinterpret_cast<const uint8_t*>(chunk.data());
+      available_in_ = chunk.size();
+    }
+
     BrotliDecoderResult result = BrotliDecoderDecompressStream(
         brotli_decoder_state_, &available_in_, &next_in_, &available_out,
         &next_out, nullptr);
@@ -46,13 +46,12 @@ bool BrotliDecompressor::Read(uint8_t* output_data, size_t bytes_to_output) {
                         BrotliDecoderGetErrorCode(brotli_decoder_state_));
       return false;
     } else if (result == BROTLI_DECODER_RESULT_NEEDS_MORE_INPUT) {
-      LOG(ERROR) << "Decompressor reached EOF while reading from input stream.";
-      return false;
+      if (RemainingInputSize() == 0 && available_in_ == 0) {
+        LOG(ERROR) << "Unexpected end of input, still need to decompress "
+                   << available_out << " bytes";
+        return false;
+      }
     } else if (result == BROTLI_DECODER_RESULT_SUCCESS) {
-      // This means that decoding is finished, no more input might be consumed
-      // and no more output will be produced. In the normal case, when there is
-      // more data available than what was requested in this Read() call it
-      // returns BROTLI_DECODER_RESULT_NEEDS_MORE_OUTPUT.
       if (available_out > 0) {
         LOG(ERROR) << "Expected to read " << available_out
                    << " more bytes but reached the end of compressed brotli "
@@ -65,10 +64,13 @@ bool BrotliDecompressor::Read(uint8_t* output_data, size_t bytes_to_output) {
   return true;
 }
 
-bool BrotliDecompressor::Close() {
+BrotliDecompressorCommon::~BrotliDecompressorCommon() {
+  Close();
+}
+
+bool BrotliDecompressorCommon::Close() {
   if (!brotli_decoder_state_) {
-    LOG(ERROR) << "BrotliDecompressor not initialized";
-    return false;
+    return true;
   }
   // In some cases, the brotli compressed stream could be empty. As a result,
   // the function BrotliDecoderIsFinished() will return false because we never
@@ -83,6 +85,54 @@ bool BrotliDecompressor::Close() {
   BrotliDecoderDestroyInstance(brotli_decoder_state_);
   brotli_decoder_state_ = nullptr;
   return true;
+}
+
+bool BrotliMemoryDecompressor::SetInputData(const uint8_t* input_data,
+                                            size_t size) {
+  input_data_ =
+      std::string_view(reinterpret_cast<const char*>(input_data), size);
+  return true;
+}
+
+[[nodiscard]] std::string_view BrotliMemoryDecompressor::GetNextInputChunk() {
+  auto ret = input_data_;
+  input_data_ = {};
+  return ret;
+}
+
+[[nodiscard]] size_t BrotliMemoryDecompressor::RemainingInputSize() const {
+  return input_data_.size();
+}
+
+
+BrotliFileDecompressor::~BrotliFileDecompressor() = default;
+
+bool BrotliFileDecompressor::SetInputFile(int fd, off_t offset, size_t size) {
+  fd_ = fd;
+  offset_ = offset;
+  remaining_input_size_ = size;
+  return true;
+}
+
+std::string_view BrotliFileDecompressor::GetNextInputChunk() {
+  size_t to_read = std::min(input_buffer_.size(), remaining_input_size_);
+  ssize_t rc = pread(fd_, input_buffer_.data(), to_read, offset_);
+  if (rc < 0) {
+    PLOG(ERROR) << "Failed to read from input file at offset " << offset_;
+    return {};
+  }
+  if (rc == 0) {
+    LOG(ERROR) << "Unexpected EOF reading from input file";
+    return {};
+  }
+  offset_ += rc;
+  remaining_input_size_ -= rc;
+  return {reinterpret_cast<char*>(input_buffer_.data()),
+          static_cast<size_t>(rc)};
+}
+
+size_t BrotliFileDecompressor::RemainingInputSize() const {
+  return remaining_input_size_;
 }
 
 }  // namespace bsdiff

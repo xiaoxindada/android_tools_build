@@ -4,8 +4,6 @@ cmake_minimum_required(VERSION 2.8.12)
 # Project
 project(protobuf-examples)
 
-find_package(GTest REQUIRED CONFIG)
-
 # Find required protobuf package
 find_package(protobuf CONFIG REQUIRED)
 

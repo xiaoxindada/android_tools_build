@@ -80,7 +80,7 @@ static void usage(void)
 int main(int argc, char *argv[])
 {
     int secure = 0;
-    char *devname;
+    char* devname = NULL;
     int fd;
     u64 len;
     struct stat statbuf;

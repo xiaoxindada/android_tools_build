@@ -348,66 +348,6 @@ class TidEntry : public EntryBase {
     char* name_;
 };
 
-class TagEntry : public EntryBase {
-  public:
-    explicit TagEntry(const LogStatisticsElement& element)
-        : EntryBase(element), tag_(element.tag), pid_(element.pid), uid_(element.uid) {}
-
-    uint32_t key() const { return tag_; }
-    pid_t pid() const { return pid_; }
-    uid_t uid() const { return uid_; }
-    const char* name() const { return android::tagToName(tag_); }
-
-    void Add(const LogStatisticsElement& element) {
-        if (uid_ != element.uid) {
-            uid_ = -1;
-        }
-        if (pid_ != element.pid) {
-            pid_ = -1;
-        }
-        EntryBase::Add(element);
-    }
-
-    std::string formatHeader(const std::string& name, log_id_t id) const;
-    std::string format(const LogStatistics& stat, log_id_t id, uint32_t) const;
-
-  private:
-    const uint32_t tag_;
-    pid_t pid_;
-    uid_t uid_;
-};
-
-class TagNameEntry : public EntryBase {
-  public:
-    explicit TagNameEntry(const LogStatisticsElement& element)
-        : EntryBase(element), tid_(element.tid), pid_(element.pid), uid_(element.uid) {}
-
-    pid_t tid() const { return tid_; }
-    pid_t pid() const { return pid_; }
-    uid_t uid() const { return uid_; }
-
-    void Add(const LogStatisticsElement& element) {
-        if (uid_ != element.uid) {
-            uid_ = -1;
-        }
-        if (pid_ != element.pid) {
-            pid_ = -1;
-        }
-        if (tid_ != element.tid) {
-            tid_ = -1;
-        }
-        EntryBase::Add(element);
-    }
-
-    std::string formatHeader(const std::string& name, log_id_t id) const;
-    std::string format(const LogStatistics& stat, log_id_t id, const std::string& key_name) const;
-
-  private:
-    pid_t tid_;
-    pid_t pid_;
-    uid_t uid_;
-};
-
 class LogStatistics {
     friend UidEntry;
     friend PidEntry;
@@ -420,7 +360,6 @@ class LogStatistics {
     log_time mOldest[LOG_ID_MAX] GUARDED_BY(lock_);
     log_time mNewest[LOG_ID_MAX] GUARDED_BY(lock_);
     static std::atomic<size_t> SizesTotal;
-    bool enable;
 
     // uid to size list
     typedef LogHashtable<uid_t, UidEntry> uidTable_t;
@@ -438,23 +377,9 @@ class LogStatistics {
     typedef LogHashtable<pid_t, TidEntry> tidTable_t;
     tidTable_t tidTable GUARDED_BY(lock_);
 
-    // tag list
-    typedef LogHashtable<uint32_t, TagEntry> tagTable_t;
-    tagTable_t tagTable GUARDED_BY(lock_);
-
-    // security tag list
-    tagTable_t securityTagTable GUARDED_BY(lock_);
-
-    // global tag list
-    typedef LogHashtable<std::string, TagNameEntry> tagNameTable_t;
-    tagNameTable_t tagNameTable;
-
     size_t sizeOf() const REQUIRES(lock_) {
         size_t size = sizeof(*this) + pidTable.sizeOf() + tidTable.sizeOf() +
-                      tagTable.sizeOf() + securityTagTable.sizeOf() +
-                      tagNameTable.sizeOf() +
-                      (pidTable.size() * sizeof(pidTable_t::iterator)) +
-                      (tagTable.size() * sizeof(tagTable_t::iterator));
+                      (pidTable.size() * sizeof(pidTable_t::iterator));
         for (const auto& it : pidTable) {
             const char* name = it.second.name();
             if (name) size += strlen(name) + 1;
@@ -462,16 +387,6 @@ class LogStatistics {
         for (const auto& it : tidTable) {
             const char* name = it.second.name();
             if (name) size += strlen(name) + 1;
-        }
-        for (const auto& it : tagNameTable) {
-            size += sizeof(std::string);
-            size_t len = it.first.size();
-            // Account for short string optimization: if the string's length is <= 22 bytes for 64
-            // bit or <= 10 bytes for 32 bit, then there is no additional allocation.
-            if ((sizeof(std::string) == 24 && len > 22) ||
-                (sizeof(std::string) != 24 && len > 10)) {
-                size += len;
-            }
         }
         log_id_for_each(id) {
             size += uidTable[id].sizeOf();
@@ -483,7 +398,7 @@ class LogStatistics {
     }
 
   public:
-    LogStatistics(bool enable_statistics, bool track_total_size,
+    LogStatistics(bool track_total_size,
                   std::optional<log_time> start_time = {});
 
     void AddTotal(log_id_t log_id, uint16_t size) EXCLUDES(lock_);

@@ -136,7 +136,8 @@ class PprofReportGenerator:
       if mapping_name not in self.mappings_dict:
         mapping = self.profile.mapping.add()
         mapping.id = len(self.profile.mapping)
-        mapping.filename = self.get_string_id(mapping_name)
+        # Leave empty to prevent pprof from trying to load debug info
+        mapping.filename = self.get_string_id('')
         self.mappings_dict[mapping_name] = mapping.id
       mapping_id = self.mappings_dict[mapping_name]
 
@@ -371,7 +372,10 @@ def main(argv):
   print('Done.')
   print(f'Report saved to: {os.path.abspath(args.output)}')
   print(f'Tip: To upload to pprof web UI, run:')
-  print(f'pprof -flame {os.path.abspath(args.output)}')
+  print(
+      'pprof -flame --nodefraction=0 --nodecount=100000 --sample_index=Pss'
+      f' {os.path.abspath(args.output)}'
+  )
 
 
 if __name__ == '__main__':

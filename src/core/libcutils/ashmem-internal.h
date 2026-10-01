@@ -16,5 +16,6 @@
 
 #pragma once
 
-bool has_memfd_support();
-int __ashmem_open();
+bool use_memfd();
+int __ashmem_create_region(const char* name, size_t size);
+int __memfd_create_region(const char* name, size_t size);

@@ -23,11 +23,10 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
-    name: "android.hardware.gatekeeper-service.trusty",
+cc_defaults {
+    name: "android.hardware.gatekeeper-service.trusty.defaults",
     vendor: true,
     relative_install_path: "hw",
-    init_rc: ["android.hardware.gatekeeper-service.trusty.rc"],
 
     srcs: [
         "service.cpp",
@@ -56,12 +55,44 @@ cc_binary {
         "libcutils",
         "libtrusty",
     ],
+}
 
+// Gatekeeper HAL binary for Trusty TEE implementation (legacy approach, Non-apex route)
+cc_binary {
+    name: "android.hardware.gatekeeper-service.trusty",
+    defaults: ["android.hardware.gatekeeper-service.trusty.defaults"],
+    init_rc: ["android.hardware.gatekeeper-service.trusty.rc"],
     vintf_fragment_modules: ["android.hardware.gatekeeper-service.trusty.xml"],
+}
+
+// Gatekeeper HAL service in vendor, enabled by vendor apex.
+// This service is disabled by default and does not package a VINTF fragment.
+// This service can be enabled at boot via vendor apex:
+// - at boot, mount a vendor apex for module `com.android.hardware.gatekeeper`
+// - have the vendor apex init.rc file to start the service when the apex is selected
+// - have the vendor apex package the vintf fragment
+cc_binary {
+    name: "android.hardware.gatekeeper-service.trusty_tee",
+    defaults: ["android.hardware.gatekeeper-service.trusty.defaults"],
+    init_rc: ["android.hardware.gatekeeper-service.trusty_tee.rc"],
+}
+
+prebuilt_etc {
+    name: "android.hardware.gatekeeper-service.trusty_tee.xml",
+    sub_dir: "vintf",
+    vendor: true,
+    src: "android.hardware.gatekeeper-service.trusty.xml",
 }
 
 vintf_fragment {
     name: "android.hardware.gatekeeper-service.trusty.xml",
     src: "android.hardware.gatekeeper-service.trusty.xml",
     vendor: true,
+}
+
+prebuilt_etc {
+    name: "android.hardware.gatekeeper-service.security_vm.xml",
+    src: "android.hardware.gatekeeper-service.security_vm.xml",
+    vendor: true,
+    sub_dir: "vintf",
 }

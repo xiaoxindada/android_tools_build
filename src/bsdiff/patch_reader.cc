@@ -6,19 +6,22 @@
 
 #include <string.h>
 
-#include <limits>
+#include <unistd.h>
 #include <vector>
 
-#include "bsdiff/brotli_decompressor.h"
-#include "bsdiff/bspatch.h"
-#include "bsdiff/bz2_decompressor.h"
+#include <bsdiff/decompressor_interface.h>
 #include "bsdiff/constants.h"
 #include "bsdiff/logging.h"
 #include "bsdiff/utils.h"
 
 namespace bsdiff {
 
-bool BsdiffPatchReader::Init(const uint8_t* patch_data, size_t patch_size) {
+bool BsdiffPatchReader::ParseHeader(
+    const uint8_t* header,
+    size_t patch_size,
+    std::function<
+        std::unique_ptr<DecompressorInterface>(CompressorType, size_t, size_t)>
+        create_decompressor) {
   //   File format:
   //   0       8    magic header
   //   8       8    X
@@ -37,18 +40,18 @@ bool BsdiffPatchReader::Init(const uint8_t* patch_data, size_t patch_size) {
   }
   // Check for appropriate magic.
   std::vector<CompressorType> compression_type;
-  if (memcmp(patch_data, kLegacyMagicHeader, 8) == 0) {
+  if (memcmp(header, kLegacyMagicHeader, 8) == 0) {
     // The magic header is "BSDIFF40" for legacy format.
     compression_type = {CompressorType::kBZ2, CompressorType::kBZ2,
                         CompressorType::kBZ2};
-  } else if (memcmp(patch_data, kBSDF2MagicHeader, 5) == 0) {
+  } else if (memcmp(header, kBSDF2MagicHeader, 5) == 0) {
     // The magic header for BSDF2 format:
     // 0 5 BSDF2
     // 5 1 compressed type for control stream
     // 6 1 compressed type for diff stream
     // 7 1 compressed type for extra stream
     for (size_t i = 5; i < 8; i++) {
-      uint8_t type = patch_data[i];
+      uint8_t type = header[i];
       switch (type) {
         case static_cast<uint8_t>(CompressorType::kBZ2):
           compression_type.push_back(CompressorType::kBZ2);
@@ -68,9 +71,9 @@ bool BsdiffPatchReader::Init(const uint8_t* patch_data, size_t patch_size) {
   }
 
   // Read lengths from header.
-  int64_t ctrl_len = ParseInt64(patch_data + 8);
-  int64_t diff_len = ParseInt64(patch_data + 16);
-  int64_t signed_newsize = ParseInt64(patch_data + 24);
+  int64_t ctrl_len = ParseInt64(header + 8);
+  int64_t diff_len = ParseInt64(header + 16);
+  int64_t signed_newsize = ParseInt64(header + 24);
   // We already checked that the patch_size is at least 32 bytes.
   if ((ctrl_len < 0) || (diff_len < 0) || (signed_newsize < 0) ||
       (static_cast<int64_t>(patch_size) - 32 < ctrl_len) ||
@@ -83,36 +86,60 @@ bool BsdiffPatchReader::Init(const uint8_t* patch_data, size_t patch_size) {
   }
   new_file_size_ = signed_newsize;
 
-  ctrl_stream_ = CreateDecompressor(compression_type[0]);
-  diff_stream_ = CreateDecompressor(compression_type[1]);
-  extra_stream_ = CreateDecompressor(compression_type[2]);
-  if (!(ctrl_stream_ && diff_stream_ && extra_stream_)) {
-    LOG(ERROR) << "uninitialized decompressor stream";
-    return false;
-  }
-
   size_t offset = 32;
-  if (!ctrl_stream_->SetInputData(const_cast<uint8_t*>(patch_data) + offset,
-                                  ctrl_len)) {
+  ctrl_stream_ = create_decompressor(compression_type[0], offset, ctrl_len);
+  if (!ctrl_stream_) {
     LOG(ERROR) << "Failed to init ctrl stream, ctrl_len: " << ctrl_len;
     return false;
   }
 
   offset += ctrl_len;
-  if (!diff_stream_->SetInputData(const_cast<uint8_t*>(patch_data) + offset,
-                                  diff_len)) {
+  diff_stream_ = create_decompressor(compression_type[1], offset, diff_len);
+  if (!diff_stream_) {
     LOG(ERROR) << "Failed to init ctrl stream, diff_len: " << diff_len;
     return false;
   }
 
   offset += diff_len;
-  if (!extra_stream_->SetInputData(const_cast<uint8_t*>(patch_data) + offset,
-                                   patch_size - offset)) {
+  extra_stream_ =
+      create_decompressor(compression_type[2], offset, patch_size - offset);
+  if (!extra_stream_) {
     LOG(ERROR) << "Failed to init extra stream, extra_offset: " << offset
                << ", patch_size: " << patch_size;
     return false;
   }
   return true;
+}
+
+bool BsdiffPatchReader::Init(const uint8_t* patch_data, size_t patch_size) {
+  if (patch_size < 32) {
+    LOG(ERROR) << "Too small to be a bspatch. " << patch_size;
+    return false;
+  }
+  return ParseHeader(
+      patch_data, patch_size,
+      [patch_data](CompressorType type, size_t offset, size_t size) {
+        return CreateDecompressor(type, patch_data + offset, size);
+      });
+  return true;
+}
+
+bool BsdiffPatchReader::Init(int fd, off_t offset, size_t size) {
+  if (size < 32) {
+    LOG(ERROR) << "Too small to be a bspatch. " << size;
+    return false;
+  }
+  uint8_t header[32];
+  if (pread(fd, header, sizeof(header), offset) != sizeof(header)) {
+    PLOG(ERROR) << "Failed to read patch header";
+    return false;
+  }
+  return ParseHeader(
+      header, size,
+      [fd, offset](CompressorType type, size_t relative_offset,
+                   size_t size) -> std::unique_ptr<DecompressorInterface> {
+        return CreateDecompressor(type, fd, offset + relative_offset, size);
+      });
 }
 
 bool BsdiffPatchReader::ParseControlEntry(ControlEntry* control_entry) {

@@ -8,7 +8,7 @@
   - [Profile a Java application](#profile-a-java-application)
   - [Profile a Java/C++ application](#profile-a-javac-application)
   - [Profile a Kotlin application](#profile-a-kotlin-application)
-- [Profile via app_api](#profile-via-app_api)
+- [Profile via app\_api](#profile-via-app_api)
 
 ## Introduction
 
@@ -53,10 +53,11 @@ steps:
 # and build this project successfully, otherwise the `./gradlew` command below will fail.
 $ cd SimpleperfExampleJava
 
-# Build and install a debuggable app. We can also build and install a released app on Android >= Q.
-# On windows, use "gradlew" instead.
-$ ./gradlew clean assemble
-$ adb install -r app/build/outputs/apk/debug/app-debug.apk
+# Build and install a released app on Android >= Q. Simpleperf can profile a released app with
+# <profileable android:shell="true" /> in AndroidManifest.xml. On Android < Q, simpleperf can only
+# profile a debug build.
+$ ./gradlew clean assembleRelease
+$ adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
 2. Record profiling data:
@@ -86,9 +87,11 @@ steps:
 # and build this project sucessfully, otherwise the `./gradlew` command below will fail.
 $ cd SimpleperfExampleCpp
 
-# On windows, use "gradlew" instead.
-$ ./gradlew clean assemble
-$ adb install -r app/build/outputs/apk/debug/app-debug.apk
+# Build and install a released app on Android >= Q. Simpleperf can profile a released app with
+# <profileable android:shell="true" /> in AndroidManifest.xml. On Android < Q, simpleperf can only
+# profile a debug build.
+$ ./gradlew clean assembleRelease
+$ adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
 2. Record profiling data:
@@ -118,10 +121,11 @@ steps:
 # and build this project sucessfully, otherwise the `./gradlew` command below will fail.
 $ cd SimpleperfExampleKotlin
 
-# Build and install a debuggable app. We can also build and install a released app on Android >= Q.
-# On windows, use "gradlew" instead.
-$ ./gradlew clean assemble
-$ adb install -r app/build/outputs/apk/debug/app-debug.apk
+# Build and install a released app on Android >= Q. Simpleperf can profile a released app with
+# <profileable android:shell="true" /> in AndroidManifest.xml. On Android < Q, simpleperf can only
+# profile a debug build.
+$ ./gradlew clean assembleRelease
+$ adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
 2. Record profiling data:
@@ -151,9 +155,11 @@ steps:
 # and build this project sucessfully, otherwise the `./gradlew` command below will fail.
 $ cd CppApi
 
-# On windows, use "gradlew" instead.
-$ ./gradlew clean assemble
-$ adb install -r app/build/outputs/apk/debug/app-debug.apk
+# Build and install a released app on Android >= Q. Simpleperf can profile a released app with
+# <profileable android:shell="true" /> in AndroidManifest.xml. On Android < Q, simpleperf can only
+# profile a debug build.
+$ ./gradlew clean assembleRelease
+$ adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
 2. Prepare recording environment.

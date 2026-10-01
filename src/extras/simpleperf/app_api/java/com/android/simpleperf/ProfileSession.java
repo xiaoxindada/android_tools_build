@@ -92,6 +92,7 @@ public class ProfileSession {
     /**
      * ProfileSession assumes appDataDir as /data/data/app_package_name.
      */
+    @SuppressWarnings("SdCardPath")
     public ProfileSession() {
         String packageName;
         try {
@@ -232,7 +233,7 @@ public class ProfileSession {
 
     private String findSimpleperf() {
         // Try /system/bin/simpleperf, which is available on Android >= Q.
-        simpleperfPath = SIMPLEPERF_PATH_IN_IMAGE;
+        String simpleperfPath = SIMPLEPERF_PATH_IN_IMAGE;
         if (isExecutableFile(simpleperfPath)) {
             return simpleperfPath;
         }

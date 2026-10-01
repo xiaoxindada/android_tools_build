@@ -15,6 +15,7 @@
 pub(crate) static DEFAULT_IO_DEPTH: u16 = 2;
 pub(crate) static DEFAULT_MAX_FDS: u16 = 128;
 pub(crate) static DEFAULT_EXIT_ON_ERROR: bool = false;
+pub(crate) static DEFAULT_RECORD_METRICS: bool = false;
 
 mod args_argh;
 use args_argh as args_internal;

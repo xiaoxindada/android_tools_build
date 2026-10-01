@@ -22,8 +22,6 @@
 
 #include <base/logging.h>
 
-#include "update_engine/common/utils.h"
-
 namespace chromeos_update_engine {
 
 off64_t CachedFileDescriptorBase::Seek(off64_t offset, int whence) {
@@ -31,7 +29,7 @@ off64_t CachedFileDescriptorBase::Seek(off64_t offset, int whence) {
   // we want to support SEEK_END then we have to figure out the size of the
   // underlying file descriptor each time and it may not be a very good idea.
   CHECK(whence == SEEK_SET || whence == SEEK_CUR);
-  off64_t next_offset = whence == SEEK_SET ? offset : offset_ + offset;
+  const off64_t next_offset = whence == SEEK_SET ? offset : offset_ + offset;
 
   if (next_offset != offset_) {
     // We sought somewhere other than what we are now. So we have to flush and
@@ -77,8 +75,9 @@ bool CachedFileDescriptorBase::Flush() {
 }
 
 bool CachedFileDescriptorBase::Close() {
+  const auto ret = Flush() && GetFd()->Close();
   offset_ = 0;
-  return FlushCache() && GetFd()->Close();
+  return ret;
 }
 
 bool CachedFileDescriptorBase::FlushCache() {
@@ -87,7 +86,10 @@ bool CachedFileDescriptorBase::FlushCache() {
     auto bytes_wrote =
         GetFd()->Write(cache_.data() + begin, bytes_cached_ - begin);
     if (bytes_wrote < 0) {
-      PLOG(ERROR) << "Failed to flush cached data!";
+      PLOG(ERROR) << "Failed to flush " << (bytes_cached_ - begin)
+                  << " bytes to underlying FD at offset " << offset_ + begin
+                  << " underlying FD is positioned at offset "
+                  << GetFd()->Seek(0, SEEK_CUR);
       return false;
     }
     begin += bytes_wrote;

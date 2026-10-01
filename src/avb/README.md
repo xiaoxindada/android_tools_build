@@ -241,6 +241,28 @@ provides built-in support for features such as key rotation.
 it has been renamed to better represent its usefulness as a general-purpose
 extension rather than anything specific to the Android Things project.
 
+### Hermetic OpenSSL and Build Configuration
+
+To ensure build consistency and ensure that modern cryptographic algorithms (such
+as ML-DSA) are always available, `avbtool` is configured to use a hermetic
+OpenSSL binary when built with the Android build system (Soong).
+
+This is achieved by declaring the prebuilt OpenSSL binary (typically from
+`prebuilts/build-tools`) as a `required` host dependency of the `avbtool` host
+binary.
+
+When `avbtool` runs, it attempts to resolve the OpenSSL binary as follows:
+
+1.  **Staged Prebuilt Binary:** It first looks for a binary named `avb_openssl`
+    (matching the Soong module name) in the same directory as the `avbtool`
+    executable itself.
+2.  **Standalone/PATH Fallback:** If a staged binary is not found (e.g., if
+    `avbtool.py` is run directly from the source tree), it falls back to using
+    the `openssl` binary found in the system's `PATH`.
+
+Note that if the system OpenSSL is used, it must be a version that supports all
+required algorithms (e.g., OpenSSL 3.2.0 or later for ML-DSA support).
+
 ## Files and Directories
 
 * `libavb/`
@@ -1157,6 +1179,14 @@ When booting an image signed with a custom key, a yellow screen will be shown as
 part of the boot process to remind the user that the custom key is in use.
 
 # Version History
+
+### Version 1.4
+Version 1.4 adds support for the following:
+* ML-DSA-65 and ML-DSA-87 signed VBMeta structs.
+
+**Note:** ML-DSA signature verification in `libavb` is currently only
+supported when built with the BoringSSL backend. The default `libavb/crypto`
+backend provides a stub implementation that will return an error.
 
 ### Version 1.3
 Version 1.3 adds support for the following:

@@ -35,6 +35,7 @@ set(libavb_sources
     "${libavb_dir}/avb_hash_descriptor.c"
     "${libavb_dir}/avb_hashtree_descriptor.c"
     "${libavb_dir}/avb_kernel_cmdline_descriptor.c"
+    "${libavb_dir}/avb_mldsa.c"
     "${libavb_dir}/avb_property_descriptor.c"
     "${libavb_dir}/avb_rsa.c"
     "${libavb_dir}/avb_slot_verify.c"
@@ -48,6 +49,7 @@ set(libavb_host_sysdeps_sources
 )
 
 set(avb_crypto_ops_impl_boringssl
+    "${libavb_dir}/boringssl/mldsa.c"
     "${libavb_dir}/boringssl/sha.c"
 )
 

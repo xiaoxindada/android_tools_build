@@ -303,9 +303,9 @@ delta payload is roughly as follows:
     partitions and remove blocks (and files) which we have already generated
     operations for in the last two steps. Assign the remaining metadata (inodes,
     etc) of each partition as a file.
-4.  If a file is new, generate a `REPLACE`, `REPLACE_XZ`, or `REPLACE_BZ`
-    operation for its data blocks depending on which one generates a smaller
-    data blob.
+4.  If a file is new, generate a `REPLACE`, `REPLACE_XZ`, `REPLACE_ZSTD`, or
+    `REPLACE_BZ` operation for its data blocks depending on which one generates
+    a smaller data blob.
 5.  For each other file, compare the source and target blocks and produce a
     `SOURCE_BSDIFF` or `PUFFDIFF` operation depending on which one generates a
     smaller data blob. These two operations produce binary diffs between a
@@ -315,8 +315,8 @@ delta payload is roughly as follows:
 7.  Optionally merge same or similar operations next to each other into larger
     operations for better efficiency and potentially smaller payloads.
 
-Full payloads can only contain `REPLACE`, `REPLACE_BZ`, and `REPLACE_XZ`
-operations. Delta payloads can contain any operations.
+Full payloads can only contain `REPLACE`, `REPLACE_BZ`, `REPLACE_XZ`, and
+`REPLACE_ZSTD` operations. Delta payloads can contain any operations.
 
 ### Major and Minor versions
 

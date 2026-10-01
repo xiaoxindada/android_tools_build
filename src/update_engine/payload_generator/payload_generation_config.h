@@ -264,6 +264,12 @@ struct PayloadGenerationConfig {
   // Whether to enable puffdiff ops
   bool enable_puffdiff = true;
 
+  // Whether to use zstd for REPLACE operations.
+  bool enable_replace_zstd = false;
+
+  // Whether to disable compression for REPLACE operations.
+  bool disable_replace_compression = false;
+
   std::string security_patch_level;
 
   // This doesn't mean we will use 256 threads, we still upper bound thread

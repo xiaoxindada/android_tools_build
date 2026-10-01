@@ -960,7 +960,7 @@ class PayloadChecker(object):
 
     # Type-specific checks.
     if op.type in (common.OpType.REPLACE, common.OpType.REPLACE_BZ,
-                   common.OpType.REPLACE_XZ):
+                   common.OpType.REPLACE_XZ, common.OpType.REPLACE_ZSTD):
       self._CheckReplaceOperation(op, data_length, total_dst_blocks, op_name)
     elif op.type == common.OpType.ZERO and self.minor_version >= 4:
       self._CheckZeroOperation(op, op_name)
@@ -1031,6 +1031,7 @@ class PayloadChecker(object):
         common.OpType.REPLACE: 0,
         common.OpType.REPLACE_BZ: 0,
         common.OpType.REPLACE_XZ: 0,
+        common.OpType.REPLACE_ZSTD: 0,
         common.OpType.ZERO: 0,
         common.OpType.SOURCE_COPY: 0,
         common.OpType.SOURCE_BSDIFF: 0,
@@ -1042,6 +1043,7 @@ class PayloadChecker(object):
         common.OpType.REPLACE: 0,
         common.OpType.REPLACE_BZ: 0,
         common.OpType.REPLACE_XZ: 0,
+        common.OpType.REPLACE_ZSTD: 0,
         # SOURCE_COPY operations don't have blobs.
         common.OpType.SOURCE_BSDIFF: 0,
         common.OpType.PUFFDIFF: 0,

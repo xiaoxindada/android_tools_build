@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -36,6 +37,7 @@ using android::base::unique_fd;
   fprintf(stderr, "Convert a protobuf tombstone to text.\n");
   fprintf(stderr, "Arguments:\n");
   fprintf(stderr, "  -h, --help                   print this message\n");
+  fprintf(stderr, "  --display-sp                 print stack pointer in backtraces\n");
   fprintf(stderr, "  --debug-file-directory PATH  specify the path to a symbols directory\n");
   exit(error);
 }
@@ -44,14 +46,21 @@ int main(int argc, char* argv[]) {
   std::vector<std::string> debug_file_directories;
   static struct option long_options[] = {
       {"debug-file-directory", required_argument, 0, 0},
+      {"display-sp", no_argument, 0, 0},
       {"help", no_argument, 0, 'h'},
       {},
   };
   int c;
-  while ((c = getopt_long(argc, argv, "h", long_options, 0)) != -1) {
+  int option_index = 0;
+  bool display_sp = false;
+  while ((c = getopt_long(argc, argv, "h", long_options, &option_index)) != -1) {
     switch (c) {
       case 0:
-        debug_file_directories.push_back(optarg);
+        if (option_index == 0) {
+          debug_file_directories.push_back(optarg);
+        } else {
+          display_sp = true;
+        }
         break;
 
       case 'h':
@@ -76,10 +85,14 @@ int main(int argc, char* argv[]) {
 
   Symbolizer sym;
   sym.Start(debug_file_directories);
-  bool result = tombstone_proto_to_text(
-      tombstone, [](const std::string& line, bool) { printf("%s\n", line.c_str()); },
-      [&](const BacktraceFrame& frame) { symbolize_backtrace_frame(frame, sym); });
+  std::function<void(const BacktraceFrame& frame)> callback_func = [](const BacktraceFrame&) {};
+  if (!debug_file_directories.empty()) {
+    callback_func = [&](const BacktraceFrame& frame) { symbolize_backtrace_frame(frame, sym); };
+  }
 
+  bool result = tombstone_proto_to_text(
+      tombstone, [](const std::string& line, bool) { printf("%s\n", line.c_str()); }, callback_func,
+      display_sp);
   if (!result) {
     errx(1, "tombstone was malformed");
   }

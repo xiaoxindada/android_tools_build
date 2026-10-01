@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-#include <limits>
-
-#include <sstream>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <vector>
 
 #include <gmock/gmock.h>
+#include <google/protobuf/util/json_util.h>
 #include <gtest/gtest.h>
 #include <json/writer.h>
-#include <jsonpb/jsonpb.h>
 #include <jsonpb/verify.h>
 
 #include "test.pb.h"
 
 using ::android::jsonpb::internal::FormatJson;
-using ::testing::ElementsAre;
+using ::google::protobuf::util::JsonStringToMessage;
 using ::testing::HasSubstr;
 
 namespace android {
@@ -41,21 +42,21 @@ class JsonKeyTest : public LibJsonpbVerifyTest {
  public:
   template <typename T>
   std::string GetFieldJsonName(const std::string& field_name) {
-    return T{}.GetDescriptor()->FindFieldByName(field_name)->json_name();
+    return std::string(T{}.GetDescriptor()->FindFieldByName(field_name)->json_name());
   }
 
   template <typename T>
   void TestParseOkWithUnknownKey(const std::string& field_name, const std::string& json_key) {
     std::string json = "{\"" + json_key + "\": \"test\"}";
-    auto object = JsonStringToMessage<T>(json);
-    ASSERT_TRUE(object.ok()) << object.error();
-    EXPECT_EQ("test", object->GetReflection()->GetString(
-                          *object, object->GetDescriptor()->FindFieldByName(field_name)));
-    std::string error;
-    ASSERT_FALSE(AllFieldsAreKnown(*object, json, &error))
-        << "AllFieldsAreKnown should return false";
-    EXPECT_THAT(error, HasSubstr("unknown keys"));
-    EXPECT_THAT(error, HasSubstr(json_key));
+    T object;
+    auto status = JsonStringToMessage(json, &object);
+    ASSERT_TRUE(status.ok()) << status;
+    EXPECT_EQ("test", object.GetReflection()->GetString(
+                          object, object.GetDescriptor()->FindFieldByName(field_name)));
+    auto result = AllFieldsAreKnown(object, json);
+    ASSERT_FALSE(result.ok()) << "AllFieldsAreKnown should return false";
+    EXPECT_THAT(result.error().message(), HasSubstr("unknown keys"));
+    EXPECT_THAT(result.error().message(), HasSubstr(json_key));
   }
 };
 
@@ -67,16 +68,16 @@ TEST_F(JsonKeyTest, WithJsonNameOk) {
       "    \"baz_qux\": \"BazQux\",\n"
       "    \"quxQuux\": \"QUX_QUUX\"\n"
       "\n}";
-  auto object = JsonStringToMessage<WithJsonName>(json);
-  ASSERT_TRUE(object.ok()) << object.error();
+  WithJsonName object;
+  auto status = JsonStringToMessage(json, &object);
+  ASSERT_TRUE(status.ok()) << status;
 
-  EXPECT_EQ("foo_bar", object->foo_bar());
-  EXPECT_EQ("barBaz", object->barbaz());
-  EXPECT_EQ("BazQux", object->bazqux());
-  EXPECT_EQ("QUX_QUUX", object->qux_quux());
+  EXPECT_EQ("foo_bar", object.foo_bar());
+  EXPECT_EQ("barBaz", object.barbaz());
+  EXPECT_EQ("BazQux", object.bazqux());
+  EXPECT_EQ("QUX_QUUX", object.qux_quux());
 
-  std::string error;
-  EXPECT_TRUE(AllFieldsAreKnown(*object, json, &error)) << error;
+  EXPECT_RESULT_OK(AllFieldsAreKnown(object, json));
 }
 
 // If Prototype field name as keys while json_name is present, AllFieldsAreKnown
@@ -106,16 +107,16 @@ TEST_F(JsonKeyTest, NoJsonNameOk) {
       "    \"BazQux\": \"BazQux\",\n"
       "    \"QUX_QUUX\": \"QUX_QUUX\"\n"
       "\n}";
-  auto object = JsonStringToMessage<NoJsonName>(json);
-  ASSERT_TRUE(object.ok()) << object.error();
+  NoJsonName object;
+  auto status = JsonStringToMessage(json, &object);
+  ASSERT_TRUE(status.ok()) << status;
 
-  EXPECT_EQ("foo_bar", object->foo_bar());
-  EXPECT_EQ("barBaz", object->barbaz());
-  EXPECT_EQ("BazQux", object->bazqux());
-  EXPECT_EQ("QUX_QUUX", object->qux_quux());
+  EXPECT_EQ("foo_bar", object.foo_bar());
+  EXPECT_EQ("barBaz", object.barbaz());
+  EXPECT_EQ("BazQux", object.bazqux());
+  EXPECT_EQ("QUX_QUUX", object.qux_quux());
 
-  std::string error;
-  EXPECT_TRUE(AllFieldsAreKnown(*object, json, &error)) << error;
+  EXPECT_RESULT_OK(AllFieldsAreKnown(object, json));
 }
 
 // JSON field name is lower/UpperCamelCase of Proto field name;
@@ -144,14 +145,15 @@ TEST_F(JsonKeyTest, NoJsonNameQuxQuux) {
 
 class EmbeddedJsonKeyTest : public LibJsonpbVerifyTest {
  public:
-  ErrorOr<Parent> TestEmbeddedError(const std::string& json, const std::string& unknown_key) {
-    auto object = JsonStringToMessage<Parent>(json);
-    if (!object.ok()) return object;
-    std::string error;
-    EXPECT_FALSE(AllFieldsAreKnown(*object, json, &error))
-        << "AllFieldsAreKnown should return false";
-    EXPECT_THAT(error, HasSubstr("unknown keys"));
-    EXPECT_THAT(error, HasSubstr(unknown_key));
+  android::base::Result<Parent> TestEmbeddedError(const std::string& json,
+                                                  const std::string& unknown_key) {
+    Parent object;
+    auto status = JsonStringToMessage(json, &object);
+    if (!status.ok()) return android::base::Error() << status;
+    auto result = AllFieldsAreKnown(object, json);
+    EXPECT_FALSE(result.ok()) << "AllFieldsAreKnown should return false";
+    EXPECT_THAT(result.error().message(), HasSubstr("unknown keys"));
+    EXPECT_THAT(result.error().message(), HasSubstr(unknown_key));
     return object;
   }
 };
@@ -164,18 +166,18 @@ TEST_F(EmbeddedJsonKeyTest, Ok) {
       "    \"no_json_name\": {\"BazQux\": \"BazQux\"},\n"
       "    \"repeated_no_json_name\": [{\"QUX_QUUX\": \"QUX_QUUX\"}]\n"
       "}";
-  auto object = JsonStringToMessage<Parent>(json);
-  ASSERT_TRUE(object.ok()) << object.error();
+  Parent object;
+  auto status = JsonStringToMessage(json, &object);
+  ASSERT_TRUE(status.ok()) << status;
 
-  EXPECT_EQ("foo_bar", object->with_json_name().foo_bar());
-  ASSERT_EQ(1u, object->repeated_with_json_name().size());
-  EXPECT_EQ("barBaz", object->repeated_with_json_name().begin()->barbaz());
-  EXPECT_EQ("BazQux", object->no_json_name().bazqux());
-  ASSERT_EQ(1u, object->repeated_no_json_name().size());
-  EXPECT_EQ("QUX_QUUX", object->repeated_no_json_name().begin()->qux_quux());
+  EXPECT_EQ("foo_bar", object.with_json_name().foo_bar());
+  ASSERT_EQ(1u, object.repeated_with_json_name().size());
+  EXPECT_EQ("barBaz", object.repeated_with_json_name().begin()->barbaz());
+  EXPECT_EQ("BazQux", object.no_json_name().bazqux());
+  ASSERT_EQ(1u, object.repeated_no_json_name().size());
+  EXPECT_EQ("QUX_QUUX", object.repeated_no_json_name().begin()->qux_quux());
 
-  std::string error;
-  EXPECT_TRUE(AllFieldsAreKnown(*object, json, &error)) << error;
+  EXPECT_RESULT_OK(AllFieldsAreKnown(object, json));
 }
 
 TEST_F(EmbeddedJsonKeyTest, FooBar) {
@@ -219,16 +221,15 @@ class ScalarTest : public LibJsonpbVerifyTest {
     if (!reader->parse(&*r.begin(), &*r.end(), &rvalue, &errorMessage))
       return ::testing::AssertionFailure() << errorMessage;
     Json::StreamWriterBuilder factory;
-    return lvalue == rvalue
-               ? (::testing::AssertionSuccess() << "Both are \n"
-                                                << Json::writeString(factory, lvalue))
-               : (::testing::AssertionFailure() << Json::writeString(factory, lvalue)
-                                                << "\n does not equal \n"
-                                                << Json::writeString(factory, rvalue));
+    return lvalue == rvalue ? (::testing::AssertionSuccess() << "Both are \n"
+                                                             << Json::writeString(factory, lvalue))
+                            : (::testing::AssertionFailure()
+                               << Json::writeString(factory, lvalue) << "\n does not equal \n"
+                               << Json::writeString(factory, rvalue));
   }
 
-  bool EqReformattedJson(const std::string& json, std::string* error) {
-    return android::jsonpb::EqReformattedJson(json, &scalar_, error);
+  auto EqReformattedJson(const std::string& json) {
+    return android::jsonpb::EqReformattedJson(json, &scalar_);
   }
 
   Scalar scalar_;
@@ -250,7 +251,7 @@ TEST_F(ScalarTest, Ok) {
   ASSERT_TRUE(formatted.ok()) << formatted.error();
   EXPECT_TRUE(IsJsonEq(json, *formatted));
 
-  EXPECT_TRUE(EqReformattedJson(json, &error_)) << error_;
+  EXPECT_RESULT_OK(EqReformattedJson(json));
 }
 
 using ScalarTestErrorParam = std::tuple<const char*, const char*>;
@@ -264,7 +265,7 @@ TEST_P(ScalarTestError, Test) {
   auto formatted = FormatJson(json, &scalar_);
   ASSERT_TRUE(formatted.ok()) << formatted.error();
   EXPECT_FALSE(IsJsonEq(json, *formatted)) << message;
-  EXPECT_FALSE(EqReformattedJson(json, &error_)) << "EqReformattedJson should return false";
+  EXPECT_FALSE(EqReformattedJson(json).ok()) << "EqReformattedJson should return false";
 }
 
 static const std::vector<ScalarTestErrorParam> gScalarTestErrorParams = {

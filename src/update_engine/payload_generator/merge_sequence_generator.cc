@@ -354,7 +354,9 @@ bool MergeSequenceGenerator::Generate(
   // operations to discard to break cycles; thus yielding a deterministic
   // sequence.
   std::map<CowMergeOperation, int> incoming_edges;
+  size_t edge_count = 0;
   for (const auto& it : merge_after_) {
+    edge_count += it.second.size();
     for (const auto& blocked : it.second) {
       // Value is default initialized to 0.
       incoming_edges[blocked] += 1;
@@ -375,7 +377,9 @@ bool MergeSequenceGenerator::Generate(
 
   std::vector<CowMergeOperation> merge_sequence;
   std::set<CowMergeOperation> convert_to_raw;
+  size_t iterations = 0;
   while (!incoming_edges.empty()) {
+    iterations++;
     if (!free_operations.empty()) {
       merge_sequence.insert(
           merge_sequence.end(), free_operations.begin(), free_operations.end());
@@ -418,11 +422,11 @@ bool MergeSequenceGenerator::Generate(
       }
     }
 
-    LOG(INFO) << "Remaining transfers " << incoming_edges.size()
-              << ", free transfers " << free_operations.size()
-              << ", merge_sequence size " << merge_sequence.size();
     free_operations = std::move(next_free_operations);
   }
+  LOG(INFO) << "Merge sequence generation finished in " << iterations
+            << " iterations, graph has " << operations_.size() << " nodes and "
+            << edge_count << " edges";
 
   if (!free_operations.empty()) {
     merge_sequence.insert(

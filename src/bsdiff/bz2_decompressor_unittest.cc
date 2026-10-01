@@ -25,11 +25,11 @@ namespace bsdiff {
 class BZ2DecompressorTest : public testing::Test {
  protected:
   void SetUp() {
-    decompressor_.reset(new BZ2Decompressor());
+    decompressor_.reset(new BZ2MemoryDecompressor());
     EXPECT_NE(nullptr, decompressor_.get());
   }
 
-  std::unique_ptr<BZ2Decompressor> decompressor_;
+  std::unique_ptr<BZ2MemoryDecompressor> decompressor_;
 };
 
 TEST_F(BZ2DecompressorTest, ReadingFromEmptyFileTest) {

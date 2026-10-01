@@ -7,6 +7,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 #include <memory>
 
@@ -18,11 +19,6 @@ class DecompressorInterface {
  public:
   virtual ~DecompressorInterface() {}
 
-  // Set the buffer starting from |input_data| with length |size| as the input
-  // compressed stream. This buffer is owned by the caller and should stay
-  // valid until the Close() function is called.
-  virtual bool SetInputData(const uint8_t* input_data, size_t size) = 0;
-
   // Decompress the stream and output |bytes_to_output| bytes of data to
   // |output_data|. Returns false if not all bytes_to_output can be
   // decompressed from the stream due to a decompressor error or EOF.
@@ -32,7 +28,14 @@ class DecompressorInterface {
   virtual bool Close() = 0;
 };
 
-std::unique_ptr<DecompressorInterface> CreateDecompressor(CompressorType type);
+std::unique_ptr<DecompressorInterface>
+CreateDecompressor(CompressorType type, const uint8_t* input_data, size_t size);
+
+
+std::unique_ptr<DecompressorInterface> CreateDecompressor(CompressorType type,
+                                                          int fd,
+                                                          off_t offset,
+                                                          size_t size);
 
 }  // namespace bsdiff
 #endif  // _BSDIFF_DECOMPRESSOR_INTERFACE_H_

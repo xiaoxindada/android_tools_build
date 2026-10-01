@@ -69,8 +69,9 @@ int main(int argc, char* argv[]) {
 
   // Check to see if the process exists and that we can actually send a signal to it.
   android::procinfo::ProcessInfo proc_info;
-  if (!android::procinfo::GetProcessInfo(pid, &proc_info)) {
-    err(1, "failed to fetch info for process %d", pid);
+  std::string error;
+  if (!android::procinfo::GetProcessInfo(pid, &proc_info, &error)) {
+    err(1, "failed to fetch info for process %d: %s", pid, error.c_str());
   }
 
   if (proc_info.state == android::procinfo::kProcessStateZombie) {

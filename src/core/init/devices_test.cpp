@@ -345,5 +345,50 @@ TEST(device_handler, SysfsPermissionsMatchWildcardPrefix) {
     EXPECT_EQ(1000U, permissions.gid());
 }
 
+TEST(device_handler, SysfsPermissionsMatchAttributeWildcard) {
+    TemporaryDir fake_sys_root;
+    std::string platform_device_dir = fake_sys_root.path + "/class/typec/port0"s;
+    // Wildcard attribute example. We have to fudge this a little because it's
+    // going to do real filesystem operations.
+    // /sys/class/typec/port0 port*/priority 0660 root system
+    SysfsPermissions permissions(platform_device_dir, "port*/priority", 0660, 0, 1000, false);
+
+    auto create_attribute_file = [&platform_device_dir](const std::string& attribute) {
+        std::string full_path = platform_device_dir + "/" + attribute;
+        mkdir_recursive(android::base::Dirname(full_path), 0777);
+        android::base::WriteStringToFile("", full_path, false);
+        return full_path;
+    };
+
+    std::vector<std::string> expected_matches = {
+            "port0/priority",
+            "port1/priority",
+            "port0.0/priority",
+    };
+    std::vector<std::string> match_full_paths;
+    for (const std::string& expected_match : expected_matches) {
+        match_full_paths.push_back(create_attribute_file(expected_match));
+    }
+
+    std::vector<std::string> expected_non_matches = {
+            "priority",
+            "foo-port0/priority",
+            "port0/foobar/priority",
+    };
+    for (const std::string& expected_non_match : expected_non_matches) {
+        create_attribute_file(expected_non_match);
+    }
+
+    std::vector<std::string> actual_matches =
+            permissions.FindMatchingAttributes(platform_device_dir);
+
+    EXPECT_EQ(actual_matches.size(), match_full_paths.size());
+    std::sort(actual_matches.begin(), actual_matches.end());
+    std::sort(match_full_paths.begin(), match_full_paths.end());
+    for (unsigned int i = 0; i < actual_matches.size(); i++) {
+        EXPECT_EQ(actual_matches[i], match_full_paths[i]);
+    }
+}
+
 }  // namespace init
 }  // namespace android

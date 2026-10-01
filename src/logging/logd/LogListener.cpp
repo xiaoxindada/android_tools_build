@@ -28,6 +28,8 @@
 #include <private/android_filesystem_config.h>
 #include <private/android_logger.h>
 
+#include <log/pmsg_writer.h>
+
 #include <IOUringSocketHandler/IOUringSocketHandler.h>
 #include <android-base/logging.h>
 #include <android_logd_flags.h>
@@ -35,8 +37,6 @@
 #include "LogBuffer.h"
 #include "LogListener.h"
 #include "LogPermissions.h"
-
-static bool uring_enabled_ = false;
 
 LogListener::LogListener(LogBuffer* buf) : socket_(GetLogSocket()), logbuf_(buf) {}
 
@@ -77,10 +77,10 @@ bool LogListener::InitializeUring() {
 void LogListener::ThreadFunction() {
     prctl(PR_SET_NAME, "logd.writer");
 
-    uring_enabled_ = android::logd::flags::enable_iouring() && InitializeUring();
+    const bool use_uring_ = android::logd::flags::use_iouring() && InitializeUring();
 
     while (true) {
-        if (uring_enabled_) {
+        if (use_uring_) {
             HandleDataUring();
         } else {
             HandleDataSync();
@@ -172,6 +172,12 @@ void LogListener::ProcessBuffer(struct ucred* cred, void* buffer, ssize_t n) {
 
     logbuf_->Log(logId, header->realtime, cred->uid, cred->pid, header->tid, msg,
                  ((size_t)n <= UINT16_MAX) ? (uint16_t)n : UINT16_MAX);
+
+    iovec vec = {.iov_base = msg, .iov_len = static_cast<size_t>(n)};
+    timespec ts = {.tv_sec = static_cast<time_t>(header->realtime.tv_sec),
+                   .tv_nsec = static_cast<long>(header->realtime.tv_nsec)};
+
+    PmsgWrite(logId, &ts, &vec, 1, cred->uid, cred->pid, header->tid);
 }
 
 int LogListener::GetLogSocket() {

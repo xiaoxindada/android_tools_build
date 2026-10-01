@@ -25,9 +25,13 @@
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 #include <android/hardware/usb/gadget/1.0/IUsbGadget.h>
+#include <android_hardware_usb_flags.h>
+
+namespace usb_flags = android::hardware::usb::flags;
 
 using aidl::android::hardware::usb::gadget::GadgetFunction;
 using android::base::GetProperty;
+using android::base::GetBoolProperty;
 using android::base::SetProperty;
 using android::hardware::Return;
 using ndk::ScopedAStatus;
@@ -46,9 +50,20 @@ int main(int /*argc*/, char** /*argv*/) {
                     .append("/default");
 
     std::string function = GetProperty("persist.sys.usb.config", "");
+    uint64_t functions;
+
     if (function == "adb") {
         LOG(INFO) << "persistent prop is adb";
         SetProperty("ctl.start", "adbd");
+        functions = static_cast<uint64_t>(GadgetFunction::ADB);
+    } else {
+        LOG(INFO) << "Signal MTP to enable default functions";
+        functions = static_cast<uint64_t>(GadgetFunction::MTP);
+    }
+
+    if (usb_flags::enable_aoa_userspace_implementation() &&
+        GetBoolProperty("ro.usb.userspace.aoa.enabled", false)) {
+        functions |= static_cast<uint64_t>(GadgetFunction::CTRL);
     }
 
     if (AServiceManager_isDeclared(service_name.c_str())) {
@@ -58,14 +73,7 @@ int main(int /*argc*/, char** /*argv*/) {
         ScopedAStatus ret;
         if (gadget_aidl != nullptr) {
             LOG(INFO) << "Usb AIDL HAL found.";
-            if (function == "adb") {
-                ret = gadget_aidl->setCurrentUsbFunctions(
-                        static_cast<uint64_t>(GadgetFunction::ADB), nullptr, 0, operationId);
-            } else {
-                LOG(INFO) << "Signal MTP to enable default functions";
-                ret = gadget_aidl->setCurrentUsbFunctions(
-                        static_cast<uint64_t>(GadgetFunction::MTP), nullptr, 0, operationId);
-            }
+            ret = gadget_aidl->setCurrentUsbFunctions(functions, nullptr, 0, operationId);
 
             if (!ret.isOk()) LOG(ERROR) << "Error while invoking usb hal";
         } else {
@@ -77,14 +85,7 @@ int main(int /*argc*/, char** /*argv*/) {
         Return<void> ret;
         if (gadget != nullptr) {
             LOG(INFO) << "Usb HAL found.";
-            if (function == "adb") {
-                ret = gadget->setCurrentUsbFunctions(static_cast<uint64_t>(GadgetFunction::ADB),
-                                                     nullptr, 0);
-            } else {
-                LOG(INFO) << "Signal MTP to enable default functions";
-                ret = gadget->setCurrentUsbFunctions(static_cast<uint64_t>(GadgetFunction::MTP),
-                                                     nullptr, 0);
-            }
+            ret = gadget->setCurrentUsbFunctions(functions, nullptr, 0);
 
             if (!ret.isOk()) LOG(ERROR) << "Error while invoking usb hal";
         } else {

@@ -129,26 +129,32 @@ TEST(cmd_inject, skip_empty_output_file) {
 }
 
 // @CddTest = 6.1/C-0-2
-TEST(cmd_inject, inject_kernel_data) {
+TEST(cmd_inject, inject_kernel_module_data) {
   const std::string recording_file =
-      GetTestData(std::string("etm") + OS_PATH_SEPARATOR + "perf_kernel.data");
+      GetTestData(std::string("etm") + OS_PATH_SEPARATOR + "perf_kernel_module_zram.data");
 
   // Inject directly to autofdo format.
-  TemporaryFile tmpfile;
-  close(tmpfile.release());
-  ASSERT_TRUE(RunInjectCmd({"-i", recording_file, "-o", tmpfile.path}));
-  std::string autofdo_output;
-  ASSERT_TRUE(android::base::ReadFileToString(tmpfile.path, &autofdo_output));
-  ASSERT_NE(autofdo_output.find("rq_stats.ko"), std::string::npos);
+  std::string autofdo_data;
+  ASSERT_TRUE(RunInjectCmd({"-i", recording_file}, &autofdo_data));
+  CheckMatchingExpectedData("perf_inject_kernel_module_zram.data", autofdo_data);
 
-  // Inject through etm branch list.
-  TemporaryFile tmpfile2;
-  close(tmpfile2.release());
-  ASSERT_TRUE(RunInjectCmd({"-i", recording_file, "-o", tmpfile.path, "--output", "branch-list"}));
-  ASSERT_TRUE(RunInjectCmd({"-i", tmpfile.path, "-o", tmpfile2.path}));
-  std::string output;
-  ASSERT_TRUE(android::base::ReadFileToString(tmpfile2.path, &output));
-  ASSERT_EQ(output, autofdo_output);
+  // Inject through ETM branch list. We have the kernel module file when converting to ETM branch
+  // list. The output file via ETM branch list is slightly different from the one not via branch
+  // list conversion, because of how we handle branch_to_addr.
+  TemporaryFile branch_list_file;
+  close(branch_list_file.release());
+  // Run inject cmd without symdir, to make sure we don't have kernel module file in this step.
+  ASSERT_TRUE(InjectCmd()->Run(
+      {"-i", recording_file, "-o", branch_list_file.path, "--output", "branch-list"}));
+  ASSERT_TRUE(RunInjectCmd({"-i", branch_list_file.path}, &autofdo_data));
+  CheckMatchingExpectedData("perf_inject_kernel_module_zram_via_branch_list.data", autofdo_data);
+
+  // Inject through ETM branch list. We don't have the kernel module file when converting to ETM
+  // branch list.
+  ASSERT_TRUE(
+      RunInjectCmd({"-i", recording_file, "-o", branch_list_file.path, "--output", "branch-list"}));
+  ASSERT_TRUE(RunInjectCmd({"-i", branch_list_file.path}, &autofdo_data));
+  CheckMatchingExpectedData("perf_inject_kernel_module_zram_via_branch_list.data", autofdo_data);
 }
 
 // @CddTest = 6.1/C-0-2
@@ -209,7 +215,7 @@ TEST(cmd_inject, merge_branch_list_files) {
 
 // @CddTest = 6.1/C-0-2
 TEST(cmd_inject, report_warning_when_overflow) {
-  CapturedStderr capture;
+  android::base::CapturedStderr capture;
   std::vector<std::unique_ptr<TemporaryFile>> branch_list_files;
   std::vector<std::unique_ptr<TemporaryFile>> input_files;
 
@@ -376,7 +382,7 @@ TEST(cmd_inject, check_missing_aux_data) {
   // Inject a malformed perf.data where an aux record's offset was changed to
   // point outside the file. It should report warnings and generate an empty file.
   android::base::ScopedLogSeverity severity(android::base::INFO);
-  CapturedStderr capture;
+  android::base::CapturedStderr capture;
   TemporaryFile tmpfile;
   close(tmpfile.release());
   ASSERT_TRUE(RunInjectCmd({"-i", GetTestData("etm/perf_etm_wrong_aux.data"), "-o", tmpfile.path}));

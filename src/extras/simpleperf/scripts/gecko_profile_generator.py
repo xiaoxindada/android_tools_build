@@ -497,7 +497,7 @@ def _gecko_profile(
         "device": meta_info.get("product_props"),
         "platform": meta_info.get("android_build_fingerprint"),
         "stackwalk": 1,
-        "debug": 0,
+        "debug": 1 if meta_info.get("app_type") == "debuggable" else 0,
         "gcpoison": 0,
         "asyncstack": 1,
         # The profile timestamp is actually the end time, not the start time.

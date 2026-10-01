@@ -48,6 +48,15 @@ int AVendorSupport_getSdkApiLevelOf(int vendorApiLevel) {
 int AVendorSupport_getVendorApiLevel() {
     int vendorApiLevel = android::base::GetIntProperty("ro.vndk.version", 0);
     if (vendorApiLevel) {
+        if (vendorApiLevel == __ANDROID_API_V__) {
+            // We only have ro.vndk.version == 35 in 24Q1(U-QPR2) release.
+            // This does not mean the version is bumped up, but we used this as
+            // a workaournd to indicate that the VNDK libs are found in the
+            // vendor partition.
+            // The actual vendor API level still remains at Android U.
+            // The next vendor API level of 34 is 202404, not 35.
+            return __ANDROID_API_U__;
+        }
         return vendorApiLevel;
     }
     return android::base::GetIntProperty("ro.board.api_level", 0);

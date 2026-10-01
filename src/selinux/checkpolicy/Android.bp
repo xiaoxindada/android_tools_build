@@ -48,6 +48,7 @@ cc_binary_host {
         "checkpolicy.c",
     ],
     static_libs: ["libsepol"],
+    stl: "libc++_static",
 }
 
 cc_binary_host {

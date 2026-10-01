@@ -23,7 +23,6 @@
 
 #include <brillo/message_loops/message_loop.h>
 #include <libsnapshot/snapshot.h>
-#include <libsnapshot/snapshot_stats.h>
 
 #include "update_engine/common/action.h"
 #include "update_engine/common/boot_control_interface.h"
@@ -75,7 +74,6 @@ class CleanupPreviousUpdateAction : public Action<CleanupPreviousUpdateAction> {
   bool running_{false};
   bool cancel_failed_{false};
   unsigned int last_percentage_{0};
-  android::snapshot::ISnapshotMergeStats* merge_stats_;
   ScopedTaskId scheduled_task_;
 
   // Helpers for task management.

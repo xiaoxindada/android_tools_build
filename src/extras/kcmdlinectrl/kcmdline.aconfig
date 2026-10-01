@@ -1,0 +1,8 @@
+package: "com.android.kcmdline"
+container: "system"
+flag {
+    name: "rust_binder"
+    namespace: "rust"
+    description: "Override the Binder driver on this device to use Rust"
+    bug: "278052745"
+}

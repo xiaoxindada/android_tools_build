@@ -178,8 +178,8 @@ bool EventFd::CreateMappedBuffer(size_t mmap_pages, bool report_error) {
   mmap_addr_ = mmap_addr;
   mmap_len_ = mmap_len;
   mmap_metadata_page_ = reinterpret_cast<perf_event_mmap_page*>(mmap_addr_);
-  mmap_data_buffer_ = reinterpret_cast<char*>(mmap_addr_) + page_size;
-  mmap_data_buffer_size_ = mmap_len_ - page_size;
+  mmap_data_buffer_ = reinterpret_cast<char*>(mmap_addr_) + mmap_metadata_page_->data_offset;
+  mmap_data_buffer_size_ = mmap_metadata_page_->data_size;
   return true;
 }
 
@@ -189,8 +189,7 @@ bool EventFd::ShareMappedBuffer(const EventFd& event_fd, bool report_error) {
   int result = ioctl(perf_event_fd_, PERF_EVENT_IOC_SET_OUTPUT, event_fd.perf_event_fd_);
   if (result != 0) {
     if (report_error) {
-      PLOG(ERROR) << "failed to share mapped buffer of " << event_fd.perf_event_fd_ << " with "
-                  << perf_event_fd_;
+      PLOG(ERROR) << "failed to share mapped buffer of " << event_fd.Name() << " with " << Name();
     }
     return false;
   }

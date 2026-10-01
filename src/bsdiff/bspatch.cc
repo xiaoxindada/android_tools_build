@@ -30,9 +30,10 @@ __FBSDID("$FreeBSD: src/usr.bin/bsdiff/bspatch/bspatch.c,v 1.1 2005/08/06 01:59:
 
 #include "bsdiff/bspatch.h"
 
+#include <brotli/decode.h>
+#include <bzlib.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -239,18 +240,9 @@ int bspatch(const uint8_t* old_data,
   return bspatch(old_file, new_file, patch_data, patch_size);
 }
 
-// Patch |old_file| with |patch_data| and save it to |new_file|.
-// Returns 0 on success, 1 on I/O error and 2 on data error.
 int bspatch(const std::unique_ptr<FileInterface>& old_file,
             const std::unique_ptr<FileInterface>& new_file,
-            const uint8_t* patch_data,
-            size_t patch_size) {
-  BsdiffPatchReader patch_reader;
-  if (!patch_reader.Init(patch_data, patch_size)) {
-    LOG(ERROR) << "Failed to initialize patch reader.";
-    return 2;
-  }
-
+            BsdiffPatchReader* patch_reader) {
   uint64_t old_file_size;
   if (!old_file->GetSize(&old_file_size)) {
     LOG(ERROR) << "Cannot obtain the size of old file.";
@@ -263,17 +255,17 @@ int bspatch(const std::unique_ptr<FileInterface>& old_file,
   std::vector<uint8_t> old_buf(1024 * 1024);
   std::vector<uint8_t> new_buf(1024 * 1024);
   uint64_t old_file_pos = 0;
-  while (newpos < patch_reader.new_file_size()) {
+  while (newpos < patch_reader->new_file_size()) {
     ControlEntry control_entry(0, 0, 0);
-    if (!patch_reader.ParseControlEntry(&control_entry)) {
+    if (!patch_reader->ParseControlEntry(&control_entry)) {
       LOG(ERROR) << "Failed to read control stream.";
       return 2;
     }
 
     // Sanity-check.
-    if (newpos + control_entry.diff_size > patch_reader.new_file_size()) {
+    if (newpos + control_entry.diff_size > patch_reader->new_file_size()) {
       LOG(ERROR) << "Corrupt patch.";
-      return 2;
+      return 3;
     }
 
     int ret = 0;
@@ -285,7 +277,7 @@ int bspatch(const std::unique_ptr<FileInterface>& old_file,
       // because we will skip part where |oldpos| < 0.
       ret = ReadStreamAndWriteAll(
           new_file, oldpos - old_file_size, new_buf.data(), new_buf.size(),
-          std::bind(&BsdiffPatchReader::ReadDiffStream, &patch_reader,
+          std::bind(&BsdiffPatchReader::ReadDiffStream, patch_reader,
                     std::placeholders::_1, std::placeholders::_2));
       if (ret)
         return ret;
@@ -314,9 +306,9 @@ int bspatch(const std::unique_ptr<FileInterface>& old_file,
         return 2;
       }
       // Read same amount of bytes from diff block
-      if (!patch_reader.ReadDiffStream(new_buf.data(), read_bytes)) {
+      if (!patch_reader->ReadDiffStream(new_buf.data(), read_bytes)) {
         LOG(ERROR) << "Failed to read diff stream.";
-        return 2;
+        return 4;
       }
       // new_buf already has data from diff block, adds old data to it.
       for (size_t k = 0; k < read_bytes; k++)
@@ -331,7 +323,7 @@ int bspatch(const std::unique_ptr<FileInterface>& old_file,
     // Adjust pointers.
     newpos += control_entry.diff_size;
     if (oldpos > INT64_MAX - static_cast<int64_t>(control_entry.diff_size))
-      return 2;
+      return 5;
     oldpos += control_entry.diff_size;
 
     if (oldpos > static_cast<int64_t>(old_file_size)) {
@@ -339,22 +331,22 @@ int bspatch(const std::unique_ptr<FileInterface>& old_file,
       // because we skipped part where |oldpos| > old_file_size.
       ret = ReadStreamAndWriteAll(
           new_file, oldpos - old_file_size, new_buf.data(), new_buf.size(),
-          std::bind(&BsdiffPatchReader::ReadDiffStream, &patch_reader,
+          std::bind(&BsdiffPatchReader::ReadDiffStream, patch_reader,
                     std::placeholders::_1, std::placeholders::_2));
       if (ret)
         return ret;
     }
 
     // Sanity-check.
-    if (newpos + control_entry.extra_size > patch_reader.new_file_size()) {
+    if (newpos + control_entry.extra_size > patch_reader->new_file_size()) {
       LOG(ERROR) << "Corrupt patch.";
-      return 2;
+      return 6;
     }
 
     // Read extra block.
     ret = ReadStreamAndWriteAll(
         new_file, control_entry.extra_size, new_buf.data(), new_buf.size(),
-        std::bind(&BsdiffPatchReader::ReadExtraStream, &patch_reader,
+        std::bind(&BsdiffPatchReader::ReadExtraStream, patch_reader,
                   std::placeholders::_1, std::placeholders::_2));
     if (ret)
       return ret;
@@ -363,14 +355,14 @@ int bspatch(const std::unique_ptr<FileInterface>& old_file,
     newpos += control_entry.extra_size;
     if (control_entry.offset_increment > 0 &&
         oldpos > INT64_MAX - control_entry.offset_increment)
-      return 2;
+      return 7;
     oldpos += control_entry.offset_increment;
   }
 
   // Close input file.
   old_file->Close();
 
-  if (!patch_reader.Finish()) {
+  if (!patch_reader->Finish()) {
     LOG(ERROR) << "Failed to finish the patch reader.";
     return 2;
   }
@@ -381,6 +373,33 @@ int bspatch(const std::unique_ptr<FileInterface>& old_file,
   }
 
   return 0;
+}
+
+// Patch |old_file| with |patch_data| and save it to |new_file|.
+// Returns 0 on success, 1 on I/O error and 2 on data error.
+int bspatch(const std::unique_ptr<FileInterface>& old_file,
+            const std::unique_ptr<FileInterface>& new_file,
+            const uint8_t* patch_data,
+            size_t patch_size) {
+  BsdiffPatchReader patch_reader;
+  if (!patch_reader.Init(patch_data, patch_size)) {
+    LOG(ERROR) << "Failed to initialize patch reader.";
+    return 2;
+  }
+  return bspatch(old_file, new_file, &patch_reader);
+}
+
+int bspatch(const std::unique_ptr<FileInterface>& old_file,
+            const std::unique_ptr<FileInterface>& new_file,
+            int patch_fd,
+            off_t patch_offset,
+            size_t patch_size) {
+  BsdiffPatchReader patch_reader;
+  if (!patch_reader.Init(patch_fd, patch_offset, patch_size)) {
+    LOG(ERROR) << "Failed to initialize patch reader.";
+    return 2;
+  }
+  return bspatch(old_file, new_file, &patch_reader);
 }
 
 }  // namespace bsdiff

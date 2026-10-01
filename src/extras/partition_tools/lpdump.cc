@@ -33,18 +33,20 @@
 #include <android-base/parseint.h>
 #include <android-base/properties.h>
 #include <android-base/strings.h>
+#include <google/protobuf/util/json_util.h>
 #ifdef __ANDROID__
 #include <cutils/android_get_control_file.h>
 #include <fs_mgr.h>
 #include <libsnapshot/snapshot.h>
 #endif
-#include <jsonpb/jsonpb.h>
 #include <liblp/builder.h>
 #include <liblp/liblp.h>
 
 #include "dynamic_partitions_device_info.pb.h"
 using namespace android;
 using namespace android::fs_mgr;
+using google::protobuf::util::MessageToJsonString;
+using google::protobuf::util::JsonPrintOptions;
 
 static int usage(int /* argc */, char* argv[], std::ostream& cerr) {
     cerr << argv[0]
@@ -284,12 +286,15 @@ static int PrintJson(const LpMetadata* metadata, std::ostream& cout,
     }
 #endif
 
-    auto error_or_json = jsonpb::MessageToJsonString(proto);
-    if (!error_or_json.ok()) {
-        cerr << error_or_json.error() << "\n";
+    std::string json;
+    auto status = MessageToJsonString(proto, &json, JsonPrintOptions{
+        .add_whitespace = true,
+    });
+    if (!status.ok()) {
+        cerr << status << "\n";
         return EX_SOFTWARE;
     }
-    cout << *error_or_json;
+    cout << json;
     return EX_OK;
 }
 

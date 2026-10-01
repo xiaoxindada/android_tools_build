@@ -53,10 +53,6 @@ public class ExtensionRegistryLite {
   // applications. Need to support this feature on smaller granularity.
   private static volatile boolean eagerlyParseMessageSets = false;
 
-  // short circuit the ExtensionRegistryFactory via assumevalues trickery
-  @SuppressWarnings("JavaOptionalSuggestions")
-  private static boolean doFullRuntimeInheritanceCheck = true;
-
   // Visible for testing.
   static final String EXTENSION_CLASS_NAME = "com.google.protobuf.Extension";
 
@@ -88,9 +84,9 @@ public class ExtensionRegistryLite {
    * available.
    */
   public static ExtensionRegistryLite newInstance() {
-    return doFullRuntimeInheritanceCheck
-        ? ExtensionRegistryFactory.create()
-        : new ExtensionRegistryLite();
+    return Android.assumeLiteRuntime
+        ? new ExtensionRegistryLite()
+        : ExtensionRegistryFactory.create();
   }
 
   private static volatile ExtensionRegistryLite emptyRegistry;
@@ -100,7 +96,7 @@ public class ExtensionRegistryLite {
    * ExtensionRegistry} (if the full (non-Lite) proto libraries are available).
    */
   public static ExtensionRegistryLite getEmptyRegistry() {
-    if (!doFullRuntimeInheritanceCheck) {
+    if (Android.assumeLiteRuntime) {
       return EMPTY_REGISTRY_LITE;
     }
     ExtensionRegistryLite result = emptyRegistry;
@@ -108,7 +104,7 @@ public class ExtensionRegistryLite {
       synchronized (ExtensionRegistryLite.class) {
         result = emptyRegistry;
         if (result == null) {
-          result = emptyRegistry = ExtensionRegistryFactory.createEmpty();
+          emptyRegistry = result = ExtensionRegistryFactory.createEmpty();
         }
       }
     }
@@ -145,10 +141,10 @@ public class ExtensionRegistryLite {
    * i.e. {@link GeneratedMessageLite.GeneratedExtension}.
    */
   public final void add(ExtensionLite<?, ?> extension) {
-    if (GeneratedMessageLite.GeneratedExtension.class.isAssignableFrom(extension.getClass())) {
+    if (extension instanceof GeneratedMessageLite.GeneratedExtension) {
       add((GeneratedMessageLite.GeneratedExtension<?, ?>) extension);
     }
-    if (doFullRuntimeInheritanceCheck && ExtensionRegistryFactory.isFullRegistry(this)) {
+    if (!Android.assumeLiteRuntime && ExtensionRegistryFactory.isFullRegistry(this)) {
       try {
         this.getClass().getMethod("add", ExtensionClassHolder.INSTANCE).invoke(this, extension);
       } catch (Exception e) {

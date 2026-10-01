@@ -47,7 +47,7 @@ class TestExampleCpp(TestExampleBase):
         self.check_annotation_summary(summary_file, [
             ("native-lib.cpp", 20, 0),
             ("BusyLoopThread", 20, 0),
-            ("line 43", 20, 0)])
+            ("line 45", 20, 0)])
 
     def test_report_sample(self):
         self.common_test_report_sample(
@@ -133,8 +133,8 @@ class TestExampleCppTraceOffCpu(TestExampleBase):
             ("SleepThread", 80, 0),
             ("RunFunction", 20, 20),
             ("SleepFunction", 20, 0),
-            ("line 70", 20, 0),
-            ("line 80", 20, 0)])
+            ("line 72", 20, 0),
+            ("line 82", 20, 0)])
         self.run_cmd([INFERNO_SCRIPT, "-sc"])
         self.check_inferno_report_html([('SleepThread', 80),
                                         ('RunFunction', 20),
@@ -162,7 +162,7 @@ class TestExampleCppJniCall(TestExampleBase):
         self.check_exist(dirname="annotated_files")
         self.check_file_under_dir("annotated_files", "native-lib.cpp")
         summary_file = os.path.join("annotated_files", "summary")
-        self.check_annotation_summary(summary_file, [("native-lib.cpp", 5, 0), ("line 37", 5, 0)])
+        self.check_annotation_summary(summary_file, [("native-lib.cpp", 5, 0), ("line 39", 5, 0)])
         if self.use_compiled_java_code:
             self.check_file_under_dir("annotated_files", "MixActivity.java")
             self.check_annotation_summary(summary_file, [
@@ -170,7 +170,7 @@ class TestExampleCppJniCall(TestExampleBase):
                 ("run", 80, 0),
                 ("line 27", 20, 0),
                 ("native-lib.cpp", 5, 0),
-                ("line 37", 5, 0)])
+                ("line 39", 5, 0)])
 
         self.run_cmd([INFERNO_SCRIPT, "-sc"])
 

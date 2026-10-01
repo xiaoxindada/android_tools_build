@@ -17,10 +17,13 @@ use std::convert::TryInto;
 use std::fmt::Display;
 use std::mem::replace;
 use std::os::unix::io::AsRawFd;
+use std::path::Path;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::RwLock;
 use std::thread;
+use std::time::Duration;
 
 use log::debug;
 use log::error;
@@ -33,6 +36,7 @@ use regex::Regex;
 use crate::args::ConfigFile;
 use crate::format::Record;
 use crate::format::{FileId, RecordsFile};
+use crate::tracer::page_size;
 use crate::Error;
 use crate::ReplayArgs;
 use libc::{c_void, off64_t, pread64};
@@ -55,6 +59,34 @@ impl<T: Display> Drop for ScopedLog<T> {
     fn drop(&mut self) {
         debug!("{} {} end", self.thd_id, self.msg);
     }
+}
+
+/// Records a list of metrics to a file, with each metric on a new line.
+///
+/// * `stat_path` - The path to the file where metrics will be written.
+/// * `metrics` - A slice of tuples, where each tuple contains a metric name
+///   and a value that can be displayed.
+fn record_metric_slice(stat_path: &std::path::Path, metrics: &[(&str, &dyn std::fmt::Display)]) {
+    let output: String =
+        metrics.iter().map(|(name, value)| format!("{}: {}\n", name, value)).collect();
+    if let Err(e) = std::fs::write(stat_path, output) {
+        error!("Failed to write to stat file '{}': {}", stat_path.display(), e);
+    }
+}
+
+fn record_metrics(stat_path: &Path, metrics: &ReplayMetrics, page_size_valid: bool) {
+    // If we failed to obtain page size, the prefetched_pages is set to unknown.
+    let prefetched_pages_metric: &dyn std::fmt::Display =
+        if page_size_valid { &metrics.prefetched_pages_count } else { &"unknown" };
+
+    let metrics: &[(&str, &dyn std::fmt::Display)] = &[
+        ("prefetched_records", &metrics.prefetched_records_count),
+        ("prefetched_bytes", &metrics.prefetched_bytes_count),
+        ("prefetched_pages", prefetched_pages_metric),
+        ("exec_time_ms", &metrics.exec_time.as_millis()),
+    ];
+
+    record_metric_slice(stat_path, metrics);
 }
 
 fn readahead(
@@ -109,6 +141,7 @@ fn worker_internal(
     exit_on_error: bool,
     exclude_files_regex: Vec<Regex>,
     buffer: &mut [u8],
+    page_size: Option<usize>,
 ) -> Result<(), Error> {
     loop {
         let index = {
@@ -188,6 +221,14 @@ fn worker_internal(
                 continue;
             }
         }
+        // If readahead is successful, update the metrics.
+        let metrics = &mut state.lock().unwrap().metrics;
+        metrics.prefetched_records_count += 1;
+        metrics.prefetched_bytes_count += record.length;
+        // Updates page_count only if we successfully get page size
+        if let Some(page_size) = page_size {
+            metrics.prefetched_pages_count += record.length.div_ceil(page_size as u64);
+        }
     }
 }
 
@@ -198,6 +239,7 @@ fn worker(
     exit_on_error: bool,
     exclude_files_regex: Vec<Regex>,
     buffer: &mut [u8],
+    page_size: Option<usize>,
 ) {
     let _dbg = scoped_log(id, "read_loop");
     let result = worker_internal(
@@ -207,6 +249,7 @@ fn worker(
         exit_on_error,
         exclude_files_regex,
         buffer,
+        page_size,
     );
     if result.is_err() {
         error!("worker failed with {result:?}");
@@ -217,11 +260,20 @@ fn worker(
     }
 }
 
+#[derive(Debug, Default)]
+pub struct ReplayMetrics {
+    prefetched_records_count: u64,
+    prefetched_bytes_count: u64,
+    prefetched_pages_count: u64,
+    exec_time: Duration,
+}
+
 #[derive(Debug)]
 pub struct SharedState {
     fds: LruCache<FileId, Arc<File>>,
     records_index: usize,
     result: Result<(), Error>,
+    metrics: ReplayMetrics,
 }
 
 impl SharedState {
@@ -240,6 +292,7 @@ pub struct Replay {
     exit_on_error: bool,
     state: Arc<Mutex<SharedState>>,
     exclude_files_regex: Vec<Regex>,
+    stat_path: Option<PathBuf>,
 }
 
 impl Replay {
@@ -269,6 +322,14 @@ impl Replay {
             }
         }
 
+        let stat_path = if args.record_metrics {
+            let stat_path = args.path.with_extension("stat");
+            File::create(&stat_path).expect("Failed to create stat file");
+            Some(stat_path)
+        } else {
+            None
+        };
+
         Ok(Self {
             records_file: Arc::new(RwLock::new(rf)),
             io_depth: args.io_depth,
@@ -277,15 +338,20 @@ impl Replay {
                 fds: LruCache::new(args.max_fds.into()),
                 records_index: 0,
                 result: Ok(()),
+                metrics: ReplayMetrics::default(),
             })),
             exclude_files_regex,
+            stat_path,
         })
     }
 
     /// Replay records.
     pub fn replay(self) -> Result<(), Error> {
+        let start_time = std::time::Instant::now();
         let _dbg = scoped_log(1, "replay");
         let mut threads = vec![];
+        let page_size = page_size().ok();
+
         for i in 0..self.io_depth {
             let i_clone = i as usize;
             let state = self.state.clone();
@@ -303,13 +369,23 @@ impl Replay {
                     exit_on_error,
                     exclude_files_regex,
                     buffer.as_mut_slice(),
+                    page_size,
                 )
             }));
         }
         for thread in threads {
             thread.unwrap().join().unwrap();
         }
-        replace(&mut self.state.lock().unwrap().result, Ok(()))
+
+        let mut state = self.state.lock().unwrap();
+
+        if let Some(stat_path) = &self.stat_path {
+            if state.result.is_ok() {
+                state.metrics.exec_time = start_time.elapsed();
+                record_metrics(stat_path, &state.metrics, page_size.is_some())
+            }
+        }
+        replace(&mut state.result, Ok(()))
     }
 }
 
@@ -366,7 +442,7 @@ pub mod tests {
     static KB: u64 = 1024;
 
     fn random_write(file: &mut NamedTempFile, base: u64) -> Range<u64> {
-        let start: u64 = base + (rand::random::<u64>() % (base / 2)) as u64;
+        let start: u64 = base + (rand::random::<u64>() % (base / 2));
         let len: u64 = rand::random::<u64>() % (32 * KB);
         let buf = vec![5; len as usize];
         nix::sys::uio::pwrite(file.as_fd(), &buf, start as i64).unwrap();
@@ -386,9 +462,9 @@ pub mod tests {
         let range2 = random_write(&mut file, 128 * KB);
         let range3 = random_write(&mut file, 4 * MB);
         if let Some(align) = align {
-            let orig_size = file.metadata().unwrap().len();
+            let orig_size = file.as_file().metadata().unwrap().len();
             let aligned_size = orig_size + (align - (orig_size % align));
-            file.set_len(aligned_size).unwrap();
+            file.as_file().set_len(aligned_size).unwrap();
         }
         (file, vec![range1, range2, range3])
     }
@@ -529,7 +605,7 @@ pub mod tests {
         /// Construct the "Record" file based on pages resident in RAM.
         pub(crate) fn get_records(&self, records: &mut Vec<Record>) -> Result<(), Error> {
             let page_size = page_size()?;
-            let page_count = (self.length + page_size - 1) / page_size;
+            let page_count = self.length.div_ceil(page_size);
             let mut buf: Vec<u8> = vec![0_u8; page_count];
             // SAFETY: This is safe because
             // - the file is mapped
@@ -587,12 +663,7 @@ pub mod tests {
                 nix::sys::mman::munmap(NonNull::new(self.map_addr).unwrap(), self.length)
             };
             if let Err(e) = ret {
-                error!(
-                    "failed to munmap {:p} {} with {}",
-                    self.map_addr,
-                    self.length,
-                    e.to_string()
-                );
+                error!("failed to munmap {:p} {} with {}", self.map_addr, self.length, e);
             }
         }
     }
@@ -691,6 +762,7 @@ pub mod tests {
             max_fds: 128,
             exit_on_error,
             config_path: config_file.path().to_owned(),
+            record_metrics: false,
         })
         .unwrap();
 
@@ -754,5 +826,67 @@ pub mod tests {
     #[test]
     fn test_replay_empty_exclude_files_list() {
         test_replay_internal(true, false, false, false, true);
+    }
+
+    #[test]
+    fn test_replay_metrics_collection() {
+        // 1. Setup: Create test files and determine expected metric values.
+        let page_size = page_size().unwrap() as u64;
+        let (rf, mut files) = generate_cached_files_and_record(None, false, Some(page_size));
+
+        let test_base_dir = setup_test_dir();
+        let (mut uncached_rf, mut uncached_files, _out_files) =
+            copy_uncached_files_and_record_from(Path::new(&test_base_dir), &mut files, &rf);
+
+        // 2. Prepare for replay, similar to other tests.
+        let mut replay_file = NamedTempFile::new().unwrap();
+        replay_file.write_all(&uncached_rf.add_checksum_and_serialize().unwrap()).unwrap();
+
+        let config_file_contents = create_test_config_file(vec![]);
+        let mut config_file = NamedTempFile::new().unwrap();
+        config_file.write_all(config_file_contents.as_bytes()).unwrap();
+
+        ensure_files_not_cached(&mut uncached_files);
+
+        // 3. Run replay with metrics enabled.
+        let replay_args = ReplayArgs {
+            path: replay_file.path().to_owned(),
+            io_depth: 32,
+            max_fds: 128,
+            exit_on_error: false,
+            config_path: config_file.path().to_owned(),
+            record_metrics: true, // Enable metrics for this test
+        };
+
+        // Determine the expected stat file path.
+        let stat_path = replay_args.path.with_extension("stat");
+
+        let replay = Replay::new(&replay_args).unwrap();
+        replay.replay().unwrap();
+
+        // 4. Verify the metrics from the .stat file.
+        let stat_content = std::fs::read_to_string(&stat_path)
+            .unwrap_or_else(|_| panic!("Failed to read stat file at {:?}", stat_path));
+
+        let mut actual_metrics = HashMap::new();
+        for line in stat_content.lines() {
+            let parts: Vec<&str> = line.splitn(2, ": ").collect();
+            if parts.len() == 2 {
+                actual_metrics.insert(parts[0], parts[1]);
+            }
+        }
+
+        assert_eq!(
+            actual_metrics.get("prefetched_records").unwrap().parse::<u64>().unwrap(),
+            uncached_rf.inner.records.len() as u64
+        );
+        assert_eq!(
+            actual_metrics.get("prefetched_bytes").unwrap().parse::<u64>().unwrap(),
+            uncached_rf.inner.records.iter().map(|r| r.length).sum::<u64>()
+        );
+        assert_eq!(
+            actual_metrics.get("prefetched_pages").unwrap().parse::<u64>().unwrap(),
+            uncached_rf.inner.records.iter().map(|r| r.length.div_ceil(page_size)).sum::<u64>()
+        );
     }
 }

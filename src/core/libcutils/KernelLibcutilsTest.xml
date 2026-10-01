@@ -29,5 +29,6 @@
         <option name="native-test-device-path" value="/data/local/tests/unrestricted" />
         <option name="module-name" value="KernelLibcutilsTest" />
         <option name="include-filter" value="*AshmemTest*" />
+        <option name="include-filter" value="*MemfdTest*" />
     </test>
 </configuration>

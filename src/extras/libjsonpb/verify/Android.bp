@@ -31,12 +31,6 @@ cc_library_static {
         "libprotobuf-cpp-full",
         "libjsoncpp",
     ],
-    static_libs: [
-        "libjsonpbparse",
-    ],
-    export_static_lib_headers: [
-        "libjsonpbparse",
-    ],
     export_include_dirs: [
         "include",
     ],
@@ -58,7 +52,6 @@ cc_test_host {
         "liblog",
         "libgmock",
         "libjsoncpp",
-        "libjsonpbparse",
         "libjsonpbverify",
     ],
     shared_libs: [

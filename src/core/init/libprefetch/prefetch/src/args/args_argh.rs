@@ -20,6 +20,7 @@ use serde::Deserialize;
 use crate::args::DEFAULT_EXIT_ON_ERROR;
 use crate::args::DEFAULT_IO_DEPTH;
 use crate::args::DEFAULT_MAX_FDS;
+use crate::args::DEFAULT_RECORD_METRICS;
 use crate::Error;
 
 /// prefetch-rs
@@ -202,9 +203,10 @@ impl RecordArgs {
 }
 
 /// Type of tracing subsystem to use.
-#[derive(Deserialize, Clone, Eq, PartialEq, Debug)]
+#[derive(Deserialize, Clone, Eq, PartialEq, Debug, Default)]
 pub enum TracerType {
     /// mem tracing subsystem relies on when a file's in-memory page gets added to the fs cache.
+    #[default]
     Mem,
 }
 
@@ -221,12 +223,6 @@ impl FromStr for TracerType {
                 })
             }
         })
-    }
-}
-
-impl Default for TracerType {
-    fn default() -> Self {
-        Self::Mem
     }
 }
 
@@ -257,6 +253,13 @@ pub struct ReplayArgs {
     #[argh(option, default = "PathBuf::new()")]
     pub config_path: PathBuf,
 
+    /// enable metric collection for the prefetch replay.
+    ///
+    /// When enabled, metrics are written to a `.stat` file in the same
+    /// location as the input `.pack` file.
+    #[argh(option, default = "DEFAULT_RECORD_METRICS")]
+    pub record_metrics: bool,
+
     #[cfg(target_os = "android")]
     /// store build_finger_print to tie the pack format
     #[argh(option, default = "default_build_finger_print_path()")]
@@ -276,8 +279,9 @@ pub struct DumpArgs {
     pub format: OutputFormat,
 }
 
-#[derive(Deserialize, Eq, PartialEq, Debug)]
+#[derive(Deserialize, Eq, PartialEq, Debug, Default)]
 pub enum OutputFormat {
+    #[default]
     Json,
     Csv,
 }
@@ -296,12 +300,6 @@ impl FromStr for OutputFormat {
                 })
             }
         })
-    }
-}
-
-impl Default for OutputFormat {
-    fn default() -> Self {
-        Self::Json
     }
 }
 

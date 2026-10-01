@@ -51,15 +51,10 @@ TEST(MetadataPartition, FirstStageMount) {
         GTEST_SKIP();
     }
     Fstab fstab;
-    if (ReadFstabFromDt(&fstab)) {
-        auto entry = GetEntryForMountPoint(&fstab, "/metadata");
-        ASSERT_NE(entry, nullptr);
-    } else {
-        ASSERT_TRUE(ReadDefaultFstab(&fstab));
-        auto entry = GetEntryForMountPoint(&fstab, "/metadata");
-        ASSERT_NE(entry, nullptr);
-        EXPECT_TRUE(entry->fs_mgr_flags.first_stage_mount);
-    }
+    ASSERT_TRUE(ReadDefaultFstab(&fstab));
+    auto entry = GetEntryForMountPoint(&fstab, "/metadata");
+    ASSERT_NE(entry, nullptr);
+    EXPECT_TRUE(entry->fs_mgr_flags.first_stage_mount);
 }
 
 static int GetVsrLevel() {

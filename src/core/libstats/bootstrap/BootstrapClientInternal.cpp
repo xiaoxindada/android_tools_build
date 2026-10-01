@@ -23,7 +23,7 @@ namespace os {
 namespace stats {
 
 sp<BootstrapClientInternal> BootstrapClientInternal::getInstance() {
-    static sp<BootstrapClientInternal> client = new BootstrapClientInternal();
+    [[clang::no_destroy]] static sp<BootstrapClientInternal> client = new BootstrapClientInternal();
     return client;
 }
 

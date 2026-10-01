@@ -100,10 +100,10 @@ static int __android_log_level(const char* tag, size_t tag_len) {
 
   /*
    * Single layer cache of four properties. Priorities are:
-   *    log.tag.<tag>
    *    persist.log.tag.<tag>
-   *    log.tag
+   *    log.tag.<tag>
    *    persist.log.tag
+   *    log.tag
    * Where the missing tag matches all tags and becomes the
    * system global default. We do not support ro.log.tag* .
    */

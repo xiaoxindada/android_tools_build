@@ -92,6 +92,10 @@ int socket_local_server_bind(int s, const char* name, int namespaceId);
 int socket_local_client_connect(int fd, const char *name, int namespaceId,
                                 int type);
 int socket_local_client(const char* name, int namespaceId, int type);
+
+// timeout_ms is passed to poll(2). -1 means infinite timeout. 0 means no timeout is installed.
+int socket_local_client_timeout(const char* name, int namespaceId, int type, int timeout_ms);
+
 cutils_socket_t socket_inaddr_any_server(int port, int type);
 
 /*

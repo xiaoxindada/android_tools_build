@@ -22,7 +22,7 @@ import android.gsi.IGsiServiceCallback;
 import android.gsi.IImageService;
 import android.os.ParcelFileDescriptor;
 
-/** {@hide} */
+/** @hide */
 interface IGsiService {
     /* Status codes for GsiProgress.status */
     const int STATUS_NO_OPERATION = 0;

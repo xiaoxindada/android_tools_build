@@ -11,6 +11,8 @@ import (
 	"github.com/google/blueprint"
 )
 
+//go:generate go run ../../../build/blueprint/gobtools/codegen
+
 func init() {
 	android.RegisterModuleType("generate_mojom_downgraded_files", mojomDowngradedFilesFactory)
 	android.RegisterModuleType("generate_mojom_pickles", mojomPicklesFactory)
@@ -33,7 +35,8 @@ var (
 		CommandDeps: []string{
 			"${mojomTypesDowngrader}",
 		},
-		Description: "Downgrade mojom files $in => $out",
+		Description:     "Downgrade mojom files $in => $out",
+		SandboxDisabled: true,
 	}, "outDir")
 
 	generateMojomPicklesRule = pctx.StaticRule("generateMojomPicklesRule", blueprint.RuleParams{
@@ -46,8 +49,9 @@ var (
 		CommandDeps: []string{
 			"${mojomBindingsGenerator}",
 		},
-		Description: "Mojo pickles generation $in => $out",
-		Restat:      true,
+		Description:     "Mojo pickles generation $in => $out",
+		Restat:          true,
+		SandboxDisabled: true,
 	}, "package", "flags", "outDir")
 
 	generateMojomSrcsRule = pctx.StaticRule("generateMojomSrcsRule", blueprint.RuleParams{
@@ -64,8 +68,9 @@ var (
 		CommandDeps: []string{
 			"${mojomBindingsGenerator}",
 		},
-		Description: "Mojo sources generation $in => $out",
-		Restat:      true,
+		Description:     "Mojo sources generation $in => $out",
+		Restat:          true,
+		SandboxDisabled: true,
 	}, "mojomGenerator", "package", "flags", "outDir", "templateDir")
 
 	mergeSrcjarsRule = pctx.StaticRule("mergeSrcjarsRule", blueprint.RuleParams{
@@ -73,7 +78,8 @@ var (
 		CommandDeps: []string{
 			"${mergeZips}",
 		},
-		Description: "Merge .srcjars $in => $out",
+		Description:     "Merge .srcjars $in => $out",
+		SandboxDisabled: true,
 	})
 )
 
@@ -153,6 +159,7 @@ type mojomPickles struct {
 	outDir        android.Path
 }
 
+// @auto-generate: gob
 type MojomPicklesInfo struct {
 	OutDir android.Path
 }

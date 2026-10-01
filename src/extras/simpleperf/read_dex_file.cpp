@@ -49,6 +49,12 @@ static void ReadSymbols(art_api::dex::DexFile& dex_file, uint64_t file_offset,
 bool ReadSymbolsFromDexFileInMemory(void* addr, uint64_t size, const std::string& debug_filename,
                                     const std::vector<uint64_t>& dex_file_offsets,
                                     const std::function<void(DexFileSymbol*)>& symbol_callback) {
+  std::string error_msg;
+  // Try loading libdexfile early, so we don't make it a fatal error when libdexfile is missing.
+  if (!art_api::dex::TryLoadLibdexfile(&error_msg)) {
+    LOG(WARNING) << error_msg;
+    return false;
+  }
   for (uint64_t file_offset : dex_file_offsets) {
     size_t max_file_size;
     if (__builtin_sub_overflow(size, file_offset, &max_file_size)) {

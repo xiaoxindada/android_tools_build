@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <array>
 #include <set>
 #include <string>
 #include <vector>
@@ -24,6 +25,8 @@
 
 namespace android {
 namespace init {
+
+constexpr const char* kApexdUseFiemapProp = "apexd.config.use_fiemap";
 
 // Scans apex_dir (/apex) to get the list of active APEXes.
 std::set<std::string> GetApexListFrom(const std::string& apex_dir);
@@ -36,6 +39,11 @@ Result<void> ParseRcScriptsFromAllApexes(bool is_default_mnt_ns);
 
 // Checks if apexd can mount apexes before data partition
 bool CanMountApexBeforeData();
+
+// The list of APEX built-in directories.
+// Keep the list in sync with kBuiltinApexPackageDirs in system/apex/apexd/apex_constants.h
+static constexpr std::array<const char*, 5> kBuiltinApexPackageDirs = {
+        "/system/apex", "/system_ext/apex", "/product/apex", "/vendor/apex", "/odm/apex"};
 
 }  // namespace init
 }  // namespace android

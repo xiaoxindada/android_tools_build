@@ -59,17 +59,17 @@ TEST_F(RecordTest, CommRecordMatchBinary) {
 TEST_F(RecordTest, SampleRecordMatchBinary) {
   event_attr.sample_type = PERF_SAMPLE_IP | PERF_SAMPLE_TID | PERF_SAMPLE_TIME | PERF_SAMPLE_ID |
                            PERF_SAMPLE_CPU | PERF_SAMPLE_PERIOD | PERF_SAMPLE_CALLCHAIN;
-  SampleRecord record(event_attr, 1, 2, 3, 4, 5, 6, 7, {}, {8, 9, 10}, {}, 0);
+  SampleRecord record(event_attr, 1, 2, 3, 4, 5, 6, 7, 8, {}, {8, 9, 10}, {}, 0);
   CheckRecordMatchBinary(record);
 }
 
 // @CddTest = 6.1/C-0-2
 TEST_F(RecordTest, SampleRecord_exclude_kernel_callchain) {
-  SampleRecord r(event_attr, 0, 1, 0, 0, 0, 0, 0, {}, {}, {}, 0);
+  SampleRecord r(event_attr, 0, 1, 0, 0, 0, 0, 0, 0, {}, {}, {}, 0);
   ASSERT_FALSE(r.ExcludeKernelCallChain());
 
   event_attr.sample_type |= PERF_SAMPLE_CALLCHAIN;
-  SampleRecord r1(event_attr, 0, 1, 0, 0, 0, 0, 0, {}, {PERF_CONTEXT_USER, 2}, {}, 0);
+  SampleRecord r1(event_attr, 0, 1, 0, 0, 0, 0, 0, 0, {}, {PERF_CONTEXT_USER, 2}, {}, 0);
   ASSERT_TRUE(r1.ExcludeKernelCallChain());
   ASSERT_EQ(2u, r1.ip_data.ip);
   SampleRecord r2;
@@ -80,7 +80,7 @@ TEST_F(RecordTest, SampleRecord_exclude_kernel_callchain) {
   ASSERT_EQ(PERF_CONTEXT_USER, r2.callchain_data.ips[0]);
   ASSERT_EQ(2u, r2.callchain_data.ips[1]);
 
-  SampleRecord r3(event_attr, 0, 1, 0, 0, 0, 0, 0, {}, {1, PERF_CONTEXT_USER, 2}, {}, 0);
+  SampleRecord r3(event_attr, 0, 1, 0, 0, 0, 0, 0, 0, {}, {1, PERF_CONTEXT_USER, 2}, {}, 0);
   ASSERT_TRUE(r3.ExcludeKernelCallChain());
   ASSERT_EQ(2u, r3.ip_data.ip);
   SampleRecord r4;
@@ -92,17 +92,17 @@ TEST_F(RecordTest, SampleRecord_exclude_kernel_callchain) {
   ASSERT_EQ(PERF_CONTEXT_USER, r4.callchain_data.ips[1]);
   ASSERT_EQ(2u, r4.callchain_data.ips[2]);
 
-  SampleRecord r5(event_attr, 0, 1, 0, 0, 0, 0, 0, {}, {1, 2}, {}, 0);
+  SampleRecord r5(event_attr, 0, 1, 0, 0, 0, 0, 0, 0, {}, {1, 2}, {}, 0);
   ASSERT_FALSE(r5.ExcludeKernelCallChain());
-  SampleRecord r6(event_attr, 0, 1, 0, 0, 0, 0, 0, {}, {1, 2, PERF_CONTEXT_USER}, {}, 0);
+  SampleRecord r6(event_attr, 0, 1, 0, 0, 0, 0, 0, 0, {}, {1, 2, PERF_CONTEXT_USER}, {}, 0);
   ASSERT_FALSE(r6.ExcludeKernelCallChain());
 
   // Process consecutive context values.
-  SampleRecord r7(event_attr, 0, 1, 0, 0, 0, 0, 0, {},
+  SampleRecord r7(event_attr, 0, 1, 0, 0, 0, 0, 0, 0, {},
                   {1, 2, PERF_CONTEXT_USER, PERF_CONTEXT_USER, 3, 4}, {}, 0);
   r7.header.misc = PERF_RECORD_MISC_KERNEL;
   ASSERT_TRUE(r7.ExcludeKernelCallChain());
-  CheckRecordEqual(r7, SampleRecord(event_attr, 0, 3, 0, 0, 0, 0, 0, {},
+  CheckRecordEqual(r7, SampleRecord(event_attr, 0, 3, 0, 0, 0, 0, 0, 0, {},
                                     {PERF_CONTEXT_USER, PERF_CONTEXT_USER, PERF_CONTEXT_USER,
                                      PERF_CONTEXT_USER, 3, 4},
                                     {}, 0));
@@ -124,10 +124,11 @@ TEST_F(RecordTest, SampleRecord_ReplaceRegAndStackWithCallChain) {
       ips.push_back(PERF_CONTEXT_USER);
       ips.insert(ips.end(), user_ips.begin(), user_ips.end());
     }
-    SampleRecord expected(event_attr, 0, 1, 2, 3, 4, 5, 6, {}, ips, {}, 0);
+    SampleRecord expected(event_attr, 0, 1, 2, 3, 4, 5, 6, 7, {}, ips, {}, 0);
     for (size_t stack_size : stack_size_tests) {
       event_attr.sample_type |= PERF_SAMPLE_REGS_USER | PERF_SAMPLE_STACK_USER;
-      SampleRecord r(event_attr, 0, 1, 2, 3, 4, 5, 6, {}, {1}, std::vector<char>(stack_size), 10);
+      SampleRecord r(event_attr, 0, 1, 2, 3, 4, 5, 6, 7, {}, {1}, std::vector<char>(stack_size),
+                     10);
       event_attr.sample_type &= ~(PERF_SAMPLE_REGS_USER | PERF_SAMPLE_STACK_USER);
       r.ReplaceRegAndStackWithCallChain(user_ips);
       CheckRecordMatchBinary(r);
@@ -136,7 +137,8 @@ TEST_F(RecordTest, SampleRecord_ReplaceRegAndStackWithCallChain) {
       // Test a sample with record size > the end of user stack (). See
       // https://lkml.org/lkml/2024/5/28/1224.
       event_attr.sample_type |= PERF_SAMPLE_REGS_USER | PERF_SAMPLE_STACK_USER;
-      SampleRecord r2(event_attr, 0, 1, 2, 3, 4, 5, 6, {}, {1}, std::vector<char>(stack_size), 10);
+      SampleRecord r2(event_attr, 0, 1, 2, 3, 4, 5, 6, 7, {}, {1}, std::vector<char>(stack_size),
+                      10);
 
       std::vector<char> big_binary(r2.size() + 72, '\0');
       memcpy(big_binary.data(), r2.Binary(), r2.size());
@@ -156,10 +158,10 @@ TEST_F(RecordTest, SampleRecord_ReplaceRegAndStackWithCallChain) {
 // @CddTest = 6.1/C-0-2
 TEST_F(RecordTest, SampleRecord_UpdateUserCallChain) {
   event_attr.sample_type |= PERF_SAMPLE_CALLCHAIN;
-  SampleRecord r(event_attr, 0, 1, 2, 3, 4, 5, 6, {}, {1, PERF_CONTEXT_USER, 2}, {}, 0);
+  SampleRecord r(event_attr, 0, 1, 2, 3, 4, 5, 6, 7, {}, {1, PERF_CONTEXT_USER, 2}, {}, 0);
   r.UpdateUserCallChain({3, 4, 5});
   CheckRecordMatchBinary(r);
-  SampleRecord expected(event_attr, 0, 1, 2, 3, 4, 5, 6, {}, {1, PERF_CONTEXT_USER, 3, 4, 5}, {},
+  SampleRecord expected(event_attr, 0, 1, 2, 3, 4, 5, 6, 7, {}, {1, PERF_CONTEXT_USER, 3, 4, 5}, {},
                         0);
   CheckRecordEqual(r, expected);
 }
@@ -167,11 +169,11 @@ TEST_F(RecordTest, SampleRecord_UpdateUserCallChain) {
 // @CddTest = 6.1/C-0-2
 TEST_F(RecordTest, SampleRecord_AdjustCallChainGeneratedByKernel) {
   event_attr.sample_type |= PERF_SAMPLE_CALLCHAIN | PERF_SAMPLE_REGS_USER | PERF_SAMPLE_STACK_USER;
-  SampleRecord r(event_attr, 0, 1, 2, 3, 4, 5, 6, {}, {1, 5, 0, PERF_CONTEXT_USER, 6, 0}, {}, 0);
+  SampleRecord r(event_attr, 0, 1, 2, 3, 4, 5, 6, 7, {}, {1, 5, 0, PERF_CONTEXT_USER, 6, 0}, {}, 0);
   r.header.misc = PERF_RECORD_MISC_KERNEL;
   r.AdjustCallChainGeneratedByKernel();
   uint64_t adjustValue = (GetTargetArch() == ARCH_ARM || GetTargetArch() == ARCH_ARM64) ? 2 : 1;
-  SampleRecord expected(event_attr, 0, 1, 2, 3, 4, 5, 6, {},
+  SampleRecord expected(event_attr, 0, 1, 2, 3, 4, 5, 6, 7, {},
                         {1, 5 - adjustValue, PERF_CONTEXT_KERNEL, PERF_CONTEXT_USER,
                          6 - adjustValue, PERF_CONTEXT_USER},
                         {}, 0);
@@ -189,7 +191,7 @@ TEST_F(RecordTest, SampleRecord_PerfSampleReadData) {
   read_data.time_running = 500;
   read_data.counts = {100};
   read_data.ids = {200};
-  SampleRecord r(event_attr, 0, 1, 2, 3, 4, 5, 6, read_data, {}, {}, 0);
+  SampleRecord r(event_attr, 0, 1, 2, 3, 4, 5, 6, 7, read_data, {}, {}, 0);
   ASSERT_EQ(read_data.time_enabled, r.read_data.time_enabled);
   ASSERT_EQ(read_data.time_running, r.read_data.time_running);
   ASSERT_TRUE(read_data.counts == r.read_data.counts);
@@ -198,7 +200,7 @@ TEST_F(RecordTest, SampleRecord_PerfSampleReadData) {
   event_attr.read_format |= PERF_FORMAT_GROUP;
   read_data.counts = {100, 200, 300, 400};
   read_data.ids = {500, 600, 700, 800};
-  SampleRecord r2(event_attr, 0, 1, 2, 3, 4, 5, 6, read_data, {}, {}, 0);
+  SampleRecord r2(event_attr, 0, 1, 2, 3, 4, 5, 6, 7, read_data, {}, {}, 0);
   ASSERT_EQ(read_data.time_enabled, r2.read_data.time_enabled);
   ASSERT_EQ(read_data.time_running, r2.read_data.time_running);
   ASSERT_TRUE(read_data.counts == r2.read_data.counts);
@@ -228,4 +230,42 @@ TEST_F(RecordTest, DebugRecord) {
   ASSERT_EQ(r.Timestamp(), 1234);
   ASSERT_STREQ(r.s, "hello");
   CheckRecordMatchBinary(r);
+}
+
+TEST_F(RecordTest, SampleRecord_BranchStackOverflow) {
+  event_attr.sample_type = PERF_SAMPLE_BRANCH_STACK;
+  std::vector<char> binary(Record::header_size() + sizeof(uint64_t) + 8, 0);
+  char* p = binary.data();
+  perf_event_header header;
+  header.type = PERF_RECORD_SAMPLE;
+  header.misc = 0;
+  header.size = binary.size();
+  memcpy(p, &header, sizeof(header));
+  p += sizeof(header);
+  // stack_nr = 0x8000000000000000
+  // stack_nr * sizeof(BranchStackItemType) = 0x8000000000000000 * 24 = 0 (overflow)
+  uint64_t stack_nr = 0x8000000000000000ULL;
+  memcpy(p, &stack_nr, sizeof(stack_nr));
+
+  SampleRecord r;
+  ASSERT_FALSE(r.Parse(event_attr, binary.data(), binary.data() + binary.size()));
+}
+
+TEST_F(RecordTest, SampleRecord_StackUserOverflow) {
+  event_attr.sample_type = PERF_SAMPLE_STACK_USER;
+  std::vector<char> binary(Record::header_size() + sizeof(uint64_t) + 8, 0);
+  char* p = binary.data();
+  perf_event_header header;
+  header.type = PERF_RECORD_SAMPLE;
+  header.misc = 0;
+  header.size = binary.size();
+  memcpy(p, &header, sizeof(header));
+  p += sizeof(header);
+  // size = UINT64_MAX
+  // size + 8 = 7 (overflow)
+  uint64_t size = UINT64_MAX;
+  memcpy(p, &size, sizeof(size));
+
+  SampleRecord r;
+  ASSERT_FALSE(r.Parse(event_attr, binary.data(), binary.data() + binary.size()));
 }

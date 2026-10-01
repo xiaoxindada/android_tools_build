@@ -16,7 +16,7 @@
 
 package android.os;
 
-/** {@hide} */
+/** @hide */
 oneway interface ILogd {
     /**
      * The function is called by LogcatManagerService on system_server

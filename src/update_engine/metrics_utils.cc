@@ -359,6 +359,18 @@ void SetUpdateBootTimestampStart(const base::Time& update_start_boot_time,
             << utils::ToString(update_start_boot_time);
 }
 
+void SetInstallDuration(int64_t duration, PrefsInterface* prefs) {
+  CHECK(prefs);
+  prefs->SetInt64(kPrefsMetricsInstallDuration, duration);
+  LOG(INFO) << "Install Duration = " << duration;
+}
+
+void SetVerificationDuration(int64_t duration, PrefsInterface* prefs) {
+  CHECK(prefs);
+  prefs->SetInt64(kPrefsMetricsVerifyingDuration, duration);
+  LOG(INFO) << "Verification Duration = " << duration;
+}
+
 bool LoadAndReportTimeToReboot(MetricsReporterInterface* metrics_reporter,
                                PrefsInterface* prefs,
                                ClockInterface* clock) {

@@ -33,6 +33,14 @@ void PrintUsage(const char* progname) {
   std::cerr << "       " << progname << " update-props" << std::endl;
 }
 
+const char *BinderValue(misc_kcmdline_message& msg) {
+  if (msg.kcmdline_flags & MISC_KCMDLINE_BINDER_FORCE_RUST)
+    return "rust";
+  if (msg.kcmdline_flags & MISC_KCMDLINE_BINDER_FORCE_C)
+    return "c";
+  return "unset";
+}
+
 int UpdateProps() {
   misc_kcmdline_message m = {.version = MISC_KCMDLINE_MESSAGE_VERSION,
                              .magic = MISC_KCMDLINE_MAGIC_HEADER};
@@ -49,8 +57,7 @@ int UpdateProps() {
          .kcmdline_flags = 0};
   }
 
-  bool use_rust_binder = (m.kcmdline_flags & MISC_KCMDLINE_BINDER_RUST) != 0;
-  android::base::SetProperty("kcmdline.binder", use_rust_binder ? "rust" : "c");
+  android::base::SetProperty("kcmdline.binder", BinderValue(m));
 
   android::base::SetProperty("kcmdline.loaded", "1");
   return 0;
@@ -74,9 +81,7 @@ int PrintProperty(const char* property_name) {
   }
 
   if (!strcmp(property_name, "binder")) {
-    bool use_rust_binder = (m.kcmdline_flags & MISC_KCMDLINE_BINDER_RUST) != 0;
-    const char* binder_value = use_rust_binder ? "rust" : "c";
-    std::cout << "binder=" << binder_value << std::endl;
+    std::cout << "binder=" << BinderValue(m) << std::endl;
     return 0;
   } else {
     LOG(ERROR) << "Unknown property name: " << property_name;
@@ -103,9 +108,14 @@ int StoreProperty(const char* property_name, const char* new_value) {
 
   if (!strcmp(property_name, "binder")) {
     if (!strcmp(new_value, "rust")) {
-      m.kcmdline_flags |= MISC_KCMDLINE_BINDER_RUST;
+      m.kcmdline_flags &= ~MISC_KCMDLINE_BINDER_FORCE_C;
+      m.kcmdline_flags |= MISC_KCMDLINE_BINDER_FORCE_RUST;
     } else if (!strcmp(new_value, "c")) {
-      m.kcmdline_flags &= !MISC_KCMDLINE_BINDER_RUST;
+      m.kcmdline_flags &= ~MISC_KCMDLINE_BINDER_FORCE_RUST;
+      m.kcmdline_flags |= MISC_KCMDLINE_BINDER_FORCE_C;
+    } else if (!strcmp(new_value, "unset")) {
+      m.kcmdline_flags &= ~MISC_KCMDLINE_BINDER_FORCE_RUST;
+      m.kcmdline_flags &= ~MISC_KCMDLINE_BINDER_FORCE_C;
     } else {
       LOG(ERROR) << "Binder property can only be 'c' or 'rust', but got " << new_value;
       return 1;

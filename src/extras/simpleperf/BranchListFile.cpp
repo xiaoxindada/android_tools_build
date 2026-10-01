@@ -282,8 +282,9 @@ void ETMBranchListGeneratorImpl::ProcessBranchList(const ETMBranchList& branch_l
   if (!binary_filter_.Filter(branch_list.dso)) {
     return;
   }
-  auto& branch_map = branch_list_binary_map_[branch_list.dso].branch_map;
-  ++branch_map[branch_list.addr][branch_list.branch];
+  auto& binary = branch_list_binary_map_[branch_list.dso];
+  auto& branch_map = binary.branch_map;
+  ++branch_map[branch_list.addr][binary.GetBranch(branch_list.branch)];
 }
 
 ETMBinaryMap ETMBranchListGeneratorImpl::GetETMBinaryMap() {
@@ -292,17 +293,14 @@ ETMBinaryMap ETMBranchListGeneratorImpl::GetETMBinaryMap() {
     Dso* dso = p.first;
     ETMBinary& binary = p.second;
     binary.dso_type = dso->type();
-    BuildId build_id;
-    GetBuildId(*dso, build_id);
-    BinaryKey key(dso->Path(), build_id);
     if (binary.dso_type == DSO_KERNEL) {
       if (kernel_map_start_addr_ == 0) {
         LOG(WARNING) << "Can't convert kernel ip addresses without kernel start addr. So remove "
                         "branches for the kernel.";
         continue;
       }
-      key.kernel_start_addr = kernel_map_start_addr_;
     }
+    BinaryKey key(dso, kernel_map_start_addr_);
     binary_map[key] = std::move(binary);
   }
   return binary_map;
@@ -368,6 +366,14 @@ bool BranchListProtoWriter::Write(const ETMBinaryMap& etm_data) {
     proto_binary->set_type(opt_binary_type.value());
     if (binary.dso_type == DSO_KERNEL) {
       proto_binary->mutable_kernel_info()->set_kernel_start_addr(key.kernel_start_addr);
+    } else if (binary.dso_type == DSO_KERNEL_MODULE) {
+      const auto& module_info = key.kernel_module_info;
+      auto proto_module = proto_binary->mutable_kernel_module_info();
+      proto_module->set_memory_start(module_info.memory_start);
+      proto_module->set_memory_end(module_info.memory_end);
+      proto_module->set_memory_symbol_name(module_info.memory_symbol_name);
+      proto_module->set_memory_symbol_addr(module_info.memory_symbol_addr);
+      proto_module->set_memory_symbol_len(module_info.memory_symbol_len);
     }
     return true;
   };
@@ -384,7 +390,7 @@ bool BranchListProtoWriter::Write(const ETMBinaryMap& etm_data) {
     for (const auto& [addr, branch_map] : binary.branch_map) {
       add_proto_addr(addr);
       for (const auto& [branch, count] : branch_map) {
-        if (branch_count + branch.size() > max_branches_per_message_ && branch_count != 0) {
+        if (branch_count + branch->size() > max_branches_per_message_ && branch_count != 0) {
           if (!WriteProtoBranchList(*proto_branch_list)) {
             return false;
           }
@@ -395,11 +401,11 @@ bool BranchListProtoWriter::Write(const ETMBinaryMap& etm_data) {
           add_proto_addr(addr);
           branch_count = 0;
         }
-        branch_count += branch.size();
+        branch_count += branch->size();
 
         proto::ETMBinary_Address_Branch* proto_branch = proto_addr->add_branches();
-        proto_branch->set_branch(ETMBranchToProtoString(branch));
-        proto_branch->set_branch_size(branch.size());
+        proto_branch->set_branch(ETMBranchToProtoString(*branch));
+        proto_branch->set_branch_size(branch->size());
         proto_branch->set_count(count);
       }
     }
@@ -552,6 +558,14 @@ bool BranchListProtoReader::AddETMBinary(const proto::ETMBinary& proto_binary,
   BinaryKey key(proto_binary.path(), BuildId(proto_binary.build_id()));
   if (proto_binary.has_kernel_info()) {
     key.kernel_start_addr = proto_binary.kernel_info().kernel_start_addr();
+  } else if (proto_binary.has_kernel_module_info()) {
+    auto& module_info = key.kernel_module_info;
+    const auto& proto_module = proto_binary.kernel_module_info();
+    module_info.memory_start = proto_module.memory_start();
+    module_info.memory_end = proto_module.memory_end();
+    module_info.memory_symbol_name = proto_module.memory_symbol_name();
+    module_info.memory_symbol_addr = proto_module.memory_symbol_addr();
+    module_info.memory_symbol_len = proto_module.memory_symbol_len();
   }
   ETMBinary& binary = etm_data[key];
   auto dso_type = ToDsoType(proto_binary.type());
@@ -568,7 +582,7 @@ bool BranchListProtoReader::AddETMBinary(const proto::ETMBinary& proto_binary,
       const auto& proto_branch = proto_addr.branches(j);
       std::vector<bool> branch =
           ProtoStringToETMBranch(proto_branch.branch(), proto_branch.branch_size());
-      b_map[branch] = proto_branch.count();
+      b_map[binary.GetBranch(branch)] = proto_branch.count();
     }
   }
   return true;
@@ -721,25 +735,32 @@ bool DumpBranchListFile(std::string filename) {
     for (size_t i = 0; i < sorted_keys.size(); ++i) {
       const auto& key = sorted_keys[i];
       const auto& binary = etm_data[key];
-      PrintIndented(1, "binary[%zu].path: %s\n", i, key.path.c_str());
-      PrintIndented(1, "binary[%zu].build_id: %s\n", i, key.build_id.ToString().c_str());
-      PrintIndented(1, "binary[%zu].binary_type: %s\n", i, DsoTypeToString(binary.dso_type));
+      PrintIndented(1, "binary[{}].path: {}\n", i, key.path);
+      PrintIndented(1, "binary[{}].build_id: {}\n", i, key.build_id.ToString());
+      PrintIndented(1, "binary[{}].binary_type: {}\n", i, DsoTypeToString(binary.dso_type));
       if (binary.dso_type == DSO_KERNEL) {
-        PrintIndented(1, "binary[%zu].kernel_start_addr: 0x%" PRIx64 "\n", i,
-                      key.kernel_start_addr);
+        PrintIndented(1, "binary[{}].kernel_start_addr: 0x{:x}\n", i, key.kernel_start_addr);
+      } else if (binary.dso_type == DSO_KERNEL_MODULE) {
+        const auto& module_info = key.kernel_module_info;
+        PrintIndented(1, "binary[{}].kernel_module_memory_start: 0x{:x}\n", i,
+                      module_info.memory_start);
+        PrintIndented(1, "binary[{}].kernel_module_memory_end: 0x{:x}\n", i,
+                      module_info.memory_end);
+        PrintIndented(1, "binary[{}].kernel_module_memory_symbol_name: {}\n", i,
+                      module_info.memory_symbol_name);
+        PrintIndented(1, "binary[{}].kernel_module_memory_symbol_addr: 0x{:x}\n", i,
+                      module_info.memory_symbol_addr);
+        PrintIndented(1, "binary[{}].kernel_module_memory_symbol_len: 0x{:x}\n", i,
+                      module_info.memory_symbol_len);
       }
-      PrintIndented(1, "binary[%zu].addrs:\n", i);
+      PrintIndented(1, "binary[{}].addrs:\n", i);
       size_t addr_id = 0;
       for (const auto& [addr, branches] : binary.GetOrderedBranchMap()) {
-        PrintIndented(2, "addr[%zu]: 0x%" PRIx64 "\n", addr_id++, addr);
+        PrintIndented(2, "addr[{}]: 0x{:x}\n", addr_id++, addr);
         size_t branch_id = 0;
         for (const auto& [branch, count] : branches) {
-          std::string s = "0b";
-          for (auto it = branch.rbegin(); it != branch.rend(); ++it) {
-            s.push_back(*it ? '1' : '0');
-          }
-          PrintIndented(3, "branch[%zu].branch: %s\n", branch_id, s.c_str());
-          PrintIndented(3, "branch[%zu].count: %" PRIu64 "\n", branch_id, count);
+          PrintIndented(3, "branch[{}].branch: {}\n", branch_id, BitsToString(branch));
+          PrintIndented(3, "branch[{}].count: {}\n", branch_id, count);
           ++branch_id;
         }
       }
@@ -749,23 +770,21 @@ bool DumpBranchListFile(std::string filename) {
     PrintIndented(0, "lbr_data:\n");
     for (size_t i = 0; i < lbr_data.samples.size(); ++i) {
       const auto& sample = lbr_data.samples[i];
-      PrintIndented(1, "sample[%zu].binary_id: %u\n", i, sample.binary_id);
-      PrintIndented(1, "sample[%zu].vaddr_in_file: 0x%" PRIx64 "\n", i, sample.vaddr_in_file);
-      PrintIndented(1, "sample[%zu].branches:\n", i);
+      PrintIndented(1, "sample[{}].binary_id: {}\n", i, sample.binary_id);
+      PrintIndented(1, "sample[{}].vaddr_in_file: 0x{:x}\n", i, sample.vaddr_in_file);
+      PrintIndented(1, "sample[{}].branches:\n", i);
       for (size_t j = 0; j < sample.branches.size(); ++j) {
         const auto& branch = sample.branches[j];
-        PrintIndented(2, "branch[%zu].from_binary_id: %u\n", j, branch.from_binary_id);
-        PrintIndented(2, "branch[%zu].from_vaddr_in_file: 0x%" PRIx64 "\n", j,
-                      branch.from_vaddr_in_file);
-        PrintIndented(2, "branch[%zu].to_binary_id: %u\n", j, branch.to_binary_id);
-        PrintIndented(2, "branch[%zu].to_vaddr_in_file: 0x%" PRIx64 "\n", j,
-                      branch.to_vaddr_in_file);
+        PrintIndented(2, "branch[{}].from_binary_id: {}\n", j, branch.from_binary_id);
+        PrintIndented(2, "branch[{}].from_vaddr_in_file: 0x{:x}\n", j, branch.from_vaddr_in_file);
+        PrintIndented(2, "branch[{}].to_binary_id: {}\n", j, branch.to_binary_id);
+        PrintIndented(2, "branch[{}].to_vaddr_in_file: 0x{:x}\n", j, branch.to_vaddr_in_file);
       }
     }
     for (size_t i = 0; i < lbr_data.binaries.size(); ++i) {
       const auto& binary = lbr_data.binaries[i];
-      PrintIndented(1, "binary[%zu].path: %s\n", i, binary.path.c_str());
-      PrintIndented(1, "binary[%zu].build_id: %s\n", i, binary.build_id.ToString().c_str());
+      PrintIndented(1, "binary[{}].path: {}\n", i, binary.path);
+      PrintIndented(1, "binary[{}].build_id: {}\n", i, binary.build_id.ToString());
     }
   }
   return true;

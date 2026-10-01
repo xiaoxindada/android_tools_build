@@ -44,6 +44,13 @@ TEST(VersionTest, VersionMatchesConfig) {
 
 #endif  // PACKAGE_VERSION
 
+// Android local modification: we want to run with unsigned integer overflow
+// sanitizer enabled to support vendor use cases, but the test below relies
+// on unsigned overflow. Disable the sanitizer for this test.
+#if defined(__clang__)
+#pragma clang attribute push(__attribute__((no_sanitize("unsigned-integer-overflow"))), apply_to=function)
+#endif
+
 TEST(CommonTest, IntMinMaxConstants) {
   // kint32min was declared incorrectly in the first release of protobufs.
   // Ugh.
@@ -54,6 +61,10 @@ TEST(CommonTest, IntMinMaxConstants) {
   EXPECT_EQ(0, kuint32max + 1);
   EXPECT_EQ(0, kuint64max + 1);
 }
+
+#if defined(__clang__)
+#pragma clang attribute pop
+#endif
 
 class ClosureTest : public testing::Test {
  public:

@@ -30,4 +30,4 @@ bool remove_prefix(std::string_view str, const char* prefix, const char** rest);
 bool parse_text_field(const char* in, animation::text_field* field);
 }  // namespace android
 
-#endif // HEALTHD_ANIMATION_PARSER_H
+#endif  // HEALTHD_ANIMATION_PARSER_H

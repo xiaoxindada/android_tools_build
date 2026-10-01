@@ -32,18 +32,17 @@
 //  Based on original Protocol Buffers design by
 //  Sanjay Ghemawat, Jeff Dean, and others.
 
-#include "absl/strings/str_replace.h"
 #include <algorithm>
 #include <unordered_set>
 
-#include <absl/strings/str_cat.h>
-#include <google/protobuf/compiler/javamicro/javamicro_message.h>
-#include <google/protobuf/compiler/javamicro/javamicro_enum.h>
-#include <google/protobuf/compiler/javamicro/javamicro_helpers.h>
-#include <google/protobuf/io/printer.h>
-#include <google/protobuf/io/coded_stream.h>
-#include <google/protobuf/wire_format.h>
-#include <google/protobuf/descriptor.pb.h>
+#include "absl/strings/str_cat.h"
+#include "absl/strings/str_replace.h"
+#include "google/protobuf/compiler/javamicro/javamicro_message.h"
+#include "google/protobuf/compiler/javamicro/javamicro_enum.h"
+#include "google/protobuf/compiler/javamicro/javamicro_helpers.h"
+#include "google/protobuf/io/printer.h"
+#include "google/protobuf/wire_format.h"
+#include "google/protobuf/descriptor.pb.h"
 
 namespace google {
 namespace protobuf {
@@ -173,7 +172,7 @@ void MessageGenerator::GenerateStaticVariableInitializers(
 }
 
 void MessageGenerator::Generate(io::Printer* printer) {
-  const std::string& file_name = descriptor_->file()->name();
+  absl::string_view file_name = descriptor_->file()->name();
   bool is_own_file =
     params_.java_multiple_files(file_name)
       && descriptor_->containing_type() == NULL;

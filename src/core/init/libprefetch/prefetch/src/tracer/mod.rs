@@ -53,9 +53,6 @@ use crate::error::Error;
 use crate::{args::TracerType, format::RecordsFile};
 use mem::MemTraceSubsystem;
 
-pub(crate) static EXCLUDE_PATHS: &[&str] =
-    &["/dev/", "/proc/", "/sys/", "/tmp/", "/run/", "/config/", "/mnt/", "/storage/"];
-
 /// During record phase, prefetch may modify files under `/sys/kernel/tracing/` to
 /// - change trace buffer size so that we don't lose trace events
 /// - enable a few trace events
@@ -408,7 +405,7 @@ pub(crate) mod tests {
     use libc::O_DIRECT;
     use nix::sys::stat::{major, minor};
     use nix::unistd::pipe;
-    use rand::distributions::Alphanumeric;
+    use rand::distr::Alphanumeric;
     use rand::Rng;
     use tempfile::NamedTempFile;
 
@@ -470,10 +467,10 @@ pub(crate) mod tests {
         }
 
         if create_mount_point || create_instances {
-            std::fs::write(&base_path.join("buffer_size_kb"), "100").unwrap();
-            std::fs::write(&base_path.join("tracing_on"), "0").unwrap();
-            std::fs::write(&base_path.join("trace"), "0").unwrap();
-            std::fs::write(&base_path.join("trace_pipe"), "0").unwrap();
+            std::fs::write(base_path.join("buffer_size_kb"), "100").unwrap();
+            std::fs::write(base_path.join("tracing_on"), "0").unwrap();
+            std::fs::write(base_path.join("trace"), "0").unwrap();
+            std::fs::write(base_path.join("trace_pipe"), "0").unwrap();
 
             for event in [
                 "events/fs/do_sys_open",
@@ -483,7 +480,7 @@ pub(crate) mod tests {
             ] {
                 let event_path = base_path.join(event);
                 std::fs::create_dir_all(&event_path).unwrap();
-                std::fs::write(&event_path.join("enable"), "0").unwrap();
+                std::fs::write(event_path.join("enable"), "0").unwrap();
             }
         }
         mount_point
@@ -580,7 +577,7 @@ pub(crate) mod tests {
 
     pub(crate) fn setup_test_dir() -> PathBuf {
         let test_base_dir: String = rand::thread_rng()
-            .sample_iter(&rand::distributions::Alphanumeric)
+            .sample_iter(&rand::distr::Alphanumeric)
             .take(7)
             .map(char::from)
             .collect();
@@ -638,19 +635,19 @@ pub(crate) mod tests {
 
     impl Deref for AlignedBuffer {
         type Target = [u8];
-        // SAFETY:
-        // - self.ptr is a valid pointer obtained from a successful allocation in the new() method.
-        // - self.len is a valid length used for allocation in the new() method.
         fn deref(&self) -> &Self::Target {
+            // SAFETY:
+            // - self.ptr is a valid pointer obtained from a successful allocation in the new() method.
+            // - self.len is a valid length used for allocation in the new() method.
             unsafe { std::slice::from_raw_parts(self.ptr, self.len) }
         }
     }
 
     impl DerefMut for AlignedBuffer {
-        // SAFETY:
-        // - self.ptr is a valid pointer obtained from a successful allocation in the new() method.
-        // - self.len is a valid length used for allocation in the new() method.
         fn deref_mut(&mut self) -> &mut Self::Target {
+            // SAFETY:
+            // - self.ptr is a valid pointer obtained from a successful allocation in the new() method.
+            // - self.len is a valid length used for allocation in the new() method.
             unsafe { std::slice::from_raw_parts_mut(self.ptr, self.len) }
         }
     }
@@ -694,7 +691,7 @@ pub(crate) mod tests {
                 .open(&out_path)
                 .expect("Can't open");
             let page_size = page_size().unwrap() as u64;
-            let in_file_size = in_file.metadata().unwrap().len();
+            let in_file_size = in_file.as_file().metadata().unwrap().len();
             assert_eq!(
                 in_file_size % page_size,
                 0,
@@ -703,8 +700,8 @@ pub(crate) mod tests {
             let out_file_size = in_file_size;
             let mut buf =
                 AlignedBuffer::new(out_file_size.try_into().unwrap(), page_size as usize).unwrap();
-            let _ = in_file.read(&mut *buf).unwrap();
-            out_file.write_all(&*buf).unwrap();
+            let _ = in_file.read(&mut buf).unwrap();
+            out_file.write_all(&buf).unwrap();
 
             new_files.push((out_path, ranges.clone()));
             out_files.push(out_file);
@@ -934,7 +931,7 @@ pub(crate) mod tests {
         ) {
             writeln!(file, "{}", line).unwrap();
         }
-        file.sync_all().unwrap();
+        file.as_file().sync_all().unwrap();
         file.seek(std::io::SeekFrom::Start(0)).unwrap();
 
         let (mut tracer, exit_evt) =

@@ -16,7 +16,7 @@
 
 package android.os;
 
-/** {@hide} */
+/** @hide */
 interface IStoraged {
     void onUserStarted(int userId);
     void onUserStopped(int userId);

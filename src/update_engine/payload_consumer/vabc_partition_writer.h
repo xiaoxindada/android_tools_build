@@ -17,10 +17,8 @@
 #ifndef UPDATE_ENGINE_VABC_PARTITION_WRITER_H_
 #define UPDATE_ENGINE_VABC_PARTITION_WRITER_H_
 
-#include <map>
 #include <memory>
 #include <string>
-#include <vector>
 
 #include <libsnapshot/cow_writer.h>
 
@@ -62,10 +60,19 @@ class VABCPartitionWriter final : public PartitionWriterInterface {
   [[nodiscard]] bool PerformReplaceOperation(const InstallOperation& operation,
                                              const void* data,
                                              size_t count) override;
+  [[nodiscard]] bool PerformReplaceOperation(const InstallOperation& operation,
+                                             int fd,
+                                             off_t offset,
+                                             size_t count) override;
 
   [[nodiscard]] bool PerformDiffOperation(const InstallOperation& operation,
                                           ErrorCode* error,
                                           const void* data,
+                                          size_t count) override;
+  [[nodiscard]] bool PerformDiffOperation(const InstallOperation& operation,
+                                          ErrorCode* error,
+                                          int fd,
+                                          off_t offset,
                                           size_t count) override;
 
   void CheckpointUpdateProgress(size_t next_op_index) override;

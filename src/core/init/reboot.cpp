@@ -91,7 +91,8 @@ namespace init {
 
 static bool shutting_down = false;
 
-static const std::set<std::string> kDebuggingServices{"tombstoned", "logd", "adbd", "console"};
+[[clang::no_destroy]] static const std::set<std::string> kDebuggingServices{"tombstoned", "logd",
+                                                                            "adbd", "console"};
 
 static void PersistRebootReason(const char* reason, bool write_to_property) {
     if (write_to_property) {
@@ -255,13 +256,6 @@ static void DumpPartitions() {
 }
 
 static void DumpUmountDebuggingInfo() {
-    int status;
-    if (!security_getenforce()) {
-        LOG(INFO) << "Run lsof";
-        const char* lsof_argv[] = {"/system/bin/lsof"};
-        logwrap_fork_execvp(arraysize(lsof_argv), lsof_argv, &status, false, LOG_KLOG, true,
-                            nullptr);
-    }
     DumpPartitions();
     // dump current CPU stack traces and uninterruptible tasks
     WriteStringToFile("l", PROC_SYSRQ);
@@ -354,19 +348,19 @@ static void KillAllProcesses(bool force) {
 }
 
 static UmountStat UmountPartitions(std::chrono::milliseconds timeout, bool ota_update_in_progress) {
-    // If we have no time left, kill them all as fast as possible by sending SIGKILL. Otherwise
-    // SIGTERM so that they can gracefully exit.
-    bool immediate = timeout == 0ms;
-    // Terminate the services before unmounting partitions. If we have some time left, give them a
-    // chance for a graceful shutdown by sending SIGTERM. If not, kill immediately by sending
-    // SIGKILL.
+    const bool immediate = timeout == 0ms;
+
+    // Terminate the services before unmounting partitions.
     for (const auto& s : ServiceList::GetInstance()) {
         if (s->IsShutdownCritical()) {
             LOG(INFO) << "Shutdown service: " << s->name();
+
+            // Terminate to prevent service restarting
+            s->Terminate();
+
+            // If we have no time left, kill as fast as possible by sending SIGKILL.
             if (immediate) {
                 s->Timeout();
-            } else {
-                s->Terminate();
             }
         }
     }
@@ -478,7 +472,7 @@ static void RebootMonitorThread(unsigned int cmd, const Timer& shutdown_timer) {
 
 // Create reboot/shutdown monitor thread
 static void StartRebootMonitorThread(unsigned int cmd, const Timer& shutdown_timer) {
-    static std::atomic_flag started{};
+    [[clang::no_destroy]] static std::atomic_flag started{};
 
     // Only allow the monitor to be started once.
     if (started.test_and_set(std::memory_order_acquire)) {

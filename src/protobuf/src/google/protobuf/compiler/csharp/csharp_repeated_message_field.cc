@@ -29,9 +29,7 @@ RepeatedMessageFieldGenerator::RepeatedMessageFieldGenerator(
     : FieldGeneratorBase(descriptor, presenceIndex, options) {
 }
 
-RepeatedMessageFieldGenerator::~RepeatedMessageFieldGenerator() {
-
-}
+RepeatedMessageFieldGenerator::~RepeatedMessageFieldGenerator() = default;
 
 void RepeatedMessageFieldGenerator::GenerateMembers(io::Printer* printer) {
   printer->Print(
@@ -54,7 +52,7 @@ void RepeatedMessageFieldGenerator::GenerateMembers(io::Printer* printer) {
   printer->Print(
     variables_,
     "private readonly pbc::RepeatedField<$type_name$> $name$_ = new pbc::RepeatedField<$type_name$>();\n");
-  WritePropertyDocComment(printer, descriptor_);
+  WritePropertyDocComment(printer, options(), descriptor_);
   AddPublicMemberAttributes(printer);
   printer->Print(
     variables_,
@@ -127,7 +125,7 @@ void RepeatedMessageFieldGenerator::GenerateFreezingCode(io::Printer* printer) {
 }
 
 void RepeatedMessageFieldGenerator::GenerateExtensionCode(io::Printer* printer) {
-  WritePropertyDocComment(printer, descriptor_);
+  WritePropertyDocComment(printer, options(), descriptor_);
   AddDeprecatedFlag(printer);
   printer->Print(
     variables_,

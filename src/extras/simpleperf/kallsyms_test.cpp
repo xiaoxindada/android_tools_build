@@ -103,7 +103,7 @@ TEST(kallsyms, LoadKernelSymbols) {
 TEST(kallsyms, print_warning) {
   TEST_REQUIRE_NON_ROOT();
   const std::string warning_msg = "Access to kernel symbol addresses is restricted.";
-  CapturedStderr capture;
+  android::base::CapturedStderr capture;
 
   // Call each function requiring kernel addresses once. Check if the warning is printed.
   ResetKernelAddressWarning();

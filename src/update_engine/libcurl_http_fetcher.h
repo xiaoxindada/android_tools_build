@@ -232,7 +232,7 @@ class LibcurlHttpFetcher : public HttpFetcher {
   // Convert a proxy URL into a curl proxy type, if applicable. Returns true iff
   // conversion was successful, false otherwise (in which case nothing is
   // written to |out_type|).
-  bool GetProxyType(const std::string& proxy, curl_proxytype* out_type);
+  bool GetProxyType(const std::string& proxy, long* out_type);
 
   // Hardware interface used to query dev-mode and official build settings.
   HardwareInterface* hardware_;

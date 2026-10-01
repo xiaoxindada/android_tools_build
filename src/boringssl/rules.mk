@@ -51,6 +51,11 @@ MODULE_STATIC_ARMCAP += $(call toarmcap,SHA1,$(USE_ARM_V8_SHA1))
 MODULE_STATIC_ARMCAP += $(call toarmcap,SHA256,$(USE_ARM_V8_SHA2))
 MODULE_COMPILEFLAGS += $(MODULE_STATIC_ARMCAP)
 
+ifeq (true,$(call TOBOOL,$(OPENSSL_SMALL)))
+# Use space efficient options; mainly reduces precomputed lookup tables
+MODULE_DEFINES += OPENSSL_SMALL=1
+endif
+
 ifeq (false,$(call TOBOOL,$(ALLOW_FP_USE)))
 # chacha, ghash, vpaes, sha1, and sha256 assembly files use neon instructions,
 # which we aren't allowed to do in the kernel if ALLOW_FP_USE is disabled. This

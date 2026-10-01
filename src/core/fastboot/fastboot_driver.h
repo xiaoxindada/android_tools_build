@@ -48,7 +48,7 @@ namespace fastboot {
 
 struct DriverCallbacks {
     std::function<void(const std::string&)> prolog = [](const std::string&) {};
-    std::function<void(int)> epilog = [](int) {};
+    std::function<void(int, bool)> epilog = [](int, bool) {};
     std::function<void(const std::string&)> info = [](const std::string&) {};
     std::function<void(const std::string&)> text = [](const std::string&) {};
 };
@@ -105,6 +105,10 @@ class FastBootDriver : public IFastBootDriver {
     RetCode FetchToFd(const std::string& partition, android::base::borrowed_fd fd,
                       int64_t offset = -1, int64_t size = -1, std::string* response = nullptr,
                       std::vector<std::string>* info = nullptr) override;
+    RetCode Fetch(const std::string& partition,
+                  const std::function<RetCode(const char*, uint64_t)>& write_fn,
+                  int64_t offset = -1, int64_t size = -1, std::string* response = nullptr,
+                  std::vector<std::string>* info = nullptr) override;
 
     /* HIGHER LEVEL COMMANDS -- Composed of the commands above */
     RetCode FlashPartition(const std::string& partition, const std::vector<char>& data) override;
@@ -134,6 +138,8 @@ class FastBootDriver : public IFastBootDriver {
                      std::vector<std::string>* info = nullptr);
 
   protected:
+    void SetCrashOnError(bool crash) override { crash_on_error_ = crash; }
+    bool GetCrashOnError() const override { return crash_on_error_; }
     RetCode DownloadCommand(uint32_t size, std::string* response = nullptr,
                             std::vector<std::string>* info = nullptr);
     RetCode HandleResponse(std::string* response = nullptr,
@@ -148,7 +154,7 @@ class FastBootDriver : public IFastBootDriver {
     RetCode SendBuffer(const std::vector<char>& buf);
     RetCode SendBuffer(const void* buf, size_t size);
 
-    RetCode ReadBuffer(void* buf, size_t size);
+    RetCode ReadFully(void* buf, size_t size);
 
     RetCode UploadInner(const std::string& outfile, std::string* response = nullptr,
                         std::vector<std::string>* info = nullptr);
@@ -160,10 +166,11 @@ class FastBootDriver : public IFastBootDriver {
 
     std::string error_;
     std::function<void(const std::string&)> prolog_;
-    std::function<void(int)> epilog_;
+    std::function<void(int, bool)> epilog_;
     std::function<void(const std::string&)> info_;
     std::function<void(const std::string&)> text_;
     bool disable_checks_;
+    bool crash_on_error_ = true;
 };
 
 }  // namespace fastboot

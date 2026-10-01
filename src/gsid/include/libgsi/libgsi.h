@@ -92,6 +92,7 @@ inline constexpr char kDsuUserdata[] = "userdata_gsi";
 
 static constexpr int kMaxBootAttempts = 1;
 
+#ifndef MICRODROID
 // Get the currently active dsu slot
 // Return true on success
 static inline bool GetActiveDsu(std::string* active_dsu) {
@@ -123,6 +124,49 @@ bool CanBootIntoGsi(std::string* error);
 // Called by first-stage init to indicate that we're about to boot into a
 // GSI.
 bool MarkSystemAsGsi();
+#else
+
+constexpr bool GetActiveDsu(std::string* active_dsu) {
+    return false;
+}
+// Returns true if the currently running system image is a GSI (both dynamic and flashed).
+constexpr bool IsGsiImage() {
+    return false;
+}
+
+// Returns true if the currently running system image is a live (dynamic) GSI.
+constexpr bool IsGsiRunning() {
+    return false;
+}
+
+// Return true if a GSI is installed (but not necessarily running).
+constexpr bool IsGsiInstalled() {
+    return false;
+}
+
+// Set the GSI as no longer bootable. This effectively removes the GSI. If no
+// GSI was bootable, false is returned.
+constexpr bool UninstallGsi() {
+    return false;
+}
+
+// Set the GSI as no longer bootable, without removing its installed files.
+constexpr bool DisableGsi() {
+    return false;
+}
+
+// Returns true if init should attempt to boot into a live GSI image, false
+// otherwise. If false, an error message is set.
+//
+// This is only called by first-stage init.
+constexpr bool CanBootIntoGsi(std::string* error) {
+    return false;
+}
+
+constexpr bool MarkSystemAsGsi() {
+    return false;
+}
+#endif
 
 }  // namespace gsi
 }  // namespace android

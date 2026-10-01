@@ -98,6 +98,11 @@ namespace Google.Protobuf.WellKnownTypes {
   #region Messages
   /// <summary>
   /// A protocol buffer message type.
+  ///
+  /// New usages of this message as an alternative to DescriptorProto are strongly
+  /// discouraged. This message does not reliability preserve all information
+  /// necessary to model the schema and preserve semantics. Instead make use of
+  /// FileDescriptorSet which preserves the necessary information.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class Type : pb::IMessage<Type>
@@ -420,7 +425,11 @@ namespace Google.Protobuf.WellKnownTypes {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -466,7 +475,11 @@ namespace Google.Protobuf.WellKnownTypes {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -510,6 +523,11 @@ namespace Google.Protobuf.WellKnownTypes {
 
   /// <summary>
   /// A single field of a message type.
+  ///
+  /// New usages of this message as an alternative to FieldDescriptorProto are
+  /// strongly discouraged. This message does not reliability preserve all
+  /// information necessary to model the schema and preserve semantics. Instead
+  /// make use of FileDescriptorSet which preserves the necessary information.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class Field : pb::IMessage<Field>
@@ -949,7 +967,11 @@ namespace Google.Protobuf.WellKnownTypes {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -1004,7 +1026,11 @@ namespace Google.Protobuf.WellKnownTypes {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -1169,6 +1195,11 @@ namespace Google.Protobuf.WellKnownTypes {
 
   /// <summary>
   /// Enum type definition.
+  ///
+  /// New usages of this message as an alternative to EnumDescriptorProto are
+  /// strongly discouraged. This message does not reliability preserve all
+  /// information necessary to model the schema and preserve semantics. Instead
+  /// make use of FileDescriptorSet which preserves the necessary information.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class Enum : pb::IMessage<Enum>
@@ -1470,7 +1501,11 @@ namespace Google.Protobuf.WellKnownTypes {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -1512,7 +1547,11 @@ namespace Google.Protobuf.WellKnownTypes {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -1552,6 +1591,11 @@ namespace Google.Protobuf.WellKnownTypes {
 
   /// <summary>
   /// Enum value definition.
+  ///
+  /// New usages of this message as an alternative to EnumValueDescriptorProto are
+  /// strongly discouraged. This message does not reliability preserve all
+  /// information necessary to model the schema and preserve semantics. Instead
+  /// make use of FileDescriptorSet which preserves the necessary information.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class EnumValue : pb::IMessage<EnumValue>
@@ -1765,7 +1809,11 @@ namespace Google.Protobuf.WellKnownTypes {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -1792,7 +1840,11 @@ namespace Google.Protobuf.WellKnownTypes {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
@@ -1818,6 +1870,10 @@ namespace Google.Protobuf.WellKnownTypes {
   /// <summary>
   /// A protocol buffer option, which can be attached to a message, field,
   /// enumeration, etc.
+  ///
+  /// New usages of this message as an alternative to FileOptions, MessageOptions,
+  /// FieldOptions, EnumOptions, EnumValueOptions, ServiceOptions, or MethodOptions
+  /// are strongly discouraged.
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class Option : pb::IMessage<Option>
@@ -2019,7 +2075,11 @@ namespace Google.Protobuf.WellKnownTypes {
     #else
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
@@ -2045,7 +2105,11 @@ namespace Google.Protobuf.WellKnownTypes {
     void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
       uint tag;
       while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;

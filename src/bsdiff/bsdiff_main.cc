@@ -19,7 +19,6 @@
 
 #include "bsdiff/bsdiff.h"
 #include "bsdiff/bsdiff_arguments.h"
-#include "bsdiff/constants.h"
 #include "bsdiff/patch_writer_factory.h"
 
 namespace {

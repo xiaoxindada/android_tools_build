@@ -37,10 +37,13 @@ cc_binary {
         "run-as.cpp",
     ],
     shared_libs: [
+        "activitymanager_structured_aidl-cpp",
         "libbase",
-        "libselinux",
-        "libpackagelistparser",
+        "libbinder",
         "libminijail",
+        "libpackagelistparser",
+        "libselinux",
+        "libutils",
     ],
     header_libs: ["libcutils_headers"],
 }

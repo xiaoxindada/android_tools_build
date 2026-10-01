@@ -36,8 +36,7 @@ WrapperFieldGenerator::WrapperFieldGenerator(const FieldDescriptor* descriptor,
   }
 }
 
-WrapperFieldGenerator::~WrapperFieldGenerator() {
-}
+WrapperFieldGenerator::~WrapperFieldGenerator() = default;
 
 void WrapperFieldGenerator::GenerateMembers(io::Printer* printer) {
   printer->Print(
@@ -48,7 +47,7 @@ void WrapperFieldGenerator::GenerateMembers(io::Printer* printer) {
     variables_,
     ";\n"
     "private $type_name$ $name$_;\n");
-  WritePropertyDocComment(printer, descriptor_);
+  WritePropertyDocComment(printer, options(), descriptor_);
   AddPublicMemberAttributes(printer);
   printer->Print(
     variables_,
@@ -176,7 +175,7 @@ void WrapperFieldGenerator::GenerateCodecCode(io::Printer* printer) {
 }
 
 void WrapperFieldGenerator::GenerateExtensionCode(io::Printer* printer) {
-  WritePropertyDocComment(printer, descriptor_);
+  WritePropertyDocComment(printer, options(), descriptor_);
   AddDeprecatedFlag(printer);
   printer->Print(
     variables_,
@@ -192,8 +191,7 @@ WrapperOneofFieldGenerator::WrapperOneofFieldGenerator(
     SetCommonOneofFieldVariables(&variables_);
 }
 
-WrapperOneofFieldGenerator::~WrapperOneofFieldGenerator() {
-}
+WrapperOneofFieldGenerator::~WrapperOneofFieldGenerator() = default;
 
 void WrapperOneofFieldGenerator::GenerateMembers(io::Printer* printer) {
   // Note: deliberately _oneof_$name$_codec, not _$oneof_name$_codec... we have one codec per field.
@@ -202,7 +200,7 @@ void WrapperOneofFieldGenerator::GenerateMembers(io::Printer* printer) {
         "private static readonly pb::FieldCodec<$type_name$> _oneof_$name$_codec = ");
   GenerateCodecCode(printer);
   printer->Print(";\n");
-  WritePropertyDocComment(printer, descriptor_);
+  WritePropertyDocComment(printer, options(), descriptor_);
   AddPublicMemberAttributes(printer);
   printer->Print(
     variables_,

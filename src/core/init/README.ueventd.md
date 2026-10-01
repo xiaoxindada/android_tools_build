@@ -81,7 +81,7 @@ There are three options to set for a subsystem or driver: the name, which device
 and which directory to place the device in. The section takes the below format of
 
     subsystem <subsystem_name>
-      devname uevent_devname|uevent_devpath
+      devname uevent_devname|uevent_devpath|sys_name
       [dirname <directory>]
 
 `subsystem_name` is used to match the uevent `SUBSYSTEM` value.
@@ -123,11 +123,22 @@ its group set to `system`.
 ## Path matching
 ----------------
 The path for a `/dev` or `/sys` entry can contain a `*` anywhere in the path.
-1. If the only `*` appears at the end of the string or if the _options_ parameter is set to
-`no_fnm_pathname`, ueventd matches the entry by `fnmatch(entry_path, incoming_path, 0)`
-2. Otherwise, ueventd matches the entry by `fnmatch(entry_path, incoming_path, FNM_PATHNAME)`
+  1. If the only `*` appears at the end of the string, ueventd matches the entry by string prefix.
+  2. If it appears elsewhere, the entry is matched using `fnmatch`.
+      * If the _options_ parameter is set to `no_fnm_pathname`, ueventd matches the entry by
+        `fnmatch(entry_path, incoming_path, 0)`
+      * Otherwise, ueventd matches the entry by `fnmatch(entry_path, incoming_path, FNM_PATHNAME)`
 
 See the [man page for fnmatch](https://www.man7.org/linux/man-pages/man3/fnmatch.3.html) for more
+details.
+
+The _attr_ in a `/sys` entry can also contain wildcards. When a uevent that matches the _nodename_
+pattern is sent and the _attr_ is a wildcard pattern, ueventd will search for matching attributes
+under that node using shell glob rules and set the permissions on all of them. Notably, wildcards
+cannot match across multiple path components (similar to `FNM_PATHNAME`), and any matches must
+resolve to attributes within the sysfs tree for the node that is being processed.
+
+See the [man page for glob](https://www.man7.org/linux/man-pages/man3/glob.3.html) for more
 details.
 
 ## Firmware loading

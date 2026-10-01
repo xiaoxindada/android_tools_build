@@ -16,6 +16,7 @@
 
 #include "update_engine/payload_consumer/vabc_partition_writer.h"
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <utility>
@@ -363,6 +364,16 @@ bool VABCPartitionWriter::PerformReplaceOperation(const InstallOperation& op,
   return executor_.ExecuteReplaceOperation(op, std::move(writer), data);
 }
 
+bool VABCPartitionWriter::PerformReplaceOperation(const InstallOperation& op,
+                                                  int fd,
+                                                  off_t offset,
+                                                  size_t count) {
+  // Setup the ExtentWriter stack based on the operation type.
+  std::unique_ptr<ExtentWriter> writer = CreateBaseExtentWriter();
+  return executor_.ExecuteReplaceOperation(
+      op, std::move(writer), fd, offset, count);
+}
+
 bool VABCPartitionWriter::PerformDiffOperation(
     const InstallOperation& operation,
     ErrorCode* error,
@@ -385,6 +396,29 @@ bool VABCPartitionWriter::PerformDiffOperation(
       operation, std::move(writer), source_fd, data, count);
 }
 
+bool VABCPartitionWriter::PerformDiffOperation(
+    const InstallOperation& operation,
+    ErrorCode* error,
+    int fd,
+    off_t offset,
+    size_t count) {
+  FileDescriptorPtr source_fd =
+      verified_source_fd_.ChooseSourceFD(operation, error);
+  TEST_AND_RETURN_FALSE(source_fd != nullptr);
+  TEST_AND_RETURN_FALSE(source_fd->IsOpen());
+
+  std::unique_ptr<ExtentWriter> writer =
+      IsXorEnabled() ? std::make_unique<XORExtentWriter>(
+                           operation,
+                           source_fd,
+                           cow_writer_.get(),
+                           xor_map_,
+                           partition_update_.old_partition_info().size())
+                     : CreateBaseExtentWriter();
+  return executor_.ExecuteDiffOperation(
+      operation, std::move(writer), source_fd, fd, offset, count);
+}
+
 void VABCPartitionWriter::CheckpointUpdateProgress(size_t next_op_index) {
   // No need to call fsync/sync, as CowWriter flushes after a label is added
   // added.
@@ -401,9 +435,15 @@ void VABCPartitionWriter::CheckpointUpdateProgress(size_t next_op_index) {
   TEST_AND_RETURN_FALSE(cow_writer_->AddLabel(kEndOfInstallLabel));
   TEST_AND_RETURN_FALSE(cow_writer_->Finalize());
 
+  const auto start = std::chrono::system_clock::now();
   auto cow_reader = cow_writer_->OpenReader();
   TEST_AND_RETURN_FALSE(cow_reader);
   TEST_AND_RETURN_FALSE(cow_reader->VerifyMergeOps());
+  const auto duration = std::chrono::system_clock::now() - start;
+  LOG(INFO)
+      << "Parsing COW and verify merge ordering took "
+      << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()
+      << " ms";
   return true;
 }
 

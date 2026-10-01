@@ -1,5 +1,5 @@
-set(fs_mgr_dir "${CMAKE_SOURCE_DIR}/src/core/fs_mgr")
-set(libfiemap_srcs_dir "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libfiemap")
+set(fs_mgr_dir "${CMAKE_SOURCE_DIR}/src/fs_mgr")
+set(libfiemap_srcs_dir "${CMAKE_SOURCE_DIR}/src/fs_mgr/libfiemap")
 set(libsnapshot_srcs_dir "${fs_mgr_dir}/libsnapshot")
 set(libsnapshot_cow_srcs_dir "${fs_mgr_dir}/libsnapshot/libsnapshot_cow")
 set(libdm_srcs_dir "${fs_mgr_dir}/libdm")
@@ -85,7 +85,6 @@ set(libsnapshot_srcs
         ${snapshot_protos_srcs}
         "${libsnapshot_srcs_dir}/device_info.cpp"
         "${libsnapshot_srcs_dir}/snapshot.cpp"
-        "${libsnapshot_srcs_dir}/snapshot_stats.cpp"
         "${libsnapshot_srcs_dir}/snapshot_stub.cpp"
         "${libsnapshot_srcs_dir}/snapshot_metadata_updater.cpp"
         "${libsnapshot_srcs_dir}/partition_cow_creator.cpp"
@@ -114,6 +113,7 @@ target_include_directories(dm PUBLIC
         ${libbase_headers}
         ${liblog_headers}
         ${e2fsprogs_lib_headers}
+        ${fs_mgr_aconfig_headers}
 )
 target_link_libraries(dm PUBLIC
         base
@@ -141,6 +141,7 @@ target_include_directories(fs_avb PUBLIC
         ${libbase_headers}
         ${libgsi_headers}
         ${boringssl_headers}
+        ${fs_mgr_aconfig_headers}
 )
 target_link_libraries(fs_avb PUBLIC
         avb
@@ -174,29 +175,9 @@ target_link_libraries(lp PUBLIC
         zlib
 )
 
-# add_library(fs_mgr_binder STATIC ${libfs_mgr_binder_srcs})
-# target_compile_options(fs_mgr_binder PRIVATE ${cflags})
-# target_include_directories(fs_mgr_binder PUBLIC
-#         ${fs_mgr_headers}
-#         ${libbase_headers}
-#         ${liblog_headers}
-# )
-# target_link_libraries(fs_mgr_binder PUBLIC
-#         base
-#         crypto
-#         crypto_utils
-#         cutils
-#         ext4_utils
-#         fec
-#         log
-#         lp
-#         selinux
-#         avb
-#         fs_avb
-#         gsi
-# )
-
 add_library(snapshot STATIC ${libsnapshot_srcs})
+# snapshot.pb.cc/.h 由 gen_snapshot_protos_srcs 生成，必须先于本库编译
+add_dependencies(snapshot gen_snapshot_protos_srcs)
 target_compile_options(snapshot PRIVATE ${cflags})
 target_include_directories(snapshot PUBLIC
         ${fs_mgr_headers}
@@ -207,6 +188,7 @@ target_include_directories(snapshot PUBLIC
         ${update_engine_dir}
         ${libext4_utils_headers}
         ${libselinux_headers}
+        ${fs_mgr_aconfig_headers}
 )
 target_link_libraries(snapshot PUBLIC
         base
@@ -215,7 +197,6 @@ target_link_libraries(snapshot PUBLIC
         log
         dm
         fstab
-        # snapshot_flags_cc_lib
         update_metadata-protos
         # fs_mgr_binder
         selinux
@@ -235,6 +216,7 @@ target_include_directories(snapshot_cow PUBLIC
         ${libzstd_headers}
         ${update_engine_headers}
         ${libselinux_headers}
+        ${fs_mgr_aconfig_headers}
 )
 target_link_libraries(snapshot_cow PUBLIC
         base

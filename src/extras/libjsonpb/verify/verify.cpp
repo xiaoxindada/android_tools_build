@@ -21,39 +21,39 @@
 #include <sstream>
 #include <string>
 
+#include <absl/strings/str_cat.h>
+#include <android-base/result.h>
 #include <android-base/strings.h>
 #include <google/protobuf/descriptor.h>
-#include <google/protobuf/descriptor.pb.h>
 #include <google/protobuf/message.h>
 #include <google/protobuf/reflection.h>
+#include <google/protobuf/util/json_util.h>
 #include <json/reader.h>
 #include <json/writer.h>
-#include <jsonpb/jsonpb.h>
 
 namespace android {
 namespace jsonpb {
 
 using google::protobuf::FieldDescriptor;
-using google::protobuf::FieldDescriptorProto;
 using google::protobuf::Message;
+using google::protobuf::util::JsonPrintOptions;
 
 // Return json_name of the field. If it is not set, return the name of the
 // field.
-const std::string& GetJsonName(const FieldDescriptor& field_descriptor) {
-  // The current version of libprotobuf does not define
-  // FieldDescriptor::has_json_name() yet. Use a workaround.
-  // TODO: use field_descriptor.has_json_name() when libprotobuf version is
-  // bumped.
-  FieldDescriptorProto proto;
-  field_descriptor.CopyTo(&proto);
-  return proto.has_json_name() ? field_descriptor.json_name() : field_descriptor.name();
+std::string GetJsonName(const FieldDescriptor& field_descriptor) {
+  if (field_descriptor.has_json_name()) {
+    return std::string(field_descriptor.json_name());
+  }
+  return std::string(field_descriptor.name());
 }
 
-bool AllFieldsAreKnown(const Message& message, const Json::Value& json,
-                       std::vector<std::string>* path, std::stringstream* error) {
+// Params:
+//   path: path to navigate inside JSON tree. For example, {"foo", "bar"}
+//         for the value "string" in {"foo": {"bar" : "string"}}
+android::base::Result<void> AllFieldsAreKnown(const Message& message, const Json::Value& json,
+                                              std::vector<std::string>* path) {
   if (!json.isObject()) {
-    *error << base::Join(*path, ".") << ": Not a JSON object\n";
-    return false;
+    return base::Error() << base::Join(*path, ".") << ": Not a JSON object";
   }
   auto&& descriptor = message.GetDescriptor();
 
@@ -70,14 +70,14 @@ bool AllFieldsAreKnown(const Message& message, const Json::Value& json,
                       std::inserter(unknown_keys, unknown_keys.begin()));
 
   if (!unknown_keys.empty()) {
-    *error << base::Join(*path, ".") << ": contains unknown keys: ["
+    return base::Error()
+           << base::Join(*path, ".") << ": contains unknown keys: ["
            << base::Join(unknown_keys, ", ") << "]. Keys must be a known field name of "
            << descriptor->full_name() << "(or its json_name option if set): ["
-           << base::Join(known_keys, ", ") << "]\n";
-    return false;
+           << base::Join(known_keys, ", ") << "]";
   }
 
-  bool success = true;
+  std::stringstream errorss;
 
   // Check message fields.
   auto&& reflection = message.GetReflection();
@@ -91,83 +91,80 @@ bool AllFieldsAreKnown(const Message& message, const Json::Value& json,
       continue;
     }
 
-    const std::string& json_name = GetJsonName(*field_descriptor);
+    std::string json_name = GetJsonName(*field_descriptor);
     const Json::Value& json_value = json[json_name];
 
     if (field_descriptor->is_repeated()) {
       auto&& fields = reflection->GetRepeatedFieldRef<Message>(message, field_descriptor);
 
       if (json_value.type() != Json::ValueType::arrayValue) {
-        *error << base::Join(*path, ".") << ": not a JSON list. This should not happen.\n";
-        success = false;
+        errorss << base::Join(*path, ".") << ": not a JSON list. This should not happen.\n";
         continue;
       }
 
       if (json_value.size() != static_cast<size_t>(fields.size())) {
-        *error << base::Join(*path, ".") << ": JSON list has size " << json_value.size()
-               << " but message has size " << fields.size() << ". This should not happen.\n";
-        success = false;
+        errorss << base::Join(*path, ".") << ": JSON list has size " << json_value.size()
+                << " but message has size " << fields.size() << ". This should not happen.\n";
         continue;
       }
 
       std::unique_ptr<Message> scratch_space(fields.NewMessage());
       for (int i = 0; i < fields.size(); ++i) {
-        path->push_back(json_name + "[" + std::to_string(i) + "]");
-        auto res =
-            AllFieldsAreKnown(fields.Get(i, scratch_space.get()), json_value[i], path, error);
+        path->push_back(absl::StrCat(json_name, "[", i, "]"));
+        auto res = AllFieldsAreKnown(fields.Get(i, scratch_space.get()), json_value[i], path);
         path->pop_back();
-        if (!res) {
-          success = false;
+        if (!res.ok()) {
+          errorss << res.error().message();
         }
       }
     } else {
       auto&& field = reflection->GetMessage(message, field_descriptor);
       path->push_back(json_name);
-      auto res = AllFieldsAreKnown(field, json_value, path, error);
+      auto res = AllFieldsAreKnown(field, json_value, path);
       path->pop_back();
-      if (!res) {
-        success = false;
+      if (!res.ok()) {
+        errorss << res.error().message();
       }
     }
   }
-  return success;
+
+  if (errorss.tellp() > 0) {
+    return base::Error() << errorss.rdbuf();
+  }
+  return {};
 }
 
-bool AllFieldsAreKnown(const google::protobuf::Message& message, const std::string& json,
-                       std::string* error) {
+android::base::Result<void> AllFieldsAreKnown(const google::protobuf::Message& message,
+                                              const std::string& json) {
   Json::CharReaderBuilder builder;
   std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
   Json::Value value;
-  if (!reader->parse(&*json.begin(), &*json.end(), &value, error)) {
-    return false;
+  std::string error;
+  if (!reader->parse(&*json.begin(), &*json.end(), &value, &error)) {
+    return base::Error() << error;
   }
 
-  std::stringstream errorss;
   std::vector<std::string> json_tree_path{"<root>"};
-  if (!AllFieldsAreKnown(message, value, &json_tree_path, &errorss)) {
-    *error = errorss.str();
-    return false;
-  }
-  return true;
+  return AllFieldsAreKnown(message, value, &json_tree_path);
 }
 
-bool EqReformattedJson(const std::string& json, google::protobuf::Message* scratch_space,
-                       std::string* error) {
+android::base::Result<void> EqReformattedJson(const std::string& json,
+                                              google::protobuf::Message* scratch_space) {
   Json::CharReaderBuilder builder;
   std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
   Json::Value old_json;
-  if (!reader->parse(&*json.begin(), &*json.end(), &old_json, error)) {
-    return false;
+  std::string error;
+  if (!reader->parse(&*json.begin(), &*json.end(), &old_json, &error)) {
+    return base::Error() << error;
   }
 
   auto new_json_string = internal::FormatJson(json, scratch_space);
   if (!new_json_string.ok()) {
-    *error = new_json_string.error();
-    return false;
+    return new_json_string.error();
   }
   Json::Value new_json;
-  if (!reader->parse(&*new_json_string->begin(), &*new_json_string->end(), &new_json, error)) {
-    return false;
+  if (!reader->parse(&*new_json_string->begin(), &*new_json_string->end(), &new_json, &error)) {
+    return base::Error() << error;
   }
 
   if (old_json != new_json) {
@@ -191,19 +188,27 @@ bool EqReformattedJson(const std::string& json, google::protobuf::Message* scrat
     Json::StreamWriterBuilder factory;
     std::unique_ptr<Json::StreamWriter> const writer(factory.newStreamWriter());
     writer->write(new_json, &ss);
-    *error = ss.str();
-    return false;
+    return base::Error() << ss.str();
   }
-  return true;
+  return {};
 }
 
 namespace internal {
-ErrorOr<std::string> FormatJson(const std::string& json, google::protobuf::Message* scratch_space) {
-  auto res = internal::JsonStringToMessage(json, scratch_space);
+android::base::Result<std::string> FormatJson(const std::string& json,
+                                              google::protobuf::Message* scratch_space) {
+  auto res = google::protobuf::util::JsonStringToMessage(json, scratch_space);
   if (!res.ok()) {
-    return MakeError<std::string>(res.error());
+    return android::base::Error() << res;
   }
-  return MessageToJsonString(*scratch_space);
+  std::string ret;
+  res = google::protobuf::util::MessageToJsonString(*scratch_space, &ret,
+                                                    JsonPrintOptions{
+                                                        .add_whitespace = true,
+                                                    });
+  if (!res.ok()) {
+    return android::base::Error() << res;
+  }
+  return ret;
 }
 }  // namespace internal
 

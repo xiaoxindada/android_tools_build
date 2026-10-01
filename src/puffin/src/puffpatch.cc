@@ -5,7 +5,9 @@
 #include "puffin/src/include/puffin/puffpatch.h"
 
 #include <endian.h>
-#include <inttypes.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -17,7 +19,6 @@
 #include "zucchini/patch_reader.h"
 #include "zucchini/zucchini.h"
 
-#include "puffin/memory_stream.h"
 #include "puffin/src/include/puffin/brotli_util.h"
 #include "puffin/src/include/puffin/common.h"
 #include "puffin/src/include/puffin/huffer.h"
@@ -231,6 +232,86 @@ bool PuffPatch(UniqueStreamPtr src,
   } else if (patch_type == metadata::PatchHeader_PatchType_ZUCCHINI) {
     TEST_AND_RETURN_FALSE(ApplyZucchiniPatch(
         std::move(src_stream), src_puff_size, patch + patch_offset,
+        raw_patch_size, std::move(dst_stream)));
+  } else {
+    LOG(ERROR) << "Unsupported patch type " << patch_type;
+    return false;
+  }
+  return true;
+}
+
+bool PuffPatch(UniqueStreamPtr src,
+               UniqueStreamPtr dst,
+               int patch_fd,
+               size_t patch_offset,
+               size_t patch_length,
+               size_t max_cache_size) {
+  size_t page_size = sysconf(_SC_PAGESIZE);
+  size_t offset_diff = patch_offset % page_size;
+  size_t mmap_offset = patch_offset - offset_diff;
+  size_t mmap_length = patch_length + offset_diff;
+
+  // puffin does not store size of the protobuf message. We have to
+  // mmap the whole puffin patch into memory, and pass the entire region
+  // to protobuf library. This relies on lazy paging on kernel side, but
+  // allows us to parse puffin patches without having to load the whole
+  // patch into memory
+  void* mmap_ptr =
+      mmap(nullptr, mmap_length, PROT_READ, MAP_PRIVATE, patch_fd, mmap_offset);
+  if (mmap_ptr == MAP_FAILED) {
+    PLOG(ERROR) << "Failed to mmap patch file";
+    return false;
+  }
+
+  auto munmap_deleter = [mmap_length](void* ptr) { munmap(ptr, mmap_length); };
+  std::unique_ptr<void, decltype(munmap_deleter)> scoped_mmap(mmap_ptr,
+                                                              munmap_deleter);
+  madvise(mmap_ptr, mmap_length, MADV_SEQUENTIAL);
+
+  const uint8_t* patch = static_cast<const uint8_t*>(mmap_ptr) + offset_diff;
+
+  size_t raw_patch_offset;  // raw patch offset in puffin |patch|.
+  size_t raw_patch_size = 0;
+  vector<BitExtent> src_deflates, dst_deflates;
+  vector<ByteExtent> src_puffs, dst_puffs;
+  uint64_t src_puff_size, dst_puff_size;
+
+  metadata::PatchHeader_PatchType patch_type;
+
+  // Decode the patch and get the raw patch (e.g. bsdiff, zucchini).
+  TEST_AND_RETURN_FALSE(
+      DecodePatch(patch, patch_length, &raw_patch_offset, &raw_patch_size,
+                  &src_deflates, &dst_deflates, &src_puffs, &dst_puffs,
+                  &src_puff_size, &dst_puff_size, &patch_type));
+  auto puffer = std::make_shared<Puffer>();
+  auto huffer = std::make_shared<Huffer>();
+
+  auto src_stream =
+      PuffinStream::CreateForPuff(std::move(src), puffer, src_puff_size,
+                                  src_deflates, src_puffs, max_cache_size);
+  TEST_AND_RETURN_FALSE(src_stream);
+  auto dst_stream = PuffinStream::CreateForHuff(
+      std::move(dst), huffer, dst_puff_size, dst_deflates, dst_puffs);
+  TEST_AND_RETURN_FALSE(dst_stream);
+
+  if (patch_type == metadata::PatchHeader_PatchType_BSDIFF) {
+    // For reading from source.
+    auto reader = BsdiffStream::Create(std::move(src_stream));
+    TEST_AND_RETURN_FALSE(reader);
+    // For writing into destination.
+    auto writer = BsdiffStream::Create(std::move(dst_stream));
+    TEST_AND_RETURN_FALSE(writer);
+
+    // Running bspatch itself.
+    auto ret = bspatch(std::move(reader), std::move(writer), patch_fd,
+                       patch_offset + raw_patch_offset, raw_patch_size);
+    if (ret != 0) {
+      LOG(ERROR) << "bspatch failed with " << ret;
+      return false;
+    }
+  } else if (patch_type == metadata::PatchHeader_PatchType_ZUCCHINI) {
+    TEST_AND_RETURN_FALSE(ApplyZucchiniPatch(
+        std::move(src_stream), src_puff_size, patch + raw_patch_offset,
         raw_patch_size, std::move(dst_stream)));
   } else {
     LOG(ERROR) << "Unsupported patch type " << patch_type;

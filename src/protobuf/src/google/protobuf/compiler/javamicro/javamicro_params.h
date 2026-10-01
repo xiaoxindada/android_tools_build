@@ -33,8 +33,11 @@
 #ifndef PROTOBUF_COMPILER_JAVAMICRO_JAVAMICRO_PARAMS_H_
 #define PROTOBUF_COMPILER_JAVAMICRO_JAVAMICRO_PARAMS_H_
 
-#include <map>
-#include <set>
+#include <string>
+
+#include "absl/strings/string_view.h"
+#include "absl/container/flat_hash_map.h"
+#include "absl/container/flat_hash_set.h"
 
 namespace google {
 namespace protobuf {
@@ -47,8 +50,9 @@ enum eMultipleFiles { JAVAMICRO_MUL_UNSET, JAVAMICRO_MUL_FALSE, JAVAMICRO_MUL_TR
 // Parameters for used by the generators
 class Params {
  public:
-  typedef std::map<std::string, std::string> NameMap;
-  typedef std::set<std::string> NameSet;
+  using NameMap = absl::flat_hash_map<std::string, std::string>;
+  using NameSet = absl::flat_hash_set<std::string>;
+
  private:
   std::string empty_;
   std::string base_name_;
@@ -60,7 +64,7 @@ class Params {
   NameSet java_multiple_files_;
 
  public:
-  Params(const std::string & base_name) :
+  explicit Params(absl::string_view base_name) :
     empty_(""),
     base_name_(base_name),
     optimization_(JAVAMICRO_OPT_DEFAULT),
@@ -72,15 +76,15 @@ class Params {
     return base_name_;
   }
 
-  bool has_java_package(const std::string& file_name) const {
+  bool has_java_package(absl::string_view file_name) const {
     return java_packages_.find(file_name)
                         != java_packages_.end();
   }
-  void set_java_package(const std::string& file_name,
+  void set_java_package(absl::string_view file_name,
       const std::string& java_package) {
     java_packages_[file_name] = java_package;
   }
-  const std::string& java_package(const std::string& file_name) const {
+  const std::string& java_package(absl::string_view file_name) const {
     NameMap::const_iterator itr;
 
     itr = java_packages_.find(file_name);
@@ -94,15 +98,15 @@ class Params {
     return java_packages_;
   }
 
-  bool has_java_outer_classname(const std::string& file_name) const {
+  bool has_java_outer_classname(absl::string_view file_name) const {
     return java_outer_classnames_.find(file_name)
                         != java_outer_classnames_.end();
   }
-  void set_java_outer_classname(const std::string& file_name,
+  void set_java_outer_classname(absl::string_view file_name,
       const std::string& java_outer_classname) {
     java_outer_classnames_[file_name] = java_outer_classname;
   }
-  const std::string& java_outer_classname(const std::string& file_name) const {
+  const std::string& java_outer_classname(absl::string_view file_name) const {
     NameMap::const_iterator itr;
 
     itr = java_outer_classnames_.find(file_name);
@@ -134,14 +138,14 @@ class Params {
     override_java_multiple_files_ = JAVAMICRO_MUL_UNSET;
   }
 
-  void set_java_multiple_files(const std::string& file_name, bool value) {
+  void set_java_multiple_files(absl::string_view file_name, bool value) {
     if (value) {
-      java_multiple_files_.insert(file_name);
+      java_multiple_files_.insert(std::string(file_name));
     } else {
       java_multiple_files_.erase(file_name);
     }
   }
-  bool java_multiple_files(const std::string& file_name) const {
+  bool java_multiple_files(absl::string_view file_name) const {
     switch (override_java_multiple_files_) {
       case JAVAMICRO_MUL_FALSE:
         return false;

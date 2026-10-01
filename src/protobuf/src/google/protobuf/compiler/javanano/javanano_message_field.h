@@ -37,7 +37,11 @@
 
 #include <map>
 #include <string>
-#include <google/protobuf/compiler/javanano/javanano_field.h>
+
+#include "google/protobuf/compiler/javanano/javanano_field.h"
+#include "google/protobuf/compiler/javanano/javanano_params.h"
+#include "google/protobuf/descriptor.h"
+#include "google/protobuf/io/printer.h"
 
 namespace google {
 namespace protobuf {
@@ -53,14 +57,14 @@ class MessageFieldGenerator : public FieldGenerator {
   ~MessageFieldGenerator();
 
   // implements FieldGenerator ---------------------------------------
-  void GenerateMembers(io::Printer* printer, bool lazy_init) const;
-  void GenerateClearCode(io::Printer* printer) const;
-  void GenerateMergingCode(io::Printer* printer) const;
-  void GenerateSerializationCode(io::Printer* printer) const;
-  void GenerateSerializedSizeCode(io::Printer* printer) const;
-  void GenerateEqualsCode(io::Printer* printer) const;
-  void GenerateHashCodeCode(io::Printer* printer) const;
-  void GenerateFixClonedCode(io::Printer* printer) const;
+  void GenerateMembers(io::Printer* printer, bool lazy_init) const override;
+  void GenerateClearCode(io::Printer* printer) const override;
+  void GenerateMergingCode(io::Printer* printer) const override;
+  void GenerateSerializationCode(io::Printer* printer) const override;
+  void GenerateSerializedSizeCode(io::Printer* printer) const override;
+  void GenerateEqualsCode(io::Printer* printer) const override;
+  void GenerateHashCodeCode(io::Printer* printer) const override;
+  void GenerateFixClonedCode(io::Printer* printer) const override;
 
  private:
   const FieldDescriptor* descriptor_;
@@ -76,14 +80,14 @@ class MessageOneofFieldGenerator : public FieldGenerator {
   ~MessageOneofFieldGenerator();
 
   // implements FieldGenerator ---------------------------------------
-  void GenerateMembers(io::Printer* printer, bool lazy_init) const;
-  void GenerateClearCode(io::Printer* printer) const;
-  void GenerateMergingCode(io::Printer* printer) const;
-  void GenerateSerializationCode(io::Printer* printer) const;
-  void GenerateSerializedSizeCode(io::Printer* printer) const;
-  void GenerateEqualsCode(io::Printer* printer) const;
-  void GenerateHashCodeCode(io::Printer* printer) const;
-  void GenerateFixClonedCode(io::Printer* printer) const;
+  void GenerateMembers(io::Printer* printer, bool lazy_init) const override;
+  void GenerateClearCode(io::Printer* printer) const override;
+  void GenerateMergingCode(io::Printer* printer) const override;
+  void GenerateSerializationCode(io::Printer* printer) const override;
+  void GenerateSerializedSizeCode(io::Printer* printer) const override;
+  void GenerateEqualsCode(io::Printer* printer) const override;
+  void GenerateHashCodeCode(io::Printer* printer) const override;
+  void GenerateFixClonedCode(io::Printer* printer) const override;
 
  private:
   const FieldDescriptor* descriptor_;
@@ -99,14 +103,14 @@ class RepeatedMessageFieldGenerator : public FieldGenerator {
   ~RepeatedMessageFieldGenerator();
 
   // implements FieldGenerator ---------------------------------------
-  void GenerateMembers(io::Printer* printer, bool lazy_init) const;
-  void GenerateClearCode(io::Printer* printer) const;
-  void GenerateMergingCode(io::Printer* printer) const;
-  void GenerateSerializationCode(io::Printer* printer) const;
-  void GenerateSerializedSizeCode(io::Printer* printer) const;
-  void GenerateEqualsCode(io::Printer* printer) const;
-  void GenerateHashCodeCode(io::Printer* printer) const;
-  void GenerateFixClonedCode(io::Printer* printer) const;
+  void GenerateMembers(io::Printer* printer, bool lazy_init) const override;
+  void GenerateClearCode(io::Printer* printer) const override;
+  void GenerateMergingCode(io::Printer* printer) const override;
+  void GenerateSerializationCode(io::Printer* printer) const override;
+  void GenerateSerializedSizeCode(io::Printer* printer) const override;
+  void GenerateEqualsCode(io::Printer* printer) const override;
+  void GenerateHashCodeCode(io::Printer* printer) const override;
+  void GenerateFixClonedCode(io::Printer* printer) const override;
 
  private:
   const FieldDescriptor* descriptor_;

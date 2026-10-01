@@ -69,3 +69,47 @@ python_binary_host {
         "update_payload",
     ],
 }
+
+python_binary_host {
+    name: "payload_info",
+    srcs: [
+        "payload_info.py",
+    ],
+    main: "payload_info.py",
+    libs: [
+        "update_payload",
+    ],
+}
+
+python_binary_host {
+    name: "paycheck",
+    srcs: [
+        "paycheck.py",
+    ],
+    main: "paycheck.py",
+    libs: [
+        "update_payload",
+    ],
+}
+
+python_binary_host {
+    name: "blockdiff",
+    srcs: [
+        "blockdiff.py",
+    ],
+    main: "blockdiff.py",
+    libs: [
+        "update_payload",
+    ],
+}
+
+python_binary_host {
+    name: "simulate_ota",
+    srcs: [
+        "simulate_ota.py",
+    ],
+    main: "simulate_ota.py",
+    libs: [
+        "update_payload",
+    ],
+}

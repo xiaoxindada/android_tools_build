@@ -16,7 +16,7 @@
 
 package com.android.server.profcollect;
 
-/** {@hide} */
+/** @hide */
 oneway interface IProviderStatusCallback {
     void onProviderReady();
 }

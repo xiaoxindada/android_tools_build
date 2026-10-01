@@ -16,14 +16,13 @@
 
 #pragma once
 
-#include <sstream>
 #include <string>
 #include <vector>
 
+#include <android-base/result.h>
 #include <google/protobuf/message.h>
 #include <json/reader.h>
 #include <json/value.h>
-#include <jsonpb/jsonpb.h>
 
 namespace android {
 namespace jsonpb {
@@ -60,11 +59,10 @@ namespace jsonpb {
 //     message Foo { string foo_bar = 1 [json_name="fooBar"]; }
 //
 // Params:
-//    path: path to navigate inside JSON tree. For example, {"foo", "bar"} for
-//    the value "string" in
-//          {"foo": {"bar" : "string"}}
-bool AllFieldsAreKnown(const google::protobuf::Message& message, const std::string& json,
-                       std::string* error);
+//    message: Sample message of which the type is the schema.
+//    json: JSON string to check.
+android::base::Result<void> AllFieldsAreKnown(const google::protobuf::Message& message,
+                                              const std::string& json);
 
 // Format the given JSON string according to Prototype T. This will serialize
 // the JSON string to a Prototype message, then re-print the message as JSON. By
@@ -74,16 +72,16 @@ bool AllFieldsAreKnown(const google::protobuf::Message& message, const std::stri
 // names, etc.
 //
 // Params:
-//   scratch_space: The scratch space to use to store the Protobuf message. It
-//   must be a pointer
-//                  to the schema that the JSON string conforms to.
-bool EqReformattedJson(const std::string& json, google::protobuf::Message* scratch_space,
-                       std::string* error);
+//    json: JSON string to check.
+//    scratch_space: The scratch space to use to store the Protobuf message. It
+//      must be a pointer to the schema that the JSON string conforms to.
+android::base::Result<void> EqReformattedJson(const std::string& json,
+                                              google::protobuf::Message* scratch_space);
 
 namespace internal {
 // See EqReformattedJson().
-ErrorOr<std::string> FormatJson(const std::string& json, google::protobuf::Message* scratch_space);
-
+android::base::Result<std::string> FormatJson(const std::string& json,
+                                              google::protobuf::Message* scratch_space);
 }  // namespace internal
 
 }  // namespace jsonpb

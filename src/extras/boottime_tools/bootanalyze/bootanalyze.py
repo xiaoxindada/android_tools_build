@@ -54,6 +54,16 @@ _ADB_CMD = "adb"
 _TIMING_THRESHOLD = 5.0
 _CARWATCHDOG_PARSER_CMD = 'perf_stats_parser'
 _LOGIN_END = "LoginEnd"
+_LAUNCHER_SHOWN = "LauncherShown"
+
+_PERFETTO_LOGIN_CONFIG_LOCATION = \
+    "/data/misc/perfetto-configs/perfetto-login.textproto"
+_PERFETTO_LOGIN_TRACE_LOCATION = \
+    "/data/misc/perfetto-traces/perfetto-login.perfetto-trace"
+_PERFETTO_LOGIN_TRACE_OUTPUT_NAME = "perfetto-login"
+
+# Wait 30 seconds for perfetto trace runtime to finish
+_PERFETTO_MAX_TIMEOUT = 30
 
 max_wait_time = _BOOT_TIME_TOO_BIG
 
@@ -99,8 +109,20 @@ def main():
   if args.iterate > 1 and args.bootchart:
     run_adb_shell_cmd_as_root('touch /data/bootchart/enabled')
 
-  if args.login and not args.skip_login_setup:
-    prepare_login_credentials()
+  if args.trace_login and not args.login:
+    print("Warning: login tracing is enabled but login workflow is "
+          "not enabled, no tracing will happen.")
+
+  if args.login:
+    if not args.skip_login_setup:
+      prepare_login_credentials()
+    if args.trace_login:
+      if args.perfetto_login_config_file:
+        run_adb_cmd(f"push {args.perfetto_login_config_file} "
+                    f"{_PERFETTO_LOGIN_CONFIG_LOCATION}")
+      else:
+        print("Warning: no perfetto config file provided. Login trace will use "
+              "the config that is already on the device, if any.")
 
   search_events_pattern = {
       key: re.compile(pattern)
@@ -135,17 +157,19 @@ def main():
   boottime_points = collections.OrderedDict()
   shutdown_event_all = collections.OrderedDict()
   shutdown_timing_event_all = collections.OrderedDict()
+  prefetch_metric_points = collections.OrderedDict()
   for it in range(0, args.iterate):
     if args.iterate > 1:
       print(f"Run: {it}")
     attempt = 1
     processing_data = None
     boottime_events = None
+    prefetch_metrics = None
     while attempt <= _MAX_RETRIES and processing_data is None:
       attempt += 1
       (processing_data, kernel_timings, logcat_timings,
        boottime_events, shutdown_events,
-       shutdown_timing_events) = iterate(args, search_events_pattern,
+       shutdown_timing_events, prefetch_metrics) = iterate(args, search_events_pattern,
                                          timing_events_pattern,
                                          shutdown_events_pattern, cfg,
                                          error_time, components_to_monitor)
@@ -163,6 +187,16 @@ def main():
           events = []
           shutdown_timing_event_all[k] = events
         events.append(v)
+
+    if args.fetch_perfetto_traces:
+      fetch_perfetto_traces(args, it)
+
+    if prefetch_metrics:
+      for k, v in prefetch_metrics.items():
+        if k not in prefetch_metric_points:
+          prefetch_metric_points[k] = []
+        prefetch_metric_points[k].append(v)
+
     if not processing_data or not boottime_events:
       # Processing error
       print("Failed to collect valid samples for run", it)
@@ -252,6 +286,17 @@ def main():
       print("{0:30}: {1:<7.5} {2:<7.5} {3}".format(
         item[0], item[1], item[2],
         item[3] if item[3] != args.iterate else ""))
+
+    if args.prefetch_metrics:
+      print("-----------------")
+      print(f"Prefetch metrics after {args.iterate} runs")
+      print("{0:30}: {1:<10} {2:<7} {3}".format(
+        "Metric", "Mean", "stddev", "#runs"))
+      for item in prefetch_metric_points.items():
+        num_runs = len(item[1])
+        print("{0:30}: {1:<10} {2:<7.5} {3}".format(
+          item[0], sum(item[1]) / num_runs, stddev(item[1]),
+          num_runs if num_runs != args.iterate else ""))
 
     run_adb_shell_cmd_as_root("rm /data/bootchart/enabled")
 
@@ -394,9 +439,12 @@ def iterate(args, search_events_pattern, timings_pattern,
     logcat_stop_events.append(_CARWATCHDOG_BOOT_COMPLETE)
   if args.login:
     logcat_stop_events.append(_LOGIN_END)
+  if args.wait_launcher_shown:
+    logcat_stop_events.append(_LAUNCHER_SHOWN)
   logcat_events, logcat_timing_events = collect_events(
       search_events_pattern, f"{_ADB_CMD} logcat -b all -v epoch",
-      timings_pattern, logcat_stop_events, True, False)
+      timings_pattern, logcat_stop_events, True, False,
+      args.trace_login)
 
   t.join()
   dmesg_events = results[0]
@@ -526,6 +574,14 @@ def iterate(args, search_events_pattern, timings_pattern,
       "from_dmesg": False,
       "logcat_value": 0.0
     }
+  if events.get("LauncherShown") and boottime_events.get("bootloader"):
+    total = events["LauncherShown"] + boottime_events["bootloader"]
+    data_points["*LauncherShown+Bootloader"] = {
+      "value": total,
+      "from_dmesg": False,
+      "logcat_value": 0.0
+    }
+
   for k, v in data_points.items():
     print("{0:30}: {1:<7.5} {2:1} ({3})".format(
       k, v["value"], "*" if v["from_dmesg"] else "", v["logcat_value"]))
@@ -566,8 +622,17 @@ def iterate(args, search_events_pattern, timings_pattern,
       if (fs_stat_val & ~0x17) != 0:
         capture_bugreport(f"fs_stat_{fs_stat}", events[_LOGCAT_BOOT_COMPLETE])
 
+  prefetch_metrics = None
+  if args.prefetch_metrics:
+    prefetch_metrics = collect_prefetch_metrics(args.output)
+    print("-----------------")
+    print("Prefetch metrics:")
+    for key, value in prefetch_metrics.items():
+      print(f"{key:<30}: {value}")
+    print("-----------------")
+
   return (data_points, kernel_timing_points, logcat_timing_points,
-          boottime_events, shutdown_events, shutdown_timing_events)
+          boottime_events, shutdown_events, shutdown_timing_events, prefetch_metrics)
 
 
 def prepare_login_credentials():
@@ -599,7 +664,7 @@ def prepare_login_credentials():
       raise Exception("Failed to set password on user 10: " + result)
 
 
-def do_login():
+def do_login(trace_login=False):
   # We sleep for some time to allow slower devices to display the proper user
   # selection screen. This is because the launcher start event does not always
   # match the immediate display of a usable and interactive screen.
@@ -619,9 +684,46 @@ def do_login():
   # Sleep some more time to allow the user selection screen to transition into a
   # lock screen as the process takes some time on slower devices.
   time.sleep(5)
+
+  # We start tracing right before we type the user credentials and begin the
+  # login process.
+  if trace_login:
+    # Remove any previous perfetto traces so we don't end up pulling the trace
+    # of a previous iteration in case of failure.
+    run_adb_shell_cmd_as_root(f"rm {_PERFETTO_LOGIN_TRACE_LOCATION}")
+    run_adb_shell_cmd(
+        f"perfetto -c {_PERFETTO_LOGIN_CONFIG_LOCATION} --txt --background "
+        f"-o {_PERFETTO_LOGIN_TRACE_LOCATION}"
+    )
+  login_start_time = time.time()
+
   # Type password and confirm with enter key
   run_adb_shell_cmd("input text 1234")
   run_adb_shell_cmd("input keyevent 66")
+
+  if trace_login:
+    remaining_time = _PERFETTO_MAX_TIMEOUT
+    perfetto_finished = False
+    while remaining_time > 0.0:
+      # Check if the perfetto process is still running
+      _, err = run_adb_shell_cmd("ps | grep perfetto")
+      if err != 0:
+        perfetto_finished = True
+        break
+      time.sleep(min(remaining_time, 1))
+      remaining_time = _PERFETTO_MAX_TIMEOUT - (time.time() - login_start_time)
+    if not perfetto_finished:
+      print("Warning: Perfetto process ran for too long. "
+            "Trace may be corrupted or incomplete. ")
+      print("Attempting to terminate the perfetto process.")
+      run_adb_shell_cmd("pkill perfetto")
+      # Give it an extra second to try and flush some of the data captured.
+      time.sleep(1)
+    # Verify that the perfetto trace file was created.
+    _, err = run_adb_shell_cmd(
+        f"ls -l {_PERFETTO_LOGIN_TRACE_LOCATION}")
+    if err != 0:
+      print("Warning: Perfetto trace not found. Login trace was not captured?")
 
 def debug(string):
   if _DEBUG:
@@ -700,6 +802,29 @@ def init_arguments():
                       action="store_true",
                       help=("if login workflow is enabled, skip the OOBE and "
                             "credential setup"))
+  parser.add_argument("--wait-launcher-shown",
+                      dest="wait_launcher_shown",
+                      action="store_true",
+                      help=("wait until launcher is shown and also collect"
+                            "launcher shown event"))
+  parser.add_argument("--prefetch-metrics",
+                      dest="prefetch_metrics",
+                      action="store_true",
+                      help=("Collect prefetch metrics from the device."))
+  parser.add_argument("--fetch-perfetto-traces",
+                      dest="fetch_perfetto_traces",
+                      action="store_true",
+                      help=("Automatically fetch perfetto traces generated by "
+                            "each iteration."))
+  parser.add_argument("--trace-login",
+                      dest="trace_login",
+                      action="store_true",
+                      help="Enable perfetto tracing for login workflow.")
+  parser.add_argument("--perfetto-login-config-file",
+                      dest="perfetto_login_config_file",
+                      action="store",
+                      help=("Path on the host of the perfetto config file to "
+                            "use for tracing login activity."))
   return parser.parse_args()
 
 
@@ -818,7 +943,8 @@ def log_timeout(time_left, stop_events, events, timing_events):
 
 
 def collect_events(search_events, command, timings, stop_events,
-                   collects_all_events, disable_timing_after_zygote):
+                   collects_all_events, disable_timing_after_zygote,
+                   trace_login=False):
   events = collections.OrderedDict()
   timing_events = {}
 
@@ -894,7 +1020,7 @@ def collect_events(search_events, command, timings, stop_events,
         if (_LOGIN_END in stop_events and event == _LAUNCHER_START and
             not login_started):
           login_started = True
-          do_login()
+          do_login(trace_login)
         if event in stop_events:
           if collects_all_events:
             stop_events.remove(event)
@@ -915,8 +1041,13 @@ def collect_events(search_events, command, timings, stop_events,
 
 
 def fetch_boottime_property():
+  # TODO: b/485123734 - use bootstat to get boot timings instead of getprop
   cmd = f"{_ADB_CMD} shell su root getprop"
   events = {}
+  bootloader_times_to_ignore = [
+      "SW",
+      "splash",
+  ]
   process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
   out = process.stdout
   pattern = re.compile(r"\[ro\.boottime\.([^\]]+)\]:\s+\[(\d+)\]")
@@ -937,7 +1068,7 @@ def fetch_boottime_property():
         entry_pair = item.split(":")
         entry_name = entry_pair[0]
         time_spent = float(entry_pair[1]) / 1000 #ms to s
-        if entry_name != "SW":
+        if entry_name not in bootloader_times_to_ignore:
           bootloader_time = bootloader_time + time_spent
   ordered_event = collections.OrderedDict()
   if bootloader_time != 0.0:
@@ -1182,6 +1313,69 @@ def grab_carwatchdog_bootstats(result_dir):
   out_proto_file_path = os.path.join(result_dir,
                                      "carwatchdog_perf_stats_out.pb")
   generate_proto(dump_file_name, build_info_file_path, out_proto_file_path)
+
+
+def collect_prefetch_metrics(output_dir):
+  """Pulls and parses prefetch metrics from the device from multiple stat files."""
+  metrics = {
+    'prefetched_records': 0,
+    'prefetched_bytes': 0,
+    'prefetched_pages': 0,
+    'exec_time_ms': 0
+  }
+  # List of prefetch stat paths on the device.
+  metric_paths = [
+    '/metadata/prefetch/prefetch.stat',
+    '/metadata/prefetch/prefetch_apex.stat'
+  ]
+
+  for metric_path in metric_paths:
+    # Use adb shell cat to read the file content directly.
+    # The /metadata partition requires root access.
+    content, ret_code = run_adb_shell_cmd_as_root(f"cat {metric_path}")
+
+    if ret_code != 0:
+      print(f"Prefetch metrics file '{metric_path}' not found or not readable, skipping.")
+      continue
+
+    # If an output directory is specified, save the content for debugging.
+    if output_dir:
+      try:
+        local_path = os.path.join(output_dir, os.path.basename(metric_path))
+        with open(local_path, 'w', encoding='utf-8') as f:
+          f.write(content)
+      except IOError as e:
+        print(f"Warning: Could not write prefetch metrics to {local_path}: {e}")
+
+    for line in content.splitlines():
+      parts = line.strip().split(': ')
+      if len(parts) == 2:
+        key, value_str = parts
+        if key in metrics:
+          try:
+            value = int(value_str)
+          except ValueError:
+            print(f"Warning: Could not parse value for key: '{key}' val: '{value_str}'"
+                  f"in file {metric_path}. Using 0 instead.")
+            value = 0
+          # Summing up the metrics from both files
+          metrics[key] += value
+      else:
+        print(f"Error: the line:{line} in file: {metric_path} does not follow "
+              f"metric_name: metric_value pattern")
+
+  return metrics
+
+
+def fetch_perfetto_traces(args, iteration):
+  """Retrieves the perfetto traces created and tags them if needed."""
+  # No need to tag the trace if we are only doing one iteration
+  tag = f"-{iteration}" if args.iterate > 1 else ""
+  if args.trace_login:
+    run_adb_cmd(
+        f"pull -z lz4 {_PERFETTO_LOGIN_TRACE_LOCATION} "
+        f"{_PERFETTO_LOGIN_TRACE_OUTPUT_NAME}{tag}.perfetto-trace"
+    )
 
 
 if __name__ == "__main__":

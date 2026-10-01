@@ -75,6 +75,10 @@ class PartitionWriter : public PartitionWriterInterface {
   [[nodiscard]] bool PerformReplaceOperation(const InstallOperation& operation,
                                              const void* data,
                                              size_t count) override;
+  [[nodiscard]] bool PerformReplaceOperation(const InstallOperation& operation,
+                                             int fd,
+                                             off_t offset,
+                                             size_t count) override;
   [[nodiscard]] bool PerformZeroOrDiscardOperation(
       const InstallOperation& operation) override;
 
@@ -83,6 +87,11 @@ class PartitionWriter : public PartitionWriterInterface {
   [[nodiscard]] bool PerformDiffOperation(const InstallOperation& operation,
                                           ErrorCode* error,
                                           const void* data,
+                                          size_t count) override;
+  [[nodiscard]] bool PerformDiffOperation(const InstallOperation& operation,
+                                          ErrorCode* error,
+                                          int fd,
+                                          off_t offset,
                                           size_t count) override;
 
   // |DeltaPerformer| calls this when all Install Ops are sent to partition

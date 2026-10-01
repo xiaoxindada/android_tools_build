@@ -17,7 +17,6 @@
 #include <cutils/sockets.h>
 
 #include <errno.h>
-#include <fcntl.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,14 +28,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-static int toggle_O_NONBLOCK(int s) {
-    int flags = fcntl(s, F_GETFL);
-    if (flags == -1 || fcntl(s, F_SETFL, flags ^ O_NONBLOCK) == -1) {
-        close(s);
-        return -1;
-    }
-    return s;
-}
+#include "sockets_utils.h"
 
 // Connect to the given host and port.
 // 'timeout' is in seconds (0 for no timeout).

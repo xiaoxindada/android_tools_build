@@ -100,14 +100,14 @@ class TestInputStream : public ZeroCopyInputStream {
  public:
   TestInputStream(const void* data, int size, int block_size)
       : array_stream_(data, size, block_size), counter_(0) {}
-  ~TestInputStream() {}
+  ~TestInputStream() override = default;
 
   // implements ZeroCopyInputStream ----------------------------------
   bool Next(const void** data, int* size) override {
     // We'll return empty buffers starting with the first buffer, and every
     // 3 and 5 buffers after that.
     if (counter_ % 3 == 0 || counter_ % 5 == 0) {
-      *data = NULL;
+      *data = nullptr;
       *size = 0;
       ++counter_;
       return true;
@@ -132,8 +132,8 @@ class TestInputStream : public ZeroCopyInputStream {
 // block of text which can be checked.
 class TestErrorCollector : public ErrorCollector {
  public:
-  TestErrorCollector() {}
-  ~TestErrorCollector() {}
+  TestErrorCollector() = default;
+  ~TestErrorCollector() override = default;
 
   std::string text_;
 
@@ -847,18 +847,25 @@ TEST_2D(TokenizerTest, DocComments, kDocCommentCases, kBlockSizes) {
 
   for (int i = 0; i < detached_comments.size(); i++) {
     ASSERT_LT(i, ABSL_ARRAYSIZE(kDocCommentCases));
-    ASSERT_TRUE(kDocCommentCases_case.detached_comments[i] != NULL);
+    ASSERT_TRUE(kDocCommentCases_case.detached_comments[i] != nullptr);
     EXPECT_EQ(kDocCommentCases_case.detached_comments[i], detached_comments[i]);
   }
 
   // Verify that we matched all the detached comments.
-  EXPECT_EQ(NULL,
+  EXPECT_EQ(nullptr,
             kDocCommentCases_case.detached_comments[detached_comments.size()]);
 
   EXPECT_EQ(kDocCommentCases_case.next_leading_comments, next_leading_comments);
 }
 
 // -------------------------------------------------------------------
+
+// Android local modification: we want to run with unsigned integer overflow
+// sanitizer enabled to support vendor use cases, but the test below relies
+// on unsigned overflow. Disable the sanitizer for this test.
+#if defined(__clang__)
+#pragma clang attribute push(__attribute__((no_sanitize("unsigned-integer-overflow"))), apply_to=function)
+#endif
 
 // Test parse helpers.
 // TODO: Add a fuzz test for this.
@@ -993,6 +1000,10 @@ TEST_F(TokenizerTest, ParseInteger) {
     }
   }
 }
+
+#if defined(__clang__)
+#pragma clang attribute pop
+#endif
 
 TEST_F(TokenizerTest, ParseFloat) {
   EXPECT_DOUBLE_EQ(1, Tokenizer::ParseFloat("1."));

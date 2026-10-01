@@ -35,12 +35,11 @@
 #include <map>
 #include <string>
 
-#include <absl/strings/str_cat.h>
-#include <google/protobuf/compiler/javanano/javanano_enum_field.h>
-#include <google/protobuf/stubs/common.h>
-#include <google/protobuf/compiler/javanano/javanano_helpers.h>
-#include <google/protobuf/io/printer.h>
-#include <google/protobuf/wire_format.h>
+#include "absl/strings/str_cat.h"
+#include "google/protobuf/compiler/javanano/javanano_enum_field.h"
+#include "google/protobuf/compiler/javanano/javanano_helpers.h"
+#include "google/protobuf/io/printer.h"
+#include "google/protobuf/wire_format.h"
 
 namespace google {
 namespace protobuf {

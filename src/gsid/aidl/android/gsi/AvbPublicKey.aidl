@@ -16,7 +16,7 @@
 
 package android.gsi;
 
-/** {@hide} */
+/** @hide */
 parcelable AvbPublicKey {
     /* Raw data bytes. */
     byte[] bytes;

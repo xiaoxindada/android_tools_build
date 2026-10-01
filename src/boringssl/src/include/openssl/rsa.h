@@ -69,7 +69,16 @@ OPENSSL_EXPORT int RSA_up_ref(RSA *rsa);
 // Properties.
 
 // OPENSSL_RSA_MAX_MODULUS_BITS is the maximum supported RSA modulus, in bits.
-#define OPENSSL_RSA_MAX_MODULUS_BITS 8192
+//
+// WARNING: RSA-16384 is extremely slow and may be a DoS risk. This value is set
+// based on the largest RSA keys any caller of BoringSSL may need to use, and
+// may be too high for a general-purpose application. Applications should impose
+// their own limits before importing an RSA key. RSA-16384 is of particular DoS
+// risk for RSA private key operations, which scale cubicly.
+//
+// In the future, BoringSSL may limit overly large RSA key sizes to application
+// opt-in, or impose a tighter limit on private key operations.
+#define OPENSSL_RSA_MAX_MODULUS_BITS 16384
 
 // RSA_bits returns the size of |rsa|, in bits.
 OPENSSL_EXPORT unsigned RSA_bits(const RSA *rsa);
@@ -657,9 +666,7 @@ OPENSSL_EXPORT void *RSA_get_ex_data(const RSA *rsa, int idx);
 // API, like a platform key store.
 #define RSA_FLAG_OPAQUE 1
 
-// RSA_FLAG_NO_BLINDING disables blinding of private operations, which is a
-// dangerous thing to do. This flag is set internally as part of self-tests but
-// is otherwise impossible to set externally.
+// RSA_FLAG_NO_BLINDING does nothing.
 #define RSA_FLAG_NO_BLINDING 8
 
 // RSA_FLAG_EXT_PKEY is deprecated and ignored.
@@ -767,9 +774,9 @@ OPENSSL_EXPORT int RSA_print(BIO *bio, const RSA *rsa, int indent);
 // id-RSASSA-PSS key encoding by default.
 //
 // WARNING: BoringSSL does support id-RSASSA-PSS parameters when callers opt in
-// (see |EVP_pkey_rsa_pss_sha256|). We currently assume such callers do not need
-// this function. Callers that opt into id-RSASSA-PSS support and require this
-// functionality should contact the BoringSSL team.
+// (see |EVP_pkey_rsa_pss_sha256| and others). We currently assume such callers
+// do not need this function. Callers that opt into id-RSASSA-PSS support and
+// require this functionality should contact the BoringSSL team.
 OPENSSL_EXPORT const RSA_PSS_PARAMS *RSA_get0_pss_params(const RSA *rsa);
 
 // RSA_new_method_no_e returns a newly-allocated |RSA| object backed by

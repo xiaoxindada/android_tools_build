@@ -81,7 +81,8 @@ HealthdDraw::HealthdDraw(animation* anim)
 
 HealthdDraw::~HealthdDraw() {}
 
-void HealthdDraw::redraw_screen(const animation* batt_anim, GRSurface* surf_unknown) {
+void HealthdDraw::redraw_screen(const animation* batt_anim, GRSurface* surf_unknown,
+                                GRSurface* surf_overheat) {
     if (!graphics_available) return;
     clear_screen();
 
@@ -89,6 +90,8 @@ void HealthdDraw::redraw_screen(const animation* batt_anim, GRSurface* surf_unkn
     if (batt_anim->cur_status == BATTERY_STATUS_UNKNOWN || batt_anim->cur_level < 0 ||
         batt_anim->num_frames == 0)
         draw_unknown(surf_unknown);
+    else if (batt_anim->cur_temp >= 550)
+        draw_overheat(surf_overheat);
     else
         draw_battery(batt_anim);
     gr_flip();
@@ -150,30 +153,30 @@ int HealthdDraw::draw_text(const GRFont* font, int x, int y, const char* str) {
     return y + char_height_;
 }
 
-void HealthdDraw::determine_xy(const animation::text_field& field,
-                               const int length, int* x, int* y) {
-  *x = field.pos_x;
-  screen_width_ = gr_fb_width() / (kSplitScreen ? 2 : 1);
-  screen_height_ = gr_fb_height();
-
-  int str_len_px = length * field.font->char_width;
-  if (field.pos_x == CENTER_VAL) {
-    *x = (screen_width_ - str_len_px) / 2;
-  } else if (field.pos_x >= 0) {
+void HealthdDraw::determine_xy(const animation::text_field& field, const int length, int* x,
+                               int* y) {
     *x = field.pos_x;
-  } else {  // position from max edge
-    *x = screen_width_ + field.pos_x - str_len_px - kSplitOffset;
-  }
+    screen_width_ = gr_fb_width() / (kSplitScreen ? 2 : 1);
+    screen_height_ = gr_fb_height();
 
-  *y = field.pos_y;
+    int str_len_px = length * field.font->char_width;
+    if (field.pos_x == CENTER_VAL) {
+        *x = (screen_width_ - str_len_px) / 2;
+    } else if (field.pos_x >= 0) {
+        *x = field.pos_x;
+    } else {  // position from max edge
+        *x = screen_width_ + field.pos_x - str_len_px - kSplitOffset;
+    }
 
-  if (field.pos_y == CENTER_VAL) {
-    *y = (screen_height_ - field.font->char_height) / 2;
-  } else if (field.pos_y >= 0) {
     *y = field.pos_y;
-  } else {  // position from max edge
-    *y = screen_height_ + field.pos_y - field.font->char_height;
-  }
+
+    if (field.pos_y == CENTER_VAL) {
+        *y = (screen_height_ - field.font->char_height) / 2;
+    } else if (field.pos_y >= 0) {
+        *y = field.pos_y;
+    } else {  // position from max edge
+        *y = screen_height_ + field.pos_y - field.font->char_height;
+    }
 }
 
 void HealthdDraw::draw_clock(const animation* anim) {
@@ -243,19 +246,32 @@ void HealthdDraw::draw_battery(const animation* anim) {
 }
 
 void HealthdDraw::draw_unknown(GRSurface* surf_unknown) {
-  int y;
-  if (surf_unknown) {
-      draw_surface_centered(surf_unknown);
-  } else if (sys_font) {
-      gr_color(0xa4, 0xc6, 0x39, 255);
-      y = draw_text(sys_font, -1, -1, "Charging!");
-      draw_text(sys_font, -1, y + 25, "?\?/100");
-  } else {
-      LOGW("Charging, level unknown\n");
-  }
+    int y;
+    if (surf_unknown) {
+        draw_surface_centered(surf_unknown);
+    } else if (sys_font) {
+        gr_color(0xa4, 0xc6, 0x39, 255);
+        y = draw_text(sys_font, -1, -1, "Charging!");
+        draw_text(sys_font, -1, y + 25, "?\?/100");
+    } else {
+        LOGW("Charging, level unknown\n");
+    }
 }
 
-std::unique_ptr<HealthdDraw> HealthdDraw::Create(animation *anim) {
+void HealthdDraw::draw_overheat(GRSurface* surf_overheat) {
+    int y;
+    if (surf_overheat) {
+        draw_surface_centered(surf_overheat);
+    } else if (sys_font) {
+        gr_color(0xa4, 0xc6, 0x39, 255);
+        y = draw_text(sys_font, -1, -1, "Charging!");
+        draw_text(sys_font, -1, y + 25, "?\?/100");
+    } else {
+        LOGW("Charging, battery overheat\n");
+    }
+}
+
+std::unique_ptr<HealthdDraw> HealthdDraw::Create(animation* anim) {
     if (gr_init() < 0) {
         LOGE("gr_init failed\n");
         return nullptr;

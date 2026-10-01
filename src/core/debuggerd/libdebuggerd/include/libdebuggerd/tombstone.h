@@ -24,6 +24,7 @@
 #include <functional>
 #include <map>
 #include <string>
+#include <unordered_map>
 
 #include <android-base/unique_fd.h>
 
@@ -53,6 +54,7 @@ int open_tombstone(std::string* path);
 /* Creates a tombstone file and writes the crash dump to it. */
 void engrave_tombstone(android::base::unique_fd output_fd, android::base::unique_fd proto_fd,
                        unwindstack::AndroidUnwinder* unwinder,
+                       const std::unordered_map<uint64_t, std::string>& vmflags,
                        const std::map<pid_t, ThreadInfo>& thread_info, pid_t target_thread,
                        const ProcessInfo& process_info, OpenFilesList* open_files,
                        std::string* amfd_data, const Architecture* guest_arch = nullptr,
@@ -62,6 +64,7 @@ void engrave_tombstone_ucontext(int tombstone_fd, int proto_fd, uint64_t abort_m
                                 siginfo_t* siginfo, ucontext_t* ucontext);
 
 void engrave_tombstone_proto(Tombstone* tombstone, unwindstack::AndroidUnwinder* unwinder,
+                             const std::unordered_map<uint64_t, std::string>& vmflags,
                              const std::map<pid_t, ThreadInfo>& threads, pid_t target_thread,
                              const ProcessInfo& process_info, const OpenFilesList* open_files,
                              const Architecture* guest_arch,

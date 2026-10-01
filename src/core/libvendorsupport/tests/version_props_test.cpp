@@ -28,6 +28,7 @@ TEST(VendorSupport, GetCorrespondingVendorApiLevel) {
     // are preferred, so add more tests (to make the helper function behaviour crystal
     // clear) using numeric API levels.
     ASSERT_EQ(202504, AVendorSupport_getVendorApiLevelOf(36));
+    ASSERT_EQ(202604, AVendorSupport_getVendorApiLevelOf(37));
     ASSERT_EQ(__INVALID_API_LEVEL, AVendorSupport_getVendorApiLevelOf(__ANDROID_API_FUTURE__));
 }
 
@@ -38,6 +39,7 @@ TEST(VendorSupport, GetCorrespondingSdkApiLevel) {
     // are preferred, so add more tests (to make the helper function behaviour crystal
     // clear) using numeric API levels.
     ASSERT_EQ(36, AVendorSupport_getSdkApiLevelOf(202504));
+    ASSERT_EQ(37, AVendorSupport_getSdkApiLevelOf(202604));
     ASSERT_EQ(__INVALID_API_LEVEL, AVendorSupport_getSdkApiLevelOf(__ANDROID_VENDOR_API_MAX__));
     ASSERT_EQ(__INVALID_API_LEVEL, AVendorSupport_getSdkApiLevelOf(35));
 }

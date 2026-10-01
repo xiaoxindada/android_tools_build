@@ -27,18 +27,9 @@ using android::base::Error;
 using android::base::Result;
 using android::base::ResultError;
 
-class FastbootError {
-  public:
-    enum Type { NETWORK_SERIAL_WRONG_PREFIX = 1, NETWORK_SERIAL_WRONG_ADDRESS = 2 };
-
-    FastbootError(Type&& type) : type_(std::forward<Type>(type)) {}
-
-    Type value() const { return type_; }
-    operator Type() const { return value(); }
-    std::string print() const { return ""; }
-
-  private:
-    Type type_;
+enum class FastbootError {
+    NETWORK_SERIAL_WRONG_PREFIX = 1,
+    NETWORK_SERIAL_WRONG_ADDRESS = 2,
 };
 
 template <typename T, typename U>

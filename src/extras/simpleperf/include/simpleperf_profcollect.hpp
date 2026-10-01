@@ -23,4 +23,5 @@ bool RunRecordCmd(const char** args, int arg_count);
 bool RunInjectCmd(const char** args, int arg_count);
 void SetLogFile(const char* filename);
 void ResetLogFile();
+const char* RunDeviceConfigCmd(const char** args, int arg_count);
 }

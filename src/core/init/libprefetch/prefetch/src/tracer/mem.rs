@@ -37,9 +37,12 @@ use crate::format::{coalesce_records, FsInfo};
 use crate::tracer::{page_size, TracerConfigs};
 use crate::{
     format::{DeviceNumber, InodeNumber},
-    tracer::{TraceSubsystem, EXCLUDE_PATHS},
+    tracer::TraceSubsystem,
     Error, FileId, Record, RecordsFile,
 };
+
+#[cfg(target_os = "android")]
+use crate::EXCLUDE_PATHS;
 
 static MOUNTINFO_PATH: &str = "/proc/self/mountinfo";
 
@@ -428,6 +431,9 @@ pub(crate) struct MemTraceSubsystem {
 
 impl MemTraceSubsystem {
     pub fn update_configs(configs: &mut TracerConfigs) {
+        // TODO(b/475970725): Update or verify EXCLUDE_PATHS when porting to other OSs to ensure
+        // platform-specific virtual filesystems are ignored.
+        #[cfg(target_os = "android")]
         for path in EXCLUDE_PATHS {
             configs.exclude_mount_prefix.push(path.to_owned().to_string());
         }
@@ -774,8 +780,8 @@ mod tests {
             let found = TraceLineInfo::from_trace_line(&re, line).unwrap();
             let expected = res.get(index).unwrap();
             assert_eq!(found.is_some(), expected.is_some());
-            if found.is_some() {
-                assert_eq!(found.unwrap(), *expected.as_ref().unwrap());
+            if let Some(x) = found {
+                assert_eq!(x, *expected.as_ref().unwrap());
             }
         }
     }
@@ -789,8 +795,8 @@ mod tests {
             copy_uncached_files_and_record_from(Path::new(&test_base_dir), &mut files, &rf);
         let mut mount_include = HashMap::new();
 
-        let included_dev = uncached_files.get(0).unwrap().0.metadata().unwrap().dev();
-        let included_inode1 = uncached_files.get(0).unwrap().0.metadata().unwrap().ino();
+        let included_dev = uncached_files.first().unwrap().0.metadata().unwrap().dev();
+        let included_inode1 = uncached_files.first().unwrap().0.metadata().unwrap().ino();
         let included_inode2 = uncached_files.get(1).unwrap().0.metadata().unwrap().ino();
         let included_major = major(included_dev);
         let included_minor = minor(included_dev);
@@ -877,8 +883,8 @@ mod tests {
             copy_uncached_files_and_record_from(Path::new(&test_base_dir), &mut files, &rf);
         let mut mount_include = HashMap::new();
 
-        let included_dev = uncached_files.get(0).unwrap().0.metadata().unwrap().dev();
-        let included_inode1 = uncached_files.get(0).unwrap().0.metadata().unwrap().ino();
+        let included_dev = uncached_files.first().unwrap().0.metadata().unwrap().dev();
+        let included_inode1 = uncached_files.first().unwrap().0.metadata().unwrap().ino();
         let included_inode2 = uncached_files.get(1).unwrap().0.metadata().unwrap().ino();
         let included_major = major(included_dev);
         let included_minor = minor(included_dev);
@@ -989,8 +995,8 @@ mod tests {
     #[test]
     fn test_mount_info() {
         let mount_info = create_fake_mountinfo(
-            &vec![],
-            &vec![],
+            &[],
+            &[],
             vec![
                 FakeDevice {
                     major: 0 as MajorMinorType,
@@ -1023,8 +1029,8 @@ mod tests {
     #[test]
     fn test_mountinfo_exclude_mount_prefix() {
         let mount_info = create_fake_mountinfo(
-            &vec![String::from("/excluded")],
-            &vec![],
+            &[String::from("/excluded")],
+            &[],
             vec![
                 FakeDevice {
                     major: 0 as MajorMinorType,
@@ -1059,8 +1065,8 @@ mod tests {
     #[test]
     fn test_mountinfo_include_mount_prefix() {
         let mount_info = create_fake_mountinfo(
-            &vec![],
-            &vec![String::from("/included")],
+            &[],
+            &[String::from("/included")],
             vec![
                 FakeDevice {
                     major: 0 as MajorMinorType,
@@ -1094,8 +1100,8 @@ mod tests {
     #[test]
     fn test_mountinfo_mixed_mount_prefix() {
         let mount_info = create_fake_mountinfo(
-            &vec![String::from("/included/excluded")],
-            &vec![String::from("/included")],
+            &[String::from("/included/excluded")],
+            &[String::from("/included")],
             vec![
                 FakeDevice {
                     major: 0 as MajorMinorType,

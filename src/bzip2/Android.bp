@@ -58,7 +58,6 @@ cc_library_static {
         "//external/puffin:__subpackages__",
         "//external/python/cpython3:__subpackages__",
         "//system/update_engine:__subpackages__",
-        "//system/core/fs_mgr/libsnapshot:__subpackages__",
         "//vendor:__subpackages__",
     ],
     arch: {
@@ -68,23 +67,35 @@ cc_library_static {
             instruction_set: "arm",
         },
     },
-    cflags: [
-        "-O3",
-        "-DUSE_MMAP",
-        "-Werror",
-        "-Wno-unused-parameter",
-    ],
+    cflags: select(release_flag("RELEASE_USE_RUST_BZIP2"), {
+        true: [],
+        false: [
+            "-O3",
+            "-DUSE_MMAP",
+            "-Werror",
+            "-Wno-unused-parameter",
+        ],
+        default: [],
+    }),
     export_include_dirs: ["."],
-    srcs: [
-        "blocksort.c",
-        "bzlib.c",
-        "compress.c",
-        "crctable.c",
-        "decompress.c",
-        "huffman.c",
-        "randtable.c",
-    ],
-    sdk_version: "9",
+    srcs: select(release_flag("RELEASE_USE_RUST_BZIP2"), {
+        true: [],
+        false: [
+            "blocksort.c",
+            "bzlib.c",
+            "compress.c",
+            "crctable.c",
+            "decompress.c",
+            "huffman.c",
+            "randtable.c",
+        ],
+        default: [],
+    }),
+    whole_static_libs: select(release_flag("RELEASE_USE_RUST_BZIP2"), {
+        true: ["liblibbz2_rs_sys_static"],
+        false: [],
+        default: [],
+    }),
     stl: "none",
 }
 

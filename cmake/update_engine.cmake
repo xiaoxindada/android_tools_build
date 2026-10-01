@@ -1,5 +1,5 @@
 set(partition_tools_dir "${CMAKE_SOURCE_DIR}/src/extras/partition_tools")
-set(fs_mgr_dir "${CMAKE_SOURCE_DIR}/src/core/fs_mgr")
+set(fs_mgr_dir "${CMAKE_SOURCE_DIR}/src/fs_mgr")
 set(libsnapshot_srcs_dir "${fs_mgr_dir}/libsnapshot")
 set(update_engine_dir "${CMAKE_SOURCE_DIR}/src/update_engine")
 
@@ -127,6 +127,7 @@ set(libpayload_consumer_srcs
         "${update_engine_dir}/payload_consumer/verified_source_fd.cc"
         "${update_engine_dir}/payload_consumer/verity_writer_android.cc"
         "${update_engine_dir}/payload_consumer/xz_extent_writer.cc"
+        "${update_engine_dir}/payload_consumer/zstd_extent_writer.cc"
         "${update_engine_dir}/payload_consumer/fec_file_descriptor.cc"
         "${update_engine_dir}/payload_consumer/partition_update_generator_android.cc"
         "${update_engine_dir}/update_status_utils.cc"
@@ -156,8 +157,8 @@ set(libpayload_generator_srcs
         "${update_engine_dir}/payload_generator/payload_properties.cc"
         "${update_engine_dir}/payload_generator/payload_signer.cc"
         "${update_engine_dir}/payload_generator/raw_filesystem.cc"
-        "${update_engine_dir}/payload_generator/squashfs_filesystem.cc"
         "${update_engine_dir}/payload_generator/xz_android.cc"
+        "${update_engine_dir}/payload_generator/zstd_android.cc"
 )
 
 set(delta_generator_srcs
@@ -209,6 +210,8 @@ target_link_libraries(cow_size_estimator PUBLIC
 )
 
 add_library(lz4diff STATIC ${liblz4diff_srcs})
+# lz4diff.pb.cc/.h 由 gen_lz4diff_protos_srcs 生成，必须先于本库编译
+add_dependencies(lz4diff gen_lz4diff_protos_srcs)
 target_compile_options(lz4diff PRIVATE ${cflags} ${cppflags})
 target_include_directories(lz4diff PUBLIC
     ${common_headers}
@@ -227,6 +230,8 @@ target_link_libraries(lz4diff PUBLIC
 )
 
 add_library(lz4patch STATIC ${liblz4patch_srcs})
+# lz4diff.pb.cc/.h 由 gen_lz4diff_protos_srcs 生成，必须先于本库编译
+add_dependencies(lz4patch gen_lz4diff_protos_srcs)
 target_compile_options(lz4patch PRIVATE ${cflags} ${cppflags})
 target_include_directories(lz4patch PUBLIC
     ${common_headers}

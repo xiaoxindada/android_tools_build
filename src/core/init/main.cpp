@@ -79,5 +79,9 @@ int main(int argc, char** argv) {
         }
     }
 
+#if defined(FIRST_STAGE_INIT) || defined(RECOVERY)
     return FirstStageMain(argc, argv);
+#else
+    LOG(FATAL) << "Second-stage init requires an argument to main()";
+#endif
 }

@@ -16,6 +16,7 @@
 //! This module implements the HAL service for Secretkeeper in Trusty.
 use authgraph_hal::channel::SerializedChannel;
 use authgraph_wire::fragmentation::{Fragmenter, Reassembler};
+use clap::Parser;
 use secretkeeper_hal::SecretkeeperService;
 use android_hardware_security_secretkeeper::aidl::android::hardware::security::secretkeeper::ISecretkeeper::{
     ISecretkeeper, BpSecretkeeper,
@@ -34,6 +35,19 @@ const AG_TIPC_SERVICE_PORT: &str = "com.android.trusty.secretkeeper.authgraph";
 const TIPC_MAX_SIZE: usize = 4000;
 
 static SERVICE_INSTANCE: &str = "default";
+
+#[derive(Debug, Parser)]
+#[command(name = "vendor.secretkeeper.trusty")]
+#[command(about = "HAL service providing access to Secretkeeper TA in Trusty")]
+struct Args {
+    #[arg(
+        short = 'D',
+        long,
+        default_value = DEFAULT_DEVICE.to_string(),
+        help = "Connect to Trusty via this device for IPC. Not passing this option will default to the Trusty default device."
+    )]
+    trusty_ipc_device: String,
+}
 
 /// Local error type for failures in the HAL service.
 #[derive(Debug, Clone)]
@@ -72,7 +86,9 @@ impl SerializedChannel for TipcChannel {
             channel.send(&req_frag).map_err(|e| binderr("send request", e))?;
 
             // Every request gets a response.
-            let mut rsp_frag = Vec::new();
+            // Allocate a buffer with the maximum logical message size, to avoid
+            // reallocation during recv() calls.
+            let mut rsp_frag = Vec::with_capacity(TIPC_MAX_SIZE);
             channel.recv(&mut rsp_frag).map_err(|e| binderr("receive response", e))?;
 
             if let Some(full_rsp) = pending_rsp.accumulate(&rsp_frag) {
@@ -81,7 +97,7 @@ impl SerializedChannel for TipcChannel {
         }
         // There may be additional response fragments to receive.
         loop {
-            let mut rsp_frag = Vec::new();
+            let mut rsp_frag = Vec::with_capacity(TIPC_MAX_SIZE);
             channel.recv(&mut rsp_frag).map_err(|e| binderr("receive response", e))?;
             if let Some(full_rsp) = pending_rsp.accumulate(&rsp_frag) {
                 return Ok(full_rsp.to_vec());
@@ -109,13 +125,14 @@ fn inner_main() -> Result<(), HalServiceError> {
         error!("{panic_info}");
     }));
 
-    info!("Trusty Secretkeeper HAL service is starting.");
+    let Args { trusty_ipc_device } = Args::parse();
+    info!("Trusty Secretkeeper HAL service is starting. Connecting to {trusty_ipc_device:?}.");
 
     info!("Starting thread pool now.");
     binder::ProcessState::start_thread_pool();
 
     // Create connections to the TA.
-    let ag_connection = trusty::TipcChannel::connect(DEFAULT_DEVICE, AG_TIPC_SERVICE_PORT)
+    let ag_connection = trusty::TipcChannel::connect(&trusty_ipc_device, AG_TIPC_SERVICE_PORT)
         .map_err(|e| {
             HalServiceError(format!(
                 "Failed to connect to Trusty port {AG_TIPC_SERVICE_PORT} because of {e:?}."
@@ -123,7 +140,7 @@ fn inner_main() -> Result<(), HalServiceError> {
         })?;
     let ag_tipc_channel = TipcChannel::new(ag_connection);
 
-    let sk_connection = trusty::TipcChannel::connect(DEFAULT_DEVICE, SK_TIPC_SERVICE_PORT)
+    let sk_connection = trusty::TipcChannel::connect(&trusty_ipc_device, SK_TIPC_SERVICE_PORT)
         .map_err(|e| {
             HalServiceError(format!(
                 "Failed to connect to Trusty port {SK_TIPC_SERVICE_PORT} because of {e:?}."

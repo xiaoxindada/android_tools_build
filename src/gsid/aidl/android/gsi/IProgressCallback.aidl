@@ -16,7 +16,7 @@
 
 package android.gsi;
 
-/** {@hide} */
+/** @hide */
 interface IProgressCallback {
     /**
      * Report progress for a long-running task.

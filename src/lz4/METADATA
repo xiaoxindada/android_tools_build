@@ -17,6 +17,7 @@ third_party {
   identifier {
     type: "Git"
     value: "https://github.com/lz4/lz4.git"
-    version: "v1.10.0"
+    version: "ebb370ca83af193212df4dcbadcc5d87bc0de2f0"
+    closest_version: "v1.10.0"
   }
 }

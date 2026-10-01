@@ -74,7 +74,7 @@ std::string GetPidString() {
 }
 
 TEST(liblog, default_write) {
-  CapturedStderr captured_stderr;
+  android::base::CapturedStderr captured_stderr;
   InitLogging(nullptr, StderrLogger);
 
   GenerateLogContent();
@@ -98,7 +98,7 @@ TEST(liblog, default_write) {
 
 TEST(liblog, verbose_write) {
   setenv("ANDROID_LOG_TAGS", "*:v", true);
-  CapturedStderr captured_stderr;
+  android::base::CapturedStderr captured_stderr;
   InitLogging(nullptr, StderrLogger);
 
   GenerateLogContent();
@@ -122,7 +122,7 @@ TEST(liblog, verbose_write) {
 
 TEST(liblog, error_write) {
   setenv("ANDROID_LOG_TAGS", "*:e", true);
-  CapturedStderr captured_stderr;
+  android::base::CapturedStderr captured_stderr;
   InitLogging(nullptr, StderrLogger);
 
   GenerateLogContent();
@@ -145,14 +145,14 @@ TEST(liblog, error_write) {
 }
 
 TEST(liblog, kernel_no_write) {
-  CapturedStderr captured_stderr;
+  android::base::CapturedStderr captured_stderr;
   InitLogging(nullptr, StderrLogger);
   __android_log_buf_print(LOG_ID_KERNEL, ANDROID_LOG_ERROR, "tag", "kernel error");
   EXPECT_EQ("", captured_stderr.str());
 }
 
 TEST(liblog, binary_no_write) {
-  CapturedStderr captured_stderr;
+  android::base::CapturedStderr captured_stderr;
   InitLogging(nullptr, StderrLogger);
   __android_log_buf_print(LOG_ID_EVENTS, ANDROID_LOG_ERROR, "tag", "error events");
   __android_log_buf_print(LOG_ID_STATS, ANDROID_LOG_ERROR, "tag", "error stats");

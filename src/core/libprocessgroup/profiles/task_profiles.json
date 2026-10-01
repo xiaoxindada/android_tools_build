@@ -21,9 +21,19 @@
       "File": "top-app/cpus"
     },
     {
+      "Name": "MemEvents",
+      "Controller": "memory",
+      "File": "memory.events"
+    },
+    {
       "Name": "MemStats",
       "Controller": "memory",
       "File": "memory.stat"
+    },
+    {
+      "Name": "MemHigh",
+      "Controller": "memory",
+      "File": "memory.high"
     },
     {
       "Name": "MemLimit",
@@ -41,6 +51,11 @@
       "Name": "MemSwappiness",
       "Controller": "memory",
       "File": "memory.swappiness"
+    },
+    {
+      "Name": "SwapMax",
+      "Controller": "memory",
+      "File": "memory.swap.max"
     },
     {
       "Name": "MemUsage",
@@ -81,6 +96,11 @@
       "Name": "FreezerState",
       "Controller": "freezer",
       "File": "cgroup.freeze"
+    },
+    {
+      "Name": "CgroupKill",
+      "Controller": "cgroup2",
+      "File": "cgroup.kill"
     },
     {
       "Name": "CgroupProcs",
@@ -759,6 +779,14 @@
     {
       "Name": "InputPolicy",
       "Profiles": [ "RealTimeInputScheduling", "MaxPerformance", "ProcessCapacityMax", "TimerSlackNormal" ]
+    },
+    {
+      "Name": "CPUSET_LMKD_REAP_TARGET",
+      "Profiles": [ "CPUSET_SP_FOREGROUND" ]
+    },
+    {
+      "Name": "SCHED_LMKD_REAP_TARGET",
+      "Profiles": [ "SCHED_SP_FOREGROUND" ]
     }
   ]
 }

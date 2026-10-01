@@ -28,7 +28,6 @@
 #include "update_engine/payload_generator/ext2_filesystem.h"
 #include "update_engine/payload_generator/filesystem_interface.h"
 #include "update_engine/payload_generator/raw_filesystem.h"
-#include "update_engine/payload_generator/squashfs_filesystem.h"
 
 namespace chromeos_update_engine {
 
@@ -111,10 +110,6 @@ int Main(int argc, const char* argv[]) {
   }
   std::unique_ptr<FilesystemInterface> fs;
 
-  fs = SquashfsFilesystem::CreateFromFile(img, true);
-  if (fs != nullptr) {
-    return WriteBlockMap(img, fs.get(), output_file);
-  }
   fs = ErofsFilesystem::CreateFromFile(img);
   if (fs != nullptr) {
     return WriteBlockMap(img, fs.get(), output_file);

@@ -16,6 +16,16 @@
 
 #pragma once
 
+// For __BIONIC__
+#include <sys/cdefs.h>
+
+#if defined(__BIONIC__)
+#include <malloc.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#endif
+
 #include <regex>
 #include <string>
 #include <type_traits>
@@ -46,6 +56,26 @@ static inline bool running_with_hwasan() {
 
 #define SKIP_WITH_HWASAN if (android::base::running_with_hwasan()) GTEST_SKIP()
 
+static inline bool running_with_scudo() {
+#if defined(__BIONIC__)
+  char* buf = nullptr;
+  size_t size = 0;
+  FILE* fp = open_memstream(&buf, &size);
+  if (fp == nullptr) return false;
+  malloc_info(0, fp);
+  fflush(fp);
+  bool result = strstr(buf, "scudo") != nullptr;
+  fclose(fp);
+  free(buf);
+  return result;
+#else
+  return false;
+#endif
+}
+
+#define SKIP_WITHOUT_SCUDO \
+  if (!android::base::running_with_scudo()) GTEST_SKIP()
+
 class CapturedStdFd {
  public:
   CapturedStdFd(int std_fd);
@@ -66,11 +96,6 @@ class CapturedStdFd {
 
   DISALLOW_COPY_AND_ASSIGN(CapturedStdFd);
 };
-
-}
-}
-
-// TODO: move these things into the correct namespace
 
 class CapturedStderr : public android::base::CapturedStdFd {
  public:
@@ -116,3 +141,6 @@ class CapturedStdout : public android::base::CapturedStdFd {
       ADD_FAILURE() << "regex mismatch: expected to not find " << (__pattern) << " in:\n" << __s; \
     }                                                                                             \
   } while (0)
+
+}
+}

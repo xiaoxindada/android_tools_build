@@ -64,6 +64,7 @@ TEST(fscrypt, ParseOptions) {
         EXPECT_EQ(FSCRYPT_MODE_AES_256_CTS, options.filenames_mode);
         EXPECT_EQ(FSCRYPT_POLICY_FLAGS_PAD_4, options.flags);
         EXPECT_FALSE(options.dusize_4k);
+        EXPECT_EQ(KeyType::kRaw, options.key_type);
     }
     for (const auto& d : defaults) {
         TEST_STRING(30, d, "aes-256-xts:aes-256-cts:v2");
@@ -73,6 +74,7 @@ TEST(fscrypt, ParseOptions) {
         EXPECT_EQ(FSCRYPT_MODE_AES_256_CTS, options.filenames_mode);
         EXPECT_EQ(FSCRYPT_POLICY_FLAGS_PAD_16, options.flags);
         EXPECT_FALSE(options.dusize_4k);
+        EXPECT_EQ(KeyType::kRaw, options.key_type);
     }
 
     EXPECT_FALSE(ParseOptionsForApiLevel(29, "blah", &dummy_options));
@@ -84,6 +86,7 @@ TEST(fscrypt, ParseOptions) {
         EXPECT_EQ(FSCRYPT_MODE_AES_256_XTS, options.contents_mode);
         EXPECT_EQ(FSCRYPT_MODE_AES_256_CTS, options.filenames_mode);
         EXPECT_EQ(FSCRYPT_POLICY_FLAGS_PAD_4, options.flags);
+        EXPECT_EQ(KeyType::kRaw, options.key_type);
     }
     {
         TEST_STRING(30, "::v1", "aes-256-xts:aes-256-cts:v1");
@@ -91,6 +94,7 @@ TEST(fscrypt, ParseOptions) {
         EXPECT_EQ(FSCRYPT_MODE_AES_256_XTS, options.contents_mode);
         EXPECT_EQ(FSCRYPT_MODE_AES_256_CTS, options.filenames_mode);
         EXPECT_EQ(FSCRYPT_POLICY_FLAGS_PAD_16, options.flags);
+        EXPECT_EQ(KeyType::kRaw, options.key_type);
     }
     {
         TEST_STRING(29, "::v2", "aes-256-xts:aes-256-cts:v2");
@@ -98,6 +102,7 @@ TEST(fscrypt, ParseOptions) {
         EXPECT_EQ(FSCRYPT_MODE_AES_256_XTS, options.contents_mode);
         EXPECT_EQ(FSCRYPT_MODE_AES_256_CTS, options.filenames_mode);
         EXPECT_EQ(FSCRYPT_POLICY_FLAGS_PAD_16, options.flags);
+        EXPECT_EQ(KeyType::kRaw, options.key_type);
     }
     {
         TEST_STRING(29, "ice", "ice:aes-256-cts:v1");
@@ -105,6 +110,7 @@ TEST(fscrypt, ParseOptions) {
         EXPECT_EQ(FSCRYPT_MODE_PRIVATE, options.contents_mode);
         EXPECT_EQ(FSCRYPT_MODE_AES_256_CTS, options.filenames_mode);
         EXPECT_EQ(FSCRYPT_POLICY_FLAGS_PAD_4, options.flags);
+        EXPECT_EQ(KeyType::kRaw, options.key_type);
     }
     EXPECT_FALSE(ParseOptionsForApiLevel(29, "ice:blah", &dummy_options));
 
@@ -114,6 +120,7 @@ TEST(fscrypt, ParseOptions) {
         EXPECT_EQ(FSCRYPT_MODE_PRIVATE, options.contents_mode);
         EXPECT_EQ(FSCRYPT_MODE_AES_256_CTS, options.filenames_mode);
         EXPECT_EQ(FSCRYPT_POLICY_FLAGS_PAD_4, options.flags);
+        EXPECT_EQ(KeyType::kRaw, options.key_type);
     }
 
     {
@@ -122,6 +129,7 @@ TEST(fscrypt, ParseOptions) {
         EXPECT_EQ(FSCRYPT_MODE_PRIVATE, options.contents_mode);
         EXPECT_EQ(FSCRYPT_MODE_AES_256_HEH, options.filenames_mode);
         EXPECT_EQ(FSCRYPT_POLICY_FLAGS_PAD_16, options.flags);
+        EXPECT_EQ(KeyType::kRaw, options.key_type);
     }
     {
         TEST_STRING(29, "adiantum", "adiantum:adiantum:v1");
@@ -129,6 +137,7 @@ TEST(fscrypt, ParseOptions) {
         EXPECT_EQ(FSCRYPT_MODE_ADIANTUM, options.contents_mode);
         EXPECT_EQ(FSCRYPT_MODE_ADIANTUM, options.filenames_mode);
         EXPECT_EQ(FSCRYPT_POLICY_FLAGS_PAD_16 | FSCRYPT_POLICY_FLAG_DIRECT_KEY, options.flags);
+        EXPECT_EQ(KeyType::kRaw, options.key_type);
     }
     {
         TEST_STRING(30, "adiantum", "adiantum:adiantum:v2");
@@ -136,6 +145,7 @@ TEST(fscrypt, ParseOptions) {
         EXPECT_EQ(FSCRYPT_MODE_ADIANTUM, options.contents_mode);
         EXPECT_EQ(FSCRYPT_MODE_ADIANTUM, options.filenames_mode);
         EXPECT_EQ(FSCRYPT_POLICY_FLAGS_PAD_16 | FSCRYPT_POLICY_FLAG_DIRECT_KEY, options.flags);
+        EXPECT_EQ(KeyType::kRaw, options.key_type);
     }
     EXPECT_FALSE(ParseOptionsForApiLevel(29, "adiantum:aes-256-cts", &dummy_options));
     EXPECT_FALSE(ParseOptionsForApiLevel(30, "adiantum:aes-256-cts", &dummy_options));
@@ -148,6 +158,7 @@ TEST(fscrypt, ParseOptions) {
         EXPECT_EQ(FSCRYPT_MODE_AES_256_XTS, options.contents_mode);
         EXPECT_EQ(FSCRYPT_MODE_AES_256_CTS, options.filenames_mode);
         EXPECT_EQ(FSCRYPT_POLICY_FLAGS_PAD_16 | FSCRYPT_POLICY_FLAG_IV_INO_LBLK_64, options.flags);
+        EXPECT_EQ(KeyType::kRaw, options.key_type);
     }
     {
         TEST_STRING(30, "aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized",
@@ -156,6 +167,7 @@ TEST(fscrypt, ParseOptions) {
         EXPECT_EQ(FSCRYPT_MODE_AES_256_XTS, options.contents_mode);
         EXPECT_EQ(FSCRYPT_MODE_AES_256_CTS, options.filenames_mode);
         EXPECT_EQ(FSCRYPT_POLICY_FLAGS_PAD_16 | FSCRYPT_POLICY_FLAG_IV_INO_LBLK_64, options.flags);
+        EXPECT_EQ(KeyType::kRaw, options.key_type);
     }
 
     {
@@ -164,6 +176,7 @@ TEST(fscrypt, ParseOptions) {
         EXPECT_EQ(FSCRYPT_MODE_AES_256_XTS, options.contents_mode);
         EXPECT_EQ(FSCRYPT_MODE_AES_256_CTS, options.filenames_mode);
         EXPECT_EQ(FSCRYPT_POLICY_FLAGS_PAD_16 | FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32, options.flags);
+        EXPECT_EQ(KeyType::kRaw, options.key_type);
     }
     EXPECT_FALSE(
             ParseOptionsForApiLevel(30, "::inlinecrypt_optimized+emmc_optimized", &dummy_options));
@@ -185,6 +198,7 @@ TEST(fscrypt, ParseOptions) {
         EXPECT_EQ(FSCRYPT_MODE_AES_256_XTS, options.contents_mode);
         EXPECT_EQ(FSCRYPT_MODE_AES_256_HCTR2, options.filenames_mode);
         EXPECT_EQ(FSCRYPT_POLICY_FLAGS_PAD_16, options.flags);
+        EXPECT_EQ(KeyType::kRaw, options.key_type);
     }
 
     {
@@ -194,6 +208,17 @@ TEST(fscrypt, ParseOptions) {
         EXPECT_EQ(FSCRYPT_MODE_AES_256_CTS, options.filenames_mode);
         EXPECT_EQ(FSCRYPT_POLICY_FLAGS_PAD_16, options.flags);
         EXPECT_TRUE(options.dusize_4k);
+        EXPECT_EQ(KeyType::kRaw, options.key_type);
+    }
+
+    {
+        TEST_STRING(34, "::wrappedkey_v0", "aes-256-xts:aes-256-cts:v2+wrappedkey_v0");
+        EXPECT_EQ(KeyType::kHwWrappedV0, options.key_type);
+    }
+
+    {
+        TEST_STRING(34, "::wrappedkey", "aes-256-xts:aes-256-cts:v2+wrappedkey");
+        EXPECT_EQ(KeyType::kHwWrapped, options.key_type);
     }
 }
 
@@ -211,7 +236,7 @@ TEST(fscrypt, ComparePolicies) {
     foo_options.contents_mode = 1;
     foo_options.filenames_mode = 1;
     foo_options.flags = 1;
-    foo_options.use_hw_wrapped_key = true;
+    foo_options.key_type = KeyType::kHwWrappedV0;
     foo_options.dusize_4k = true;
     foo.options = foo_options;
     EXPECT_EQ(foo, foo);
@@ -220,6 +245,6 @@ TEST(fscrypt, ComparePolicies) {
     TEST_INEQUALITY(foo, options.contents_mode, -1);
     TEST_INEQUALITY(foo, options.filenames_mode, 3);
     TEST_INEQUALITY(foo, options.flags, 0);
-    TEST_INEQUALITY(foo, options.use_hw_wrapped_key, false);
+    TEST_INEQUALITY(foo, options.key_type, KeyType::kRaw);
     TEST_INEQUALITY(foo, options.dusize_4k, false);
 }

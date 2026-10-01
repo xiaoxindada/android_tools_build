@@ -71,7 +71,7 @@ ssize_t ipc_get_msg(struct storage_msg *msg, void *req_buf, size_t req_buf_len)
 
     assert(tipc_fd >=  0);
 
-    rc = TEMP_FAILURE_RETRY(readv(tipc_fd, iovs, 2));
+    rc = readv(tipc_fd, iovs, 2);
     if (rc < 0) {
         ALOGE("failed to read request: %s\n", strerror(errno));
         return rc;

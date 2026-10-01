@@ -58,3 +58,9 @@ TEST(StringPrintfTest, At1024) {
 TEST(StringPrintfTest, At1025) {
   TestN(1025);
 }
+
+TEST(StringPrintfTest, huge_strings) {
+  std::string huge(2048u, 'x');
+  std::string expected = huge + " hello there " + huge;
+  ASSERT_EQ(expected, android::base::StringPrintf("%s hello there %s", huge.c_str(), huge.c_str()));
+}

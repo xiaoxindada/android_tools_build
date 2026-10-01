@@ -33,8 +33,10 @@ static void ThrowErrnoException(JNIEnv* env, const char* function_name, int err)
     env->Throw(obj);
 }
 
-int CallFunction(int a) {
-    return a + atoi("1");
+noinline int CallFunction(int a) {
+    const char* num_str = "1";
+    asm volatile("" : "+r" (num_str));
+    return a + atoi(num_str);
 }
 
 static void* BusyLoopThread(void*) {

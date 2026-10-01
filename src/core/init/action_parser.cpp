@@ -16,10 +16,11 @@
 
 #include "action_parser.h"
 
-#include <ctype.h>
-
 #include <android-base/properties.h>
 #include <android-base/strings.h>
+#include <ctype.h>
+
+#include <string_view>
 
 #ifdef INIT_FULL_SOURCES
 #include "property_service.h"
@@ -60,7 +61,7 @@ bool IsActionableProperty(Subcontext* subcontext, const std::string& prop_name) 
 
 Result<void> ParsePropertyTrigger(const std::string& trigger, Subcontext* subcontext,
                                   std::map<std::string, std::string>* property_triggers) {
-    const static std::string prop_str("property:");
+    static constexpr std::string_view prop_str("property:");
     std::string prop_name(trigger.substr(prop_str.length()));
     size_t equal_pos = prop_name.find('=');
     if (equal_pos == std::string::npos) {
@@ -94,7 +95,7 @@ Result<void> ValidateEventTrigger(const std::string& event_trigger) {
 Result<void> ParseTriggers(const std::vector<std::string>& args, Subcontext* subcontext,
                            std::string* event_trigger,
                            std::map<std::string, std::string>* property_triggers) {
-    const static std::string prop_str("property:");
+    static constexpr std::string_view prop_str("property:");
     for (std::size_t i = 0; i < args.size(); ++i) {
         if (args[i].empty()) {
             return Error() << "empty trigger is not valid";

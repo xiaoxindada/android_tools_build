@@ -120,7 +120,7 @@ TEST(BranchListProtoReaderWriter, smoke) {
       for (size_t j = 0; j < branch.size(); j += 2) {
         branch[j] = true;
       }
-      b_map[branch] = i;
+      b_map[binary.GetBranch(branch)] = i;
     }
   }
   LBRData lbr_data;

@@ -53,7 +53,7 @@ TEST(IOEventLoop, read) {
   std::thread thread([&]() {
     for (int i = 0; i < 100; ++i) {
       usleep(1000);
-      char c;
+      char c = 0;
       CHECK_EQ(write(fd[1], &c, 1), 1);
     }
   });
@@ -199,7 +199,7 @@ TEST(IOEventLoop, read_and_del_event) {
   std::thread thread([&]() {
     for (int i = 0; i < 100; ++i) {
       usleep(1000);
-      char c;
+      char c = 0;
       CHECK_EQ(write(fd[1], &c, 1), 1);
     }
   });
@@ -313,7 +313,7 @@ TEST(IOEventLoop, priority) {
                          },
                          IOEventHighPriority));
 
-  char c;
+  char c = 0;
   CHECK_EQ(write(low_priority_fd[1], &c, 1), 1);
   CHECK_EQ(write(high_priority_fd[1], &c, 1), 1);
   ASSERT_TRUE(loop.RunLoop());

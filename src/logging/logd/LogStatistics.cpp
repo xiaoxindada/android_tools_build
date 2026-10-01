@@ -62,9 +62,9 @@ static std::string TagNameKey(const LogStatisticsElement& element) {
     return std::string(msg, len);
 }
 
-LogStatistics::LogStatistics(bool enable_statistics, bool track_total_size,
+LogStatistics::LogStatistics(bool track_total_size,
                              std::optional<log_time> start_time)
-    : enable(enable_statistics), track_total_size_(track_total_size) {
+    : track_total_size_(track_total_size) {
     log_time now(CLOCK_REALTIME);
     log_id_for_each(id) {
         mSizes[id] = 0;
@@ -162,24 +162,6 @@ void LogStatistics::Add(LogStatisticsElement element) {
     if (element.uid == AID_SYSTEM) {
         pidSystemTable[log_id].Add(element.pid, element);
     }
-
-    if (!enable) {
-        return;
-    }
-
-    pidTable.Add(element.pid, element);
-    tidTable.Add(element.tid, element);
-
-    uint32_t tag = element.tag;
-    if (tag) {
-        if (log_id == LOG_ID_SECURITY) {
-            securityTagTable.Add(tag, element);
-        } else {
-            tagTable.Add(tag, element);
-        }
-    }
-
-    tagNameTable.Add(TagNameKey(element), element);
 }
 
 void LogStatistics::Subtract(LogStatisticsElement element) {
@@ -206,24 +188,6 @@ void LogStatistics::Subtract(LogStatisticsElement element) {
     if (element.uid == AID_SYSTEM) {
         pidSystemTable[log_id].Subtract(element.pid, element);
     }
-
-    if (!enable) {
-        return;
-    }
-
-    pidTable.Subtract(element.pid, element);
-    tidTable.Subtract(element.tid, element);
-
-    uint32_t tag = element.tag;
-    if (tag) {
-        if (log_id == LOG_ID_SECURITY) {
-            securityTagTable.Subtract(tag, element);
-        } else {
-            tagTable.Subtract(tag, element);
-        }
-    }
-
-    tagNameTable.Subtract(TagNameKey(element), element);
 }
 
 // caller must own and free character string
@@ -419,85 +383,6 @@ std::string TidEntry::format(const LogStatistics& stat, log_id_t, pid_t tid) con
     stat.FormatTmp(name_, uid_, name, size, 12);
 
     std::string pruned = "";
-    return formatLine(name, size, pruned);
-}
-
-std::string TagEntry::formatHeader(const std::string& name, log_id_t id) const {
-    bool isprune = worstUidEnabledForLogid(id);
-    return formatLine(name, std::string("Size"),
-                      std::string(isprune ? "Prune" : "")) +
-           formatLine(std::string("    TAG/UID   TAGNAME"),
-                      std::string("BYTES"), std::string(isprune ? "NUM" : ""));
-}
-
-std::string TagEntry::format(const LogStatistics&, log_id_t, uint32_t) const {
-    std::string name;
-    if (uid_ == (uid_t)-1) {
-        name = android::base::StringPrintf("%7u", key());
-    } else {
-        name = android::base::StringPrintf("%7u/%u", key(), uid_);
-    }
-    const char* nameTmp = this->name();
-    if (nameTmp) {
-        name += android::base::StringPrintf(
-            "%*s%s", (int)std::max(14 - name.length(), (size_t)1), "", nameTmp);
-    }
-
-    std::string size = android::base::StringPrintf("%zu", getSizes());
-
-    std::string pruned = "";
-    return formatLine(name, size, pruned);
-}
-
-std::string TagNameEntry::formatHeader(const std::string& name,
-                                       log_id_t /* id */) const {
-    return formatLine(name, std::string("Size"), std::string("")) +
-           formatLine(std::string("  TID/PID/UID   LOG_TAG NAME"),
-                      std::string("BYTES"), std::string(""));
-}
-
-std::string TagNameEntry::format(const LogStatistics&, log_id_t,
-                                 const std::string& key_name) const {
-    std::string name;
-    std::string pidstr;
-    if (pid_ != (pid_t)-1) {
-        pidstr = android::base::StringPrintf("%u", pid_);
-        if (tid_ != (pid_t)-1 && tid_ != pid_) pidstr = "/" + pidstr;
-    }
-    int len = 9 - pidstr.length();
-    if (len < 0) len = 0;
-    if (tid_ == (pid_t)-1 || tid_ == pid_) {
-        name = android::base::StringPrintf("%*s", len, "");
-    } else {
-        name = android::base::StringPrintf("%*u", len, tid_);
-    }
-    name += pidstr;
-    if (uid_ != (uid_t)-1) {
-        name += android::base::StringPrintf("/%u", uid_);
-    }
-
-    std::string size = android::base::StringPrintf("%zu", getSizes());
-
-    const char* nameTmp = key_name.data();
-    if (nameTmp) {
-        size_t lenSpace = std::max(16 - name.length(), (size_t)1);
-        size_t len = EntryBase::TOTAL_LEN - EntryBase::PRUNED_LEN - size.length() - name.length() -
-                     lenSpace - 2;
-        size_t lenNameTmp = strlen(nameTmp);
-        while ((len < lenNameTmp) && (lenSpace > 1)) {
-            ++len;
-            --lenSpace;
-        }
-        name += android::base::StringPrintf("%*s", (int)lenSpace, "");
-        if (len < lenNameTmp) {
-            name += "...";
-            nameTmp += lenNameTmp - std::max(len - 3, (size_t)1);
-        }
-        name += nameTmp;
-    }
-
-    std::string pruned = "";
-
     return formatLine(name, size, pruned);
 }
 
@@ -747,37 +632,6 @@ std::string LogStatistics::Format(uid_t uid, pid_t pid, unsigned int logMask) co
         name = (uid == AID_ROOT) ? "Chattiest UIDs in %s log buffer:"
                                  : "Logging for your UID in %s log buffer:";
         output += FormatTable(uidTable[id], uid, pid, name, id);
-    }
-
-    if (enable) {
-        name = ((uid == AID_ROOT) && !pid) ? "Chattiest PIDs:"
-                                           : "Logging for this PID:";
-        output += FormatTable(pidTable, uid, pid, name);
-        name = "Chattiest TIDs";
-        if (pid) name += android::base::StringPrintf(" for PID %d", pid);
-        name += ":";
-        output += FormatTable(tidTable, uid, pid, name);
-    }
-
-    if (enable && (logMask & (1 << LOG_ID_EVENTS))) {
-        name = "Chattiest events log buffer TAGs";
-        if (pid) name += android::base::StringPrintf(" for PID %d", pid);
-        name += ":";
-        output += FormatTable(tagTable, uid, pid, name, LOG_ID_EVENTS);
-    }
-
-    if (enable && (logMask & (1 << LOG_ID_SECURITY))) {
-        name = "Chattiest security log buffer TAGs";
-        if (pid) name += android::base::StringPrintf(" for PID %d", pid);
-        name += ":";
-        output += FormatTable(securityTagTable, uid, pid, name, LOG_ID_SECURITY);
-    }
-
-    if (enable) {
-        name = "Chattiest TAGs";
-        if (pid) name += android::base::StringPrintf(" for PID %d", pid);
-        name += ":";
-        output += FormatTable(tagNameTable, uid, pid, name);
     }
 
     return output;

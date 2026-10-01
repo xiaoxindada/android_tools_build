@@ -6,7 +6,6 @@
 // https://developers.google.com/open-source/licenses/bsd
 
 #import "GPBTestUtilities.h"
-
 #import "objectivec/Tests/MapUnittest.pbobjc.h"
 #import "objectivec/Tests/Unittest.pbobjc.h"
 #import "objectivec/Tests/UnittestImport.pbobjc.h"
@@ -34,7 +33,7 @@ const uint32_t kGPBDefaultRepeatCount = 2;
 }
 
 + (instancetype)gpbtu_dataWithEmbeddedNulls {
-  char bytes[6] = "\1\0\2\3\0\5";
+  char bytes[6] = {'\1', '\0', '\2', '\3', '\0', '\5'};
   return [self dataWithBytes:bytes length:sizeof(bytes)];
 }
 @end

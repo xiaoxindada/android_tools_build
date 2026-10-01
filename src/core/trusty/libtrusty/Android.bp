@@ -24,6 +24,13 @@ cc_defaults {
         "-Wall",
         "-Werror",
     ],
+    target: {
+        host: {
+            cflags: [
+                "-D_GNU_SOURCE=1",
+            ],
+        },
+    },
 
     shared_libs: ["liblog"],
 }
@@ -32,6 +39,7 @@ cc_library {
     name: "libtrusty",
     // TODO(b/170753563): cc_fuzz can't deal with vendor components. Build
     // libtrusty for system and vendor.
+    host_supported: true,
     vendor_available: true,
     recovery_available: true,
     defaults: ["libtrusty_defaults"],

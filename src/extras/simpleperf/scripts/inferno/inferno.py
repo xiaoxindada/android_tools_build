@@ -54,7 +54,7 @@ def collect_data(args):
     """ Run app_profiler.py to generate record file. """
     app_profiler_args = [sys.executable, os.path.join(SCRIPTS_PATH, "app_profiler.py"), "-nb"]
     if args.app:
-        app_profiler_args += ["-p", args.app]
+        app_profiler_args += ["-p", args.app, '--unrepresentative_profile_debug_app']
     elif args.native_program:
         app_profiler_args += ["-np", args.native_program]
     elif args.pid != -1:

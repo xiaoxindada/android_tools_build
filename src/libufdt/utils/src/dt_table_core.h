@@ -55,9 +55,10 @@ struct dt_table_header {
                                  no padding is appended */
 
   uint32_t page_size; /* flash page size we assume */
-  uint32_t version;   /* DTBO image version, the current version is 0.
-                         The version will be incremented when the dt_table_header
-                         struct is updated. */
+  uint32_t version;   /* DTBO image version, the latest version is 2.
+                         The version field reflects the dt_table_entry struct
+                         version, allowing the bootloader to determine how to
+                         properly parse the entry items. */
 };
 
 enum dt_compression_info {
@@ -87,6 +88,19 @@ struct dt_table_entry_v1 {
                 of 'flags' will be used indicate the compression
                 format of the DT entry as per the enum 'dt_compression_info' */
   uint32_t custom[3]; /* optional, must be zero if unused */
+};
+
+struct dt_table_entry_v2 {
+  uint32_t dt_size;
+  uint32_t dt_offset; /* offset from head of dt_table_header */
+
+  uint32_t id;  /* optional, must be zero if unused */
+  uint32_t rev; /* optional, must be zero if unused */
+  uint32_t
+      flags; /* For version 2 of dt_table_header, the 4 least significant bits
+                of 'flags' will be used indicate the compression
+                format of the DT entry as per the enum 'dt_compression_info' */
+  uint32_t custom[11]; /* optional, must be zero if unused */
 };
 
 #endif

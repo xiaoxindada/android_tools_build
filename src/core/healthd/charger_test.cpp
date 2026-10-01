@@ -58,6 +58,7 @@ class Atomic {
         return mChanged.wait_for(lock, std::chrono::milliseconds(ms),
                                  [this, &expectVal] { return mValue == expectVal; });
     }
+
   private:
     std::mutex mMutex;
     std::condition_variable mChanged;
@@ -166,20 +167,11 @@ int main(int /*argc*/, char** /*argv*/) {
     passthrough->debug(createHidlHandle(dumpFile), {} /* options */);
 
     std::string content = openToString(dumpFile);
-    int status = expectContains(content, {
-        "status: 4",
-        "health: 6",
-        "present: 1",
-        "level: 47",
-        "voltage: 45",
-        "temp: 987",
-        "current now: 99000",
-        "current avg: 98000",
-        "charge counter: 600",
-        "current now: 99",
-        "cycle count: 77",
-        "Full charge: 3515547"
-    });
+    int status =
+            expectContains(content, {"status: 4", "health: 6", "present: 1", "level: 47",
+                                     "voltage: 45", "temp: 987", "current now: 99000",
+                                     "current avg: 98000", "charge counter: 600", "current now: 99",
+                                     "cycle count: 77", "Full charge: 3515547"});
 
     if (status == 0) {
         LOG_THIS("Test success.");

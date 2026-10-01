@@ -602,3 +602,46 @@ TEST(logd, logging_permissions) {
     GTEST_LOG_(INFO) << "This test does nothing.\n";
 #endif
 }
+
+#ifdef __ANDROID__
+static std::string popenToString(const std::string& command) {
+    std::string ret;
+
+    FILE* fp = popen(command.c_str(), "re");
+    if (fp) {
+        if (!android::base::ReadFdToString(fileno(fp), &ret)) ret = "";
+        pclose(fp);
+    }
+    return ret;
+}
+
+static bool isPmsgActive() {
+    std::string pidStr = popenToString("pidof -s logd");
+    if (pidStr.empty()) return true;
+
+    int pid = atoi(pidStr.c_str());
+
+    std::string myPidFds = popenToString(android::base::StringPrintf("ls -l /proc/%d/fd", pid));
+
+    if (myPidFds.length() == 0) return true;
+
+    return std::string::npos != myPidFds.find(" -> /dev/pmsg0");
+}
+#endif
+
+TEST(logd, test_pmsg_active) {
+#ifdef __ANDROID__
+    if (getuid() != 0) {
+        GTEST_SKIP() << "This test requires root";
+    }
+
+    if (ANDROID_DEBUGGABLE) {
+        bool has_pstore = access("/dev/pmsg0", W_OK) == 0;
+        if (has_pstore) {
+            EXPECT_TRUE(isPmsgActive());
+        }
+    }
+#else
+    GTEST_LOG_(INFO) << "This test does nothing.\n";
+#endif
+}

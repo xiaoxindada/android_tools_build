@@ -16,6 +16,17 @@
 
 #pragma once
 
+#include <chrono>
 #include <string>
 
+#include <sys/types.h>
+
 static const std::string CGROUP_V2_ROOT_DEFAULT = "/sys/fs/cgroup";
+
+// These are not stable APIs.
+// They are exported from libprocessgroup so they are usable by platform code, but they are not
+// publicly declared or intended to be usable by non-platform code.
+int KillProcessGroup(
+    uid_t uid, pid_t initialPid, int signal, bool reclaimMemory = false, bool once = false,
+    std::chrono::steady_clock::time_point until =
+        std::chrono::steady_clock::now() + std::chrono::milliseconds(2200));

@@ -255,7 +255,7 @@ Result<void> SubsystemParser::ParseDirName(std::vector<std::string>&& args) {
 Result<void> SubsystemParser::ParseLineSection(std::vector<std::string>&& args, int line) {
     using OptionParser = Result<void> (SubsystemParser::*)(std::vector<std::string> && args);
     // clang-format off
-    static const KeywordMap<OptionParser> parser_map = {
+    [[clang::no_destroy]] static const KeywordMap<OptionParser> parser_map = {
         {"devname",     {1,     1,      &SubsystemParser::ParseDevName}},
         {"dirname",     {1,     1,      &SubsystemParser::ParseDirName}},
     };

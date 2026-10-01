@@ -26,6 +26,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "RegEx.h"
 #include "event_attr.h"
 #include "record.h"
 
@@ -49,31 +50,6 @@ class MapRecordReader {
   const uint64_t event_id_;
   const bool keep_non_executable_maps_;
   std::function<bool(Record*)> callback_;
-};
-
-// Create a thread for reading maps while recording. The maps are stored in a temporary file, and
-// read back after recording.
-class MapRecordThread {
- public:
-  MapRecordThread(const MapRecordReader& map_record_reader);
-  ~MapRecordThread();
-
-  bool Join();
-  bool ReadMapRecordData(const std::function<bool(const char*, size_t)>& callback);
-  bool ReadMapRecords(const std::function<void(const Record*)>& callback, bool only_kernel_maps);
-
- private:
-  // functions running in the map record thread
-  bool RunThread();
-  bool WriteRecordToFile(Record* record);
-
-  MapRecordReader map_record_reader_;
-  std::unique_ptr<TemporaryFile> tmpfile_;
-  std::unique_ptr<FILE, decltype(&fclose)> fp_;
-  std::thread thread_;
-  bool thread_joined_ = false;
-  std::atomic<bool> early_stop_ = false;
-  std::atomic<bool> thread_result_ = false;
 };
 
 }  // namespace simpleperf

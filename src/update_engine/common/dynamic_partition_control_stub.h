@@ -34,7 +34,6 @@ class DynamicPartitionControlStub final
   FeatureFlag GetVirtualAbFeatureFlag() override;
   FeatureFlag GetVirtualAbCompressionFeatureFlag() override;
   FeatureFlag GetVirtualAbCompressionXorFeatureFlag() override;
-  FeatureFlag GetVirtualAbUserspaceSnapshotsFeatureFlag() override;
   bool OptimizeOperation(const std::string& partition_name,
                          const InstallOperation& operation,
                          InstallOperation* optimized) override;

@@ -44,9 +44,6 @@ import java.util.zip.ZipOutputStream;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class DsuGsiIntegrationTest extends DsuTestBase {
-    private static final long DSU_MAX_WAIT_SEC = 10 * 60;
-    private static final long DSU_DEFAULT_USERDATA_SIZE = 8L << 30;
-
     private static final String GSI_IMAGE_NAME = "system.img";
     private static final String DSU_IMAGE_ZIP_PUSH_PATH = "/sdcard/gsi.zip";
 
@@ -74,7 +71,7 @@ public class DsuGsiIntegrationTest extends DsuTestBase {
                         + " -d file://%s"
                         + " --el KEY_USERDATA_SIZE %d"
                         + " --ez KEY_ENABLE_WHEN_COMPLETED true",
-                DSU_IMAGE_ZIP_PUSH_PATH, getDsuUserdataSize(DSU_DEFAULT_USERDATA_SIZE));
+                DSU_IMAGE_ZIP_PUSH_PATH, getDsuUserdataSize());
     }
 
     @Before
@@ -153,7 +150,7 @@ public class DsuGsiIntegrationTest extends DsuTestBase {
         CLog.i("Wait for DSU installation complete and reboot");
         assertTrue(
                 "Timed out waiting for DSU installation complete",
-                getDevice().waitForDeviceNotAvailable(DSU_MAX_WAIT_SEC * 1000));
+                getDevice().waitForDeviceNotAvailable(5 * 60 * 1000 /* 5 minutes */));
         CLog.i("DSU installation is complete and device is disconnected");
 
         getDevice().waitForDeviceAvailable();

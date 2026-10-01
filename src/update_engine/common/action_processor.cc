@@ -61,12 +61,14 @@ void ActionProcessor::StopProcessing() {
   LOG(INFO) << "ActionProcessor: aborted "
             << (current_action_ ? current_action_->Type() : "")
             << (suspended_ ? " while suspended" : "");
-  current_action_.reset();
   suspended_ = false;
   // Delete all the actions before calling the delegate.
   actions_.clear();
   if (delegate_)
     delegate_->ProcessingStopped(this);
+  // Reset current_action_ after calling delegate, as delegate might call
+  // current_action() to find out which action was cancelled.
+  current_action_.reset();
 }
 
 void ActionProcessor::SuspendProcessing() {

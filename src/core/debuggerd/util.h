@@ -18,8 +18,10 @@
 
 #include <functional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
+#include <stdint.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
@@ -31,3 +33,5 @@ std::string get_thread_name(pid_t tid);
 std::string get_timestamp();
 bool iterate_tids(pid_t, std::function<void(pid_t)>);
 bool is_microdroid();
+
+void get_vmflags(pid_t pid, std::unordered_map<uint64_t, std::string>& vmflags);

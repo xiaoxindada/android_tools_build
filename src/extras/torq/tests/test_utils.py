@@ -14,11 +14,13 @@
 # limitations under the License.
 #
 
+import subprocess
 import sys
 from src.torq import create_parser, run
+from unittest import mock
 
 
-def parameterized(items, setup_func):
+def parameterized(items, setup_func=None):
   """
   Function to create a decorator function that parameterizes a test method using
   unittest.subTest given a setup function and a list of items.
@@ -36,7 +38,8 @@ def parameterized(items, setup_func):
     def decorated_test(self, *args, **kwargs):
       for item in items:
         with self.subTest(item=item):
-          setup_func(self, item)
+          if setup_func:
+            setup_func(self, item)
           test_method(self, item, *args, **kwargs)
 
     return decorated_test
@@ -46,6 +49,10 @@ def parameterized(items, setup_func):
 
 def parameterized_profiler(setup_func):
   return parameterized(["perfetto", "simpleperf"], setup_func)
+
+
+def parameterized_config_builder():
+  return parameterized(["pull", "show"])
 
 
 def create_parser_from_cli(command_string):
@@ -61,3 +68,21 @@ def parse_cli(command_string):
 def run_cli(command_string):
   sys.argv = command_string.split()
   run()
+
+
+def generate_mock_completed_process(stdout_string=b'\n',
+                                    stderr_string=b'\n',
+                                    returncode=0):
+
+  def check_returncode():
+    if returncode != 0:
+      raise Exception()
+
+  mock_completed_process = mock.create_autospec(
+      subprocess.CompletedProcess,
+      instance=True,
+      stdout=stdout_string,
+      stderr=stderr_string,
+      returncode=returncode)
+  mock_completed_process.check_returncode = check_returncode
+  return mock_completed_process

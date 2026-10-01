@@ -24,6 +24,7 @@
 #include <fstream>
 #include <functional>
 #include <optional>
+#include <print>
 #include <set>
 #include <string>
 #include <vector>
@@ -64,13 +65,32 @@ class OneTimeFreeAllocator {
   explicit OneTimeFreeAllocator(size_t unit_size = 8192u)
       : unit_size_(unit_size), cur_(nullptr), end_(nullptr) {}
 
+  OneTimeFreeAllocator(OneTimeFreeAllocator&& other) noexcept
+      : unit_size_(other.unit_size_), v_(std::move(other.v_)), cur_(other.cur_), end_(other.end_) {
+    other.cur_ = nullptr;
+    other.end_ = nullptr;
+  }
+
+  OneTimeFreeAllocator& operator=(OneTimeFreeAllocator&& other) noexcept {
+    if (this != &other) {
+      Clear();
+      unit_size_ = other.unit_size_;
+      v_ = std::move(other.v_);
+      cur_ = other.cur_;
+      end_ = other.end_;
+      other.cur_ = nullptr;
+      other.end_ = nullptr;
+    }
+    return *this;
+  }
+
   ~OneTimeFreeAllocator() { Clear(); }
 
   void Clear();
   const char* AllocateString(std::string_view s);
 
  private:
-  const size_t unit_size_;
+  size_t unit_size_;
   std::vector<char*> v_;
   char* cur_;
   char* end_;
@@ -227,8 +247,17 @@ struct BinaryReader {
   bool error;
 };
 
-void PrintIndented(size_t indent, const char* fmt, ...);
-void FprintIndented(FILE* fp, size_t indent, const char* fmt, ...);
+template <typename... Args>
+void PrintIndented(size_t indent, std::format_string<Args...> fmt, Args&&... args) {
+  std::print("{:>{}}", "", indent * 2);
+  std::print(fmt, std::forward<Args>(args)...);
+}
+
+template <typename... Args>
+void FprintIndented(std::FILE* fp, size_t indent, std::format_string<Args...> fmt, Args&&... args) {
+  std::print(fp, "{:>{}}", "", indent * 2);
+  std::print(fp, fmt, std::forward<Args>(args)...);
+}
 
 bool IsPowerOfTwo(uint64_t value);
 
@@ -293,6 +322,8 @@ void OverflowSafeAdd(uint64_t& dest, uint64_t add);
 
 std::string ReadableCount(uint64_t count);
 std::string ReadableBytes(uint64_t bytes);
+
+std::string BitsToString(const std::vector<bool>& bits);
 
 }  // namespace simpleperf
 

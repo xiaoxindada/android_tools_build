@@ -29,12 +29,18 @@ static const char* fscrypt_key_mode = "/unencrypted/mode";
 namespace android {
 namespace fscrypt {
 
+enum class KeyType {
+    kRaw,
+    kHwWrappedV0,
+    kHwWrapped,
+};
+
 struct EncryptionOptions {
     int version;
     int contents_mode;
     int filenames_mode;
     int flags;
-    bool use_hw_wrapped_key;
+    KeyType key_type;
     bool dusize_4k;
 
     // Ensure that "version" is not valid on creation and so must be explicitly set
@@ -65,7 +71,7 @@ bool EnsurePolicy(const EncryptionPolicy& policy, const std::string& directory);
 inline bool operator==(const EncryptionOptions& lhs, const EncryptionOptions& rhs) {
     return (lhs.version == rhs.version) && (lhs.contents_mode == rhs.contents_mode) &&
            (lhs.filenames_mode == rhs.filenames_mode) && (lhs.flags == rhs.flags) &&
-           (lhs.use_hw_wrapped_key == rhs.use_hw_wrapped_key) && (lhs.dusize_4k == rhs.dusize_4k);
+           (lhs.key_type == rhs.key_type) && (lhs.dusize_4k == rhs.dusize_4k);
 }
 
 inline bool operator!=(const EncryptionOptions& lhs, const EncryptionOptions& rhs) {

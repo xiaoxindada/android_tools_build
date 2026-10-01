@@ -31,11 +31,11 @@
 #endif
 
 #include "update_engine/common/utils.h"
+#include "update_engine/metrics_utils.h"
 #include "update_engine/payload_consumer/delta_performer.h"
 
 using android::base::GetBoolProperty;
 using android::snapshot::ISnapshotManager;
-using android::snapshot::SnapshotMergeStats;
 using android::snapshot::UpdateState;
 using brillo::MessageLoop;
 
@@ -69,8 +69,7 @@ CleanupPreviousUpdateAction::CleanupPreviousUpdateAction(
       delegate_(delegate),
       running_(false),
       cancel_failed_(false),
-      last_percentage_(0),
-      merge_stats_(nullptr) {}
+      last_percentage_(0) {}
 
 CleanupPreviousUpdateAction::~CleanupPreviousUpdateAction() {
   StopActionInternal();
@@ -159,8 +158,6 @@ void CleanupPreviousUpdateAction::StartActionInternal() {
   }
   // SnapshotManager must be available on VAB devices.
   CHECK(snapshot_ != nullptr);
-  merge_stats_ = snapshot_->GetSnapshotMergeStatsInstance();
-  CHECK(merge_stats_ != nullptr);
   WaitBootCompletedOrSchedule();
 }
 
@@ -187,7 +184,7 @@ void CleanupPreviousUpdateAction::WaitBootCompletedOrSchedule() {
 
   auto boot_time = std::chrono::duration_cast<std::chrono::milliseconds>(
       android::base::boot_clock::now().time_since_epoch());
-  merge_stats_->set_boot_complete_time_ms(boot_time.count());
+  prefs_->SetInt64(kPrefsMetricsBootCompleteTimeMs, boot_time.count());
 
   LOG(INFO) << "Boot completed, waiting on markBootSuccessful()";
   CheckSlotMarkedSuccessfulOrSchedule();
@@ -283,11 +280,6 @@ void CleanupPreviousUpdateAction::StartMerge() {
     }
   }
 
-  if (!merge_stats_->Start()) {
-    // Not an error because CleanupPreviousUpdateAction may be paused and
-    // resumed while kernel continues merging snapshots in the background.
-    LOG(WARNING) << "SnapshotMergeStats::Start failed.";
-  }
   LOG(INFO) << "Waiting for any previous merge request to complete. "
             << "This can take up to several minutes.";
   WaitForMergeOrSchedule();
@@ -308,20 +300,9 @@ void CleanupPreviousUpdateAction::WaitForMergeOrSchedule() {
   AcknowledgeTaskExecuted();
   TEST_AND_RETURN(running_);
 
-  snapshot_->SetMergeStatsFeatures(merge_stats_);
-
-  // Propagate the merge failure code to the merge stats. If we wait until
-  // after ProcessUpdateState, then a successful merge could overwrite the
-  // state of the previous failure.
-  auto failure_code = snapshot_->ReadMergeFailureCode();
-  if (failure_code != android::snapshot::MergeFailureCode::Ok) {
-    merge_stats_->set_merge_failure_code(failure_code);
-  }
-
   auto state = snapshot_->ProcessUpdateState(
       std::bind(&CleanupPreviousUpdateAction::OnMergePercentageUpdate, this),
       std::bind(&CleanupPreviousUpdateAction::BeforeCancel, this));
-  merge_stats_->set_state(state);
 
   switch (state) {
     case UpdateState::None: {
@@ -366,7 +347,6 @@ void CleanupPreviousUpdateAction::WaitForMergeOrSchedule() {
 
     case UpdateState::MergeFailed: {
       LOG(ERROR) << "Merge failed. Device may be corrupted.";
-      merge_stats_->set_merge_failure_code(snapshot_->ReadMergeFailureCode());
       processor_->ActionComplete(this, ErrorCode::kDeviceCorrupted);
       return;
     }
@@ -444,19 +424,15 @@ void CleanupPreviousUpdateAction::InitiateMergeAndWait() {
     return;
   }
 
-  snapshot_->UpdateCowStats(merge_stats_);
-
-  auto merge_start_time = std::chrono::duration_cast<std::chrono::milliseconds>(
-      android::base::boot_clock::now().time_since_epoch());
-  merge_stats_->set_boot_complete_to_merge_start_time_ms(
-      merge_start_time.count() - merge_stats_->boot_complete_time_ms());
-
-  auto source_build_fingerprint = snapshot_->ReadSourceBuildFingerprint();
-  merge_stats_->set_source_build_fingerprint(source_build_fingerprint);
-
-  if (!merge_stats_->WriteState()) {
-    LOG(ERROR) << "Failed to write merge stats; record may be unreliable if "
-                  "merge is interrupted.";
+  int64_t boot_complete_time = 0;
+  int64_t merge_start_time =
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          android::base::boot_clock::now().time_since_epoch())
+          .count();
+  if (prefs_->GetInt64(kPrefsMetricsBootCompleteTimeMs, &boot_complete_time) &&
+      merge_start_time >= boot_complete_time) {
+    auto ms = merge_start_time - boot_complete_time;
+    prefs_->SetInt64(kPrefsMetricsBootCompleteToMergeStartMs, ms);
   }
 
   if (snapshot_->InitiateMerge()) {
@@ -466,7 +442,6 @@ void CleanupPreviousUpdateAction::InitiateMergeAndWait() {
 
   LOG(WARNING) << "InitiateMerge failed.";
   auto state = snapshot_->GetUpdateState();
-  merge_stats_->set_state(state);
   if (state == UpdateState::Unverified) {
     // We are stuck at unverified state. This can happen if the update has
     // been applied, but it has not even been attempted yet (in libsnapshot,
@@ -493,19 +468,12 @@ void CleanupPreviousUpdateAction::InitiateMergeAndWait() {
 }
 
 void CleanupPreviousUpdateAction::ReportMergeStats() {
-  auto result = merge_stats_->Finish();
-  if (result == nullptr) {
-    LOG(WARNING) << "Not reporting merge stats because "
-                    "SnapshotMergeStats::Finish failed.";
-    return;
-  }
-
 #ifdef __ANDROID_RECOVERY__
   LOG(INFO) << "Skip reporting merge stats in recovery.";
 #elif defined(UE_DISABLE_STATS)
   LOG(INFO) << "Skip reporting merge stats because metrics are disabled.";
 #else
-  const auto& report = result->report();
+  auto report = snapshot_->ReadMergeReport();
 
   if (report.state() == UpdateState::None ||
       report.state() == UpdateState::Initiated ||
@@ -515,9 +483,6 @@ void CleanupPreviousUpdateAction::ReportMergeStats() {
     return;
   }
 
-  auto passed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-      result->merge_time());
-
   bool vab_compression_enabled = boot_control_->GetDynamicPartitionControl()
                                      ->GetVirtualAbCompressionFeatureFlag()
                                      .IsEnabled();
@@ -525,28 +490,38 @@ void CleanupPreviousUpdateAction::ReportMergeStats() {
   // DynamicPartitionControlInterface::UpdateUsesSnapshotCompression.
   // However, we have saved the flag in the snapshot report.
   bool vab_compression_used = report.compression_enabled();
-  bool userspace_snapshots_enabled =
-      boot_control_->GetDynamicPartitionControl()
-          ->GetVirtualAbUserspaceSnapshotsFeatureFlag()
-          .IsEnabled();
+  constexpr bool userspace_snapshots_enabled = true;
   bool userspace_snapshots_used = report.userspace_snapshots_used();
   bool xor_compression_enabled = boot_control_->GetDynamicPartitionControl()
                                      ->GetVirtualAbCompressionXorFeatureFlag()
                                      .IsEnabled();
   bool xor_compression_used = report.xor_compression_used();
   bool iouring_used = report.iouring_used();
+  bool ublk_used = report.ublk_used();
+  int64_t install_time_ms =
+      metrics_utils::GetPersistedValue(kPrefsMetricsInstallDuration, prefs_);
+  int64_t verification_time_ms =
+      metrics_utils::GetPersistedValue(kPrefsMetricsVerifyingDuration, prefs_);
+  int64_t boot_complete_time_ms =
+      metrics_utils::GetPersistedValue(kPrefsMetricsBootCompleteTimeMs, prefs_);
+  int64_t boot_complete_to_merge_start_ms = metrics_utils::GetPersistedValue(
+      kPrefsMetricsBootCompleteToMergeStartMs, prefs_);
 
   auto target_build_fingerprint =
       android::base::GetProperty("ro.build.fingerprint", "");
 
   LOG(INFO) << "Reporting merge stats: "
             << android::snapshot::UpdateState_Name(report.state()) << " in "
-            << passed_ms.count() << "ms (resumed " << report.resume_count()
-            << " times), using " << report.cow_file_size()
-            << " bytes of COW image.";
+            << report.merge_total_time_ms() << "ms (resumed "
+            << report.resume_count() << " times), using "
+            << report.cow_file_size()
+            << " bytes of COW image, ublk_used=" << ublk_used
+            << ", install_time_ms=" << install_time_ms
+            << ", verification_time_ms=" << verification_time_ms;
+
   statsd::stats_write(statsd::SNAPSHOT_MERGE_REPORTED,
                       static_cast<int32_t>(report.state()),
-                      static_cast<int64_t>(passed_ms.count()),
+                      static_cast<int64_t>(report.merge_total_time_ms()),
                       static_cast<int32_t>(report.resume_count()),
                       false, /* vab retrofit */
                       static_cast<int64_t>(report.cow_file_size()),
@@ -554,8 +529,8 @@ void CleanupPreviousUpdateAction::ReportMergeStats() {
                       vab_compression_used,
                       report.total_cow_size_bytes(),
                       report.estimated_cow_size_bytes(),
-                      report.boot_complete_time_ms(),
-                      report.boot_complete_to_merge_start_time_ms(),
+                      boot_complete_time_ms,
+                      boot_complete_to_merge_start_ms,
                       static_cast<int32_t>(report.merge_failure_code()),
                       report.source_build_fingerprint().c_str(),
                       target_build_fingerprint.c_str(),
@@ -563,7 +538,12 @@ void CleanupPreviousUpdateAction::ReportMergeStats() {
                       userspace_snapshots_used,
                       xor_compression_enabled,
                       xor_compression_used,
-                      iouring_used);
+                      iouring_used,
+                      ublk_used,
+                      install_time_ms,
+                      verification_time_ms);
+  prefs_->Delete(kPrefsMetricsInstallDuration);
+  prefs_->Delete(kPrefsMetricsVerifyingDuration);
 #endif
 }
 

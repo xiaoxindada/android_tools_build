@@ -16,9 +16,11 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#if STORAGEPROXYD_RPMB_UFS_SUPPORT
 #include <scsi/scsi.h>
 #include <scsi/scsi_proto.h>
 #include <scsi/sg.h>
+#endif
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -30,7 +32,9 @@
 #include <unistd.h>
 
 #include <linux/major.h>
+#if STORAGEPROXYD_RPMB_MMC_SUPPORT
 #include <linux/mmc/ioctl.h>
+#endif
 
 #include <hardware_legacy/power.h>
 
@@ -39,10 +43,13 @@
 #include "rpmb.h"
 #include "storage.h"
 
+#if STORAGEPROXYD_RPMB_UFS_SUPPORT
 /* sg_io_hdr_t host_status codes */
 #define DID_OK 0
 #define DID_REQUEUE 0x0d
+#endif
 
+#if STORAGEPROXYD_RPMB_MMC_SUPPORT
 #define MMC_READ_MULTIPLE_BLOCK 18
 #define MMC_WRITE_MULTIPLE_BLOCK 25
 #define MMC_RELIABLE_WRITE_FLAG (1 << 31)
@@ -58,9 +65,11 @@
 #define MMC_WRITE_FLAG_R 0
 #define MMC_WRITE_FLAG_W 1
 #define MMC_WRITE_FLAG_RELW (MMC_WRITE_FLAG_W | MMC_RELIABLE_WRITE_FLAG)
+#endif
 
 #define MMC_BLOCK_SIZE 512
 
+#if STORAGEPROXYD_RPMB_UFS_SUPPORT
 /*
  * Number of retry attempts when an RPMB authenticated write triggers a UNIT
  * ATTENTION
@@ -115,11 +124,13 @@ struct sec_proto_cdb {
     /* CONTROL = 00h. */
     uint8_t ctrl;
 } __packed;
+#endif
 
 static int rpmb_fd = -1;
 static uint8_t read_buf[4096];
 static enum dev_type dev_type = UNKNOWN_RPMB;
 
+#if STORAGEPROXYD_RPMB_UFS_SUPPORT
 static const char* UFS_WAKE_LOCK_NAME = "ufs_seq_wakelock";
 
 /**
@@ -178,7 +189,9 @@ err:
         return -1;
     }
 }
+#endif
 
+#if STORAGEPROXYD_RPMB_UFS_SUPPORT
 static void set_sg_io_hdr(sg_io_hdr_t* io_hdrp, int dxfer_direction, unsigned char cmd_len,
                           unsigned char mx_sb_len, unsigned int dxfer_len, void* dxferp,
                           unsigned char* cmdp, void* sbp) {
@@ -283,7 +296,7 @@ static enum scsi_result check_scsi_sense(const uint8_t* sense_buf, size_t len) {
     return SCSI_RES_ERR;
 }
 
-static enum scsi_result check_sg_io_hdr(const sg_io_hdr_t* io_hdrp) {
+static enum scsi_result check_sg_io_hdr(const sg_io_hdr_t* io_hdrp, int* const retry_count) {
     if (io_hdrp->status == 0 && io_hdrp->host_status == 0 && io_hdrp->driver_status == 0) {
         return SCSI_RES_OK;
     }
@@ -295,7 +308,13 @@ static enum scsi_result check_sg_io_hdr(const sg_io_hdr_t* io_hdrp) {
     if (io_hdrp->masked_status != GOOD && io_hdrp->sb_len_wr > 0) {
         enum scsi_result scsi_res = check_scsi_sense(io_hdrp->sbp, io_hdrp->sb_len_wr);
         if (scsi_res == SCSI_RES_RETRY) {
-            return SCSI_RES_RETRY;
+            /* Check if we can retry */
+            if (retry_count && *retry_count) {
+                *retry_count -= 1;
+                return SCSI_RES_RETRY;
+            } else {
+                return SCSI_RES_ERR;
+            }
         } else if (scsi_res != SCSI_RES_OK) {
             ALOGE("Unexpected SCSI sense. masked_status: %hhu, host_status: %hu, driver_status: "
                   "%hu\n",
@@ -317,6 +336,7 @@ static enum scsi_result check_sg_io_hdr(const sg_io_hdr_t* io_hdrp) {
     }
 
     if (io_hdrp->host_status == DID_REQUEUE && io_hdrp->driver_status == 0) {
+        /* Don't check the retry_count for a driver soft-failure */
         ALOGW("SG_IO failed with host_status: DID_REQUEUE, retrying\n");
         return SCSI_RES_RETRY;
     }
@@ -331,7 +351,9 @@ static enum scsi_result check_sg_io_hdr(const sg_io_hdr_t* io_hdrp) {
     }
     return SCSI_RES_ERR;
 }
+#endif
 
+#if STORAGEPROXYD_RPMB_MMC_SUPPORT
 static int send_mmc_rpmb_req(int mmc_fd, const struct storage_rpmb_send_req* req,
                              struct watcher* watcher) {
     union {
@@ -395,7 +417,18 @@ static int send_mmc_rpmb_req(int mmc_fd, const struct storage_rpmb_send_req* req
     }
     return rc;
 }
+#else
+static int send_mmc_rpmb_req(int mmc_fd, const struct storage_rpmb_send_req* req,
+                             struct watcher* watcher) {
+    (void)mmc_fd;
+    (void)req;
+    (void)watcher;
+    errno = ENOTSUP;
+    return -1;
+}
+#endif
 
+#if STORAGEPROXYD_RPMB_UFS_SUPPORT
 static int send_ufs_rpmb_req(int sg_fd, const struct storage_rpmb_send_req* req,
                              struct watcher* watcher) {
     int rc;
@@ -442,7 +475,7 @@ static int send_ufs_rpmb_req(int sg_fd, const struct storage_rpmb_send_req* req,
                 ALOGE("%s: ufs ioctl failed: %d, %s\n", __func__, rc, strerror(errno));
                 goto err_op;
             }
-        } while (check_sg_io_hdr(&io_hdr) == SCSI_RES_RETRY && retry_count-- > 0);
+        } while (check_sg_io_hdr(&io_hdr, &retry_count) == SCSI_RES_RETRY);
         write_buf += req->reliable_write_size;
     }
 
@@ -469,23 +502,29 @@ static int send_ufs_rpmb_req(int sg_fd, const struct storage_rpmb_send_req* req,
                 ALOGE("%s: ufs ioctl failed: %d, %s\n", __func__, rc, strerror(errno));
                 goto err_op;
             }
-        } while (check_sg_io_hdr(&io_hdr) == SCSI_RES_RETRY && retry_count-- > 0);
+        } while (check_sg_io_hdr(&io_hdr, &retry_count) == SCSI_RES_RETRY);
         write_buf += req->write_size;
     }
 
     if (req->read_size) {
         /* Prepare SECURITY PROTOCOL IN command. */
-        in_cdb.length = __builtin_bswap32(req->read_size);
         sg_io_hdr_t io_hdr;
-        set_sg_io_hdr(&io_hdr, SG_DXFER_FROM_DEV, sizeof(in_cdb), sizeof(sense_buffer),
-                      req->read_size, read_buf, (unsigned char*)&in_cdb, sense_buffer);
-        watch_progress(watcher, "rpmb ufs read");
-        rc = TEMP_FAILURE_RETRY(ioctl(sg_fd, SG_IO, &io_hdr));
-        watch_progress(watcher, "rpmb ufs read done");
-        if (rc < 0) {
-            ALOGE("%s: ufs ioctl failed: %d, %s\n", __func__, rc, strerror(errno));
-        }
-        check_sg_io_hdr(&io_hdr);
+        /*
+         * No retry for unit attention conditions since this won't be the first
+         * call in the sequence.
+         */
+        int retry_count = 0;
+        do {
+            in_cdb.length = __builtin_bswap32(req->read_size);
+            set_sg_io_hdr(&io_hdr, SG_DXFER_FROM_DEV, sizeof(in_cdb), sizeof(sense_buffer),
+                          req->read_size, read_buf, (unsigned char*)&in_cdb, sense_buffer);
+            watch_progress(watcher, "rpmb ufs read");
+            rc = TEMP_FAILURE_RETRY(ioctl(sg_fd, SG_IO, &io_hdr));
+            watch_progress(watcher, "rpmb ufs read done");
+            if (rc < 0) {
+                ALOGE("%s: ufs ioctl failed: %d, %s\n", __func__, rc, strerror(errno));
+            }
+        } while (check_sg_io_hdr(&io_hdr, &retry_count) == SCSI_RES_RETRY);
     }
 
 err_op:
@@ -498,6 +537,16 @@ err_op:
 
     return rc;
 }
+#else
+static int send_ufs_rpmb_req(int sg_fd, const struct storage_rpmb_send_req* req,
+                             struct watcher* watcher) {
+    (void)sg_fd;
+    (void)req;
+    (void)watcher;
+    errno = ENOTSUP;
+    return -1;
+}
+#endif
 
 static int send_virt_rpmb_req(int rpmb_fd, void* read_buf, size_t read_size, const void* payload,
                               size_t payload_size) {
@@ -607,7 +656,7 @@ err_response:
 }
 
 int rpmb_open(const char* rpmb_devname, enum dev_type open_dev_type) {
-    int rc, sg_version_num;
+    int rc;
     dev_type = open_dev_type;
 
     if (dev_type != SOCK_RPMB) {
@@ -620,12 +669,24 @@ int rpmb_open(const char* rpmb_devname, enum dev_type open_dev_type) {
 
         /* For UFS, it is prudent to check we have a sg device by calling an ioctl */
         if (dev_type == UFS_RPMB) {
+#if STORAGEPROXYD_RPMB_UFS_SUPPORT
+            int sg_version_num;
             if ((TEMP_FAILURE_RETRY(ioctl(rpmb_fd, SG_GET_VERSION_NUM, &sg_version_num)) < 0) ||
                 (sg_version_num < RPMB_MIN_SG_VERSION_NUM)) {
                 ALOGE("%s is not a sg device, or old sg driver\n", rpmb_devname);
                 return -1;
             }
+#else
+            ALOGE("%s: rpmb ufs not supported\n", rpmb_devname);
+            return -1;
+#endif
         }
+#if !STORAGEPROXYD_RPMB_MMC_SUPPORT
+        if (dev_type == MMC_RPMB) {
+            ALOGE("%s: rpmb mmc support not enabled\n", rpmb_devname);
+            return -1;
+        }
+#endif
     } else {
         struct sockaddr_un unaddr;
         struct sockaddr *addr = (struct sockaddr *)&unaddr;

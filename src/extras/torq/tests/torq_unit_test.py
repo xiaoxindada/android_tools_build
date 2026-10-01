@@ -15,18 +15,26 @@
 #
 
 import unittest
-import sys
 import os
 from unittest import mock
 from src.config import create_config_command
-from src.profiler import DEFAULT_DUR_MS, DEFAULT_OUT_DIR
+from src.profiler import (DEFAULT_DUR_MS, DEFAULT_OUT_DIR,
+                          DEFAULT_TRIGGER_DUR_MS, DEFAULT_TRIGGER_MODE,
+                          DEFAULT_TRIGGER_STOP_DELAY_MS, MIN_STOP_DELAY_MS,
+                          MIN_DURATION_MS)
 from src.torq import create_parser, verify_args
-from tests.test_utils import create_parser_from_cli, parse_cli
+from tests.test_utils import create_parser_from_cli, parse_cli, parameterized_config_builder
 
 TEST_USER_ID = 10
 TEST_PACKAGE = "com.android.contacts"
 TEST_FILE = "file.pbtxt"
 SYMBOLS_PATH = "/folder/symbols"
+TEST_TRIGGER_NAMES = [
+    "team.package.test-trigger-name", "team2.package2.test-trigger-name2"
+]
+TEST_TRIGGER_DUR_MS = 10000
+TEST_TRIGGER_STOP_DELAY_MS = 1000
+TEST_TRIGGER_MODE = "stop"
 
 
 class TorqUnitTest(unittest.TestCase):
@@ -679,6 +687,139 @@ class TorqUnitTest(unittest.TestCase):
                                         " once if you want to collect"
                                         " cpu-cycles."))
 
+  def test_verify_args_trigger_names(self):
+    args = parse_cli("torq --trigger-names %s" % " ".join(TEST_TRIGGER_NAMES))
+
+    args, error = verify_args(args)
+
+    self.assertEqual(error, None)
+    self.assertEqual(args.trigger_names, TEST_TRIGGER_NAMES)
+    self.assertEqual(args.trigger_timeout_ms, DEFAULT_TRIGGER_DUR_MS)
+    self.assertEqual(args.trigger_stop_delay_ms, DEFAULT_TRIGGER_STOP_DELAY_MS)
+
+  @mock.patch.object(os.path, "exists", autospec=True)
+  @mock.patch.object(os.path, "isdir", autospec=True)
+  def test_verify_args_trigger_names_invalid_profiler(self, mock_isdir,
+                                                      mock_exists):
+    mock_isdir.return_value = True
+    mock_exists.return_value = True
+    args = parse_cli("torq -p simpleperf --symbols %s --trigger-names %s" %
+                     (SYMBOLS_PATH, " ".join(TEST_TRIGGER_NAMES)))
+
+    args, error = verify_args(args)
+
+    self.assertEqual(
+        error.message,
+        ("Command is invalid because --trigger-names cannot be passed"
+         " if --profiler is not set to perfetto."))
+    self.assertEqual(error.suggestion, "Set -p perfetto to use trigger-names.")
+
+  def test_verify_args_trigger_names_with_dur_ms(self):
+    args = parse_cli("torq --dur-ms 3000 --trigger-names %s" %
+                     " ".join(TEST_TRIGGER_NAMES))
+
+    args, error = verify_args(args)
+
+    self.assertEqual(error.message, ("Command is invalid because --dur-ms"
+                                     " cannot be passed if a perfetto trigger"
+                                     " is being set."))
+    self.assertEqual(error.suggestion, ("Run command with a"
+                                        " --trigger-timeout-ms option instead"
+                                        " of --dur-ms."))
+
+  def test_verify_args_trigger_names_with_multiple_runs(self):
+    args = parse_cli("torq -r 2 --trigger-names %s" %
+                     " ".join(TEST_TRIGGER_NAMES))
+
+    args, error = verify_args(args)
+
+    self.assertEqual(error.message, ("Command is invalid because the number of"
+                                     " runs cannot be more than 1 when"
+                                     " including trigger configs."))
+    self.assertEqual(error.suggestion, ("Run command without the -r"
+                                        " option."))
+
+  def test_verify_args_trigger_timeout_ms_no_trigger_names(self):
+    args = parse_cli("torq --trigger-timeout-ms %s" % TEST_TRIGGER_DUR_MS)
+
+    args, error = verify_args(args)
+
+    self.assertEqual(error.message, ("Command is invalid because"
+                                     " --trigger-timeout-ms cannot be set"
+                                     " without --trigger-names."))
+    self.assertEqual(error.suggestion, ("Set --trigger-names or remove"
+                                        " --trigger-timeout-ms."))
+
+  def test_verify_args_trigger_stop_delay_ms_no_trigger_names(self):
+    args = parse_cli("torq --trigger-stop-delay-ms %s" %
+                     TEST_TRIGGER_STOP_DELAY_MS)
+
+    args, error = verify_args(args)
+
+    self.assertEqual(error.message, ("Command is invalid because"
+                                     " --trigger-stop-delay-ms cannot be set"
+                                     " without --trigger-names."))
+    self.assertEqual(error.suggestion, ("Set --trigger-names or remove"
+                                        " --trigger-stop-delay-ms."))
+
+  def test_verify_args_trigger_mode_no_trigger_names(self):
+    args = parse_cli("torq --trigger-mode %s" % TEST_TRIGGER_MODE)
+
+    args, error = verify_args(args)
+
+    self.assertEqual(error.message, ("Command is invalid because"
+                                     " --trigger-mode cannot be set"
+                                     " without --trigger-names."))
+    self.assertEqual(error.suggestion, ("Set --trigger-names or remove"
+                                        " --trigger-mode."))
+
+  def test_verify_args_too_many_trigger_stop_delay_ms(self):
+    args = parse_cli("torq --trigger-names %s --trigger-stop-delay-ms %s %s" %
+                     (TEST_TRIGGER_NAMES[0], TEST_TRIGGER_STOP_DELAY_MS,
+                      TEST_TRIGGER_STOP_DELAY_MS))
+
+    args, error = verify_args(args)
+
+    self.assertEqual(error.message, ("Command is invalid because number of"
+                                     " trigger names passed is not equal to"
+                                     " number of stop-delay-ms values passed."))
+    self.assertEqual(error.suggestion, ("Pass only one stop-delay-ms value to"
+                                        " use for all triggers, pass none to"
+                                        " use the default value for all"
+                                        " triggers, or pass an equal number of"
+                                        " trigger names and stop-delay-ms"
+                                        " values."))
+
+  def test_verify_args_invalid_trigger_stop_delay_ms(self):
+    args = parse_cli("torq --trigger-names %s --trigger-stop-delay-ms %d" %
+                     (TEST_TRIGGER_NAMES[0], MIN_STOP_DELAY_MS - 1))
+
+    args, error = verify_args(args)
+
+    self.assertEqual(
+        error.message,
+        ("Command is invalid because --trigger-stop-delay-ms cannot be set to a"
+         " value smaller than %d." % MIN_STOP_DELAY_MS))
+    self.assertEqual(
+        error.suggestion,
+        ("Set --trigger-stop-delay-ms %d to keep tracing after a trigger for %d"
+         " seconds." % (MIN_STOP_DELAY_MS, (MIN_STOP_DELAY_MS / 1000))))
+
+  def test_verify_args_invalid_trigger_timeout_ms(self):
+    args = parse_cli("torq --trigger-names %s --trigger-timeout-ms %d" %
+                     (TEST_TRIGGER_NAMES[0], MIN_DURATION_MS - 1))
+
+    args, error = verify_args(args)
+
+    self.assertEqual(
+        error.message,
+        ("Command is invalid because --trigger-timeout-ms cannot be set to a"
+         " value smaller than %d." % MIN_DURATION_MS))
+    self.assertEqual(
+        error.suggestion,
+        ("Set --trigger-timeout-ms %d to timeout after %d seconds." %
+         (MIN_DURATION_MS, (MIN_DURATION_MS / 1000))))
+
   def test_create_parser_invalid_perfetto_config_command(self):
     parser = create_parser_from_cli("torq --perfetto-config")
 
@@ -841,6 +982,156 @@ class TorqUnitTest(unittest.TestCase):
 
     self.assertEqual(error, None)
     self.assertEqual(command.get_type(), "config pull")
+
+  @parameterized_config_builder()
+  def test_verify_args_config_trigger_names(self, config_subcommand):
+    args = parse_cli(f'torq config {config_subcommand} default --trigger-names'
+                     f' {" ".join(TEST_TRIGGER_NAMES)}')
+
+    args, error = verify_args(args)
+
+    self.assertEqual(error, None)
+    self.assertEqual(args.trigger_names, TEST_TRIGGER_NAMES)
+    self.assertEqual(args.trigger_timeout_ms, DEFAULT_TRIGGER_DUR_MS)
+    self.assertEqual(args.trigger_stop_delay_ms, DEFAULT_TRIGGER_STOP_DELAY_MS)
+    self.assertEqual(args.trigger_mode, DEFAULT_TRIGGER_MODE)
+    self.assertEqual(args.profiler, "perfetto")
+    self.assertEqual(args.runs, 1)
+
+  @parameterized_config_builder()
+  def test_verify_args_config_trigger_names_with_dur_ms(self,
+                                                        config_subcommand):
+    args = parse_cli(
+        f'torq config {config_subcommand} default --dur-ms 3000 --trigger-names'
+        f' {" ".join(TEST_TRIGGER_NAMES)}')
+
+    args, error = verify_args(args)
+
+    self.assertEqual(error.message, ("Command is invalid because --dur-ms"
+                                     " cannot be passed if a perfetto trigger"
+                                     " is being set."))
+    self.assertEqual(error.suggestion, ("Run command with a"
+                                        " --trigger-timeout-ms option instead"
+                                        " of --dur-ms."))
+
+  @parameterized_config_builder()
+  def test_verify_args_config_trigger_timeout_ms_no_trigger_names(
+      self, config_subcommand):
+    args = parse_cli(
+        f'torq config {config_subcommand} default --trigger-timeout-ms'
+        f' {TEST_TRIGGER_DUR_MS}')
+
+    args, error = verify_args(args)
+
+    self.assertEqual(error.message, ("Command is invalid because"
+                                     " --trigger-timeout-ms cannot be set"
+                                     " without --trigger-names."))
+    self.assertEqual(error.suggestion, ("Set --trigger-names or remove"
+                                        " --trigger-timeout-ms."))
+
+  @parameterized_config_builder()
+  def test_verify_args_config_trigger_stop_delay_ms_no_trigger_names(
+      self, config_subcommand):
+    args = parse_cli(
+        f'torq config {config_subcommand} default --trigger-stop-delay-ms'
+        f' {TEST_TRIGGER_STOP_DELAY_MS}')
+
+    args, error = verify_args(args)
+
+    self.assertEqual(error.message, ("Command is invalid because"
+                                     " --trigger-stop-delay-ms cannot be set"
+                                     " without --trigger-names."))
+    self.assertEqual(error.suggestion, ("Set --trigger-names or remove"
+                                        " --trigger-stop-delay-ms."))
+
+  @parameterized_config_builder()
+  def test_verify_args_config_trigger_mode_no_trigger_names(
+      self, config_subcommand):
+    args = parse_cli(f'torq config {config_subcommand} default --trigger-mode'
+                     f' {TEST_TRIGGER_MODE}')
+
+    args, error = verify_args(args)
+
+    self.assertEqual(error.message, ("Command is invalid because"
+                                     " --trigger-mode cannot be set"
+                                     " without --trigger-names."))
+    self.assertEqual(error.suggestion, ("Set --trigger-names or remove"
+                                        " --trigger-mode."))
+
+  @parameterized_config_builder()
+  def test_verify_args_config_too_many_trigger_stop_delay_ms(
+      self, config_subcommand):
+    args = parse_cli(
+        f'torq config {config_subcommand} default --trigger-names'
+        f' {TEST_TRIGGER_NAMES[0]} --trigger-stop-delay-ms'
+        f' {TEST_TRIGGER_STOP_DELAY_MS} {TEST_TRIGGER_STOP_DELAY_MS}')
+
+    args, error = verify_args(args)
+
+    self.assertEqual(error.message, ("Command is invalid because number of"
+                                     " trigger names passed is not equal to"
+                                     " number of stop-delay-ms values passed."))
+    self.assertEqual(error.suggestion, ("Pass only one stop-delay-ms value to"
+                                        " use for all triggers, pass none to"
+                                        " use the default value for all"
+                                        " triggers, or pass an equal number of"
+                                        " trigger names and stop-delay-ms"
+                                        " values."))
+
+  @parameterized_config_builder()
+  def test_verify_args_config_multiple_trigger_names_and_multiple_trigger_stop_delay_ms(
+      self, config_subcommand):
+    args = parse_cli(
+        f'torq config {config_subcommand} default --trigger-names'
+        f' {" ".join(TEST_TRIGGER_NAMES)} --trigger-stop-delay-ms'
+        f' {TEST_TRIGGER_STOP_DELAY_MS} {TEST_TRIGGER_STOP_DELAY_MS}')
+
+    args, error = verify_args(args)
+
+    self.assertEqual(error, None)
+    self.assertEqual(args.trigger_names, TEST_TRIGGER_NAMES)
+    self.assertEqual(args.trigger_timeout_ms, DEFAULT_TRIGGER_DUR_MS)
+    self.assertEqual(args.trigger_stop_delay_ms,
+                     [TEST_TRIGGER_STOP_DELAY_MS, TEST_TRIGGER_STOP_DELAY_MS])
+    self.assertEqual(args.trigger_mode, DEFAULT_TRIGGER_MODE)
+    self.assertEqual(args.profiler, "perfetto")
+    self.assertEqual(args.runs, 1)
+
+  @parameterized_config_builder()
+  def test_verify_args_config_invalid_trigger_stop_delay_ms(
+      self, config_subcommand):
+    args = parse_cli(f'torq config {config_subcommand} default --trigger-names'
+                     f' {TEST_TRIGGER_NAMES[0]} --trigger-stop-delay-ms'
+                     f' {MIN_STOP_DELAY_MS - 1}')
+
+    args, error = verify_args(args)
+
+    self.assertEqual(
+        error.message,
+        ("Command is invalid because --trigger-stop-delay-ms cannot be set to a"
+         " value smaller than %d." % MIN_STOP_DELAY_MS))
+    self.assertEqual(
+        error.suggestion,
+        ("Set --trigger-stop-delay-ms %d to keep tracing after a trigger for %d"
+         " seconds." % (MIN_STOP_DELAY_MS, (MIN_STOP_DELAY_MS / 1000))))
+
+  @parameterized_config_builder()
+  def test_verify_args_config_invalid_trigger_timeout_ms(
+      self, config_subcommand):
+    args = parse_cli(
+        f'torq config {config_subcommand} default --trigger-names'
+        f' {TEST_TRIGGER_NAMES[0]} --trigger-timeout-ms {MIN_DURATION_MS - 1}')
+
+    args, error = verify_args(args)
+
+    self.assertEqual(
+        error.message,
+        ("Command is invalid because --trigger-timeout-ms cannot be set to a"
+         " value smaller than %d." % MIN_DURATION_MS))
+    self.assertEqual(
+        error.suggestion,
+        ("Set --trigger-timeout-ms %d to timeout after %d seconds." %
+         (MIN_DURATION_MS, (MIN_DURATION_MS / 1000))))
 
   @mock.patch.object(os.path, "exists", autospec=True)
   def test_create_parser_valid_open_subcommand(self, mock_exists):

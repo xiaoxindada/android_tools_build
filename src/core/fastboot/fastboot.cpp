@@ -75,6 +75,7 @@
 #include "fastboot_driver.h"
 #include "fastboot_driver_interface.h"
 #include "fs.h"
+#include "h2h_workaround.h"
 #include "storage.h"
 #include "task.h"
 #include "tcp.h"
@@ -210,10 +211,12 @@ static void Status(const std::string& message) {
     last_start_time = now();
 }
 
-static void Epilog(IFastBootDriver* fb, int status) {
+static void Epilog(IFastBootDriver* fb, int status, bool crash_on_error) {
     if (status) {
         fprintf(stderr, "FAILED (%s)\n", fb->Error().c_str());
-        die("Command failed");
+        if (crash_on_error) {
+            die("Command failed");
+        }
     } else {
         double split = now();
         fprintf(stderr, "OKAY [%7.3fs]\n", (split - last_start_time));
@@ -287,6 +290,11 @@ static void PrintDevice(const char* local_serial, const char* status = nullptr,
 
 static int list_devices_callback(usb_ifc_info* info) {
     if (match_fastboot_with_serial(info, nullptr) == 0) {
+        // As a temporary workaround, we disregard any h2h device.
+        if (is_h2h_device(info)) {
+            return -1;
+        }
+
         std::string serial = info->serial_number;
         std::string interface = info->interface;
         if (interface.empty()) {
@@ -319,7 +327,7 @@ Result<NetworkSerial, FastbootError> ParseNetworkSerial(const std::string& seria
         net_address = serial.c_str() + strlen("udp:");
         port = udp::kDefaultPort;
     } else {
-        return Error<FastbootError>(FastbootError::Type::NETWORK_SERIAL_WRONG_PREFIX)
+        return Error<FastbootError>(FastbootError::NETWORK_SERIAL_WRONG_PREFIX)
                << "protocol prefix ('tcp:' or 'udp:') is missed: " << serial << ". "
                << "Expected address format:\n"
                << "<protocol>:<address>:<port> (tcp:localhost:5554)";
@@ -328,7 +336,7 @@ Result<NetworkSerial, FastbootError> ParseNetworkSerial(const std::string& seria
     std::string error;
     std::string host;
     if (!android::base::ParseNetAddress(net_address, &host, &port, nullptr, &error)) {
-        return Error<FastbootError>(FastbootError::Type::NETWORK_SERIAL_WRONG_ADDRESS)
+        return Error<FastbootError>(FastbootError::NETWORK_SERIAL_WRONG_ADDRESS)
                << "invalid network address '" << net_address << "': " << error;
     }
 
@@ -362,8 +370,7 @@ static std::unique_ptr<Transport> open_device(const char* local_serial, bool wai
             if (!transport && announce) {
                 LOG(ERROR) << "error: " << error;
             }
-        } else if (network_serial.error().code() ==
-                   FastbootError::Type::NETWORK_SERIAL_WRONG_PREFIX) {
+        } else if (network_serial.error().code() == FastbootError::NETWORK_SERIAL_WRONG_PREFIX) {
             // WRONG_PREFIX is special because it happens when user wants to communicate with USB
             // device
             transport = usb_open(match_fastboot(local_serial));
@@ -1045,6 +1052,7 @@ static bool load_buf_fd(unique_fd fd, struct fastboot_buffer* buf) {
         buf->file_type = FB_BUFFER_FD;
     }
 
+    lseek(fd.get(), 0, SEEK_SET);
     buf->fd = std::move(fd);
     return true;
 }
@@ -1214,6 +1222,19 @@ static void copy_avb_footer(const FlashingPlan* fp, const std::string& partition
     }
     buf->fd = std::move(fd);
     buf->sz = partition_size;
+}
+
+void flash_partition(const FlashingPlan* fp, const std::string& partition, SparsePtr sparse_file) {
+    std::vector<SparsePtr> files;
+    if (int limit = get_sparse_limit(sparse_file_len(sparse_file.get(), true, false), fp)) {
+        if (!split_file(sparse_file.get(), limit, &files)) {
+            LOG(FATAL) << "Failed to resparse data for partition " << partition << " sparse limit "
+                       << limit << " bytes";
+        }
+    } else {
+        files.emplace_back(std::move(sparse_file));
+    }
+    flash_partition_files(fp->fb, partition, files);
 }
 
 void flash_partition_files(IFastBootDriver* fb, const std::string& partition,
@@ -2368,7 +2389,8 @@ int FastBootTool::Main(int argc, char* argv[]) {
     }
     fastboot::DriverCallbacks driver_callbacks = {
             .prolog = Status,
-            .epilog = [&fp](int status) { Epilog(fp->fb, status); },
+            .epilog = [&fp](int status,
+                            bool crash_on_error) { Epilog(fp->fb, status, crash_on_error); },
             .info = InfoMessage,
             .text = TextMessage,
     };

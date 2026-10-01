@@ -377,6 +377,28 @@ class TestReportLib(TestBase):
         self.assertNotIn('AsyncTask #3', thread_names)
         self.assertNotIn('AsyncTask #4', thread_names)
 
+    def test_no_demangle(self):
+        """ Test using ReportLib.DisableDemangle(). """
+        record_file = TestHelper.testdata_path('perf_display_bitmaps.data')
+        self.report_lib.SetRecordFile(record_file)
+
+        def get_symbol_names() -> Set[str]:
+            symbol_names = set()
+            while self.report_lib.GetNextSample():
+                symbol = self.report_lib.GetSymbolOfCurrentSample()
+                symbol_names.add(symbol.symbol_name)
+            return symbol_names
+        symbol_names = get_symbol_names()
+        self.assertIn('art::InternTable::Table::VisitRoots(art::RootVisitor*)', symbol_names)
+        self.assertNotIn('_ZN3art11InternTable5Table10VisitRootsEPNS_11RootVisitorE', symbol_names)
+        self.report_lib.Close()
+        self.report_lib = ReportLib()
+        self.report_lib.SetRecordFile(record_file)
+        self.report_lib.DisableDemangle()
+        symbol_names = get_symbol_names()
+        self.assertNotIn('art::InternTable::Table::VisitRoots(art::RootVisitor*)', symbol_names)
+        self.assertIn('_ZN3art11InternTable5Table10VisitRootsEPNS_11RootVisitorE', symbol_names)
+
     def test_use_vmlinux(self):
         """ Test if we can use vmlinux in symfs_dir. """
         record_file = TestHelper.testdata_path('perf_test_vmlinux.data')
@@ -514,3 +536,24 @@ class TestProtoFileReportLib(TestBase):
             TestHelper.testdata_path('perf.data'))
         report_lib.SetRecordFile(proto_file_path)
         self.assertEqual(report_lib.GetSupportedTraceOffCpuModes(), [])
+
+    def test_add_proguard_mapping_file(self):
+        report_lib = ProtoFileReportLib()
+        with self.assertRaises(ValueError):
+            report_lib.AddProguardMappingFile('non_exist_file')
+        proguard_mapping_file = TestHelper.testdata_path('proguard_mapping.txt')
+        report_lib.AddProguardMappingFile(proguard_mapping_file)
+        report_lib.Close()
+
+    def test_de_obfuscate(self):
+        report_lib = ProtoFileReportLib()
+        proto_file_path = self.convert_perf_data_to_proto_file(
+            TestHelper.testdata_path('perf_need_proguard_mapping.data'))
+        report_lib.SetRecordFile(proto_file_path)
+        report_lib.AddProguardMappingFile(TestHelper.testdata_path('proguard_mapping.txt'))
+        symbol_names = set()
+        while report_lib.GetNextSample():
+            symbol = report_lib.GetSymbolOfCurrentSample()
+            symbol_names.add(symbol.symbol_name)
+        self.assertIn('androidx.fragment.app.FragmentActivity.startActivityForResult', symbol_names)
+        report_lib.Close()

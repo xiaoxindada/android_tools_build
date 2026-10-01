@@ -20,6 +20,10 @@
 
 #include <string>
 
+#include <errno.h>
+#include <linux/bpf.h>
+#include <sys/syscall.h>
+
 #include <android-base/file.h>
 #include <gtest/gtest.h>
 
@@ -45,4 +49,29 @@ TEST(OpenFilesListTest, BasicTest) {
     }
   }
   EXPECT_TRUE(found);
+}
+
+// Check that we can correctly identify and extract details for BPF program file descriptors.
+TEST(OpenFilesListTest, BpfProgTest) {
+  // Create a simple BPF program to test the extraction of its details.
+  struct bpf_insn insns[2] = {{.code = BPF_ALU64 | BPF_MOV | BPF_K}, {.code = BPF_JMP | BPF_EXIT}};
+  union bpf_attr attr = {.prog_type = BPF_PROG_TYPE_SOCKET_FILTER,
+                         .insns = reinterpret_cast<uint64_t>(insns),
+                         .insn_cnt = 2,
+                         .license = reinterpret_cast<uint64_t>(insns)};
+  int fd = syscall(__NR_bpf, BPF_PROG_LOAD, &attr, sizeof(attr));
+  EXPECT_GE(fd, 0) << "Failed to load BPF program: " << strerrorname_np(errno);
+
+  OpenFilesList list;
+  populate_open_files_list(&list, getpid());
+  close(fd);
+
+  EXPECT_TRUE(list.contains(fd)) << "BPF program not found in open files.";
+  EXPECT_TRUE(list[fd].path.has_value()) << "BPF path not found.";
+  EXPECT_EQ("anon_inode:bpf-prog", list[fd].path.value());
+  EXPECT_TRUE(list[fd].details.has_value()) << "BPF program details not found.";
+  // The prog id is not guaranteed to be the same on every run, so only look for the name.
+  EXPECT_TRUE(list[fd].details.value().starts_with("prog_id: "))
+      << "BPF details not correct: expected starts with: 'prog_id:' actual: '"
+      << list[fd].details.value() << "'";
 }

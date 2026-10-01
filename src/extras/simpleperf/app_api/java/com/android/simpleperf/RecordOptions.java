@@ -37,17 +37,18 @@ import java.util.List;
  *
  * <p>
  * Example:
- *   RecordOptions options = new RecordOptions();
- *   options.setDuration(3).recordDwarfCallGraph().setOutputFilename("perf.data");
- *   ProfileSession session = new ProfileSession();
- *   session.startRecording(options);
+ * RecordOptions options = new RecordOptions();
+ * options.setDuration(3).recordDwarfCallGraph().setOutputFilename("perf.data");
+ * ProfileSession session = new ProfileSession();
+ * session.startRecording(options);
  * </p>
  */
 @RequiresApi(28)
 public class RecordOptions {
 
     /**
-     * Set output filename. Default is perf-<month>-<day>-<hour>-<minute>-<second>.data.
+     * Set output filename. Default is
+     * perf-<month>-<day>-<hour>-<minute>-<second>.data.
      * The file will be generated under simpleperf_data/.
      */
     @NonNull
@@ -57,7 +58,8 @@ public class RecordOptions {
     }
 
     /**
-     * Set event to record. Default is cpu-cycles. See `simpleperf list` for all available events.
+     * Set event to record. Default is cpu-cycles. See `simpleperf list` for all
+     * available events.
      */
     @NonNull
     public RecordOptions setEvent(@NonNull String event) {
@@ -75,7 +77,8 @@ public class RecordOptions {
     }
 
     /**
-     * Set record duration. The record stops after `durationInSecond` seconds. By default,
+     * Set record duration. The record stops after `durationInSecond` seconds. By
+     * default,
      * record stops only when stopRecording() is called.
      */
     @NonNull
@@ -85,7 +88,8 @@ public class RecordOptions {
     }
 
     /**
-     * Record some threads in the app process. By default, record all threads in the process.
+     * Record some threads in the app process. By default, record all threads in the
+     * process.
      */
     @NonNull
     public RecordOptions setSampleThreads(@NonNull List<Integer> threads) {
@@ -104,7 +108,8 @@ public class RecordOptions {
     }
 
     /**
-     * Record frame pointer based call graph. It is suitable to get C++ callstacks on 64bit devices.
+     * Record frame pointer based call graph. It is suitable to get C++ callstacks
+     * on 64bit devices.
      */
     @NonNull
     public RecordOptions recordFramePointerCallGraph() {
@@ -169,6 +174,7 @@ public class RecordOptions {
         return args;
     }
 
+    @SuppressWarnings("JavaTimeDefaultTimeZone")
     private String getDefaultOutputFilename() {
         LocalDateTime time = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("'perf'-MM-dd-HH-mm-ss'.data'");

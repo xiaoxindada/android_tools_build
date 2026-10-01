@@ -108,6 +108,22 @@ cc_binary {
     ],
 }
 
+python_binary_host {
+    name: "generate_test_zips",
+    main: "src/generate_test_zips.py",
+    srcs: ["src/generate_test_zips.py"],
+}
+
+genrule {
+    name: "puffin_integration_test_zips",
+    cmd: "$(location generate_test_zips) $(location src.zip) $(location dst.zip)",
+    tools: ["generate_test_zips"],
+    out: [
+        "src.zip",
+        "dst.zip",
+    ],
+}
+
 cc_test {
     name: "puffin_unittest",
     host_supported: true,
@@ -122,13 +138,18 @@ cc_test {
         "src/patching_unittest.cc",
         "src/puff_io_unittest.cc",
         "src/puffin_unittest.cc",
+        "src/puffpatch_integration_test.cc",
         "src/stream_unittest.cc",
         "src/testrunner.cc",
         "src/unittest_common.cc",
         "src/utils_unittest.cc",
     ],
+    data: [
+        ":puffin_integration_test_zips",
+    ],
     shared_libs: [
         "libbrillo",
+        "libbase",
     ],
     static_libs: [
         "libbsdiff",

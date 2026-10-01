@@ -37,9 +37,17 @@ cc_defaults {
     header_libs: ["libinit_headers"],
     fuzz_config: {
         cc: [
-            "android-media-fuzzing-reports@google.com",
+            "dvander@google.com",
+            "jiyong@google.com",
         ],
-        componentid: 155276,
+        componentid: 1312227,
+        vector: "local_no_privileges_required",
+        hotlists: [
+            "4593311",
+        ],
+        service_privilege: "privileged",
+        users: "single_user",
+        fuzzed_code_usage: "shipped",
     },
 }
 

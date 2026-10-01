@@ -13,19 +13,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+
 #include "task.h"
 
-#include "fastboot_driver.h"
-
-#include <android-base/logging.h>
+#include <android-base/file.h>
 #include <android-base/parseint.h>
+#include <android-base/unique_fd.h>
 
 #include "fastboot.h"
+#include "fastboot_driver_interface.h"
 #include "filesystem.h"
+#include "liblp/builder.h"
+#include "liblp/liblp.h"
+#include "liblp/metadata_format.h"
+#include "sparse/sparse.h"
 #include "super_flash_helper.h"
 #include "util.h"
 
+// Need to include logging.h after fastboot.h, due to ERROR macro conflict
+// clang-format off
+#include <android-base/logging.h>
+// clang-format on
+
 using namespace std::string_literals;
+using android::fs_mgr::GetPrimaryMetadataOffset;
+using android::fs_mgr::MetadataBuilder;
+using android::fs_mgr::ParseSuperPartition;
+using android::fs_mgr::SlotNumberForSlotSuffix;
+using android::fs_mgr::ValidateAndSerializeMetadata;
+
 FlashTask::FlashTask(const std::string& slot, const std::string& pname, const std::string& fname,
                      const bool apply_vbmeta, const FlashingPlan* fp)
     : pname_(pname), fname_(fname), slot_(slot), apply_vbmeta_(apply_vbmeta), fp_(fp) {}
@@ -39,10 +55,125 @@ bool FlashTask::IsDynamicPartition(const ImageSource* source, const FlashTask* t
     return should_flash_in_userspace(*metadata.get(), task->GetPartitionAndSlot());
 }
 
+fastboot::RetCode FlashPartition(fastboot::IFastBootDriver* fb, const std::string& partition_name,
+                                 void* data, size_t size, off64_t offset) {
+    // We use LP_PARTITION_RESERVED_BYTES as block size because everything in
+    // liblp is aligned with this granularity
+    std::unique_ptr<struct sparse_file, decltype(&sparse_file_destroy)> sparse_file(
+            sparse_file_new(LP_PARTITION_RESERVED_BYTES, offset + size), sparse_file_destroy);
+    // Fastboot's flash protocol does not have a way to specify offset we want
+    // to write to, so we use sparse file as a way around it. Blocks which
+    // have no data will be skipped by bootloader, similar to seeking forward
+    // on a file.
+    sparse_file_add_data(sparse_file.get(), data, size, offset / LP_PARTITION_RESERVED_BYTES);
+    auto ret = fb->Download(partition_name, sparse_file.get(),
+                            sparse_file_len(sparse_file.get(), true, false), 1, 1, false);
+    if (ret != fastboot::SUCCESS) {
+        return ret;
+    }
+    return fb->Flash(partition_name);
+}
+
+fastboot::RetCode FlashMetadata(MetadataBuilder* builder, uint32_t slot_number,
+                                fastboot::IFastBootDriver* fb) {
+    auto metadata = builder->Export();
+    auto serialized = ValidateAndSerializeMetadata(*metadata);
+    return FlashPartition(fb, "super", serialized.data(), serialized.size(),
+                          GetPrimaryMetadataOffset(metadata->geometry, slot_number));
+}
+
+std::unique_ptr<MetadataBuilder> FetchAndParseMetadata(fastboot::IFastBootDriver* fb,
+                                                       uint32_t slot_number) {
+    // For typical use cases(3 slot + 65536 max metadata size), 512K is enough
+    // We reserve 1MB just to get some headroom
+    constexpr size_t kMaxMetadataSize = 1024 * 1024;
+    std::vector<uint8_t> buffer;
+    buffer.reserve(kMaxMetadataSize);
+    // So that fb->Fetch() commands do not just crash on failure
+    fastboot::NoCrashGuard guard(fb);
+    auto ret = fb->Fetch("super", &buffer, 0, buffer.capacity());
+    if (ret != fastboot::SUCCESS) {
+        LOG(ERROR) << "Failed to fetch first " << kMaxMetadataSize << " bytes of super partition";
+        return nullptr;
+    }
+    LpMetadataGeometry geometry;
+    if (!android::fs_mgr::ParseGeometryFromSuperPartition(buffer.data(), buffer.size(),
+                                                          &geometry)) {
+        return nullptr;
+    }
+    const size_t total_metadata_size = android::fs_mgr::GetTotalMetadataSize(
+            geometry.metadata_max_size, geometry.metadata_slot_count);
+    if (total_metadata_size > kMaxMetadataSize) {
+        LOG(ERROR) << "Total metadata size " << total_metadata_size
+                   << " exceeds maximum supported metadata size " << kMaxMetadataSize;
+        return nullptr;
+    }
+    auto metadata = ParseSuperPartition(buffer.data(), buffer.size(), slot_number);
+    if (metadata == nullptr) {
+        return nullptr;
+    }
+    return MetadataBuilder::New(*metadata);
+}
+
+constexpr uint64_t SectorToBlock(uint64_t sectors) {
+    constexpr auto kSectorPerBlock = android::fs_mgr::kDefaultBlockSize / LP_SECTOR_SIZE;
+    return sectors / kSectorPerBlock;
+}
+
+android::base::unique_fd OpenFile(const FlashingPlan* fp, const char* fname) {
+    if (fp->source) {
+        return fp->source->OpenFile(fname);
+    } else {
+        return unique_fd(TEMP_FAILURE_RETRY(open(fname, O_RDONLY | O_BINARY)));
+    }
+}
+
+// Generate a sparse image where extents from LpMetadata partition |p| is
+// filled with data from |fname| . This sparse image can then be sent over
+// fastboot protocol to flash super partition, end result is flashing a single
+// partition inside super.
+SparsePtr SparseForSuper(const char* fname, int64_t file_size, android::fs_mgr::Partition* p) {
+    struct fastboot_buffer buf;
+
+    SparsePtr sparse_file = SparsePtr(
+            sparse_file_new(android::fs_mgr::kDefaultBlockSize, file_size), sparse_file_destroy);
+    uint64_t offset = 0;
+    for (const auto& extent : p->extents()) {
+        auto e = extent->AsLinearExtent();
+        if (!e) {
+            die("Partition on device contains a non-linear extent. unsupported.");
+        }
+        sparse_file_add_file(sparse_file.get(), fname, offset,
+                             extent->num_sectors() * LP_SECTOR_SIZE,
+                             SectorToBlock(e->physical_sector()));
+        offset += extent->num_sectors() * LP_SECTOR_SIZE;
+    }
+
+    LOG(INFO) << "Transfer size for " << p->name() << " is " << offset;
+    return sparse_file;
+}
+
 void FlashTask::Run() {
+    const auto is_fastbootd = is_userspace_fastboot(fp_->fb);
+    const auto slot_number = SlotNumberForSlotSuffix(fp_->current_slot);
+
     auto flash = [&](const std::string& partition) {
-        if (should_flash_in_userspace(fp_->source.get(), partition) &&
-            !is_userspace_fastboot(fp_->fb) && !fp_->force_flash) {
+        const bool is_dynamic_partition = should_flash_in_userspace(fp_->source.get(), partition);
+        // fastbootd should be able to flash both static and dynamic
+        // partitions, just flash it
+        if (is_fastbootd) {
+            do_flash(partition.c_str(), fname_.c_str(), apply_vbmeta_, fp_);
+            return;
+        }
+        if (!is_dynamic_partition || fp_->force_flash) {
+            do_flash(partition.c_str(), fname_.c_str(), apply_vbmeta_, fp_);
+            return;
+        }
+        // is_dynamic && !force_flash
+        // Make last attempt to save everything by fetching super partition
+        // metadata
+        auto builder = FetchAndParseMetadata(fp_->fb, slot_number);
+        if (builder == nullptr) {
             die("The partition you are trying to flash is dynamic, and "
                 "should be flashed via fastbootd. Please run:\n"
                 "\n"
@@ -51,7 +182,35 @@ void FlashTask::Run() {
                 "And try again. If you are intentionally trying to "
                 "overwrite a fixed partition, use --force.");
         }
-        do_flash(partition.c_str(), fname_.c_str(), apply_vbmeta_, fp_);
+        auto part = builder->FindPartition(partition);
+        if (part == nullptr) {
+            die("The partition you are trying to flash is not a static partition, and we cannot "
+                "find it in super partition either");
+        }
+        auto fd = OpenFile(fp_, fname_.c_str());
+        if (fd < 0) {
+            die("Failed to open input file %s : %s", fname_.c_str(), strerror(errno));
+        }
+        if (is_sparse_file(fd)) {
+            die("Flashing sparse images to dynamic partitions is currently not supported");
+        }
+        auto file_size = get_file_size(fd);
+        if (file_size <= 0) {
+            die("Failed to get file size for %s : %s", fname_.c_str(), strerror(errno));
+        }
+        if ((uint64_t)file_size != part->size()) {
+            part->RemoveExtents();
+            builder->ResizePartition(part, file_size);
+        }
+        SparsePtr sparse_file = SparseForSuper(fname_.c_str(), file_size, part);
+
+        auto metadata = builder->Export();
+        auto serialized = ValidateAndSerializeMetadata(*metadata);
+        sparse_file_add_data(sparse_file.get(), serialized.data(), serialized.size(),
+                             GetPrimaryMetadataOffset(metadata->geometry, slot_number) /
+                                     android::fs_mgr::kDefaultBlockSize);
+
+        flash_partition(fp_, "super", std::move(sparse_file));
     };
     do_for_partitions(fp_->fb, pname_, slot_, flash, true);
 }
@@ -274,12 +433,26 @@ ResizeTask::ResizeTask(const FlashingPlan* fp, const std::string& pname, const s
     : fp_(fp), pname_(pname), size_(size), slot_(slot) {}
 
 void ResizeTask::Run() {
-    auto resize_partition = [this](const std::string& partition) -> void {
-        if (is_logical(fp_->fb, partition)) {
-            fp_->fb->ResizePartition(partition, size_);
+    if (is_userspace_fastboot(fp_->fb)) {
+        auto resize_partition = [this](const std::string& partition) -> void {
+            if (is_logical(fp_->fb, partition)) {
+                fp_->fb->ResizePartition(partition, size_);
+            }
+        };
+        do_for_partitions(fp_->fb, pname_, slot_, resize_partition, false);
+        return;
+    }
+    auto slot_number = SlotNumberForSlotSuffix(fp_->current_slot);
+    auto builder = FetchAndParseMetadata(fp_->fb, slot_number);
+    auto resize_partition = [this,
+                             builder(builder.get())](const std::string& partition) mutable -> void {
+        auto p = builder->FindPartition(partition);
+        if (p) {
+            builder->ResizePartition(p, atoll(size_.c_str()));
         }
     };
     do_for_partitions(fp_->fb, pname_, slot_, resize_partition, false);
+    FlashMetadata(builder.get(), slot_number, fp_->fb);
 }
 
 std::string ResizeTask::ToString() const {

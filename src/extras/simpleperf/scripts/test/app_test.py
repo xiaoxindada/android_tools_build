@@ -14,13 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import glob
 import os
 from pathlib import Path
 import re
 import shutil
 import subprocess
-import time
+import sys
 from typing import List, Tuple
 
 from simpleperf_report_lib import ReportLib
@@ -99,6 +98,8 @@ class TestExampleBase(TestBase):
         args += ["-lib", self.example_path]
         if not self.adb_root:
             args.append("--disable_adb_root")
+        if self.apk_path.name == 'app-debug.apk':
+            args.append('--unrepresentative_profile_debug_app')
         self.run_cmd(args)
         self.check_exist(filename="perf.data")
         if build_binary_cache:
@@ -247,7 +248,8 @@ class TestRecordingRealApps(TestBase):
                          stdout=TestHelper.log_fh, stderr=TestHelper.log_fh)
 
     def record_data(self, package_name, record_arg):
-        self.run_cmd(['app_profiler.py', '--app', package_name, '-r', record_arg])
+        self.run_cmd(['app_profiler.py', '--app', package_name, '-r', record_arg,
+                      '--unrepresentative_profile_debug_app'])
 
     def check_symbol_in_record_file(self, symbol_name):
         self.run_cmd(['report.py', '--children', '-o', 'report.txt'])
@@ -271,11 +273,21 @@ class TestRecordingRealApps(TestBase):
             'EndlessTunnel.apk'), 'com.google.sample.tunnel')
         # Test using --launch to start the app.
         self.run_cmd(['app_profiler.py', '--app', 'com.google.sample.tunnel',
-                     '--launch', '-r', '-e cpu-clock -g --duration 10'])
+                     '--launch', '-r', '-e cpu-clock -g --duration 10',
+                     '--unrepresentative_profile_debug_app'])
         self.check_symbol_in_record_file('PlayScene::DoFrame')
 
         # Check app versioncode.
-        report = ReportLib()
-        meta_info = report.MetaInfo()
-        self.assertEqual(meta_info.get('app_versioncode'), '1')
-        report.Close()
+        if TestHelper.android_version >= 12:
+            report = ReportLib()
+            meta_info = report.MetaInfo()
+            self.assertEqual(meta_info.get('app_versioncode'), '1')
+            report.Close()
+
+        # Test if app_profiler.py test if the app is debug build.
+        if TestHelper.android_version >= 12:
+            subproc = subprocess.run([sys.executable, TestHelper.script_path('app_profiler.py'),
+                                      '--app', 'com.google.sample.tunnel'],
+                                      stderr=subprocess.PIPE, text=True, check=False)
+            self.assertNotEqual(subproc.returncode, 0)
+            self.assertIn('com.google.sample.tunnel is a debug build', subproc.stderr)

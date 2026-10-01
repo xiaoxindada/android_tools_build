@@ -5,10 +5,18 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-load("//bazel:build_defs.bzl", "UPB_DEFAULT_COPTS")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("//upb/bazel:build_defs.bzl", "UPB_DEFAULT_COPTS")
+
+package(default_applicable_licenses = ["//:license"])
 
 cc_library(
     name = "mem",
+    srcs = [
+        "alloc.c",
+        "arena.c",
+    ],
     hdrs = [
         "alloc.h",
         "arena.h",
@@ -18,25 +26,19 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":internal",
-        "//upb:port",
+        "//upb/port",
     ],
 )
 
 cc_library(
     name = "internal",
-    srcs = [
-        "alloc.c",
-        "alloc.h",
-        "arena.c",
-        "arena.h",
-    ],
     hdrs = [
         "internal/arena.h",
     ],
     copts = UPB_DEFAULT_COPTS,
-    visibility = ["//upb:__pkg__"],
+    visibility = ["//visibility:public"],
     deps = [
-        "//upb:port",
+        "//upb/port",
     ],
 )
 
@@ -44,18 +46,20 @@ cc_test(
     name = "arena_test",
     srcs = ["arena_test.cc"],
     deps = [
-        "@com_google_googletest//:gtest_main",
-        "//upb:mem",
-        "//upb:mem_internal",
-        "//upb:port",
-        "@com_google_absl//absl/random",
-        "@com_google_absl//absl/random:distributions",
-        "@com_google_absl//absl/synchronization",
-        "@com_google_absl//absl/time",
+        ":mem",
+        "//upb/port",
+        "@abseil-cpp//absl/base:core_headers",
+        "@abseil-cpp//absl/cleanup",
+        "@abseil-cpp//absl/container:flat_hash_map",
+        "@abseil-cpp//absl/random",
+        "@abseil-cpp//absl/random:distributions",
+        "@abseil-cpp//absl/synchronization",
+        "@abseil-cpp//absl/time",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )
 
-# begin:github_only
 filegroup(
     name = "source_files",
     srcs = glob(
@@ -66,8 +70,17 @@ filegroup(
         ],
     ),
     visibility = [
-        "//upb/cmake:__pkg__",
         "//python/dist:__pkg__",
-    ]
+        "//upb/cmake:__pkg__",
+    ],
 )
-# end:github_only
+
+filegroup(
+    name = "test_srcs",
+    srcs = glob(
+        [
+            "**/*test.cc",
+        ],
+    ),
+    visibility = ["//upb:__pkg__"],
+)

@@ -45,6 +45,7 @@ rust_library {
         "libanyhow",
         "libbinder_rs",
         "libchrono",
+        "libcmd",
         "liblog_rust",
         "libmacaddr",
         "libnix",

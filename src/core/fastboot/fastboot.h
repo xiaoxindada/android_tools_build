@@ -184,6 +184,10 @@ struct NetworkSerial {
 
 Result<NetworkSerial, FastbootError> ParseNetworkSerial(const std::string& serial);
 std::string GetPartitionName(const ImageEntry& entry, const std::string& current_slot_);
+// Flash a single large sparse file to specified partition
+void flash_partition(const FlashingPlan* fp, const std::string& partition, SparsePtr sparse_file);
+// Flash a set of sparse files to specified partition, each sparse file should
+// not exceed sparse limit of the device
 void flash_partition_files(fastboot::IFastBootDriver* fb, const std::string& partition,
                            const std::vector<SparsePtr>& files);
 int64_t get_sparse_limit(int64_t size, const FlashingPlan* fp);

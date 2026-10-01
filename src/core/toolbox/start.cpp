@@ -42,6 +42,9 @@ static void ControlDefaultServices(bool start) {
         "audioserver",
         "zygote",
     };
+#ifdef ANDROID_NATIVE_FRAMEWORK_PROTOTYPE
+    services.emplace_back("zygote_next");
+#endif
 
     // Only start zygote_secondary if not single arch.
     std::string zygote_configuration = GetProperty("ro.zygote", "");

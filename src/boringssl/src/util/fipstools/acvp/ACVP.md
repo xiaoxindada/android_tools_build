@@ -99,6 +99,7 @@ The other commands are as follows. (Note that you only need to implement the com
 | KDF-counter          | Number output bytes, PRF name, counter location string, key (or empty), number of counter bits | key, counter, derived key |
 | KDF-feedback | Number output bytes, PRF name, counter location string, key (or empty), number of counter bits | key, counter, derived key |
 | RSA/keyGen           | Modulus bit-size | e, p, q, n, d |
+| RSA/keyGen/crt       | Modulus bit-size | e, p, q, n, d, dmp1, dmq1, iqmp |
 | RSA/sigGen/&lt;HASH&gt;/pkcs1v1.5 | Modulus bit-size, message | n, e, signature |
 | RSA/sigGen/&lt;HASH&gt;/pss       | Modulus bit-size, message | n, e, signature |
 | RSA/sigVer/&lt;HASH&gt;/pkcs1v1.5 | n, e, message, signature | Single-byte validity flag |
@@ -136,8 +137,8 @@ The other commands are as follows. (Note that you only need to implement the com
 | TLSKDF/1.2/&lt;HASH&gt; | Number output bytes, secret, label, seed1, seed2 | Output |
 | PBKDF                | HMAC name, key length (bits), salt, password, iteration count | Derived key |
 | ML-DSA-XX/keyGen     | Seed | Public key, private key |
-| ML-DSA-XX/sigGen     | Private key, message, randomizer | Signature |
-| ML-DSA-XX/sigVer     | Public key, message, signature | Single-byte validity flag |
+| ML-DSA-XX/sigGen     | Private key, message, randomizer, context, mu | Signature |
+| ML-DSA-XX/sigVer     | Public key, message, signature, context, mu | Single-byte validity flag |
 | ML-KEM-XX/keyGen     | Seed | Public key, private key |
 | ML-KEM-XX/encap      | Public key, entropy | Ciphertext, shared secret |
 | ML-KEM-XX/decap      | Private key, ciphertext | Shared secret |

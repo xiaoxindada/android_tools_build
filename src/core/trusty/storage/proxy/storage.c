@@ -23,6 +23,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
@@ -54,7 +55,7 @@ static const char *ssdir_name;
 /* List head for storage mapping, elements added at init, and never removed */
 static struct storage_mapping_node* storage_mapping_head;
 
-static void sync_parent(const char* path, struct watcher* watcher);
+static void sync_parent(char* path, struct watcher* watcher);
 
 #ifdef VENDOR_FS_READY_PROPERTY
 
@@ -346,7 +347,7 @@ err_response:
     return ipc_respond(msg, NULL, 0);
 }
 
-static void sync_parent(const char* path, struct watcher* watcher) {
+static void sync_parent(char* path, struct watcher* watcher) {
     int parent_fd;
     watch_progress(watcher, "syncing parent");
     char* parent_path = dirname(path);

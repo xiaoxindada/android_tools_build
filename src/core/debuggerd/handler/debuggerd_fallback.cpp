@@ -96,6 +96,7 @@ class ScopedUseFallbackAllocator {
 static void debuggerd_fallback_trace(int output_fd, ucontext_t* ucontext) {
   ThreadInfo thread;
   thread.pid = getpid();
+  thread.ppid = getppid();
   thread.tid = gettid();
   thread.thread_name = get_thread_name(gettid());
   thread.registers.reset(

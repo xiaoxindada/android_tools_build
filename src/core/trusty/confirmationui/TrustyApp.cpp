@@ -87,7 +87,7 @@ ssize_t TrustyApp::TrustyRpc(const uint8_t* obegin, const uint8_t* oend, uint8_t
 }
 
 TrustyApp::TrustyApp(const std::string& path, const std::string& appname)
-    : handle_(kInvalidHandle) {
+    : handle_(kInvalidHandle), shm_base_(nullptr), shm_len_(0) {
     unique_fd tipc_handle(tipc_connect(path.c_str(), appname.c_str()));
     if (tipc_handle < 0) {
         LOG(ERROR) << AT << "failed to connect to Trusty TA \"" << appname << "\" using dev:"
@@ -144,6 +144,7 @@ TrustyApp::TrustyApp(const std::string& path, const std::string& appname)
     void* shm_base = mmap(0, shm_len, PROT_READ | PROT_WRITE, MAP_SHARED, dma_buf, 0);
     if (shm_base == MAP_FAILED) {
         LOG(ERROR) << AT << "failed to mmap() shared memory buffer";
+        shm_base_ = nullptr;
         return;
     }
 
@@ -155,6 +156,9 @@ TrustyApp::TrustyApp(const std::string& path, const std::string& appname)
 }
 
 TrustyApp::~TrustyApp() {
+    if (shm_base_ != nullptr) {
+        munmap(shm_base_, shm_len_);
+    }
     LOG(INFO) << "Done shutting down TrustyApp";
 }
 

@@ -33,8 +33,10 @@
 
 #include <map>
 #include <string>
-#include <vector>
-#include <google/protobuf/compiler/javanano/javanano_field.h>
+
+#include "google/protobuf/compiler/javanano/javanano_field.h"
+#include "google/protobuf/compiler/javanano/javanano_params.h"
+#include "google/protobuf/io/printer.h"
 
 namespace google {
 namespace protobuf {
@@ -50,13 +52,13 @@ class MapFieldGenerator : public FieldGenerator {
   ~MapFieldGenerator();
 
   // implements FieldGenerator ---------------------------------------
-  void GenerateMembers(io::Printer* printer, bool lazy_init) const;
-  void GenerateClearCode(io::Printer* printer) const;
-  void GenerateMergingCode(io::Printer* printer) const;
-  void GenerateSerializationCode(io::Printer* printer) const;
-  void GenerateSerializedSizeCode(io::Printer* printer) const;
-  void GenerateEqualsCode(io::Printer* printer) const;
-  void GenerateHashCodeCode(io::Printer* printer) const;
+  void GenerateMembers(io::Printer* printer, bool lazy_init) const override;
+  void GenerateClearCode(io::Printer* printer) const override;
+  void GenerateMergingCode(io::Printer* printer) const override;
+  void GenerateSerializationCode(io::Printer* printer) const override;
+  void GenerateSerializedSizeCode(io::Printer* printer) const override;
+  void GenerateEqualsCode(io::Printer* printer) const override;
+  void GenerateHashCodeCode(io::Printer* printer) const override;
 
  private:
   const FieldDescriptor* descriptor_;

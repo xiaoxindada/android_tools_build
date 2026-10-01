@@ -245,7 +245,7 @@ static void CheckMessage(const std::string& output, android::base::LogSeverity s
 #endif
 }
 
-static void CheckMessage(CapturedStderr& cap, android::base::LogSeverity severity,
+static void CheckMessage(android::base::CapturedStderr& cap, android::base::LogSeverity severity,
                          const char* expected, const char* expected_tag = nullptr) {
   cap.Stop();
   std::string output = cap.str();
@@ -255,14 +255,14 @@ static void CheckMessage(CapturedStderr& cap, android::base::LogSeverity severit
 #define CHECK_LOG_STREAM_DISABLED(SEVERITY)                      \
   {                                                              \
     android::base::ScopedLogSeverity sls1(android::base::FATAL); \
-    CapturedStderr cap1;                                         \
+    android::base::CapturedStderr cap1;                          \
     LOG_STREAM(SEVERITY) << "foo bar";                           \
     cap1.Stop();                                                 \
     ASSERT_EQ("", cap1.str());                                   \
   }                                                              \
   {                                                              \
     android::base::ScopedLogSeverity sls1(android::base::FATAL); \
-    CapturedStderr cap1;                                         \
+    android::base::CapturedStderr cap1;                          \
     LOG_STREAM(::android::base::SEVERITY) << "foo bar";          \
     cap1.Stop();                                                 \
     ASSERT_EQ("", cap1.str());                                   \
@@ -271,13 +271,13 @@ static void CheckMessage(CapturedStderr& cap, android::base::LogSeverity severit
 #define CHECK_LOG_STREAM_ENABLED(SEVERITY) \
   { \
     android::base::ScopedLogSeverity sls2(android::base::SEVERITY); \
-    CapturedStderr cap2; \
+    android::base::CapturedStderr cap2; \
     LOG_STREAM(SEVERITY) << "foobar"; \
     CheckMessage(cap2, android::base::SEVERITY, "foobar"); \
   } \
   { \
     android::base::ScopedLogSeverity sls2(android::base::SEVERITY); \
-    CapturedStderr cap2; \
+    android::base::CapturedStderr cap2; \
     LOG_STREAM(::android::base::SEVERITY) << "foobar"; \
     CheckMessage(cap2, android::base::SEVERITY, "foobar"); \
   } \
@@ -332,14 +332,14 @@ TEST(logging, LOG_STREAM_VERBOSE_enabled) {
 #define CHECK_LOG_DISABLED(SEVERITY)                             \
   {                                                              \
     android::base::ScopedLogSeverity sls1(android::base::FATAL); \
-    CapturedStderr cap1;                                         \
+    android::base::CapturedStderr cap1;                          \
     LOG(SEVERITY) << "foo bar";                                  \
     cap1.Stop();                                                 \
     ASSERT_EQ("", cap1.str());                                   \
   }                                                              \
   {                                                              \
     android::base::ScopedLogSeverity sls1(android::base::FATAL); \
-    CapturedStderr cap1;                                         \
+    android::base::CapturedStderr cap1;                          \
     LOG(::android::base::SEVERITY) << "foo bar";                 \
     cap1.Stop();                                                 \
     ASSERT_EQ("", cap1.str());                                   \
@@ -355,7 +355,7 @@ TEST(logging, LOG_STREAM_VERBOSE_enabled) {
                     android::base::kSeverityChars[android::base::SEVERITY]))); \
     auto reset_tag_property_guard = android::base::make_scope_guard(           \
         [=] { android::base::SetProperty(log_tag_property, ""); });            \
-    CapturedStderr cap2;                                                       \
+    android::base::CapturedStderr cap2;                                        \
     LOG(SEVERITY) << "foobar";                                                 \
     CheckMessage(cap2, android::base::SEVERITY, "foobar", LOG_TAG);            \
   }
@@ -366,13 +366,13 @@ TEST(logging, LOG_STREAM_VERBOSE_enabled) {
 #define CHECK_LOG_ENABLED(SEVERITY)                                 \
   {                                                                 \
     android::base::ScopedLogSeverity sls2(android::base::SEVERITY); \
-    CapturedStderr cap2;                                            \
+    android::base::CapturedStderr cap2;                             \
     LOG(SEVERITY) << "foobar";                                      \
     CheckMessage(cap2, android::base::SEVERITY, "foobar");          \
   }                                                                 \
   {                                                                 \
     android::base::ScopedLogSeverity sls2(android::base::SEVERITY); \
-    CapturedStderr cap2;                                            \
+    android::base::CapturedStderr cap2;                             \
     LOG(::android::base::SEVERITY) << "foobar";                     \
     CheckMessage(cap2, android::base::SEVERITY, "foobar");          \
   }                                                                 \
@@ -436,7 +436,7 @@ TEST(logging, LOG_complex_param) {
   {                                                                                            \
     android::base::ScopedLogSeverity sls(                                                      \
         (use_scoped_log_severity_info) ? ::android::base::INFO : ::android::base::WARNING);    \
-    CapturedStderr cap;                                                                        \
+    android::base::CapturedStderr cap;                                                         \
     LOG((use_logging_severity_info) ? ::android::base::INFO : ::android::base::WARNING)        \
         << "foobar";                                                                           \
     if ((use_scoped_log_severity_info) || !(use_logging_severity_info)) {                      \
@@ -459,7 +459,7 @@ TEST(logging, LOG_complex_param) {
 
 
 TEST(logging, LOG_does_not_clobber_errno) {
-  CapturedStderr cap;
+  android::base::CapturedStderr cap;
   errno = 12345;
   LOG(INFO) << (errno = 67890);
   EXPECT_EQ(12345, errno) << "errno was not restored";
@@ -468,7 +468,7 @@ TEST(logging, LOG_does_not_clobber_errno) {
 }
 
 TEST(logging, PLOG_does_not_clobber_errno) {
-  CapturedStderr cap;
+  android::base::CapturedStderr cap;
   errno = 12345;
   PLOG(INFO) << (errno = 67890);
   EXPECT_EQ(12345, errno) << "errno was not restored";
@@ -477,7 +477,7 @@ TEST(logging, PLOG_does_not_clobber_errno) {
 }
 
 TEST(logging, LOG_does_not_have_dangling_if) {
-  CapturedStderr cap; // So the logging below has no side-effects.
+  android::base::CapturedStderr cap; // So the logging below has no side-effects.
 
   // Do the test two ways: once where we hypothesize that LOG()'s if
   // will evaluate to true (when severity is high enough) and once when we
@@ -502,14 +502,14 @@ TEST(logging, LOG_does_not_have_dangling_if) {
 #define CHECK_PLOG_DISABLED(SEVERITY)                            \
   {                                                              \
     android::base::ScopedLogSeverity sls1(android::base::FATAL); \
-    CapturedStderr cap1;                                         \
+    android::base::CapturedStderr cap1;                          \
     PLOG(SEVERITY) << "foo bar";                                 \
     cap1.Stop();                                                 \
     ASSERT_EQ("", cap1.str());                                   \
   }                                                              \
   {                                                              \
     android::base::ScopedLogSeverity sls1(android::base::FATAL); \
-    CapturedStderr cap1;                                         \
+    android::base::CapturedStderr cap1;                          \
     PLOG(SEVERITY) << "foo bar";                                 \
     cap1.Stop();                                                 \
     ASSERT_EQ("", cap1.str());                                   \
@@ -518,14 +518,14 @@ TEST(logging, LOG_does_not_have_dangling_if) {
 #define CHECK_PLOG_ENABLED(SEVERITY) \
   { \
     android::base::ScopedLogSeverity sls2(android::base::SEVERITY); \
-    CapturedStderr cap2; \
+    android::base::CapturedStderr cap2; \
     errno = ENOENT; \
     PLOG(SEVERITY) << "foobar"; \
     CheckMessage(cap2, android::base::SEVERITY, "foobar: No such file or directory"); \
   } \
   { \
     android::base::ScopedLogSeverity sls2(android::base::SEVERITY); \
-    CapturedStderr cap2; \
+    android::base::CapturedStderr cap2; \
     errno = ENOENT; \
     PLOG(SEVERITY) << "foobar"; \
     CheckMessage(cap2, android::base::SEVERITY, "foobar: No such file or directory"); \
@@ -587,7 +587,7 @@ TEST(logging, PLOG_VERBOSE_enabled) {
 TEST(logging, UNIMPLEMENTED) {
   std::string expected = android::base::StringPrintf("%s unimplemented ", __PRETTY_FUNCTION__);
 
-  CapturedStderr cap;
+  android::base::CapturedStderr cap;
   errno = ENOENT;
   UNIMPLEMENTED(ERROR);
   CheckMessage(cap, android::base::ERROR, expected.c_str());
@@ -598,7 +598,7 @@ static void NoopAborter(const char* msg ATTRIBUTE_UNUSED) {
 }
 
 TEST(logging, LOG_FATAL_NOOP_ABORTER) {
-  CapturedStderr cap;
+  android::base::CapturedStderr cap;
   {
     android::base::SetAborter(NoopAborter);
 
@@ -633,7 +633,7 @@ TEST(logging, LOG_FATAL_ABORTER_MESSAGE) {
   android::base::SetAborter(CountLineAborter::CountLineAborterFunction);
 
   android::base::ScopedLogSeverity sls(android::base::ERROR);
-  CapturedStderr cap;
+  android::base::CapturedStderr cap;
   LOG(FATAL) << "foo\nbar";
 
   EXPECT_EQ(CountLineAborter::newline_count, 1U);
@@ -652,8 +652,8 @@ __attribute__((constructor)) void TestLoggingInConstructor() {
 }
 
 TEST(logging, StdioLogger) {
-  CapturedStderr cap_err;
-  CapturedStdout cap_out;
+  android::base::CapturedStderr cap_err;
+  android::base::CapturedStdout cap_out;
   android::base::SetLogger(android::base::StdioLogger);
   LOG(INFO) << "out";
   LOG(ERROR) << "err";

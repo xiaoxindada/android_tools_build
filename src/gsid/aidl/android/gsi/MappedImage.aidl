@@ -16,7 +16,7 @@
 
 package android.gsi;
 
-/** {@hide} */
+/** @hide */
 parcelable MappedImage {
     /* Path to the block device. */
     @utf8InCpp String path;

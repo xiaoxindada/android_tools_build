@@ -34,14 +34,15 @@
 
 #include <iostream>
 
-#include <google/protobuf/compiler/javamicro/javamicro_file.h>
-#include <google/protobuf/compiler/javamicro/javamicro_enum.h>
-#include <google/protobuf/compiler/javamicro/javamicro_helpers.h>
-#include <google/protobuf/compiler/javamicro/javamicro_message.h>
-#include <google/protobuf/compiler/code_generator.h>
-#include <google/protobuf/io/printer.h>
-#include <google/protobuf/io/zero_copy_stream.h>
-#include <google/protobuf/descriptor.pb.h>
+#include "absl/strings/str_cat.h"
+#include "google/protobuf/compiler/javamicro/javamicro_file.h"
+#include "google/protobuf/compiler/javamicro/javamicro_enum.h"
+#include "google/protobuf/compiler/javamicro/javamicro_helpers.h"
+#include "google/protobuf/compiler/javamicro/javamicro_message.h"
+#include "google/protobuf/compiler/code_generator.h"
+#include "google/protobuf/io/printer.h"
+#include "google/protobuf/io/zero_copy_stream.h"
+#include "google/protobuf/descriptor.pb.h"
 
 namespace google {
 namespace protobuf {
@@ -198,7 +199,7 @@ static void GenerateSibling(const std::string& package_dir,
                             OutputDirectory* output_directory,
                             std::vector<std::string>* file_list,
                             const Params& params) {
-  std::string filename = package_dir + descriptor->name() + ".java";
+  std::string filename = absl::StrCat(package_dir, descriptor->name(), ".java");
   file_list->push_back(filename);
 
   std::unique_ptr<io::ZeroCopyOutputStream> output(

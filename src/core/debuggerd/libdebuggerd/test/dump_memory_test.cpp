@@ -327,8 +327,7 @@ TEST_F(DumpMemoryTest, memory_partially_unreadable_two_unaligned_reads) {
 }
 
 TEST_F(DumpMemoryTest, address_low_fence) {
-  uint8_t buffer[256];
-  memset(buffer, 0, sizeof(buffer));
+  uint8_t buffer[256] = {};
   memory_mock_->SetReadData(buffer, sizeof(buffer));
 
   dump_memory(&log_, memory_mock_.get(), 0x1000, "memory near r1");
@@ -346,8 +345,7 @@ TEST_F(DumpMemoryTest, address_low_fence) {
 }
 
 TEST_F(DumpMemoryTest, memory_address_too_high) {
-  uint8_t buffer[256];
-  memset(buffer, 0, sizeof(buffer));
+  uint8_t buffer[256] = {};
   memory_mock_->SetReadData(buffer, sizeof(buffer));
 
 #if defined(__LP64__)

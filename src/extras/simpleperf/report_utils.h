@@ -36,7 +36,7 @@ class ProguardMappingRetrace {
   bool AddProguardMappingFile(std::string_view mapping_file);
 
   bool DeObfuscateJavaMethods(std::string_view obfuscated_name, std::string* original_name,
-                              bool* synthesized);
+                              bool* synthesized) const;
 
  private:
   struct MappingMethod {

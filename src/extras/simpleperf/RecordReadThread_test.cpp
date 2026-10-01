@@ -176,8 +176,8 @@ static std::vector<std::unique_ptr<Record>> CreateFakeRecords(const perf_event_a
                                                               size_t dyn_stack_size) {
   std::vector<std::unique_ptr<Record>> records;
   for (size_t i = 0; i < record_count; ++i) {
-    SampleRecord* r = new SampleRecord(attr, i, i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, {}, {},
-                                       std::vector<char>(stack_size), dyn_stack_size);
+    SampleRecord* r = new SampleRecord(attr, i, i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7, {},
+                                       {}, std::vector<char>(stack_size), dyn_stack_size);
     records.emplace_back(r);
   }
   return records;
@@ -479,9 +479,9 @@ TEST_F(RecordReadThreadTest, exclude_perf) {
   attr.sample_type |= PERF_SAMPLE_STACK_USER;
   size_t stack_size = 1024;
   attr.sample_stack_user = stack_size;
-  records_.emplace_back(new SampleRecord(attr, 0, 1, getpid(), 3, 4, 5, 6, {}, {},
+  records_.emplace_back(new SampleRecord(attr, 0, 1, getpid(), 3, 4, 5, 6, 7, {}, {},
                                          std::vector<char>(stack_size), stack_size));
-  records_.emplace_back(new SampleRecord(attr, 0, 1, getpid() + 1, 3, 4, 5, 6, {}, {},
+  records_.emplace_back(new SampleRecord(attr, 0, 1, getpid() + 1, 3, 4, 5, 6, 7, {}, {},
                                          std::vector<char>(stack_size), stack_size));
 
   auto read_records = [&](RecordReadThread& thread, std::vector<std::unique_ptr<Record>>& records) {

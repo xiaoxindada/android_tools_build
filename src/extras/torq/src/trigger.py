@@ -30,8 +30,8 @@ def verify_trigger_args(args):
   return args, None
 
 
-def execute_trigger_command(self, device):
+def execute_trigger_command(args, device):
   error = device.check_device_connection()
   if error is not None:
     return error
-  return device.trigger_perfetto(self.trigger_name)
+  return device.trigger_perfetto(args.trigger_name)

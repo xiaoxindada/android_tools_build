@@ -22,5 +22,6 @@
 namespace android {
 
 String8 sanitizeSerialNumber(const std::string& serial);
+bool getBooleanField(const String8& path);
 
 }  // namespace android

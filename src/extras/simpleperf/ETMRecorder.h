@@ -20,6 +20,7 @@
 
 #include <map>
 #include <memory>
+#include <ranges>
 #include <set>
 
 #include <android-base/expected.h>
@@ -62,8 +63,8 @@ class ETMRecorder {
   bool IsETMDriverAvailable();
   // If need_etr is true, then return true only if ETR is ready.
   // Otherwise, return true if either ETR or TRBE is ready.
-  android::base::expected<bool, std::string> CheckEtmSupport(bool need_etr = true);
-  void SetEtmPerfEventAttr(const EventType& event_type, perf_event_attr& attr);
+  android::base::expected<bool, std::string> CheckEtmSupport(bool need_etr = false);
+  bool SetEtmPerfEventAttr(const EventType& event_type, perf_event_attr& attr);
   AuxTraceInfoRecord CreateAuxTraceInfoRecord();
   size_t GetAddrFilterPairs();
   void SetRecordTimestamp(bool record);
@@ -72,6 +73,9 @@ class ETMRecorder {
   bool IsUsingTRBE(const perf_event_attr& attr, int cpu) const;
   const std::set<int>& GetCPUsHavingTRBESink() const { return trbe_supported_cpus_; }
 
+  const std::map<std::string, uint32_t> GetETRSinksForTesting() const { return etr_sink_configs_; }
+  void SetTRBESinkForTesting(bool has_trbe_sink) { this->has_trbe_sink = has_trbe_sink; }
+
  private:
   bool ReadEtmInfo();
   bool CheckSinkSupport();
@@ -79,10 +83,9 @@ class ETMRecorder {
 
   int event_type_ = 0;
   bool etm_supported_ = false;
-  bool has_etr_sink = false;
   bool has_trbe_sink = false;
-  // select ETR device, setting in perf_event_attr->config2
-  uint32_t etr_sink_config_ = 0;
+  // mapping from etr sink name to setting in perf_event_attr->config2
+  std::map<std::string, uint32_t> etr_sink_configs_;
   std::set<int> trbe_supported_cpus_;
   // use EL2 PID tracing or not
   bool use_contextid2_ = false;

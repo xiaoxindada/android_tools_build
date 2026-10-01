@@ -1,5 +1,5 @@
 set(partition_tools_dir "${CMAKE_SOURCE_DIR}/src/extras/partition_tools")
-set(fs_mgr_dir "${CMAKE_SOURCE_DIR}/src/core/fs_mgr")
+set(fs_mgr_dir "${CMAKE_SOURCE_DIR}/src/fs_mgr")
 set(libsnapshot_srcs_dir "${fs_mgr_dir}/libsnapshot")
 set(update_engine_dir "${CMAKE_SOURCE_DIR}/src/update_engine")
 
@@ -91,12 +91,13 @@ target_link_libraries(lpunpack PRIVATE
 )
 
 add_executable(lpdump ${lpdump_srcs})
+# lpdump 直接编译 dynamic_partitions_device_info.pb.cc，必须先于本目标编译
+add_dependencies(lpdump gen_dynamic_partitions_device_info_srcs)
 target_compile_options(lpdump PRIVATE ${cflags})
 target_include_directories(lpdump PRIVATE
     ${libbase_headers}
     ${liblog_headers}
     ${liblp_headers}
-    ${libjsonpbparse_headers}
     ${fs_mgr_headers}
     ${update_engine_dir}
     "${libsnapshot_srcs_dir}/android/snapshot"
@@ -107,7 +108,6 @@ target_link_libraries(lpdump PRIVATE
     log
     lp
     protobuf-cpp-full
-    jsonpbparse
     cutils
     # fs_mgr
     snapshot

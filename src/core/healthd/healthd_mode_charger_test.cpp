@@ -144,6 +144,11 @@ void ExpectChargerResAt(const std::string& root) {
                 *surface = nullptr;
                 return 0;
             }));
+    EXPECT_CALL(*charger, CreateDisplaySurface(StrEq(root + "charger/battery_overheat.png"), _))
+            .WillRepeatedly(Invoke([](const auto&, GRSurface** surface) {
+                *surface = nullptr;
+                return 0;
+            }));
     EXPECT_CALL(*charger,
                 CreateMultiDisplaySurface(StrEq(root + "charger/battery_scale.png"), _, _, _))
             .WillRepeatedly(Invoke([&](const auto&, int* frames, int* fps, GRSurface*** surface) {

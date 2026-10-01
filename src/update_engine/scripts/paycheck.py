@@ -35,7 +35,15 @@ from update_payload import error
 lib_dir = os.path.join(os.path.dirname(__file__), 'lib')
 if os.path.exists(lib_dir) and os.path.isdir(lib_dir):
   sys.path.insert(1, lib_dir)
-import update_payload  # pylint: disable=wrong-import-position
+try:
+  import update_payload  # pylint: disable=wrong-import-position
+except ImportError:
+  print("Error: Could not import update_payload.", file=sys.stderr)
+  print("If you are in an AOSP environment, please build this tool with:", file=sys.stderr)
+  print("  m paycheck", file=sys.stderr)
+  print("And run the generated binary", file=sys.stderr)
+  print("or append system/update_engine/scripts to $PYTHONPATH.", file=sys.stderr)
+  raise
 
 
 _TYPE_FULL = 'full'

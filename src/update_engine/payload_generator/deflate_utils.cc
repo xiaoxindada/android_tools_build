@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <base/files/file_util.h>
 #include <base/logging.h>
@@ -27,7 +28,6 @@
 #include "update_engine/payload_generator/delta_diff_generator.h"
 #include "update_engine/payload_generator/extent_ranges.h"
 #include "update_engine/payload_generator/extent_utils.h"
-#include "update_engine/payload_generator/squashfs_filesystem.h"
 #include "update_engine/update_metadata.pb.h"
 
 using puffin::BitExtent;
@@ -45,40 +45,6 @@ constexpr std::ostream& operator<<(std::ostream& out,
   return out;
 }
 
-// The minimum size for a squashfs image to be processed.
-const uint64_t kMinimumSquashfsImageSize = 1 * 1024 * 1024;  // bytes
-
-// TODO(*): Optimize this so we don't have to read all extents into memory in
-// case it is large.
-bool CopyExtentsToFile(const string& in_path,
-                       const vector<Extent>& extents,
-                       const string& out_path,
-                       size_t block_size) {
-  brillo::Blob data(utils::BlocksInExtents(extents) * block_size);
-  TEST_AND_RETURN_FALSE(
-      utils::ReadExtents(in_path, extents, &data, data.size(), block_size));
-  TEST_AND_RETURN_FALSE(
-      utils::WriteFile(out_path.c_str(), data.data(), data.size()));
-  return true;
-}
-
-bool IsSquashfsImage(const string& part_path,
-                     const FilesystemInterface::File& file) {
-  // Only check for files with img postfix.
-  if (android::base::EndsWith(file.name, ".img") &&
-      utils::BlocksInExtents(file.extents) >=
-          kMinimumSquashfsImageSize / kBlockSize) {
-    brillo::Blob super_block;
-    TEST_AND_RETURN_FALSE(
-        utils::ReadFileChunk(part_path,
-                             file.extents[0].start_block() * kBlockSize,
-                             100,
-                             &super_block));
-    return SquashfsFilesystem::IsSquashfsImage(super_block);
-  }
-  return false;
-}
-
 bool IsRegularFile(const FilesystemInterface::File& file) {
   // If inode is 0, then stat information is invalid for some psuedo files
   if (file.file_stat.st_ino != 0 &&
@@ -86,28 +52,6 @@ bool IsRegularFile(const FilesystemInterface::File& file) {
     return true;
   }
   return false;
-}
-
-// Realigns subfiles |files| of a splitted file |file| into its correct
-// positions. This can be used for squashfs, zip, apk, etc.
-bool RealignSplittedFiles(const FilesystemInterface::File& file,
-                          vector<FilesystemInterface::File>* files) {
-  // We have to shift all the Extents in |files|, based on the Extents of the
-  // |file| itself.
-  size_t num_blocks = 0;
-  for (auto& in_file : *files) {  // We need to modify so no constant.
-    TEST_AND_RETURN_FALSE(
-        ShiftExtentsOverExtents(file.extents, &in_file.extents));
-    TEST_AND_RETURN_FALSE(
-        ShiftBitExtentsOverExtents(file.extents, &in_file.deflates));
-
-    in_file.name = file.name + "/" + in_file.name;
-    num_blocks += utils::BlocksInExtents(in_file.extents);
-  }
-
-  // Check that all files in |in_files| cover the entire image.
-  TEST_AND_RETURN_FALSE(utils::BlocksInExtents(file.extents) == num_blocks);
-  return true;
 }
 
 bool IsBitExtentInExtent(const Extent& extent, const BitExtent& bit_extent) {
@@ -321,36 +265,6 @@ bool PreprocessPartitionFiles(const PartitionConfig& part,
 
   for (auto& file : tmp_files) {
     auto is_regular_file = IsRegularFile(file);
-
-    if (is_regular_file && IsSquashfsImage(part.path, file)) {
-      // Read the image into a file.
-      base::FilePath path;
-      TEST_AND_RETURN_FALSE(base::CreateTemporaryFile(&path));
-      ScopedPathUnlinker old_unlinker(path.value());
-      TEST_AND_RETURN_FALSE(
-          CopyExtentsToFile(part.path, file.extents, path.value(), kBlockSize));
-      // Test if it is actually a Squashfs file.
-      auto sqfs =
-          SquashfsFilesystem::CreateFromFile(path.value(), extract_deflates);
-      if (sqfs) {
-        // It is an squashfs file. Get its files to replace with itself.
-        vector<FilesystemInterface::File> files;
-        sqfs->GetFiles(&files);
-
-        // Replace squashfs file with its files only if |files| has at least two
-        // files or if it has some deflates (since it is better to replace it to
-        // take advantage of the deflates.)
-        if (files.size() > 1 ||
-            (files.size() == 1 && !files[0].deflates.empty())) {
-          TEST_AND_RETURN_FALSE(RealignSplittedFiles(file, &files));
-          result_files->insert(result_files->end(), files.begin(), files.end());
-          continue;
-        }
-      } else {
-        LOG(WARNING) << "We thought file: " << file.name
-                     << " was a Squashfs file, but it was not.";
-      }
-    }
 
     if (is_regular_file && extract_deflates && !file.is_compressed) {
       // Search for deflates if the file is in zip or gzip format.

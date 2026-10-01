@@ -67,6 +67,7 @@ cc_defaults {
         "-Werror",
         "-Wno-exit-time-destructors",
         "-DANDROID_UTILS_REF_BASE_DISABLE_IMPLICIT_CONSTRUCTION",
+        "-Wthread-safety",
     ],
 
     sanitize: {
@@ -184,25 +185,6 @@ cc_library {
     defaults: ["libutils_impl_defaults"],
 
     double_loadable: true,
-
-    target: {
-        product: {
-            header_abi_checker: {
-                enabled: true,
-                // AFDO affects weak symbols.
-                diff_flags: ["-allow-adding-removing-weak-symbols"],
-                ref_dump_dirs: ["abi-dumps"],
-            },
-        },
-        vendor: {
-            header_abi_checker: {
-                enabled: true,
-                // AFDO affects weak symbols.
-                diff_flags: ["-allow-adding-removing-weak-symbols"],
-                ref_dump_dirs: ["abi-dumps"],
-            },
-        },
-    },
 }
 
 cc_library {

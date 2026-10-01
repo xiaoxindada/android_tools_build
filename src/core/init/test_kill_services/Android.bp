@@ -7,6 +7,9 @@ package {
     default_applicable_licenses: ["system_core_init_license"],
 }
 
+// Many years ago, there was a bug when too many processes were killed, init
+// would hang. This test ensures that doesn't happen. However, if every process
+// in Android can withstand being killed, then it will make a good phone.
 cc_test {
     name: "init_kill_services_test",
     srcs: ["init_kill_services_test.cpp"],

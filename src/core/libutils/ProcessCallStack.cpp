@@ -20,6 +20,11 @@
 #include <utils/ProcessCallStack.h>
 
 #include <dirent.h>
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <memory>
@@ -53,7 +58,7 @@ static void dumpProcessHeader(Printer& printer, pid_t pid, const char* timeStr) 
     FILE* fp;
 
     snprintf(path, sizeof(path), "/proc/%d/cmdline", pid);
-    if ((fp = fopen(path, "r"))) {
+    if ((fp = fopen(path, "re"))) {
         procName = fgets(procNameBuf, sizeof(procNameBuf), fp);
         fclose(fp);
     }
@@ -81,11 +86,11 @@ static String8 getThreadName(pid_t tid) {
     FILE* fp;
 
     snprintf(path, sizeof(path), PATH_THREAD_NAME, tid);
-    if ((fp = fopen(path, "r"))) {
+    if ((fp = fopen(path, "re"))) {
         procName = fgets(procNameBuf, sizeof(procNameBuf), fp);
         fclose(fp);
     } else {
-        ALOGE("%s: Failed to open %s", __FUNCTION__, path);
+        ALOGE("%s: Failed to open %s: %s", __FUNCTION__, path, strerror(errno));
     }
 
     if (procName == nullptr) {
@@ -94,7 +99,7 @@ static String8 getThreadName(pid_t tid) {
     }
 
     // Strip ending newline
-    strtok(procName, "\n");
+    *strchrnul(procName, '\n') = '\0';
 
     return String8(procName);
 }
@@ -158,8 +163,8 @@ void ProcessCallStack::update() {
 
         if (tid < 0) {
             // Ignore '.' and '..'
-            ALOGV("%s: Failed to read tid from %s/%s",
-                  __FUNCTION__, PATH_SELF_TASK, ep->d_name);
+            ALOGV("%s: Failed to read tid from %s/%s: %s", __FUNCTION__, PATH_SELF_TASK, ep->d_name,
+                  strerror(errno));
             continue;
         }
 

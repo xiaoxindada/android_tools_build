@@ -17,10 +17,13 @@
 //! ProfCollect Binder client interface.
 
 mod config;
+mod device_config;
 mod report;
 mod scheduler;
 mod service;
 mod trace_provider;
+
+pub use device_config::write_config_to_properties;
 
 use anyhow::{Context, Result};
 use nix::sys::sysinfo;
@@ -104,12 +107,10 @@ pub fn reset() -> Result<()> {
 
 /// Inits logging for Android
 pub fn init_logging() {
-    let max_log_level =
-        if cfg!(feature = "test") { log::LevelFilter::Info } else { log::LevelFilter::Error };
     android_logger::init_once(
         android_logger::Config::default()
             .with_tag("profcollectd")
-            .with_max_level(max_log_level)
+            .with_max_level(log::LevelFilter::Info)
             .with_log_buffer(android_logger::LogId::System),
     );
 }

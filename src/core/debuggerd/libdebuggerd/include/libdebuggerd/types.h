@@ -33,6 +33,7 @@ struct ThreadInfo {
   std::string thread_name;
 
   pid_t pid;
+  pid_t ppid;
 
   std::string executable_name;
   std::vector<std::string> command_line;

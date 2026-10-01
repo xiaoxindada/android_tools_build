@@ -1082,7 +1082,7 @@ TEST_P(StorageServiceTest, OpenInvalidFileName) {
     const char *fname1 = "";
     const char *fname2 = "ffff$ffff";
     const char *fname3 = "ffff\\ffff";
-    char max_name[STORAGE_MAX_NAME_LENGTH_BYTES+1];
+    char max_name[STORAGE_MAX_NAME_SIZE];
 
     rc = storage_open_file(session_, &handle, fname1,
                            STORAGE_FILE_OPEN_CREATE | STORAGE_FILE_OPEN_TRUNCATE,
@@ -1102,6 +1102,7 @@ TEST_P(StorageServiceTest, OpenInvalidFileName) {
     /* max name */
     memset(max_name, 'a', sizeof(max_name));
     max_name[sizeof(max_name)-1] = 0;
+    ASSERT_EQ(STORAGE_MAX_NAME_LENGTH + 1, strlen(max_name));
 
     rc = storage_open_file(session_, &handle, max_name,
                            STORAGE_FILE_OPEN_CREATE | STORAGE_FILE_OPEN_TRUNCATE,
@@ -1109,6 +1110,8 @@ TEST_P(StorageServiceTest, OpenInvalidFileName) {
     ASSERT_EQ(-EINVAL, rc);
 
     max_name[sizeof(max_name)-2] = 0;
+    ASSERT_EQ(STORAGE_MAX_NAME_LENGTH, strlen(max_name));
+
     rc = storage_open_file(session_, &handle, max_name,
                            STORAGE_FILE_OPEN_CREATE | STORAGE_FILE_OPEN_TRUNCATE,
                            STORAGE_OP_COMPLETE);

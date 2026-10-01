@@ -67,6 +67,7 @@ namespace android {
 namespace init {
 
 const std::string kDataDirPrefix("/data/");
+const int kExitFailureStatus = -1;
 
 void (*trigger_shutdown)(const std::string& command) = nullptr;
 
@@ -753,20 +754,20 @@ std::vector<std::string> FilterVersionedConfigs(const std::vector<std::string>& 
 
 // Forks, executes the provided program in the child, and waits for the completion in the parent.
 // Child's stderr is captured and logged using LOG(ERROR).
-bool ForkExecveAndWaitForCompletion(const char* filename, char* const argv[]) {
+int ForkExecveAndWaitForCompletion(const char* filename, char* const argv[]) {
     // Create a pipe used for redirecting child process's output.
     // * pipe_fds[0] is the FD the parent will use for reading.
     // * pipe_fds[1] is the FD the child will use for writing.
     int pipe_fds[2];
     if (pipe(pipe_fds) == -1) {
         PLOG(ERROR) << "Failed to create pipe";
-        return false;
+        return kExitFailureStatus;
     }
 
     pid_t child_pid = fork();
     if (child_pid == -1) {
         PLOG(ERROR) << "Failed to fork for " << filename;
-        return false;
+        return kExitFailureStatus;
     }
 
     if (child_pid == 0) {
@@ -779,18 +780,18 @@ bool ForkExecveAndWaitForCompletion(const char* filename, char* const argv[]) {
         if (TEMP_FAILURE_RETRY(dup2(pipe_fds[1], STDERR_FILENO)) == -1) {
             PLOG(ERROR) << "Failed to redirect stderr of " << filename;
             _exit(127);
-            return false;
+            return kExitFailureStatus;
         }
         close(pipe_fds[1]);
 
         if (execv(filename, argv) == -1) {
             PLOG(ERROR) << "Failed to execve " << filename;
-            return false;
+            return kExitFailureStatus;
         }
         // Unreachable because execve will have succeeded and replaced this code
         // with child process's code.
         _exit(127);
-        return false;
+        return kExitFailureStatus;
     } else {
         // fork succeeded -- this is executing in the original/parent process
 
@@ -820,16 +821,15 @@ bool ForkExecveAndWaitForCompletion(const char* filename, char* const argv[]) {
         int status;
         if (TEMP_FAILURE_RETRY(waitpid(child_pid, &status, 0)) != child_pid) {
             PLOG(ERROR) << "Failed to wait for " << filename;
-            return false;
+            return kExitFailureStatus;
         }
 
         if (WIFEXITED(status)) {
             int status_code = WEXITSTATUS(status);
-            if (status_code == 0) {
-                return true;
-            } else {
+            if (status_code != 0) {
                 LOG(ERROR) << filename << " exited with status " << status_code;
             }
+            return status_code;
         } else if (WIFSIGNALED(status)) {
             LOG(ERROR) << filename << " killed by signal " << WTERMSIG(status);
         } else if (WIFSTOPPED(status)) {
@@ -838,7 +838,7 @@ bool ForkExecveAndWaitForCompletion(const char* filename, char* const argv[]) {
             LOG(ERROR) << "waitpid for " << filename << " returned unexpected status: " << status;
         }
 
-        return false;
+        return kExitFailureStatus;
     }
 }
 
@@ -854,6 +854,20 @@ std::string SignalName(int signum) {
     // doesn't seem available in our repo.
     return std::format("signal {}", signum);
 #endif
+}
+
+int CountFilesIn(const char* path) {
+    std::unique_ptr<DIR, decltype(&closedir)> dir(opendir(path), closedir);
+    if (!dir) return 0;
+
+    int count = 0;
+    dirent* dp;
+    while ((dp = readdir(dir.get())) != nullptr) {
+        if (dp->d_type == DT_REG) {
+            count++;
+        }
+    }
+    return count;
 }
 
 }  // namespace init

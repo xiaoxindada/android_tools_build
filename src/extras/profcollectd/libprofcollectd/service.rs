@@ -86,7 +86,7 @@ impl IProfCollectd for ProfcollectdBinderService {
 
     fn registerProviderStatusCallback(
         &self,
-        cb: &binder::Strong<(dyn IProviderStatusCallback)>,
+        cb: &binder::Strong<dyn IProviderStatusCallback>,
     ) -> BinderResult<()> {
         if self.lock().scheduler.is_provider_ready() {
             if let Err(e) = cb.onProviderReady() {

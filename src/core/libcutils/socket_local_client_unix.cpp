@@ -17,10 +17,16 @@
 #include <cutils/sockets.h>
 
 #include <errno.h>
+#include <poll.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <android-base/unique_fd.h>
+using namespace android::base;
+
+#include "sockets_utils.h"
 
 #if defined(_WIN32)
 
@@ -142,22 +148,79 @@ error:
     return -1;
 }
 
-/** 
+int socket_local_client_timeout(const char* name, int namespaceId, int type, int timeout_ms) {
+    unique_fd s(socket(AF_LOCAL, type, 0));
+    if (s < 0) {
+        return -1;
+    }
+
+    if (toggle_O_NONBLOCK(s) == -1) {
+        return -1;
+    }
+
+    // Let's try to connect.
+    int rc = socket_local_client_connect(s, name, namespaceId, type);
+    if (rc == 0) {
+        // Connection was successful. We just need to restore the socket to blocking.
+        if (toggle_O_NONBLOCK(s.get()) == -1) {
+            return -1;
+        }
+        return s.release();
+    } else if (rc == -1 && errno != EINPROGRESS && errno != EAGAIN) {
+        return -1;
+    }
+
+    // As per connect(2), we select the socket for writing to wait until connect succeeds.
+    struct pollfd pfd;
+    pfd.fd = s;
+    pfd.events = POLLOUT;
+    pfd.revents = 0;
+
+    rc = poll(&pfd, 1, timeout_ms);
+    if (rc == -1) {
+        return -1;
+    }
+
+    // Did poll time out?
+    if (rc == 0) {
+        return -1;
+    }
+
+    // No timeout occurred
+
+    // Check for non-requested events, indicative of errors.
+    if (pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) {
+        // Backlog likely full
+        return -1;
+    }
+
+    // No timeout. Let's see if we had a socket error.
+    socklen_t len = sizeof(errno);
+    if (getsockopt(s, SOL_SOCKET, SO_ERROR, &errno, &len) == -1) {
+        return -1;
+    }
+
+    // Put back the socket into blocking mode.
+    if (toggle_O_NONBLOCK(s.get()) == -1) {
+        return -1;
+    }
+
+    return s.release();
+}
+
+/**
  * connect to peer named "name"
  * returns fd or -1 on error
  */
 int socket_local_client(const char *name, int namespaceId, int type)
 {
     int s;
-
     s = socket(AF_LOCAL, type, 0);
-    if(s < 0) return -1;
-
+    if (s < 0) return -1;
     if ( 0 > socket_local_client_connect(s, name, namespaceId, type)) {
         close(s);
         return -1;
     }
-
     return s;
 }
 

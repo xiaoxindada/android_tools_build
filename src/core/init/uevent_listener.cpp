@@ -195,8 +195,8 @@ void UeventListener::Poll(const ListenerCallback& callback,
     using namespace std::chrono;
 
     pollfd ufd = {
-            .events = POLLIN,
             .fd = device_fd_.get(),
+            .events = POLLIN,
     };
 
     auto start_time = steady_clock::now();
@@ -232,6 +232,11 @@ void UeventListener::Poll(const ListenerCallback& callback,
             }
         }
     }
+}
+
+std::ostream& operator<<(std::ostream& os, const Uevent& uevent) {
+    os << "uevent { '" << uevent.action << "', '" << uevent.path << "' }";
+    return os;
 }
 
 }  // namespace init

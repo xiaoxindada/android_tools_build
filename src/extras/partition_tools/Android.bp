@@ -42,8 +42,8 @@ cc_library_shared {
         "liblp",
         "libprotobuf-cpp-full",
     ],
-    static_libs: [
-        "libjsonpbparse",
+    header_libs: [
+        "libupdate_engine_headers",
     ],
     srcs: [
         "lpdump.cc",
@@ -71,9 +71,6 @@ cc_binary {
         "libbase",
         "liblog",
         "liblp",
-    ],
-    static_libs: [
-        "libjsonpbparse",
     ],
     target: {
         android: {

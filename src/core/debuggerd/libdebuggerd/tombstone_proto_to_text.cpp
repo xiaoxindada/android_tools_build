@@ -115,8 +115,13 @@ static void print_thread_header(CallbackType callback, const Tombstone& tombston
   } else {
     CB(should_log, "Cmdline: <unknown>");
   }
-  CB(should_log, "pid: %d, tid: %d, name: %s  >>> %s <<<", tombstone.pid(), thread.id(),
-     thread.name().c_str(), process_name);
+  if (tombstone.ppid() == 0) {
+    CB(should_log, "pid: %d, tid: %d, name: %s  >>> %s <<<", tombstone.pid(), thread.id(),
+       thread.name().c_str(), process_name);
+  } else {
+    CB(should_log, "pid: %d, ppid: %d, tid: %d, name: %s  >>> %s <<<", tombstone.pid(),
+       tombstone.ppid(), thread.id(), thread.name().c_str(), process_name);
+  }
   CB(should_log, "uid: %d", tombstone.uid());
   if (thread.tagged_addr_ctrl() != -1) {
     CB(should_log, "tagged_addr_ctrl: %016" PRIx64 "%s", thread.tagged_addr_ctrl(),
@@ -163,11 +168,11 @@ static void print_thread_registers(CallbackType callback, const Tombstone& tombs
       break;
 
     case Architecture::ARM64:
-      special_registers = {"ip", "lr", "sp", "pc", "pst", "esr"};
+      special_registers = {"ip", "lr", "sp", "pc", "pst", "esr", "vg"};
       break;
 
     case Architecture::RISCV64:
-      special_registers = {"ra", "sp", "pc"};
+      special_registers = {"ra", "sp", "pc", "vlenb"};
       break;
 
     case Architecture::X86:
@@ -212,14 +217,22 @@ static void print_thread_registers(CallbackType callback, const Tombstone& tombs
   }
 }
 
+static const MemoryMapping find_map(const Tombstone& tombstone, uint64_t addr) {
+  for (const auto& map : tombstone.memory_mappings()) {
+    if (addr >= map.begin_address() && addr < map.end_address()) {
+      return map;
+    }
+  }
+  return {};
+}
+
 static void print_backtrace(CallbackType callback, SymbolizeCallbackType symbolize,
                             const Tombstone& tombstone,
                             const google::protobuf::RepeatedPtrField<BacktraceFrame>& backtrace,
-                            bool should_log) {
+                            bool should_log, bool display_sp) {
   int index = 0;
   for (const auto& frame : backtrace) {
     std::string function;
-
     if (!frame.function_name().empty()) {
       function =
           StringPrintf(" (%s+%" PRId64 ")", frame.function_name().c_str(), frame.function_offset());
@@ -230,9 +243,42 @@ static void print_backtrace(CallbackType callback, SymbolizeCallbackType symboli
       build_id = StringPrintf(" (BuildId: %s)", frame.build_id().c_str());
     }
 
+    int ptr_width = pointer_width(tombstone) * 2;
     std::string line =
-        StringPrintf("      #%02d pc %0*" PRIx64 "  %s", index++, pointer_width(tombstone) * 2,
-                     frame.rel_pc(), frame.file_name().c_str());
+        StringPrintf("      #%02d pc %0*" PRIx64, index++, ptr_width, frame.rel_pc());
+    if (display_sp) {
+      line += StringPrintf(" sp %0*" PRIx64, ptr_width, frame.sp());
+
+      if (index < backtrace.size()) {
+        const MemoryMapping sp_map = find_map(tombstone, frame.sp());
+        uint64_t next_sp = backtrace[index].sp();
+        const MemoryMapping next_sp_map = find_map(tombstone, next_sp);
+
+        if (sp_map.begin_address() == 0 && sp_map.end_address() == 0) {
+          line += "(unknown map)";
+        } else {
+          bool new_map_set = false;
+          if (sp_map.begin_address() == next_sp_map.begin_address()) {
+            // The sp is in the same map as the next frame, show stack frame size.
+            line += StringPrintf(
+                "+%" PRId64, (next_sp > frame.sp()) ? next_sp - frame.sp() : frame.sp() - next_sp);
+          } else {
+            line += "(new map";
+            new_map_set = true;
+          }
+          if (!sp_map.read() || !sp_map.write()) {
+            if (new_map_set) {
+              line += " is not rw)";
+            } else {
+              line += "(map is not rw)";
+            }
+          } else if (new_map_set) {
+            line += ")";
+          }
+        }
+      }
+    }
+    line += "  " + frame.file_name();
     if (frame.file_map_offset() != 0) {
       line += StringPrintf(" (offset 0x%" PRIx64 ")", frame.file_map_offset());
     }
@@ -245,7 +291,7 @@ static void print_backtrace(CallbackType callback, SymbolizeCallbackType symboli
 
 static void print_thread_backtrace(CallbackType callback, SymbolizeCallbackType symbolize,
                                    const Tombstone& tombstone, const Thread& thread,
-                                   bool should_log) {
+                                   bool should_log, bool display_sp) {
   CBS("");
   CB(should_log, "%d total frames", thread.current_backtrace().size());
   CB(should_log, "backtrace:");
@@ -253,7 +299,8 @@ static void print_thread_backtrace(CallbackType callback, SymbolizeCallbackType 
     CB(should_log, "  NOTE: %s",
        android::base::Join(thread.backtrace_note(), "\n  NOTE: ").c_str());
   }
-  print_backtrace(callback, symbolize, tombstone, thread.current_backtrace(), should_log);
+  print_backtrace(callback, symbolize, tombstone, thread.current_backtrace(), should_log,
+                  display_sp);
 }
 
 static void print_thread_memory_dump(CallbackType callback, const Tombstone& tombstone,
@@ -307,10 +354,10 @@ static void print_thread_memory_dump(CallbackType callback, const Tombstone& tom
 }
 
 static void print_thread(CallbackType callback, SymbolizeCallbackType symbolize,
-                         const Tombstone& tombstone, const Thread& thread) {
+                         const Tombstone& tombstone, const Thread& thread, bool display_sp) {
   print_thread_header(callback, tombstone, thread, false);
   print_thread_registers(callback, tombstone, thread, false);
-  print_thread_backtrace(callback, symbolize, tombstone, thread, false);
+  print_thread_backtrace(callback, symbolize, tombstone, thread, /*should_log*/ false, display_sp);
   print_thread_memory_dump(callback, tombstone, thread);
 }
 
@@ -417,10 +464,13 @@ static void print_memory_maps(CallbackType callback, const Tombstone& tombstone)
         line = "--->";
       }
     }
-    StringAppendF(&line, "%s-%s", format_pointer(map.begin_address()).c_str(),
+    StringAppendF(&line, "%s-%s ", format_pointer(map.begin_address()).c_str(),
                   format_pointer(map.end_address() - 1).c_str());
-    StringAppendF(&line, " %s%s%s", map.read() ? "r" : "-", map.write() ? "w" : "-",
-                  map.execute() ? "x" : "-");
+    std::string flags_str("---");
+    if (map.read()) flags_str[0] = 'r';
+    if (map.write()) flags_str[1] = 'w';
+    if (map.execute()) flags_str[2] = 'x';
+    line += flags_str;
     StringAppendF(&line, "  %8" PRIx64 "  %8" PRIx64, map.offset(),
                   map.end_address() - map.begin_address());
 
@@ -437,6 +487,15 @@ static void print_memory_maps(CallbackType callback, const Tombstone& tombstone)
     }
 
     CBS("%s", line.c_str());
+    if (!map.vmflags().empty()) {
+      // The spacing should cause the vm flags string to line up with the rw-
+      // from the map line.
+      // For 64 bit platforms, space length:
+      //   17(map addr) * 2 + 1(dash) + 1(space)- 9(VmFlags: )
+      // For 32 bit platforms, space length:
+      //   8(map addr) * 2 + 1(dash) + 1(space) - 9(VmFlags: )
+      CBS("    %*sVmFlags: %s", pointer_width(tombstone) == 8 ? 27 : 9, " ", map.vmflags().c_str());
+    }
   }
 
   if (has_fault_address && !printed_fault_address_marker) {
@@ -473,7 +532,7 @@ static std::string get_read_write_desc(const Architecture& arch, const Thread& t
 }
 
 static void print_main_thread(CallbackType callback, SymbolizeCallbackType symbolize,
-                              const Tombstone& tombstone, const Thread& thread) {
+                              const Tombstone& tombstone, const Thread& thread, bool display_sp) {
   print_thread_header(callback, tombstone, thread, true);
 
   const Signal& signal_info = tombstone.signal_info();
@@ -526,7 +585,13 @@ static void print_main_thread(CallbackType callback, SymbolizeCallbackType symbo
     CBL("      in this process. The stack trace below is the first system call or context");
     CBL("      switch that was executed after the memory corruption happened.");
   }
-  print_thread_backtrace(callback, symbolize, tombstone, thread, true);
+  print_thread_backtrace(callback, symbolize, tombstone, thread, /*should_log*/ true, display_sp);
+
+  if (!display_sp) {
+    CBS("");
+    CBL("Note: To display stack pointer information, use the pbtombstone tool:");
+    CBL("        pbtombstone --display-sp tombstone_XX.pb");
+  }
 
   if (tombstone.causes_size() > 1) {
     CBS("");
@@ -559,13 +624,15 @@ static void print_main_thread(CallbackType callback, SymbolizeCallbackType symbo
       if (heap_object.deallocation_backtrace_size() != 0) {
         CBS("");
         CBL("deallocated by thread %" PRIu64 ":", heap_object.deallocation_tid());
-        print_backtrace(callback, symbolize, tombstone, heap_object.deallocation_backtrace(), true);
+        print_backtrace(callback, symbolize, tombstone, heap_object.deallocation_backtrace(),
+                        /*should_log*/ true, display_sp);
       }
 
       if (heap_object.allocation_backtrace_size() != 0) {
         CBS("");
         CBL("allocated by thread %" PRIu64 ":", heap_object.allocation_tid());
-        print_backtrace(callback, symbolize, tombstone, heap_object.allocation_backtrace(), true);
+        print_backtrace(callback, symbolize, tombstone, heap_object.allocation_backtrace(),
+                        /*should_log*/ true, display_sp);
       }
     }
   }
@@ -616,7 +683,7 @@ void print_logs(CallbackType callback, const Tombstone& tombstone, int tail) {
 
 static void print_guest_thread(CallbackType callback, SymbolizeCallbackType symbolize,
                                const Tombstone& tombstone, const Thread& guest_thread, pid_t tid,
-                               bool should_log) {
+                               bool should_log, bool display_sp) {
   CBS("--- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---");
   CBS("Guest thread information for tid: %d", tid);
   print_thread_registers(callback, tombstone, guest_thread, should_log);
@@ -624,13 +691,14 @@ static void print_guest_thread(CallbackType callback, SymbolizeCallbackType symb
   CBS("");
   CB(true, "%d total frames", guest_thread.current_backtrace().size());
   CB(true, "backtrace:");
-  print_backtrace(callback, symbolize, tombstone, guest_thread.current_backtrace(), should_log);
+  print_backtrace(callback, symbolize, tombstone, guest_thread.current_backtrace(), should_log,
+                  display_sp);
 
   print_thread_memory_dump(callback, tombstone, guest_thread);
 }
 
 bool tombstone_proto_to_text(const Tombstone& tombstone, CallbackType callback,
-                             SymbolizeCallbackType symbolize) {
+                             SymbolizeCallbackType symbolize, bool display_sp) {
   CBL("*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***");
   CBL("Build fingerprint: '%s'", tombstone.build_fingerprint().c_str());
   if (!tombstone.kernel_release().empty()) {
@@ -661,7 +729,7 @@ bool tombstone_proto_to_text(const Tombstone& tombstone, CallbackType callback,
 
   const auto& main_thread = main_thread_it->second;
 
-  print_main_thread(callback, symbolize, tombstone, main_thread);
+  print_main_thread(callback, symbolize, tombstone, main_thread, display_sp);
 
   print_logs(callback, tombstone, 50);
 
@@ -669,7 +737,7 @@ bool tombstone_proto_to_text(const Tombstone& tombstone, CallbackType callback,
   auto main_guest_thread_it = guest_threads.find(tombstone.tid());
   if (main_guest_thread_it != threads.end()) {
     print_guest_thread(callback, symbolize, tombstone, main_guest_thread_it->second,
-                       tombstone.tid(), true);
+                       tombstone.tid(), /*should_log*/ true, display_sp);
   }
 
   // protobuf's map is unordered, so sort the keys first.
@@ -682,10 +750,11 @@ bool tombstone_proto_to_text(const Tombstone& tombstone, CallbackType callback,
 
   for (const auto& tid : thread_ids) {
     CBS("--- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---");
-    print_thread(callback, symbolize, tombstone, threads.find(tid)->second);
+    print_thread(callback, symbolize, tombstone, threads.find(tid)->second, display_sp);
     auto guest_thread_it = guest_threads.find(tid);
     if (guest_thread_it != guest_threads.end()) {
-      print_guest_thread(callback, symbolize, tombstone, guest_thread_it->second, tid, false);
+      print_guest_thread(callback, symbolize, tombstone, guest_thread_it->second, tid,
+                         /*should_log*/ false, display_sp);
     }
   }
 
@@ -693,12 +762,18 @@ bool tombstone_proto_to_text(const Tombstone& tombstone, CallbackType callback,
     CBS("");
     CBS("open files:");
     for (const auto& fd : tombstone.open_fds()) {
-      std::optional<std::string> owner;
+      std::string line = StringPrintf("    fd %d: %s (", fd.fd(), fd.path().c_str());
       if (!fd.owner().empty()) {
-        owner = StringPrintf("owned by %s 0x%" PRIx64, fd.owner().c_str(), fd.tag());
+        line += StringPrintf("owned by %s 0x%" PRIx64, fd.owner().c_str(), fd.tag());
+      } else {
+        line += "unowned";
       }
+      line += ')';
 
-      CBS("    fd %d: %s (%s)", fd.fd(), fd.path().c_str(), owner ? owner->c_str() : "unowned");
+      if (!fd.details().empty()) {
+        line += " (" + fd.details() + ")";
+      }
+      CBS("%s", line.c_str());
     }
   }
 

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <unistd.h>
 #include <sys/time.h>
 #include <time.h>
+#include <unistd.h>
 
 #define N_PAGES (4096)
 
@@ -40,17 +40,18 @@ static unsigned long long stop_watch()
     t.tv_sec = t.tv_nsec = 0;
     clock_gettime(CLOCK_MONOTONIC, &t);
     return t.tv_sec*1000000000ULL + t.tv_nsec;
-}   
+}
 
 int main()
 {
-    char *mem = malloc((N_PAGES+1) * 4096);
+    const size_t kPageSize = getpagesize();
+    char* mem = malloc((N_PAGES + 1) * kPageSize);
     intptr_t *p;
     int i;
     unsigned int j;
 
     /* Align to page start */
-    mem = (char *) ((intptr_t) (mem + 4096) & ~0xfff);
+    mem = (char*)((intptr_t)(mem + kPageSize) & ~(kPageSize - 1));
 
     for (j = 0; j < sizeof(numPagesList)/sizeof(int); j++) {
         int numPages = numPagesList[j];
@@ -58,8 +59,8 @@ int main()
         int entryOffset = 0;
 
         /*
-         * page 0      page 1      page 2     ....     page N  
-         * ------      ------      ------              ------  
+         * page 0      page 1      page 2     ....     page N
+         * ------      ------      ------              ------
          * word 0   -> word 0   -> word 0 ->  ....  -> word 0 -> (page 0/word 0)
          *   :           :           :         :         :
          * word 1023   word 1023   word 1023   :       word 1023
@@ -73,12 +74,11 @@ int main()
             int nextEntryOffset = entryOffset;
 
             if (i != numPages -1) {
-                *(intptr_t *) (mem + 4096 * pageIdx + entryOffset) = 
-                    (intptr_t) (mem + 4096 * nextPageIdx + nextEntryOffset);
+                *(intptr_t*)(mem + kPageSize * pageIdx + entryOffset) =
+                        (intptr_t)(mem + kPageSize * nextPageIdx + nextEntryOffset);
             } else {
                 /* Last page - form the cycle */
-                *(intptr_t *) (mem + 4096 * pageIdx + entryOffset) =
-                    (intptr_t) &mem[0];
+                *(intptr_t*)(mem + kPageSize * pageIdx + entryOffset) = (intptr_t)&mem[0];
             }
 
             pageIdx = nextPageIdx;
@@ -101,8 +101,7 @@ int main()
         unsigned long long t1 = stop_watch();
 
         /* To keep p from being optimized by gcc */
-        if (p) 
-            printf("%d, %f\n", numPages, (float) (t1 - t0) / WORKLOAD);
+        if (p) printf("%d, %f\n", numPages, (float)(t1 - t0) / WORKLOAD);
     }
     return 0;
 }

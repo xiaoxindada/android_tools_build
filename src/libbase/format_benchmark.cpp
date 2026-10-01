@@ -95,5 +95,14 @@ static void BM_format_StringPrintf_strings(benchmark::State& state) {
 }
 BENCHMARK(BM_format_StringPrintf_strings);
 
+static void BM_format_StringPrintf_huge_strings(benchmark::State& state) {
+  std::string huge(2048u, 'x');
+  for (auto _ : state) {
+    benchmark::DoNotOptimize(StringPrintf("%s hello there %s",
+                                          huge.c_str(), huge.c_str()));
+  }
+}
+BENCHMARK(BM_format_StringPrintf_huge_strings);
+
 // Run the benchmark
 BENCHMARK_MAIN();

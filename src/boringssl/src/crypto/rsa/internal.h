@@ -17,10 +17,10 @@
 
 #include <openssl/base.h>
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+#include "../fipsmodule/rsa/internal.h"
 
+
+BSSL_NAMESPACE_BEGIN
 
 int RSA_padding_check_PKCS1_OAEP_mgf1(uint8_t *out, size_t *out_len,
                                       size_t max_out, const uint8_t *from,
@@ -28,34 +28,24 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(uint8_t *out, size_t *out_len,
                                       size_t param_len, const EVP_MD *md,
                                       const EVP_MD *mgf1md);
 
-enum rsa_pss_params_t {
-  // RSA-PSS using SHA-256, MGF1 with SHA-256, salt length 32.
-  rsa_pss_sha256,
-  // RSA-PSS using SHA-384, MGF1 with SHA-384, salt length 48.
-  rsa_pss_sha384,
-  // RSA-PSS using SHA-512, MGF1 with SHA-512, salt length 64.
-  rsa_pss_sha512,
-};
-
 // rsa_pss_params_get_md returns the hash function used with |params|. This also
 // specifies the MGF-1 hash and the salt length because we do not support other
 // configurations.
 const EVP_MD *rsa_pss_params_get_md(rsa_pss_params_t params);
 
 // rsa_marshal_pss_params marshals |params| as a DER-encoded RSASSA-PSS-params
-// (RFC 4055). It returns one on success and zero on error.
+// (RFC 4055). It returns one on success and zero on error. If |params| is
+// |rsa_pss_params_none|, this function gives an error.
 int rsa_marshal_pss_params(CBB *cbb, rsa_pss_params_t params);
 
 // rsa_marshal_pss_params decodes a DER-encoded RSASSA-PSS-params
 // (RFC 4055). It returns one on success and zero on error. On success, it sets
 // |*out| to the result. If |allow_explicit_trailer| is non-zero, an explicit
-// encoding of the trailerField is allowed, although it is not valid DER.
+// encoding of the trailerField is allowed, although it is not valid DER. This
+// function never outputs |rsa_pss_params_none|.
 int rsa_parse_pss_params(CBS *cbs, rsa_pss_params_t *out,
                          int allow_explicit_trailer);
 
-
-#if defined(__cplusplus)
-}  // extern C
-#endif
+BSSL_NAMESPACE_END
 
 #endif  // OPENSSL_HEADER_CRYPTO_RSA_INTERNAL_H

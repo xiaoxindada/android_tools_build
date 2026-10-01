@@ -1,0 +1,37 @@
+package: "com.android.libsnapshot"
+container: "system"
+
+flag {
+  name: "vabc_with_ublk_support"
+  is_exported: false
+  namespace: "android_kernel"
+  description: "Enable ublk support for Virtual A/B Compression"
+  bug: "362683283"
+  is_fixed_read_only: true
+}
+
+flag {
+  name: "snapuserd_read_batching"
+  is_exported: false
+  namespace: "android_kernel"
+  description: "Enable read batching feature for snapuserd"
+  bug: "364476528"
+  is_fixed_read_only: true
+}
+
+flag {
+  name: "merge_worker_normal_priority"
+  is_exported: false
+  namespace: "android_kernel"
+  description: "Merge worker normal priority"
+  bug: "399902322"
+  is_fixed_read_only: true
+}
+
+flag {
+  name: "memory_efficient_data_structures"
+  is_exported: false
+  namespace: "android_kernel"
+  description: "Use more memmory efficient data structures/algorithms, such as ExtentMap, bitset, inline sorting, etc"
+  bug: "475862875"
+}

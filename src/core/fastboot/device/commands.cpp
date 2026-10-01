@@ -894,10 +894,11 @@ class PartitionFetcher {
                 start_offset_, total_size_to_read_));
     }
 
-    static constexpr std::array<const char*, 3> kAllowedPartitions{
+    static constexpr std::array<const char*, 4> kAllowedPartitions{
             "vendor_boot",
             "vendor_boot_a",
             "vendor_boot_b",
+            "super",
     };
 
     FastbootDevice* device_;

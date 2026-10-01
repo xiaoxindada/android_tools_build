@@ -30,7 +30,7 @@ namespace android {
 typedef int32_t status_t;
 
 /*
- * Error codes. 
+ * Error codes.
  * All error codes are negative values.
  */
 
@@ -57,18 +57,19 @@ enum {
 #if !defined(_WIN32)
     BAD_INDEX           = -EOVERFLOW,
     NOT_ENOUGH_DATA     = -ENODATA,
-    WOULD_BLOCK         = -EWOULDBLOCK, 
+    WOULD_BLOCK         = -EWOULDBLOCK,
     TIMED_OUT           = -ETIMEDOUT,
     UNKNOWN_TRANSACTION = -EBADMSG,
-#else    
+#else
     BAD_INDEX           = -E2BIG,
     NOT_ENOUGH_DATA     = (UNKNOWN_ERROR + 3),
     WOULD_BLOCK         = (UNKNOWN_ERROR + 4),
     TIMED_OUT           = (UNKNOWN_ERROR + 5),
     UNKNOWN_TRANSACTION = (UNKNOWN_ERROR + 6),
-#endif    
+#endif
     FDS_NOT_ALLOWED     = (UNKNOWN_ERROR + 7),
     UNEXPECTED_NULL     = (UNKNOWN_ERROR + 8),
+    FROZEN_OBJECT       = (UNKNOWN_ERROR + 9),
 };
 
 // Human readable name of error

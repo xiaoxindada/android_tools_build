@@ -17,7 +17,7 @@
 //! This module implements safe wrappers for simpleperf operations required
 //! by profcollect.
 
-use std::ffi::{c_char, CString};
+use std::ffi::{c_char, CStr, CString};
 use std::path::Path;
 
 fn path_to_cstr(path: &Path) -> CString {
@@ -76,5 +76,22 @@ pub fn reset_log_file() {
     // SAFETY: This is always safe to call.
     unsafe {
         simpleperf_profcollect_bindgen::ResetLogFile();
+    }
+}
+
+/// Run the device_config command to get profcollect device configs.
+pub fn run_device_config_cmd<'a>(args: &'a [&'a str]) -> &'a str {
+    let c_args: Vec<CString> = args.iter().map(|s| CString::new(s.as_bytes()).unwrap()).collect();
+    let mut pointer_args: Vec<*const c_char> = c_args.iter().map(|s| s.as_ptr()).collect();
+    let arg_count: i32 = pointer_args.len().try_into().unwrap();
+    // SAFETY: pointer_args is an array of valid C strings. Its length is defined by arg_count.
+    unsafe {
+        let ptr = simpleperf_profcollect_bindgen::RunDeviceConfigCmd(
+            pointer_args.as_mut_ptr(),
+            arg_count,
+        );
+        let c_str_ptr = ptr as *const c_char;
+        let c_str = CStr::from_ptr(c_str_ptr);
+        c_str.to_str().unwrap()
     }
 }

@@ -74,9 +74,13 @@ class UpdateAttempterAndroidIntegrationTest : public ::testing::Test,
     ExportPartitionTable();
   }
   void RemoveFakePartitionGroup() {
-    builder_->RemovePartition("fake_a");
-    builder_->RemovePartition("fake_b");
-    builder_->RemoveGroupAndPartitions("fake_group");
+    for (const auto& partition :
+         {"fake_a", "fake_b", "fake_a-cow", "fake_b-cow"}) {
+      builder_->RemovePartition(partition);
+    }
+    for (const auto& group : {"fake_group", "fake_group_a", "fake_group_b"}) {
+      builder_->RemoveGroupAndPartitions(group);
+    }
   }
 
   // Fill partition |path| with arbitrary data.

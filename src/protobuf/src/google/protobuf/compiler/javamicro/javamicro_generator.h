@@ -38,8 +38,9 @@
 #define GOOGLE_PROTOBUF_COMPILER_JAVA_MICRO_GENERATOR_H__
 
 #include <string>
-#include <google/protobuf/compiler/code_generator.h>
-#include <google/protobuf/stubs/port.h>
+
+#include "google/protobuf/compiler/code_generator.h"
+#include "google/protobuf/stubs/port.h"
 
 namespace google {
 namespace protobuf {

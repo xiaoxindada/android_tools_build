@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <thread>
@@ -62,6 +63,35 @@ struct AutoFDOBinaryInfo {
   std::unordered_map<uint64_t, uint64_t> address_count_map;
   std::unordered_map<AddrPair, uint64_t, AddrPairHash> range_count_map;
   std::unordered_map<AddrPair, uint64_t, AddrPairHash> branch_count_map;
+
+  void GetExecutableSegments(const Dso* dso) {
+    CHECK(executable_segments.empty());
+    ElfStatus status;
+    auto elf = ElfFile::Open(dso->GetDebugFilePath(), &status);
+    if (!elf) {
+      return;
+    }
+    if (dso->type() == DSO_KERNEL_MODULE) {
+      // A kernel module file doesn't have program header. So create a fake one for .text section.
+      for (const auto& section : elf->GetSectionHeader()) {
+        if (section.name == ".text") {
+          executable_segments.resize(1);
+          auto& segment = executable_segments.back();
+          segment.vaddr = section.vaddr;
+          segment.file_offset = section.file_offset;
+          segment.file_size = section.size;
+          segment.is_executable = true;
+          segment.is_load = true;
+        }
+      }
+    } else {
+      executable_segments = elf->GetProgramHeader();
+      auto not_executable = [](const ElfSegment& s) { return !s.is_executable; };
+      executable_segments.erase(
+          std::remove_if(executable_segments.begin(), executable_segments.end(), not_executable),
+          executable_segments.end());
+    }
+  }
 
   void AddAddress(uint64_t addr) { OverflowSafeAdd(address_count_map[addr], 1); }
 
@@ -118,18 +148,6 @@ struct AutoFDOBinaryInfo {
 using AutoFDOBinaryCallback = std::function<void(const BinaryKey&, AutoFDOBinaryInfo&)>;
 using ETMBinaryCallback = std::function<void(const BinaryKey&, ETMBinary&)>;
 using LBRDataCallback = std::function<void(LBRData&)>;
-
-static std::vector<ElfSegment> GetExecutableSegments(const Dso* dso) {
-  std::vector<ElfSegment> segments;
-  ElfStatus status;
-  if (auto elf = ElfFile::Open(dso->GetDebugFilePath(), &status); elf) {
-    segments = elf->GetProgramHeader();
-    auto not_executable = [](const ElfSegment& s) { return !s.is_executable; };
-    segments.erase(std::remove_if(segments.begin(), segments.end(), not_executable),
-                   segments.end());
-  }
-  return segments;
-}
 
 // Base class for reading perf.data and generating AutoFDO or branch list data.
 class PerfDataReader {
@@ -198,9 +216,9 @@ class PerfDataReader {
 
   void ProcessAutoFDOBinaryInfo() {
     for (auto& p : autofdo_binary_map_) {
-      const Dso* dso = p.first;
+      Dso* dso = p.first;
       AutoFDOBinaryInfo& binary = p.second;
-      binary.executable_segments = GetExecutableSegments(dso);
+      binary.GetExecutableSegments(dso);
       autofdo_callback_(BinaryKey(dso, 0), binary);
     }
   }
@@ -216,7 +234,7 @@ class PerfDataReader {
   ETMBinaryCallback etm_binary_callback_;
   LBRDataCallback lbr_data_callback_;
   // Store results for AutoFDO.
-  std::unordered_map<const Dso*, AutoFDOBinaryInfo> autofdo_binary_map_;
+  std::unordered_map<Dso*, AutoFDOBinaryInfo> autofdo_binary_map_;
 };
 
 class ETMThreadTreeWithFilter : public ETMThreadTree {
@@ -375,8 +393,9 @@ class ETMPerfDataReader : public PerfDataReader {
       return;
     }
 
-    auto& branch_map = etm_binary_map_[branch_list.dso].branch_map;
-    ++branch_map[branch_list.addr][branch_list.branch];
+    auto& binary = etm_binary_map_[branch_list.dso];
+    auto& branch_map = binary.branch_map;
+    ++branch_map[branch_list.addr][binary.GetBranch(branch_list.branch)];
   }
 
   void ProcessETMBinary() {
@@ -519,7 +538,7 @@ class LBRPerfDataReader : public PerfDataReader {
     return std::make_pair(binary_id, vaddr_in_file);
   }
 
-  uint32_t GetBinaryId(const Dso* dso) {
+  uint32_t GetBinaryId(Dso* dso) {
     if (auto it = dso_map_.find(dso); it != dso_map_.end()) {
       return it->second;
     }
@@ -531,7 +550,7 @@ class LBRPerfDataReader : public PerfDataReader {
 
   LBRData lbr_data_;
   // Map from dso to binary_id in lbr_data_.
-  std::unordered_map<const Dso*, uint32_t> dso_map_;
+  std::unordered_map<Dso*, uint32_t> dso_map_;
 };
 
 // Read a protobuf file specified by branch_list.proto.
@@ -632,12 +651,28 @@ class ETMBranchListToAutoFDOConverter {
  public:
   std::unique_ptr<AutoFDOBinaryInfo> Convert(const BinaryKey& key, ETMBinary& binary) {
     BuildId build_id = key.build_id;
-    std::unique_ptr<Dso> dso = Dso::CreateDsoWithBuildId(binary.dso_type, key.path, build_id);
+    std::unique_ptr<Dso> dso;
+    if (binary.dso_type == DSO_KERNEL_MODULE) {
+      const auto& module_info = key.kernel_module_info;
+      auto module_dso = std::make_unique<KernelModuleDso>(key.path, module_info.memory_start,
+                                                          module_info.memory_end, nullptr);
+      module_dso->SetFirstSymbolInMemory(Symbol(module_info.memory_symbol_name,
+                                                module_info.memory_symbol_addr,
+                                                module_info.memory_symbol_len));
+      module_dso->FindDebugFilePath(build_id);
+      dso.reset(module_dso.release());
+
+    } else {
+      dso = Dso::CreateDsoWithBuildId(binary.dso_type, key.path, build_id);
+    }
     if (!dso || !CheckBuildId(dso.get(), key.build_id)) {
+      // Log at DEBUG level to avoid flooding the host log.
+      // Using LOG(INFO) can overwhelm the output with expected "not found" messages.
+      LOG(DEBUG) << "Not found debug binary for " << key.path << " with build id " << key.build_id;
       return nullptr;
     }
     std::unique_ptr<AutoFDOBinaryInfo> autofdo_binary(new AutoFDOBinaryInfo);
-    autofdo_binary->executable_segments = GetExecutableSegments(dso.get());
+    autofdo_binary->GetExecutableSegments(dso.get());
 
     if (dso->type() == DSO_KERNEL) {
       CHECK_EQ(key.kernel_start_addr, 0);
@@ -1297,7 +1332,7 @@ class InjectCommand : public Command {
         if (!dso) {
           continue;
         }
-        binary.executable_segments = GetExecutableSegments(dso.get());
+        binary.GetExecutableSegments(dso.get());
         autofdo_writer.AddAutoFDOBinary(key, binary);
       }
     }

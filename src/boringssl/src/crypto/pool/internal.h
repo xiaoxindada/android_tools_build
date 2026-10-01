@@ -19,30 +19,24 @@
 #include "../lhash/internal.h"
 
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
+BSSL_NAMESPACE_BEGIN
 
 DEFINE_LHASH_OF(CRYPTO_BUFFER)
+
+BSSL_NAMESPACE_END
 
 struct crypto_buffer_st {
   CRYPTO_BUFFER_POOL *pool;
   uint8_t *data;
   size_t len;
-  CRYPTO_refcount_t references;
+  bssl::CRYPTO_refcount_t references;
   int data_is_static;
 };
 
 struct crypto_buffer_pool_st {
   LHASH_OF(CRYPTO_BUFFER) *bufs;
-  CRYPTO_MUTEX lock;
+  bssl::CRYPTO_MUTEX lock;
   const uint64_t hash_key[2];
 };
-
-
-#if defined(__cplusplus)
-}  // extern C
-#endif
 
 #endif  // OPENSSL_HEADER_CRYPTO_POOL_INTERNAL_H

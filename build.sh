@@ -34,7 +34,7 @@ function set_toolchains() {
 function builld_x86_64_aprotoc() {
 	local target="aprotoc"
 	local target_dir="prebuilt/x86_64"
-	local cmake_gen_args="-DCMAKE_C_COMPILER=$cc -DCMAKE_CXX_COMPILER=$cxx -DMY_TARGET=\"$target\""
+	local cmake_gen_args="-DCMAKE_C_COMPILER=$cc -DCMAKE_CXX_COMPILER=$cxx"
 
 	rm -rf "build"
 	cmake $cmake_gen_args -G "Ninja" -B "build" -DCMAKE_BUILD_TYPE="Release"
@@ -62,6 +62,9 @@ function build() {
 		cmake_gen_args="-DCMAKE_C_COMPILER=$cc -DCMAKE_CXX_COMPILER=$cxx"
 	fi
 
+  	if [[ $1 == "android" ]]; then
+		builld_x86_64_aprotoc
+  	fi
 	rm -rf "build"
 	echo "cmake $cmake_gen_args -G Ninja"
 	cmake $cmake_gen_args -G "Ninja" -B "build" -DCMAKE_INSTALL_PREFIX="build" -DCMAKE_BUILD_TYPE="Release"
@@ -70,5 +73,4 @@ function build() {
 
 install_deps
 set_toolchains
-builld_x86_64_aprotoc
 build $@

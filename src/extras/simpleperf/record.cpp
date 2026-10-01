@@ -65,6 +65,7 @@ static std::string RecordTypeToString(int record_type) {
       {PERF_RECORD_TRACING_DATA, "tracing_data"},
       {PERF_RECORD_AUXTRACE_INFO, "auxtrace_info"},
       {PERF_RECORD_AUXTRACE, "auxtrace"},
+      {PERF_RECORD_ITRACE_START, "itrace_start"},
       {SIMPLE_PERF_RECORD_KERNEL_SYMBOL, "kernel_symbol"},
       {SIMPLE_PERF_RECORD_DSO, "dso"},
       {SIMPLE_PERF_RECORD_SYMBOL, "symbol"},
@@ -156,19 +157,19 @@ void SampleId::WriteToBinaryFormat(char*& p) const {
 void SampleId::Dump(size_t indent) const {
   if (sample_id_all) {
     if (sample_type & PERF_SAMPLE_TID) {
-      PrintIndented(indent, "sample_id: pid %u, tid %u\n", tid_data.pid, tid_data.tid);
+      PrintIndented(indent, "sample_id: pid {}, tid {}\n", tid_data.pid, tid_data.tid);
     }
     if (sample_type & PERF_SAMPLE_TIME) {
-      PrintIndented(indent, "sample_id: time %" PRId64 "\n", time_data.time);
+      PrintIndented(indent, "sample_id: time {}\n", time_data.time);
     }
     if (sample_type & (PERF_SAMPLE_ID | PERF_SAMPLE_IDENTIFIER)) {
-      PrintIndented(indent, "sample_id: id %" PRId64 "\n", id_data.id);
+      PrintIndented(indent, "sample_id: id {}\n", id_data.id);
     }
     if (sample_type & PERF_SAMPLE_STREAM_ID) {
-      PrintIndented(indent, "sample_id: stream_id %" PRId64 "\n", stream_id_data.stream_id);
+      PrintIndented(indent, "sample_id: stream_id {}\n", stream_id_data.stream_id);
     }
     if (sample_type & PERF_SAMPLE_CPU) {
-      PrintIndented(indent, "sample_id: cpu %u, res %u\n", cpu_data.cpu, cpu_data.res);
+      PrintIndented(indent, "sample_id: cpu {}, res {}\n", cpu_data.cpu, cpu_data.res);
     }
   }
 }
@@ -221,8 +222,8 @@ bool Record::ParseHeader(char*& p, char*& end) {
 }
 
 void Record::Dump(size_t indent) const {
-  PrintIndented(indent, "record %s: type %u, misc 0x%x, size %u\n",
-                RecordTypeToString(type()).c_str(), type(), misc(), size());
+  PrintIndented(indent, "record {}: type {}, misc 0x{:x}, size {}\n", RecordTypeToString(type()),
+                type(), misc(), size());
   DumpData(indent + 1);
   sample_id.Dump(indent + 1);
 }
@@ -289,9 +290,9 @@ void MmapRecord::SetDataAndFilename(const MmapRecordDataType& data, const std::s
 }
 
 void MmapRecord::DumpData(size_t indent) const {
-  PrintIndented(indent, "pid %u, tid %u, addr 0x%" PRIx64 ", len 0x%" PRIx64 "\n", data->pid,
-                data->tid, data->addr, data->len);
-  PrintIndented(indent, "pgoff 0x%" PRIx64 ", filename %s\n", data->pgoff, filename);
+  PrintIndented(indent, "pid {}, tid {}, addr 0x{:x}, len 0x{:x}\n", data->pid, data->tid,
+                data->addr, data->len);
+  PrintIndented(indent, "pgoff 0x{:x}, filename {}\n", data->pgoff, filename);
 }
 
 bool Mmap2Record::Parse(const perf_event_attr& attr, char* p, char* end) {
@@ -339,12 +340,11 @@ void Mmap2Record::SetDataAndFilename(const Mmap2RecordDataType& data, const std:
 }
 
 void Mmap2Record::DumpData(size_t indent) const {
-  PrintIndented(indent, "pid %u, tid %u, addr 0x%" PRIx64 ", len 0x%" PRIx64 "\n", data->pid,
-                data->tid, data->addr, data->len);
-  PrintIndented(
-      indent, "pgoff 0x%" PRIx64 ", maj %u, min %u, ino %" PRId64 ", ino_generation %" PRIu64 "\n",
-      data->pgoff, data->maj, data->min, data->ino, data->ino_generation);
-  PrintIndented(indent, "prot %u, flags %u, filename %s\n", data->prot, data->flags, filename);
+  PrintIndented(indent, "pid {}, tid {}, addr 0x{:x}, len 0x{:x}\n", data->pid, data->tid,
+                data->addr, data->len);
+  PrintIndented(indent, "pgoff 0x{:x}, maj {}, min {}, ino {}, ino_generation {}\n", data->pgoff,
+                data->maj, data->min, data->ino, data->ino_generation);
+  PrintIndented(indent, "prot {}, flags {}, filename {}\n", data->prot, data->flags, filename);
 }
 
 bool CommRecord::Parse(const perf_event_attr& attr, char* p, char* end) {
@@ -406,7 +406,7 @@ void CommRecord::SetCommandName(const std::string& name) {
 }
 
 void CommRecord::DumpData(size_t indent) const {
-  PrintIndented(indent, "pid %u, tid %u, comm %s\n", data->pid, data->tid, comm);
+  PrintIndented(indent, "pid {}, tid {}, comm {}\n", data->pid, data->tid, comm);
 }
 
 bool ExitOrForkRecord::Parse(const perf_event_attr& attr, char* p, char* end) {
@@ -420,7 +420,7 @@ bool ExitOrForkRecord::Parse(const perf_event_attr& attr, char* p, char* end) {
 }
 
 void ExitOrForkRecord::DumpData(size_t indent) const {
-  PrintIndented(indent, "pid %u, ppid %u, tid %u, ptid %u\n", data->pid, data->ppid, data->tid,
+  PrintIndented(indent, "pid {}, ppid {}, tid {}, ptid {}\n", data->pid, data->ppid, data->tid,
                 data->ptid);
 }
 
@@ -455,7 +455,7 @@ bool LostRecord::Parse(const perf_event_attr& attr, char* p, char* end) {
 }
 
 void LostRecord::DumpData(size_t indent) const {
-  PrintIndented(indent, "id %" PRIu64 ", lost %" PRIu64 "\n", id, lost);
+  PrintIndented(indent, "id {}, lost {}\n", id, lost);
 }
 
 bool SampleRecord::Parse(const perf_event_attr& attr, char* p, char* end) {
@@ -549,9 +549,13 @@ bool SampleRecord::Parse(const perf_event_attr& attr, char* p, char* end) {
   if (sample_type & PERF_SAMPLE_BRANCH_STACK) {
     CHECK_SIZE_U64(p, end, 1);
     MoveFromBinaryFormat(branch_stack_data.stack_nr, p);
-    CHECK_SIZE(p, end, branch_stack_data.stack_nr * sizeof(BranchStackItemType));
+    uint64_t size;
+    if (__builtin_mul_overflow(branch_stack_data.stack_nr, sizeof(BranchStackItemType), &size)) {
+      return false;
+    }
+    CHECK_SIZE(p, end, size);
     branch_stack_data.stack = reinterpret_cast<BranchStackItemType*>(p);
-    p += branch_stack_data.stack_nr * sizeof(BranchStackItemType);
+    p += size;
   }
   if (sample_type & PERF_SAMPLE_REGS_USER) {
     CHECK_SIZE_U64(p, end, 1);
@@ -575,7 +579,11 @@ bool SampleRecord::Parse(const perf_event_attr& attr, char* p, char* end) {
     if (stack_user_data.size == 0) {
       stack_user_data.dyn_size = 0;
     } else {
-      CHECK_SIZE(p, end, stack_user_data.size + sizeof(uint64_t));
+      uint64_t size;
+      if (__builtin_add_overflow(stack_user_data.size, sizeof(uint64_t), &size)) {
+        return false;
+      }
+      CHECK_SIZE(p, end, size);
       stack_user_data.data = p;
       p += stack_user_data.size;
       MoveFromBinaryFormat(stack_user_data.dyn_size, p);
@@ -590,16 +598,22 @@ bool SampleRecord::Parse(const perf_event_attr& attr, char* p, char* end) {
 
 SampleRecord::SampleRecord(const perf_event_attr& attr, uint64_t id, uint64_t ip, uint32_t pid,
                            uint32_t tid, uint64_t time, uint32_t cpu, uint64_t period,
-                           const PerfSampleReadType& read_data, const std::vector<uint64_t>& ips,
-                           const std::vector<char>& stack, uint64_t dyn_stack_size) {
-  SetTypeAndMisc(PERF_RECORD_SAMPLE, PERF_RECORD_MISC_USER);
+                           uint64_t addr, const PerfSampleReadType& read_data,
+                           const std::vector<uint64_t>& ips, const std::vector<char>& stack,
+                           uint64_t dyn_stack_size, bool in_kernel,
+                           uint64_t additional_sample_type) {
+  SetTypeAndMisc(PERF_RECORD_SAMPLE, in_kernel ? PERF_RECORD_MISC_KERNEL : PERF_RECORD_MISC_USER);
   sample_type = attr.sample_type;
+  if (sample_type != 0) {
+    sample_type |= additional_sample_type;
+  }
   read_format = attr.read_format;
-  CHECK_EQ(0u,
-           sample_type & ~(PERF_SAMPLE_IP | PERF_SAMPLE_TID | PERF_SAMPLE_TIME | PERF_SAMPLE_ID |
-                           PERF_SAMPLE_CPU | PERF_SAMPLE_PERIOD | PERF_SAMPLE_READ |
-                           PERF_SAMPLE_CALLCHAIN | PERF_SAMPLE_REGS_USER | PERF_SAMPLE_STACK_USER));
+  CHECK_EQ(0u, sample_type &
+                   ~(PERF_SAMPLE_IP | PERF_SAMPLE_TID | PERF_SAMPLE_TIME | PERF_SAMPLE_ID |
+                     PERF_SAMPLE_CPU | PERF_SAMPLE_PERIOD | PERF_SAMPLE_READ | PERF_SAMPLE_ADDR |
+                     PERF_SAMPLE_CALLCHAIN | PERF_SAMPLE_REGS_USER | PERF_SAMPLE_STACK_USER));
   ip_data.ip = ip;
+  addr_data.addr = addr;
   tid_data.pid = pid;
   tid_data.tid = tid;
   time_data.time = time;
@@ -620,6 +634,9 @@ SampleRecord::SampleRecord(const perf_event_attr& attr, uint64_t id, uint64_t ip
   uint32_t size = header_size();
   if (sample_type & PERF_SAMPLE_IP) {
     size += sizeof(ip_data);
+  }
+  if (sample_type & PERF_SAMPLE_ADDR) {
+    size += sizeof(addr_data);
   }
   if (sample_type & PERF_SAMPLE_TID) {
     size += sizeof(tid_data);
@@ -659,6 +676,9 @@ SampleRecord::SampleRecord(const perf_event_attr& attr, uint64_t id, uint64_t ip
   MoveToBinaryFormat(header, p);
   if (sample_type & PERF_SAMPLE_IP) {
     MoveToBinaryFormat(ip_data, p);
+  }
+  if (sample_type & PERF_SAMPLE_ADDR) {
+    MoveToBinaryFormat(addr_data, p);
   }
   if (sample_type & PERF_SAMPLE_TID) {
     MoveToBinaryFormat(tid_data, p);
@@ -848,81 +868,80 @@ void SampleRecord::BuildBinaryWithNewCallChain(uint32_t new_size,
 }
 
 void SampleRecord::DumpData(size_t indent) const {
-  PrintIndented(indent, "sample_type: 0x%" PRIx64 "\n", sample_type);
+  PrintIndented(indent, "sample_type: 0x{:x}\n", sample_type);
   if (sample_type & PERF_SAMPLE_IP) {
-    PrintIndented(indent, "ip %p\n", reinterpret_cast<void*>(ip_data.ip));
+    PrintIndented(indent, "ip {}\n", reinterpret_cast<void*>(ip_data.ip));
   }
   if (sample_type & PERF_SAMPLE_TID) {
-    PrintIndented(indent, "pid %u, tid %u\n", tid_data.pid, tid_data.tid);
+    PrintIndented(indent, "pid {}, tid {}\n", tid_data.pid, tid_data.tid);
   }
   if (sample_type & PERF_SAMPLE_TIME) {
-    PrintIndented(indent, "time %" PRId64 "\n", time_data.time);
+    PrintIndented(indent, "time {}\n", time_data.time);
   }
   if (sample_type & PERF_SAMPLE_ADDR) {
-    PrintIndented(indent, "addr %p\n", reinterpret_cast<void*>(addr_data.addr));
+    PrintIndented(indent, "addr {}\n", reinterpret_cast<void*>(addr_data.addr));
   }
   if (sample_type & (PERF_SAMPLE_ID | PERF_SAMPLE_IDENTIFIER)) {
-    PrintIndented(indent, "id %" PRId64 "\n", id_data.id);
+    PrintIndented(indent, "id {}\n", id_data.id);
   }
   if (sample_type & PERF_SAMPLE_STREAM_ID) {
-    PrintIndented(indent, "stream_id %" PRId64 "\n", stream_id_data.stream_id);
+    PrintIndented(indent, "stream_id {}\n", stream_id_data.stream_id);
   }
   if (sample_type & PERF_SAMPLE_CPU) {
-    PrintIndented(indent, "cpu %u, res %u\n", cpu_data.cpu, cpu_data.res);
+    PrintIndented(indent, "cpu {}, res {}\n", cpu_data.cpu, cpu_data.res);
   }
   if (sample_type & PERF_SAMPLE_PERIOD) {
-    PrintIndented(indent, "period %" PRId64 "\n", period_data.period);
+    PrintIndented(indent, "period {}\n", period_data.period);
   }
   if (sample_type & PERF_SAMPLE_READ) {
-    PrintIndented(indent, "read nr=%zu\n", read_data.counts.size());
+    PrintIndented(indent, "read nr={}\n", read_data.counts.size());
     if (read_format & PERF_FORMAT_TOTAL_TIME_ENABLED) {
-      PrintIndented(indent + 1, "time_enabled %" PRIu64 "\n", read_data.time_enabled);
+      PrintIndented(indent + 1, "time_enabled {}\n", read_data.time_enabled);
     }
     if (read_format & PERF_FORMAT_TOTAL_TIME_RUNNING) {
-      PrintIndented(indent + 1, "time_running %" PRIu64 "\n", read_data.time_running);
+      PrintIndented(indent + 1, "time_running {}\n", read_data.time_running);
     }
     for (size_t i = 0; i < read_data.counts.size(); i++) {
-      PrintIndented(indent + 1, "count[%zu] %" PRIu64 "\n", i, read_data.counts[i]);
+      PrintIndented(indent + 1, "count[{}] {}\n", i, read_data.counts[i]);
       if (read_format & PERF_FORMAT_ID) {
-        PrintIndented(indent + 1, "id[%zu] %" PRIu64 "\n", i, read_data.ids[i]);
+        PrintIndented(indent + 1, "id[{}] {}\n", i, read_data.ids[i]);
       }
     }
   }
   if (sample_type & PERF_SAMPLE_CALLCHAIN) {
-    PrintIndented(indent, "callchain nr=%" PRIu64 "\n", callchain_data.ip_nr);
+    PrintIndented(indent, "callchain nr={}\n", callchain_data.ip_nr);
     for (uint64_t i = 0; i < callchain_data.ip_nr; ++i) {
-      PrintIndented(indent + 1, "0x%" PRIx64 "\n", callchain_data.ips[i]);
+      PrintIndented(indent + 1, "0x{:x}\n", callchain_data.ips[i]);
     }
   }
   if (sample_type & PERF_SAMPLE_RAW) {
-    PrintIndented(indent, "raw size=%zu\n", raw_data.size);
+    PrintIndented(indent, "raw size={}\n", raw_data.size);
     const uint32_t* data = reinterpret_cast<const uint32_t*>(raw_data.data);
     size_t size = raw_data.size / sizeof(uint32_t);
     for (size_t i = 0; i < size; ++i) {
-      PrintIndented(indent + 1, "0x%08x (%zu)\n", data[i], data[i]);
+      PrintIndented(indent + 1, "0x{:08x} ({})\n", data[i], data[i]);
     }
   }
   if (sample_type & PERF_SAMPLE_BRANCH_STACK) {
-    PrintIndented(indent, "branch_stack nr=%" PRIu64 "\n", branch_stack_data.stack_nr);
+    PrintIndented(indent, "branch_stack nr={}\n", branch_stack_data.stack_nr);
     for (uint64_t i = 0; i < branch_stack_data.stack_nr; ++i) {
       auto& item = branch_stack_data.stack[i];
-      PrintIndented(indent + 1, "from 0x%" PRIx64 ", to 0x%" PRIx64 ", flags 0x%" PRIx64 "\n",
-                    item.from, item.to, item.flags);
+      PrintIndented(indent + 1, "from 0x{:x}, to 0x{:x}, flags 0x{:x}\n", item.from, item.to,
+                    item.flags);
     }
   }
   if (sample_type & PERF_SAMPLE_REGS_USER) {
-    PrintIndented(indent, "user regs: abi=%" PRId64 "\n", regs_user_data.abi);
+    PrintIndented(indent, "user regs: abi={}\n", regs_user_data.abi);
     RegSet regs(regs_user_data.abi, regs_user_data.reg_mask, regs_user_data.regs);
     for (size_t i = 0; i < 64; ++i) {
       uint64_t value;
       if (regs.GetRegValue(i, &value)) {
-        PrintIndented(indent + 1, "reg (%s) 0x%016" PRIx64 "\n", GetRegName(i, regs.arch).c_str(),
-                      value);
+        PrintIndented(indent + 1, "reg ({}) 0x{:016x}\n", GetRegName(i, regs.arch), value);
       }
     }
   }
   if (sample_type & PERF_SAMPLE_STACK_USER) {
-    PrintIndented(indent, "user stack: size %zu dyn_size %" PRIu64 "\n", stack_user_data.size,
+    PrintIndented(indent, "user stack: size {} dyn_size {}\n", stack_user_data.size,
                   stack_user_data.dyn_size);
     const uint64_t* p = reinterpret_cast<const uint64_t*>(stack_user_data.data);
     const uint64_t* end = p + (stack_user_data.size / sizeof(uint64_t));
@@ -1032,9 +1051,9 @@ bool AuxRecord::Parse(const perf_event_attr& attr, char* p, char* end) {
 }
 
 void AuxRecord::DumpData(size_t indent) const {
-  PrintIndented(indent, "aux_offset %" PRIu64 "\n", data->aux_offset);
-  PrintIndented(indent, "aux_size %" PRIu64 "\n", data->aux_size);
-  PrintIndented(indent, "flags 0x%" PRIx64 "\n", data->flags);
+  PrintIndented(indent, "aux_offset {}\n", data->aux_offset);
+  PrintIndented(indent, "aux_size {}\n", data->aux_size);
+  PrintIndented(indent, "flags 0x{:x}\n", data->flags);
 }
 
 bool SwitchRecord::Parse(const perf_event_attr& attr, char* p, char* end) {
@@ -1055,9 +1074,9 @@ bool SwitchCpuWideRecord::Parse(const perf_event_attr& attr, char* p, char* end)
 
 void SwitchCpuWideRecord::DumpData(size_t indent) const {
   if (header.misc & PERF_RECORD_MISC_SWITCH_OUT) {
-    PrintIndented(indent, "next_pid %u, next_tid %u\n", tid_data.pid, tid_data.tid);
+    PrintIndented(indent, "next_pid {}, next_tid {}\n", tid_data.pid, tid_data.tid);
   } else {
-    PrintIndented(indent, "prev_pid %u, prev_tid %u\n", tid_data.pid, tid_data.tid);
+    PrintIndented(indent, "prev_pid {}, prev_tid {}\n", tid_data.pid, tid_data.tid);
   }
 }
 
@@ -1078,9 +1097,9 @@ bool BuildIdRecord::Parse(const perf_event_attr&, char* p, char* end) {
 }
 
 void BuildIdRecord::DumpData(size_t indent) const {
-  PrintIndented(indent, "pid %u\n", pid);
-  PrintIndented(indent, "build_id %s\n", build_id.ToString().c_str());
-  PrintIndented(indent, "filename %s\n", filename);
+  PrintIndented(indent, "pid {}\n", pid);
+  PrintIndented(indent, "build_id {}\n", build_id.ToString());
+  PrintIndented(indent, "filename {}\n", filename);
 }
 
 BuildIdRecord::BuildIdRecord(bool in_kernel, uint32_t pid, const BuildId& build_id,
@@ -1108,7 +1127,8 @@ bool AuxTraceInfoRecord::Parse(const perf_event_attr&, char* p, char* end) {
   data = reinterpret_cast<DataType*>(p);
   CHECK_SIZE(p, end, sizeof(*data));
   p += sizeof(*data);
-  if (data->aux_type != AUX_TYPE_ETM || data->version > 2) {
+  if (!((data->aux_type == AUX_TYPE_ETM && data->version <= 2) ||
+        (data->aux_type == AUX_TYPE_SPE && data->version == 1))) {
     return false;
   }
   for (uint32_t i = 0; i < data->nr_cpu; ++i) {
@@ -1117,11 +1137,26 @@ bool AuxTraceInfoRecord::Parse(const perf_event_attr&, char* p, char* end) {
     if (magic == MAGIC_ETM4) {
       CHECK_SIZE(p, end, sizeof(ETM4Info));
       ETM4Info& e = *reinterpret_cast<ETM4Info*>(p);
-      p += (e.nrtrcparams + 3) * sizeof(uint64_t);
+      uint64_t size;
+      if (__builtin_add_overflow(e.nrtrcparams, 3, &size) ||
+          __builtin_mul_overflow(size, sizeof(uint64_t), &size)) {
+        return false;
+      }
+      CHECK_SIZE(p, end, size);
+      p += size;
     } else if (magic == MAGIC_ETE) {
       CHECK_SIZE(p, end, sizeof(ETEInfo));
       ETEInfo& e = *reinterpret_cast<ETEInfo*>(p);
-      p += (e.nrtrcparams + 3) * sizeof(uint64_t);
+      uint64_t size;
+      if (__builtin_add_overflow(e.nrtrcparams, 3, &size) ||
+          __builtin_mul_overflow(size, sizeof(uint64_t), &size)) {
+        return false;
+      }
+      CHECK_SIZE(p, end, size);
+      p += size;
+    } else if (magic == MAGIC_SPE) {
+      CHECK_SIZE(p, end, sizeof(SPEInfo));
+      p += sizeof(SPEInfo);
     } else {
       return false;
     }
@@ -1155,44 +1190,67 @@ AuxTraceInfoRecord::AuxTraceInfoRecord(const DataType& data, const std::vector<E
   UpdateBinary(new_binary);
 }
 
+AuxTraceInfoRecord::AuxTraceInfoRecord(const DataType& data, const std::vector<SPEInfo>& spe_info) {
+  SetTypeAndMisc(PERF_RECORD_AUXTRACE_INFO, 0);
+
+  uint32_t size = header_size() + sizeof(DataType);
+  size += sizeof(SPEInfo) * spe_info.size();
+  SetSize(size);
+  char* new_binary = new char[size];
+  char* p = new_binary;
+  MoveToBinaryFormat(header, p);
+  this->data = reinterpret_cast<DataType*>(p);
+  MoveToBinaryFormat(data, p);
+  MoveToBinaryFormat(spe_info.data(), spe_info.size(), p);
+  UpdateBinary(new_binary);
+}
+
 void AuxTraceInfoRecord::DumpData(size_t indent) const {
-  PrintIndented(indent, "aux_type %u\n", data->aux_type);
-  PrintIndented(indent, "version %" PRIu64 "\n", data->version);
-  PrintIndented(indent, "nr_cpu %u\n", data->nr_cpu);
-  PrintIndented(indent, "pmu_type %u\n", data->pmu_type);
-  PrintIndented(indent, "snapshot %" PRIu64 "\n", data->snapshot);
+  PrintIndented(indent, "aux_type {}\n", data->aux_type);
+  PrintIndented(indent, "version {}\n", data->version);
+  PrintIndented(indent, "nr_cpu {}\n", data->nr_cpu);
+  PrintIndented(indent, "pmu_type {}\n", data->pmu_type);
+  PrintIndented(indent, "snapshot {}\n", data->snapshot);
   indent++;
   uint64_t* info = data->info;
 
   for (int i = 0; i < data->nr_cpu; i++) {
     if (info[0] == MAGIC_ETM4) {
       ETM4Info& e = *reinterpret_cast<ETM4Info*>(info);
-      PrintIndented(indent, "magic 0x%" PRIx64 "\n", e.magic);
-      PrintIndented(indent, "cpu %" PRIu64 "\n", e.cpu);
-      PrintIndented(indent, "nrtrcparams %" PRIu64 "\n", e.nrtrcparams);
-      PrintIndented(indent, "trcconfigr 0x%" PRIx64 "\n", e.trcconfigr);
-      PrintIndented(indent, "trctraceidr 0x%" PRIx64 "\n", e.trctraceidr);
-      PrintIndented(indent, "trcidr0 0x%" PRIx64 "\n", e.trcidr0);
-      PrintIndented(indent, "trcidr1 0x%" PRIx64 "\n", e.trcidr1);
-      PrintIndented(indent, "trcidr2 0x%" PRIx64 "\n", e.trcidr2);
-      PrintIndented(indent, "trcidr8 0x%" PRIx64 "\n", e.trcidr8);
-      PrintIndented(indent, "trcauthstatus 0x%" PRIx64 "\n", e.trcauthstatus);
+      PrintIndented(indent, "magic 0x{:x}\n", e.magic);
+      PrintIndented(indent, "cpu {}\n", e.cpu);
+      PrintIndented(indent, "nrtrcparams {}\n", e.nrtrcparams);
+      PrintIndented(indent, "trcconfigr 0x{:x}\n", e.trcconfigr);
+      PrintIndented(indent, "trctraceidr 0x{:x}\n", e.trctraceidr);
+      PrintIndented(indent, "trcidr0 0x{:x}\n", e.trcidr0);
+      PrintIndented(indent, "trcidr1 0x{:x}\n", e.trcidr1);
+      PrintIndented(indent, "trcidr2 0x{:x}\n", e.trcidr2);
+      PrintIndented(indent, "trcidr8 0x{:x}\n", e.trcidr8);
+      PrintIndented(indent, "trcauthstatus 0x{:x}\n", e.trcauthstatus);
+      info += e.nrtrcparams + 3;
+    } else if (info[0] == MAGIC_ETE) {
+      ETEInfo& e = *reinterpret_cast<ETEInfo*>(info);
+      PrintIndented(indent, "magic 0x{:x}\n", e.magic);
+      PrintIndented(indent, "cpu {}\n", e.cpu);
+      PrintIndented(indent, "nrtrcparams {}\n", e.nrtrcparams);
+      PrintIndented(indent, "trcconfigr 0x{:x}\n", e.trcconfigr);
+      PrintIndented(indent, "trctraceidr 0x{:x}\n", e.trctraceidr);
+      PrintIndented(indent, "trcidr0 0x{:x}\n", e.trcidr0);
+      PrintIndented(indent, "trcidr1 0x{:x}\n", e.trcidr1);
+      PrintIndented(indent, "trcidr2 0x{:x}\n", e.trcidr2);
+      PrintIndented(indent, "trcidr8 0x{:x}\n", e.trcidr8);
+      PrintIndented(indent, "trcauthstatus 0x{:x}\n", e.trcauthstatus);
+      PrintIndented(indent, "trcdevarch 0x{:x}\n", e.trcdevarch);
       info += e.nrtrcparams + 3;
     } else {
-      CHECK_EQ(info[0], MAGIC_ETE);
-      ETEInfo& e = *reinterpret_cast<ETEInfo*>(info);
-      PrintIndented(indent, "magic 0x%" PRIx64 "\n", e.magic);
-      PrintIndented(indent, "cpu %" PRIu64 "\n", e.cpu);
-      PrintIndented(indent, "nrtrcparams %" PRIu64 "\n", e.nrtrcparams);
-      PrintIndented(indent, "trcconfigr 0x%" PRIx64 "\n", e.trcconfigr);
-      PrintIndented(indent, "trctraceidr 0x%" PRIx64 "\n", e.trctraceidr);
-      PrintIndented(indent, "trcidr0 0x%" PRIx64 "\n", e.trcidr0);
-      PrintIndented(indent, "trcidr1 0x%" PRIx64 "\n", e.trcidr1);
-      PrintIndented(indent, "trcidr2 0x%" PRIx64 "\n", e.trcidr2);
-      PrintIndented(indent, "trcidr8 0x%" PRIx64 "\n", e.trcidr8);
-      PrintIndented(indent, "trcauthstatus 0x%" PRIx64 "\n", e.trcauthstatus);
-      PrintIndented(indent, "trcdevarch 0x%" PRIx64 "\n", e.trcdevarch);
-      info += e.nrtrcparams + 3;
+      CHECK_EQ(info[0], MAGIC_SPE);
+      SPEInfo& e = *reinterpret_cast<SPEInfo*>(info);
+      PrintIndented(indent, "magic 0x{:x}\n", e.magic);
+      PrintIndented(indent, "cpu {}\n", e.cpu);
+      PrintIndented(indent, "cap_min_ival 0x{:x}\n", e.cap_min_ival);
+      PrintIndented(indent, "cpu_midr 0x{:x}\n", e.cpu_midr);
+      PrintIndented(indent, "enabled 0x{:x}\n", e.enabled);
+      info = reinterpret_cast<uint64_t*>(&e + 1);
     }
   }
 }
@@ -1226,12 +1284,12 @@ AuxTraceRecord::AuxTraceRecord(uint64_t aux_size, uint64_t offset, uint32_t idx,
 }
 
 void AuxTraceRecord::DumpData(size_t indent) const {
-  PrintIndented(indent, "aux_size %" PRIu64 "\n", data->aux_size);
-  PrintIndented(indent, "offset %" PRIu64 "\n", data->offset);
-  PrintIndented(indent, "idx %u\n", data->idx);
-  PrintIndented(indent, "tid %u\n", data->tid);
-  PrintIndented(indent, "cpu %u\n", data->cpu);
-  PrintIndented(indent, "location.file_offset %" PRIu64 "\n", location.file_offset);
+  PrintIndented(indent, "aux_size {}\n", data->aux_size);
+  PrintIndented(indent, "offset {}\n", data->offset);
+  PrintIndented(indent, "idx {}\n", data->idx);
+  PrintIndented(indent, "tid {}\n", data->tid);
+  PrintIndented(indent, "cpu {}\n", data->cpu);
+  PrintIndented(indent, "location.file_offset {}\n", location.file_offset);
 }
 
 bool KernelSymbolRecord::Parse(const perf_event_attr&, char* p, char* end) {
@@ -1248,7 +1306,7 @@ bool KernelSymbolRecord::Parse(const perf_event_attr&, char* p, char* end) {
 }
 
 void KernelSymbolRecord::DumpData(size_t indent) const {
-  PrintIndented(indent, "kallsyms: %s\n", std::string(kallsyms, kallsyms + kallsyms_size).c_str());
+  PrintIndented(indent, "kallsyms {}\n", std::string_view(kallsyms, kallsyms + kallsyms_size));
 }
 
 KernelSymbolRecord::KernelSymbolRecord(const std::string& kallsyms) {
@@ -1297,11 +1355,11 @@ DsoRecord::DsoRecord(uint64_t dso_type, uint64_t dso_id, const std::string& dso_
 }
 
 void DsoRecord::DumpData(size_t indent) const {
-  PrintIndented(indent, "dso_type: %s(%" PRIu64 ")\n",
-                DsoTypeToString(static_cast<DsoType>(dso_type)), dso_type);
-  PrintIndented(indent, "dso_id: %" PRIu64 "\n", dso_id);
-  PrintIndented(indent, "min_vaddr: 0x%" PRIx64 "\n", min_vaddr);
-  PrintIndented(indent, "dso_name: %s\n", dso_name);
+  PrintIndented(indent, "dso_type: {}({})\n", DsoTypeToString(static_cast<DsoType>(dso_type)),
+                dso_type);
+  PrintIndented(indent, "dso_id: {}\n", dso_id);
+  PrintIndented(indent, "min_vaddr: 0x{:x}\n", min_vaddr);
+  PrintIndented(indent, "dso_name: {}\n", dso_name);
 }
 
 bool SymbolRecord::Parse(const perf_event_attr&, char* p, char* end) {
@@ -1336,10 +1394,10 @@ SymbolRecord::SymbolRecord(uint64_t addr, uint64_t len, const std::string& name,
 }
 
 void SymbolRecord::DumpData(size_t indent) const {
-  PrintIndented(indent, "name: %s\n", name);
-  PrintIndented(indent, "addr: 0x%" PRIx64 "\n", addr);
-  PrintIndented(indent, "len: 0x%" PRIx64 "\n", len);
-  PrintIndented(indent, "dso_id: %" PRIu64 "\n", dso_id);
+  PrintIndented(indent, "name: {}\n", name);
+  PrintIndented(indent, "addr: 0x{:x}\n", addr);
+  PrintIndented(indent, "len: 0x{:x}\n", len);
+  PrintIndented(indent, "dso_id: {}\n", dso_id);
 }
 
 bool TracingDataRecord::Parse(const perf_event_attr&, char* p, char* end) {
@@ -1382,8 +1440,12 @@ bool EventIdRecord::Parse(const perf_event_attr&, char* p, char* end) {
   CHECK_SIZE_U64(p, end, 1);
   MoveFromBinaryFormat(count, p);
   data = reinterpret_cast<const EventIdData*>(p);
-  CHECK_SIZE(p, end, sizeof(data[0]) * count);
-  p += sizeof(data[0]) * count;
+  uint64_t size;
+  if (__builtin_mul_overflow(sizeof(data[0]), count, &size)) {
+    return false;
+  }
+  CHECK_SIZE(p, end, size);
+  p += size;
   return p == end;
 }
 
@@ -1401,10 +1463,10 @@ EventIdRecord::EventIdRecord(const std::vector<uint64_t>& data) {
 }
 
 void EventIdRecord::DumpData(size_t indent) const {
-  PrintIndented(indent, "count: %" PRIu64 "\n", count);
+  PrintIndented(indent, "count: {}\n", count);
   for (size_t i = 0; i < count; ++i) {
-    PrintIndented(indent, "attr_id[%" PRIu64 "]: %" PRIu64 "\n", i, data[i].attr_id);
-    PrintIndented(indent, "event_id[%" PRIu64 "]: %" PRIu64 "\n", i, data[i].event_id);
+    PrintIndented(indent, "attr_id[{}]: {}\n", i, data[i].attr_id);
+    PrintIndented(indent, "event_id[{}]: {}\n", i, data[i].event_id);
   }
 }
 
@@ -1418,7 +1480,11 @@ bool CallChainRecord::Parse(const perf_event_attr&, char* p, char* end) {
   MoveFromBinaryFormat(chain_type, p);
   MoveFromBinaryFormat(time, p);
   MoveFromBinaryFormat(ip_nr, p);
-  CHECK_SIZE_U64(p, end, ip_nr * 2);
+  uint64_t u64_count;
+  if (__builtin_mul_overflow(ip_nr, 2, &u64_count)) {
+    return false;
+  }
+  CHECK_SIZE_U64(p, end, u64_count);
   ips = reinterpret_cast<uint64_t*>(p);
   p += ip_nr * sizeof(uint64_t);
   sps = reinterpret_cast<uint64_t*>(p);
@@ -1468,13 +1534,13 @@ void CallChainRecord::DumpData(size_t indent) const {
       type_name = "JOINED_REMOTE";
       break;
   }
-  PrintIndented(indent, "pid %u\n", pid);
-  PrintIndented(indent, "tid %u\n", tid);
-  PrintIndented(indent, "chain_type %s\n", type_name);
-  PrintIndented(indent, "time %" PRIu64 "\n", time);
-  PrintIndented(indent, "ip_nr %" PRIu64 "\n", ip_nr);
+  PrintIndented(indent, "pid {}\n", pid);
+  PrintIndented(indent, "tid {}\n", tid);
+  PrintIndented(indent, "chain_type {}\n", type_name);
+  PrintIndented(indent, "time {}\n", time);
+  PrintIndented(indent, "ip_nr {}\n", ip_nr);
   for (size_t i = 0; i < ip_nr; ++i) {
-    PrintIndented(indent + 1, "ip 0x%" PRIx64 ", sp 0x%" PRIx64 "\n", ips[i], sps[i]);
+    PrintIndented(indent + 1, "ip 0x{:x}, sp 0x{:x}\n", ips[i], sps[i]);
   }
 }
 
@@ -1505,7 +1571,11 @@ bool UnwindingResultRecord::Parse(const perf_event_attr&, char* p, char* end) {
   if (stack_user_data.size == 0) {
     stack_user_data.dyn_size = 0;
   } else {
-    CHECK_SIZE(p, end, stack_user_data.size + sizeof(uint64_t));
+    uint64_t size;
+    if (__builtin_add_overflow(stack_user_data.size, sizeof(uint64_t), &size)) {
+      return false;
+    }
+    CHECK_SIZE(p, end, size);
     stack_user_data.data = p;
     p += stack_user_data.size;
     MoveFromBinaryFormat(stack_user_data.dyn_size, p);
@@ -1515,7 +1585,11 @@ bool UnwindingResultRecord::Parse(const perf_event_attr&, char* p, char* end) {
   if (p < end) {
     CHECK_SIZE_U64(p, end, 1);
     MoveFromBinaryFormat(callchain.length, p);
-    CHECK_SIZE_U64(p, end, callchain.length * 2);
+    uint64_t u64_count;
+    if (__builtin_mul_overflow(callchain.length, 2, &u64_count)) {
+      return false;
+    }
+    CHECK_SIZE_U64(p, end, u64_count);
     callchain.ips = reinterpret_cast<uint64_t*>(p);
     p += callchain.length * sizeof(uint64_t);
     callchain.sps = reinterpret_cast<uint64_t*>(p);
@@ -1566,25 +1640,24 @@ UnwindingResultRecord::UnwindingResultRecord(uint64_t time, const UnwindingResul
 }
 
 void UnwindingResultRecord::DumpData(size_t indent) const {
-  PrintIndented(indent, "time %" PRIu64 "\n", time);
-  PrintIndented(indent, "used_time %" PRIu64 "\n", unwinding_result.used_time);
-  PrintIndented(indent, "error_code %" PRIu64 "\n", unwinding_result.error_code);
-  PrintIndented(indent, "error_addr 0x%" PRIx64 "\n", unwinding_result.error_addr);
-  PrintIndented(indent, "stack_start 0x%" PRIx64 "\n", unwinding_result.stack_start);
-  PrintIndented(indent, "stack_end 0x%" PRIx64 "\n", unwinding_result.stack_end);
+  PrintIndented(indent, "time {}\n", time);
+  PrintIndented(indent, "used_time {}\n", unwinding_result.used_time);
+  PrintIndented(indent, "error_code {}\n", unwinding_result.error_code);
+  PrintIndented(indent, "error_addr 0x{:x}\n", unwinding_result.error_addr);
+  PrintIndented(indent, "stack_start 0x{:x}\n", unwinding_result.stack_start);
+  PrintIndented(indent, "stack_end 0x{:x}\n", unwinding_result.stack_end);
   if (regs_user_data.reg_nr > 0) {
-    PrintIndented(indent, "user regs: abi=%" PRId64 "\n", regs_user_data.abi);
+    PrintIndented(indent, "user regs: abi={}\n", regs_user_data.abi);
     RegSet regs(regs_user_data.abi, regs_user_data.reg_mask, regs_user_data.regs);
     for (size_t i = 0; i < 64; ++i) {
       uint64_t value;
       if (regs.GetRegValue(i, &value)) {
-        PrintIndented(indent + 1, "reg (%s) 0x%016" PRIx64 "\n", GetRegName(i, regs.arch).c_str(),
-                      value);
+        PrintIndented(indent + 1, "reg ({}) 0x{:016x}\n", GetRegName(i, regs.arch), value);
       }
     }
   }
   if (stack_user_data.size > 0) {
-    PrintIndented(indent, "user stack: size %zu dyn_size %" PRIu64 "\n", stack_user_data.size,
+    PrintIndented(indent, "user stack: size {} dyn_size {}\n", stack_user_data.size,
                   stack_user_data.dyn_size);
     const uint64_t* p = reinterpret_cast<const uint64_t*>(stack_user_data.data);
     const uint64_t* end = p + (stack_user_data.size / sizeof(uint64_t));
@@ -1598,10 +1671,10 @@ void UnwindingResultRecord::DumpData(size_t indent) const {
     printf("\n");
   }
   if (callchain.length > 0) {
-    PrintIndented(indent, "callchain length=%" PRIu64 ":\n", callchain.length);
+    PrintIndented(indent, "callchain length={}:\n", callchain.length);
     for (uint64_t i = 0; i < callchain.length; i++) {
-      PrintIndented(indent + 1, "ip_%" PRIu64 ": 0x%" PRIx64 "\n", i + 1, callchain.ips[i]);
-      PrintIndented(indent + 1, "sp_%" PRIu64 ": 0x%" PRIx64 "\n", i + 1, callchain.sps[i]);
+      PrintIndented(indent + 1, "ip_{}: 0x{:x}\n", i + 1, callchain.ips[i]);
+      PrintIndented(indent + 1, "sp_{}: 0x{:x}\n", i + 1, callchain.sps[i]);
     }
   }
 }
@@ -1635,7 +1708,7 @@ bool DebugRecord::Parse(const perf_event_attr&, char* p, char* end) {
 }
 
 void DebugRecord::DumpData(size_t indent) const {
-  PrintIndented(indent, "s %s\n", s);
+  PrintIndented(indent, "s {}\n", s);
 }
 
 bool UnknownRecord::Parse(const perf_event_attr&, char* p, char* end) {
@@ -1743,6 +1816,9 @@ std::vector<std::unique_ptr<Record>> ReadRecordsFromBuffer(const perf_event_attr
 }
 
 std::unique_ptr<Record> ReadRecordFromBuffer(const perf_event_attr& attr, char* p, char* end) {
+  if (static_cast<size_t>(end - p) < sizeof(perf_event_header)) {
+    return nullptr;
+  }
   auto header = reinterpret_cast<const perf_event_header*>(p);
   return ReadRecordFromBuffer(attr, header->type, p, end);
 }

@@ -28,8 +28,11 @@
 
 #include <chrono>
 #include <condition_variable>
+#include <fstream>
 #include <memory>
 #include <mutex>
+#include <optional>
+#include <string_view>
 #include <thread>
 
 #include <android-base/chrono_utils.h>
@@ -37,19 +40,38 @@
 #include <android-base/logging.h>
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
+#include <android-base/strings.h>
 
 using android::base::StringPrintf;
 using android::base::boot_clock;
+using android::base::GetBoolProperty;
+using android::base::ReadFileToString;
 using namespace std::chrono_literals;
 
 namespace android {
 namespace init {
 
-static std::thread* g_bootcharting_thread;
+static std::optional<std::thread> g_bootcharting_thread;
 
 [[clang::no_destroy]] static std::mutex g_bootcharting_finished_mutex;
 [[clang::no_destroy]] static std::condition_variable g_bootcharting_finished_cv;
 static bool g_bootcharting_finished;
+
+static std::string get_bootchart_path(std::string_view file) {
+    static const bool early = GetBoolProperty("ro.boot.bootchart.enabled", false);
+    return std::string(early ? "/dev/bootchart/" : "/data/bootchart/") + std::string(file);
+}
+
+static bool is_bootchart_enabled() {
+    // Support bootchart start on early-init
+    if (GetBoolProperty("ro.boot.bootchart.enabled", false)) {
+        return true;
+    }
+    // Otherwise, fallback to start on post-fs-data
+    // We don't care about the content, but we do care that /data/bootchart/enabled exists.
+    std::string start;
+    return ReadFileToString("/data/bootchart/enabled", &start);
+}
 
 static long long get_uptime_jiffies() {
     constexpr int64_t kNanosecondsPerJiffy = 10000000;
@@ -62,6 +84,32 @@ static std::unique_ptr<FILE, decltype(&fclose)> fopen_unique(const char* filenam
   std::unique_ptr<FILE, decltype(&fclose)> result(fopen(filename, mode), fclose);
   if (!result) PLOG(ERROR) << "bootchart: failed to open " << filename;
   return result;
+}
+
+static std::string get_cpu_model() {
+#if defined(__i386__) || defined(__x86_64__)
+    static const char* kModelKey = "model name";
+#elif defined(__arm__) || defined(__aarch64__)
+    static const char* kModelKey = "Processor";
+#else
+    static const char* kModelKey = nullptr;
+#endif
+
+    if (kModelKey) {
+        if (std::ifstream infile("/proc/cpuinfo"); infile.is_open()) {
+            std::string line;
+            while (std::getline(infile, line)) {
+                if (android::base::StartsWith(line, kModelKey)) {
+                    std::vector<std::string> parts = android::base::Split(line, ":");
+                    if (parts.size() > 1) return android::base::Trim(parts[1]);
+                }
+            }
+        }
+    }
+
+    utsname uts;
+    if (uname(&uts) != -1) return uts.machine;
+    return "unknown";
 }
 
 static void log_header() {
@@ -77,16 +125,15 @@ static void log_header() {
   if (fingerprint.empty()) return;
 
   std::string kernel_cmdline;
-  android::base::ReadFileToString("/proc/cmdline", &kernel_cmdline);
+  ReadFileToString("/proc/cmdline", &kernel_cmdline);
 
-  auto fp = fopen_unique("/data/bootchart/header", "we");
+  auto fp = fopen_unique(get_bootchart_path("header").c_str(), "we");
   if (!fp) return;
   fprintf(&*fp, "version = Android init 0.8\n");
   fprintf(&*fp, "title = Boot chart for Android (%s)\n", date);
   fprintf(&*fp, "system.uname = %s %s %s %s\n", uts.sysname, uts.release, uts.version, uts.machine);
   fprintf(&*fp, "system.release = %s\n", fingerprint.c_str());
-  // TODO: use /proc/cpuinfo "model name" line for x86, "Processor" line for arm.
-  fprintf(&*fp, "system.cpu = %s\n", uts.machine);
+  fprintf(&*fp, "system.cpu = %s\n", get_cpu_model().c_str());
   fprintf(&*fp, "system.kernel.options = %s\n", kernel_cmdline.c_str());
 }
 
@@ -98,7 +145,7 @@ static void log_file(FILE* log, const char* procfile) {
   log_uptime(log);
 
   std::string content;
-  if (android::base::ReadFileToString(procfile, &content)) {
+  if (ReadFileToString(procfile, &content)) {
     fprintf(log, "%s\n", content.c_str());
   }
 }
@@ -115,19 +162,48 @@ static void log_processes(FILE* log) {
 
     // /proc/<pid>/stat only has truncated task names, so get the full
     // name from /proc/<pid>/cmdline.
-    std::string cmdline;
-    android::base::ReadFileToString(StringPrintf("/proc/%d/cmdline", pid), &cmdline);
-    const char* full_name = cmdline.c_str(); // So we stop at the first NUL.
+    std::string cmdline_path = StringPrintf("/proc/%d/cmdline", pid);
+    std::string process_cmdline;
+    if (ReadFileToString(cmdline_path, &process_cmdline)) {
+      // Remove trailing null chars
+      while (!process_cmdline.empty() && process_cmdline.back() == '\0') {
+        process_cmdline.pop_back();
+      }
+      // Replace remaining null chars with spaces
+      std::replace(process_cmdline.begin(), process_cmdline.end(), '\0', ' ');
+      process_cmdline = android::base::Trim(process_cmdline);
+
+      // Trim the executable path, should keep only the basename
+      if (!process_cmdline.empty()) {
+        size_t first_space = process_cmdline.find(' ');
+        std::string executable;
+        std::string args;
+
+        if (first_space != std::string::npos) {
+          executable = process_cmdline.substr(0, first_space);
+          args = process_cmdline.substr(first_space);
+        } else {
+          executable = process_cmdline;
+        }
+        size_t last_slash = executable.find_last_of('/');
+        if (last_slash != std::string::npos && last_slash < executable.size() - 1) {
+          executable = executable.substr(last_slash + 1);
+        }
+        process_cmdline = executable + args;
+      }
+    } else {
+      process_cmdline = "unknown process";
+    }
 
     // Read process stat line.
     std::string stat;
-    if (android::base::ReadFileToString(StringPrintf("/proc/%d/stat", pid), &stat)) {
-      if (!cmdline.empty()) {
+    if (ReadFileToString(StringPrintf("/proc/%d/stat", pid), &stat)) {
+      if (!process_cmdline.empty()) {
         // Substitute the process name with its real name.
         size_t open = stat.find('(');
         size_t close = stat.find_last_of(')');
         if (open != std::string::npos && close != std::string::npos) {
-          stat.replace(open + 1, close - open - 1, full_name);
+          stat.replace(open + 1, close - open - 1, process_cmdline);
         }
       }
       fputs(stat.c_str(), log);
@@ -155,11 +231,11 @@ static void bootchart_thread_main() {
       return;
   }
   // Open log files.
-  auto stat_log = fopen_unique("/data/bootchart/proc_stat.log", "we");
+  auto stat_log = fopen_unique(get_bootchart_path("proc_stat.log").c_str(), "we");
   if (!stat_log) return;
-  auto proc_log = fopen_unique("/data/bootchart/proc_ps.log", "we");
+  auto proc_log = fopen_unique(get_bootchart_path("proc_ps.log").c_str(), "we");
   if (!proc_log) return;
-  auto disk_log = fopen_unique("/data/bootchart/proc_diskstats.log", "we");
+  auto disk_log = fopen_unique(get_bootchart_path("proc_diskstats.log").c_str(), "we");
   if (!disk_log) return;
 
   log_header();
@@ -180,14 +256,12 @@ static void bootchart_thread_main() {
 }
 
 static Result<void> do_bootchart_start() {
-    // We don't care about the content, but we do care that /data/bootchart/enabled actually exists.
-    std::string start;
-    if (!android::base::ReadFileToString("/data/bootchart/enabled", &start)) {
+    if (!is_bootchart_enabled()) {
         LOG(VERBOSE) << "Not bootcharting";
         return {};
     }
-
-    g_bootcharting_thread = new std::thread(bootchart_thread_main);
+    if (!g_bootcharting_thread)
+        g_bootcharting_thread.emplace(bootchart_thread_main);
     return {};
 }
 
@@ -202,8 +276,7 @@ static Result<void> do_bootchart_stop() {
     }
 
     g_bootcharting_thread->join();
-    delete g_bootcharting_thread;
-    g_bootcharting_thread = nullptr;
+    g_bootcharting_thread.reset();
     return {};
 }
 

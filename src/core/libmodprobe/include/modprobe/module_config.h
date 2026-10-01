@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <functional>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -49,6 +50,7 @@ class ModuleConfig {
     bool ParseDepCallback(const std::string& base_path, const std::vector<std::string>& args);
     bool ParseAliasCallback(const std::vector<std::string>& args);
     bool ParseSoftdepCallback(const std::vector<std::string>& args);
+    bool ParseSoftdepParams(const std::string& module, const std::vector<std::string>& args);
     bool ParseLoadCallback(const std::vector<std::string>& args);
     bool ParseOptionsCallback(const std::vector<std::string>& args);
     bool ParseDynOptionsCallback(const std::vector<std::string>& args);

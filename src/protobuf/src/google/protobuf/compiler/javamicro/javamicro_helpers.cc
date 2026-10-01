@@ -33,15 +33,18 @@
 //  Sanjay Ghemawat, Jeff Dean, and others.
 
 #include <limits>
+#include <string>
 
-#include <absl/strings/ascii.h>
-#include <absl/strings/escaping.h>
-#include <absl/strings/match.h>
-#include <absl/strings/substitute.h>
-#include <absl/log/absl_log.h>
-#include <google/protobuf/compiler/javamicro/javamicro_helpers.h>
-#include <google/protobuf/compiler/javamicro/javamicro_params.h>
-#include <google/protobuf/descriptor.pb.h>
+#include "absl/strings/ascii.h"
+#include "absl/strings/escaping.h"
+#include "absl/strings/match.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
+#include "absl/strings/substitute.h"
+#include "absl/log/absl_log.h"
+#include "google/protobuf/compiler/javamicro/javamicro_helpers.h"
+#include "google/protobuf/compiler/javamicro/javamicro_params.h"
+#include "google/protobuf/descriptor.pb.h"
 
 namespace google {
 namespace protobuf {
@@ -57,7 +60,7 @@ namespace {
 
 const char* kDefaultPackage = "";
 
-const std::string& FieldName(const FieldDescriptor* field) {
+absl::string_view FieldName(const FieldDescriptor* field) {
   // Groups are hacky:  The name of the field is just the lower-cased name
   // of the group type.  In Java, though, we would like to retain the original
   // capitalization of the type name.
@@ -68,7 +71,7 @@ const std::string& FieldName(const FieldDescriptor* field) {
   }
 }
 
-std::string UnderscoresToCamelCaseImpl(const std::string& input, bool cap_next_letter) {
+std::string UnderscoresToCamelCaseImpl(absl::string_view input, bool cap_next_letter) {
   std::string result;
   // Note:  I distrust ctype.h due to locales.
   for (int i = 0; i < input.size(); i++) {
@@ -160,7 +163,7 @@ bool IsOuterClassNeeded(const Params& params, const FileDescriptor* file) {
   return !params.java_multiple_files(file->name());
 }
 
-std::string ToJavaName(const Params& params, const std::string& name, bool is_class,
+std::string ToJavaName(const Params& params, absl::string_view name, bool is_class,
     const Descriptor* parent, const FileDescriptor* file) {
   std::string result;
   if (parent != NULL) {
@@ -263,7 +266,7 @@ const char* BoxedPrimitiveTypeName(JavaType type) {
   return NULL;
 }
 
-bool AllAscii(const std::string& text) {
+bool AllAscii(absl::string_view text) {
   for (int i = 0; i < text.size(); i++) {
     if ((text[i] & 0x80) != 0) {
       return false;
@@ -336,8 +339,8 @@ std::string DefaultValue(const Params& params, const FieldDescriptor* field) {
       }
 
     case FieldDescriptor::CPPTYPE_ENUM:
-      return ClassName(params, field->enum_type()) + "." +
-             field->default_value_enum()->name();
+      return absl::StrCat(ClassName(params, field->enum_type()), ".",
+                          field->default_value_enum()->name());
 
     case FieldDescriptor::CPPTYPE_MESSAGE:
       return ClassName(params, field->message_type()) + ".getDefaultInstance()";

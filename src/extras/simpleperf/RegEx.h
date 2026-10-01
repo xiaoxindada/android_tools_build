@@ -32,15 +32,22 @@ class RegExMatch {
   virtual void MoveToNextMatch() = 0;
 };
 
-// A wrapper of std::regex, converting std::regex_error exception into return value.
+// A wrapper of the regex engine (currently libpcre2).
 class RegEx {
  public:
   static std::unique_ptr<RegEx> Create(std::string_view pattern);
   virtual ~RegEx() {}
   const std::string& GetPattern() const { return pattern_; }
 
+  // Thread-safe for concurrent calls on the same object.
   virtual bool Match(std::string_view s) const = 0;
   virtual bool Search(std::string_view s) const = 0;
+
+  // Not thread-safe for concurrent calls on the same object. But it is about 2x faster than
+  // Match() and Search() because of reusing match data.
+  virtual bool ThreadUnsafeMatch(std::string_view s) const = 0;
+  virtual bool ThreadUnsafeSearch(std::string_view s) const = 0;
+
   // Always return a not-null RegExMatch. If no match, RegExMatch->IsValid() is false.
   virtual std::unique_ptr<RegExMatch> SearchAll(std::string_view s) const = 0;
   virtual std::optional<std::string> Replace(const std::string& s,

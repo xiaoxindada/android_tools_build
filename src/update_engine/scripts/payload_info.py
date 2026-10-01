@@ -24,9 +24,19 @@ from __future__ import print_function
 import argparse
 import sys
 import textwrap
+import json
 
 from six.moves import range
-import update_metadata_pb2
+try:
+  import update_metadata_pb2
+except ImportError:
+  print("Error: Could not import update_metadata_pb2.", file=sys.stderr)
+  print("If you are in an AOSP environment, please build this tool with:", file=sys.stderr)
+  print("  m payload_info", file=sys.stderr)
+  print("And run the generated binary", file=sys.stderr)
+  print("or append system/update_engine/scripts to $PYTHONPATH.", file=sys.stderr)
+  raise
+
 import update_payload
 
 
@@ -73,17 +83,54 @@ class PayloadCommand:
     manifest = self.payload.manifest
     # pylint: disable=no-member
     DisplayValue('Number of partitions', len(manifest.partitions))
-    for partition in manifest.partitions:
-      DisplayValue('  Number of "%s" ops' % partition.partition_name,
-                   len(partition.operations))
-    for partition in manifest.partitions:
-      DisplayValue("  Timestamp for " +
-                   partition.partition_name, partition.version)
-    for partition in manifest.partitions:
-      DisplayValue("  COW Size for " +
-                   partition.partition_name, partition.estimate_cow_size)
     DisplayValue('Block size', manifest.block_size)
     DisplayValue('Minor version', manifest.minor_version)
+
+    for i, partition in enumerate(manifest.partitions):
+      print('\nPartition %d: %s' % (i, partition.partition_name))
+      DisplayValue('  Number of ops', len(partition.operations))
+      DisplayValue("  Version", partition.version)
+      DisplayValue("  COW Size estimate", partition.estimate_cow_size)
+
+      if partition.HasField('hash_tree_data_extent'):
+        extent = partition.hash_tree_data_extent
+        DisplayValue('  Hash tree data extent', '(%s, %s)' %
+                     (extent.start_block, extent.num_blocks))
+      if partition.HasField('hash_tree_extent'):
+        extent = partition.hash_tree_extent
+        DisplayValue('  Hash tree extent', '(%s, %s)' %
+                     (extent.start_block, extent.num_blocks))
+      if partition.HasField('hash_tree_algorithm'):
+        DisplayValue('  Hash tree algorithm', partition.hash_tree_algorithm)
+      if partition.HasField('hash_tree_salt'):
+        DisplayValue('  Hash tree salt (hex)', partition.hash_tree_salt.hex())
+
+      if partition.HasField('fec_data_extent'):
+        extent = partition.fec_data_extent
+        DisplayValue('  FEC data extent', '(%s, %s)' %
+                     (extent.start_block, extent.num_blocks))
+      if partition.HasField('fec_extent'):
+        extent = partition.fec_extent
+        DisplayValue('  FEC extent', '(%s, %s)' % (extent.start_block,
+                                                   extent.num_blocks))
+      if partition.HasField('fec_roots'):
+        DisplayValue('  FEC roots', partition.fec_roots)
+      DisplayValue('  FEC computation on device',
+                   partition.HasField('fec_data_extent'))
+
+    if manifest.HasField('dynamic_partition_metadata'):
+      print('\nDynamic Partition Metadata:')
+      dpm = manifest.dynamic_partition_metadata
+      DisplayValue('  Snapshot enabled', dpm.snapshot_enabled)
+      DisplayValue('  VABC enabled', dpm.vabc_enabled)
+      if dpm.HasField('vabc_compression_param'):
+        DisplayValue('  VABC compression param', dpm.vabc_compression_param)
+      if dpm.HasField('cow_version'):
+        DisplayValue('  COW version', dpm.cow_version)
+      if dpm.HasField('compression_factor'):
+        DisplayValue('  Compression Factor', dpm.compression_factor)
+      if dpm.HasField('disable_ublk'):
+        DisplayValue('  Disable UBLK', dpm.disable_ublk)
 
   def _DisplaySignatures(self):
     """Show information about the signatures from the manifest."""
@@ -203,10 +250,121 @@ class PayloadCommand:
     DisplayValue('Blocks written', stats['written_blocks'])
     DisplayValue('Seeks when writing', stats['num_write_seeks'])
 
+  def _GetJsonStats(self, manifest):
+    """Returns a dictionary with detailed statistics about the payload."""
+    op_names = update_payload.common.OpType.NAMES
+    json_stats = {
+        'partitions': {},
+        'block_size': manifest.block_size,
+        'minor_version': manifest.minor_version,
+    }
+    if manifest.HasField('dynamic_partition_metadata'):
+      dpm = manifest.dynamic_partition_metadata
+      dpm_stats = {
+          'snapshot_enabled': dpm.snapshot_enabled,
+          'vabc_enabled': dpm.vabc_enabled,
+      }
+      if dpm.HasField('vabc_compression_param'):
+        dpm_stats['vabc_compression_param'] = dpm.vabc_compression_param
+      if dpm.HasField('cow_version'):
+        dpm_stats['cow_version'] = dpm.cow_version
+      if dpm.HasField('compression_factor'):
+        dpm_stats['compression_factor'] = dpm.compression_factor
+      if dpm.HasField('disable_ublk'):
+        dpm_stats['disable_ublk'] = dpm.disable_ublk
+      json_stats['dynamic_partition_metadata'] = dpm_stats
+
+    total_read_blocks = 0
+    total_written_blocks = 0
+    total_write_seeks = 0
+
+    for partition in manifest.partitions:
+      partition_stats = {
+          'op_stats': {},
+          'read_blocks': 0,
+          'written_blocks': 0,
+          'num_write_seeks': 0,
+          'new_partition_size': partition.new_partition_info.size,
+          'old_partition_size': partition.old_partition_info.size,
+          'version': partition.version,
+          'estimate_cow_size': partition.estimate_cow_size,
+      }
+
+      if partition.HasField('hash_tree_data_extent'):
+        partition_stats['hash_tree_data_extent'] = {
+            'start_block': partition.hash_tree_data_extent.start_block,
+            'num_blocks': partition.hash_tree_data_extent.num_blocks,
+        }
+      if partition.HasField('hash_tree_extent'):
+        partition_stats['hash_tree_extent'] = {
+            'start_block': partition.hash_tree_extent.start_block,
+            'num_blocks': partition.hash_tree_extent.num_blocks,
+        }
+      if partition.HasField('hash_tree_algorithm'):
+        partition_stats['hash_tree_algorithm'] = partition.hash_tree_algorithm
+      if partition.HasField('hash_tree_salt'):
+        partition_stats['hash_tree_salt'] = partition.hash_tree_salt.hex()
+      partition_stats['fec_computation_on_device'] = partition.HasField(
+          'fec_data_extent')
+      if partition.HasField('fec_data_extent'):
+        partition_stats['fec_data_extent'] = {
+            'start_block': partition.fec_data_extent.start_block,
+            'num_blocks': partition.fec_data_extent.num_blocks,
+        }
+      if partition.HasField('fec_extent'):
+        partition_stats['fec_extent'] = {
+            'start_block': partition.fec_extent.start_block,
+            'num_blocks': partition.fec_extent.num_blocks,
+        }
+      if partition.HasField('fec_roots'):
+        partition_stats['fec_roots'] = partition.fec_roots
+
+      last_ext = None
+      for op in partition.operations:
+        op_name = op_names[op.type]
+        if op_name not in partition_stats['op_stats']:
+          partition_stats['op_stats'][op_name] = {'count': 0, 'blocks': 0}
+
+        partition_stats['op_stats'][op_name]['count'] += 1
+        written_blocks_op = sum(ext.num_blocks for ext in op.dst_extents)
+        partition_stats['op_stats'][op_name]['blocks'] += written_blocks_op
+
+        partition_stats['read_blocks'] += sum(
+            ext.num_blocks for ext in op.src_extents)
+        partition_stats['written_blocks'] += written_blocks_op
+
+        for curr_ext in op.dst_extents:
+          if last_ext and (curr_ext.start_block !=
+                           last_ext.start_block + last_ext.num_blocks):
+            partition_stats['num_write_seeks'] += 1
+          last_ext = curr_ext
+
+      # Add verification reads
+      partition_stats['read_blocks'] += (
+          partition.old_partition_info.size // manifest.block_size)
+      partition_stats['read_blocks'] += (
+          partition.new_partition_info.size // manifest.block_size)
+
+      json_stats['partitions'][partition.partition_name] = partition_stats
+      total_read_blocks += partition_stats['read_blocks']
+      total_written_blocks += partition_stats['written_blocks']
+      total_write_seeks += partition_stats['num_write_seeks']
+
+    json_stats['total_read_blocks'] = total_read_blocks
+    json_stats['total_written_blocks'] = total_written_blocks
+    json_stats['total_write_seeks'] = total_write_seeks
+    return json_stats
+
   def Run(self):
     """Parse the update payload and display information from it."""
     self.payload = update_payload.Payload(self.options.payload_file)
     self.payload.Init()
+
+    if self.options.json:
+      stats = self._GetJsonStats(self.payload.manifest)
+      print(json.dumps(stats, indent=2))
+      return
+
     self._DisplayHeader()
     self._DisplayManifest()
     if self.options.signatures:
@@ -232,6 +390,8 @@ def main():
                       help='Show information about overall input/output.')
   parser.add_argument('--signatures', default=False, action='store_true',
                       help='Show signatures stored in the payload.')
+  parser.add_argument('--json', default=False, action='store_true',
+                      help='Dump payload info in JSON format.')
   args = parser.parse_args()
 
   PayloadCommand(args).Run()

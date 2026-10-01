@@ -36,9 +36,11 @@
 #define GOOGLE_PROTOBUF_COMPILER_JAVA_HELPERS_H__
 
 #include <string>
-#include <google/protobuf/compiler/javamicro/javamicro_params.h>
-#include <google/protobuf/descriptor.pb.h>
-#include <google/protobuf/descriptor.h>
+
+#include "absl/strings/string_view.h"
+#include "google/protobuf/compiler/javamicro/javamicro_params.h"
+#include "google/protobuf/descriptor.pb.h"
+#include "google/protobuf/descriptor.h"
 
 namespace google {
 namespace protobuf {
@@ -80,7 +82,7 @@ bool IsOuterClassNeeded(const Params& params, const FileDescriptor* file);
 // outer class name should be included in the return value depends on factors
 // inferrable from the given arguments, including is_class which indicates
 // whether the entity translates to a Java class.
-std::string ToJavaName(const Params& params, const std::string& name, bool is_class,
+std::string ToJavaName(const Params& params, absl::string_view name, bool is_class,
     const Descriptor* parent, const FileDescriptor* file);
 
 // These return the fully-qualified class name corresponding to the given

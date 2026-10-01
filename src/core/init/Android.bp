@@ -71,14 +71,13 @@ init_device_sources = [
     "devices.cpp",
     "firmware_handler.cpp",
     "first_stage_console.cpp",
-    "first_stage_init.cpp",
-    "first_stage_mount.cpp",
     "fscrypt_init_extensions.cpp",
     "init.cpp",
     "lmkd_service.cpp",
     "modalias_handler.cpp",
     "mount_handler.cpp",
     "mount_namespace.cpp",
+    "ota_utils.cpp",
     "persistent_properties.cpp",
     "persistent_properties.proto",
     "property_service.cpp",
@@ -106,6 +105,7 @@ soong_config_module_type {
     bool_variables: [
         "PRODUCT_INSTALL_DEBUG_POLICY_TO_SYSTEM_EXT",
         "release_write_appcompat_override_system_properties",
+        "release_deprecate_runtime_apex",
     ],
     properties: [
         "cflags",
@@ -174,9 +174,13 @@ libinit_cc_defaults {
         release_write_appcompat_override_system_properties: {
             cflags: ["-DWRITE_APPCOMPAT_OVERRIDE_SYSTEM_PROPERTIES"],
         },
+        release_deprecate_runtime_apex: {
+            cflags: ["-DRELEASE_DEPRECATE_RUNTIME_APEX"],
+        },
     },
     static_libs: [
         "libapexd_flags",
+        "libinit_flags",
         "libavb",
         "libavf_cc_flags",
         "libbootloader_message",
@@ -211,7 +215,10 @@ libinit_cc_defaults {
         "libutils",
         "libvendorsupport",
     ],
-    header_libs: ["bionic_libc_platform_headers"],
+    header_libs: [
+        "bionic_libc_platform_headers",
+        "libupdate_engine_headers",
+    ],
     bootstrap: true,
     visibility: [":__subpackages__"],
 }
@@ -243,6 +250,7 @@ cc_defaults {
         export_proto_headers: true,
     },
     static_libs: [
+        "libinit_flags",
         "libueventd_flags",
     ],
 
@@ -273,6 +281,26 @@ cc_library_static {
     defaults: [
         "avf_build_flags_cc",
         "libinit_defaults",
+    ],
+    exclude_srcs: [
+        "subcontext.cpp",
+        "snapuserd_transition.cpp",
+    ],
+    header_libs: [
+        "libgsi_headers",
+        "libsnapshot_headers",
+    ],
+    static_libs: [
+        "libfs_mgr.microdroid",
+        "liblp",
+    ],
+    exclude_static_libs: [
+        "libsnapshot",
+    ],
+    exclude_shared_libs: [
+        "libfs_mgr",
+        "libgsi",
+        "liblp",
     ],
     recovery_available: false,
     cflags: ["-DMICRODROID=1"],
@@ -329,6 +357,11 @@ cc_binary {
         "libbinder",
         "libutils",
     ],
+    srcs: [
+        "first_stage_init.cpp",
+        "first_stage_mount.cpp",
+        "first_stage_mount_android.cpp",
+    ],
     required: [
         "init_recovery.rc",
         "ueventd.rc.recovery",
@@ -345,7 +378,22 @@ cc_binary {
         "avf_build_flags_cc",
         "init_second_stage_defaults",
     ],
-    static_libs: ["libinit.microdroid"],
+    static_libs: [
+        "libinit.microdroid",
+        "libfs_mgr.microdroid",
+        "libfs_avb",
+    ],
+    shared_libs: [
+        "libcrypto",
+    ],
+    exclude_static_libs: [
+        "libsnapshot",
+    ],
+    exclude_shared_libs: [
+        "libfs_mgr",
+        "libgsi",
+        "liblp",
+    ],
     cflags: ["-DMICRODROID=1"],
     cppflags: [
         "-UWORLD_WRITABLE_KMSG",
@@ -382,10 +430,10 @@ init_first_stage_cc_defaults {
         "first_stage_init.cpp",
         "first_stage_main.cpp",
         "first_stage_mount.cpp",
+        "ota_utils.cpp",
         "reboot_utils.cpp",
         "selabel.cpp",
         "service_utils.cpp",
-        "snapuserd_transition.cpp",
         "switch_root.cpp",
         "uevent_listener.cpp",
         "util.cpp",
@@ -398,32 +446,31 @@ init_first_stage_cc_defaults {
         "libfs_mgr",
         "libfec",
         "libfec_rs",
-        "libsquashfs_utils",
         "libcrypto_utils",
         "libavb",
-        "liblp",
         "libcutils",
         "libbase",
         "liblog",
         "libcrypto_static",
         "libselinux",
         "libcap",
-        "libgsi",
         "liblzma",
         "libunwindstack_no_dex",
         "libmodprobe",
         "libext2_uuid",
-        "libprotobuf-cpp-lite",
-        "libsnapshot_cow",
-        "liblz4",
-        "libzstd",
-        "libsnapshot_init",
-        "update_metadata-protos",
+        "libz",
         "libprocinfo",
         "libbootloader_message",
     ],
 
+    header_libs: [
+        "libupdate_engine_headers",
+    ],
+
     static_executable: true,
+    ldflags: [
+        "-Wl,--image-base=0x200000",
+    ],
     system_shared_libs: [],
 
     cflags: [
@@ -435,6 +482,7 @@ init_first_stage_cc_defaults {
         "-DALLOW_FIRST_STAGE_CONSOLE=0",
         "-DALLOW_LOCAL_PROP_OVERRIDE=0",
         "-DALLOW_PERMISSIVE_SELINUX=0",
+        "-DFIRST_STAGE_INIT=1",
         "-DREBOOT_BOOTLOADER_ON_PANIC=0",
         "-DWORLD_WRITABLE_KMSG=0",
         "-DDUMP_ON_UMOUNT_FAILURE=0",
@@ -494,6 +542,20 @@ init_first_stage_cc_defaults {
 cc_binary {
     name: "init_first_stage",
     defaults: ["init_first_stage_defaults"],
+    srcs: [
+        "first_stage_mount_android.cpp",
+        "snapuserd_transition.cpp",
+    ],
+    static_libs: [
+        "libgsi",
+        "liblp",
+        "liblz4",
+        "libprotobuf-cpp-lite",
+        "libsnapshot_cow",
+        "libsnapshot_init",
+        "libzstd",
+        "update_metadata-protos",
+    ],
 }
 
 cc_binary {
@@ -501,6 +563,12 @@ cc_binary {
     defaults: [
         "avf_build_flags_cc",
         "init_first_stage_defaults",
+    ],
+    srcs: [
+        "first_stage_mount_microdroid.cpp",
+    ],
+    static_libs: [
+        "libsnapshot",
     ],
     cflags: [
         "-DMICRODROID=1",
@@ -581,6 +649,7 @@ cc_defaults {
     static_libs: [
         "libfs_mgr",
         "libhidl-gen-utils",
+        "libinit_flags",
     ],
 }
 
@@ -633,6 +702,7 @@ cc_defaults {
     ],
     static_libs: [
         "libfstab",
+        "libinit_flags",
         "libpropertyinfoserializer",
         "libpropertyinfoparser",
     ],
@@ -736,4 +806,17 @@ aconfig_declarations {
 cc_aconfig_library {
     name: "libueventd_flags",
     aconfig_declarations: "ueventd_flags",
+}
+
+aconfig_declarations {
+    name: "init_flags",
+    package: "com.android.init.flags",
+    srcs: ["init.aconfig"],
+    container: "system",
+}
+
+cc_aconfig_library {
+    name: "libinit_flags",
+    aconfig_declarations: "init_flags",
+    host_supported: true,
 }

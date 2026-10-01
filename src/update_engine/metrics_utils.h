@@ -76,6 +76,13 @@ void SetUpdateTimestampStart(const base::Time& update_start_time,
 void SetUpdateBootTimestampStart(const base::Time& update_start_boot_time,
                                  PrefsInterface* prefs);
 
+// Persists the install duration of an update to |kPrefsMetricsInstallDuration|.
+void SetInstallDuration(int64_t duration, PrefsInterface* prefs);
+
+// Persists the verification duration of an update to
+// |kPrefsMetricsVerifyingDuration|.
+void SetVerificationDuration(int64_t duration, PrefsInterface* prefs);
+
 // Called at program startup if the device booted into a new update.
 // The |time_to_reboot| parameter contains the (monotonic-clock) duration
 // from when the update successfully completed (the value in

@@ -51,16 +51,10 @@ public final class MapLiteTest {
 
   @Test
   public void testSetMapValues() {
-    TestMap.Builder usingMutableMapBuilder = TestMap.newBuilder();
-    setMapValues(usingMutableMapBuilder);
-    TestMap usingMutableMap = usingMutableMapBuilder.build();
-    assertMapValuesSet(usingMutableMap);
-
-    TestMap.Builder usingAccessorsBuilder = TestMap.newBuilder();
-    setMapValues(usingAccessorsBuilder);
-    TestMap usingAccessors = usingAccessorsBuilder.build();
-    assertMapValuesSet(usingAccessors);
-    assertThat(usingMutableMap).isEqualTo(usingAccessors);
+    TestMap.Builder testMapBuilder = TestMap.newBuilder();
+    setMapValues(testMapBuilder);
+    TestMap testMap = testMapBuilder.build();
+    assertMapValuesSet(testMap);
   }
 
   private void copyMapValues(TestMap source, TestMap.Builder destination) {
@@ -564,6 +558,7 @@ public final class MapLiteTest {
   }
 
   @Test
+  @SuppressWarnings("SelfAssertion") // Just testing that the getters execute and are consistent.
   public void testGetMap() {
     TestMap.Builder builder = TestMap.newBuilder();
     setMapValues(builder);

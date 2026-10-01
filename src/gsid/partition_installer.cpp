@@ -263,9 +263,14 @@ int PartitionInstaller::GetPartitionFd() {
 }
 
 bool PartitionInstaller::MapAshmem(int fd, size_t size) {
+    void* mapped = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (mapped == MAP_FAILED) {
+        PLOG(ERROR) << "failed to mmap(size = " << size << ", fd = " << fd << ")";
+        return false;
+    }
+    ashmem_data_ = mapped;
     ashmem_size_ = size;
-    ashmem_data_ = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    return ashmem_data_ != MAP_FAILED;
+    return true;
 }
 
 void PartitionInstaller::UnmapAshmem() {
@@ -354,10 +359,11 @@ int PartitionInstaller::WipeWritable(const std::string& active_dsu, const std::s
 
 std::optional<uint64_t> PartitionInstaller::GetMinimumFreeSpaceThreshold(
         const std::string& install_dir) {
-    // No need to retain any space if we were not installing to the internal storage
-    // or device is not using VAB.
-    if (!android::base::StartsWith(install_dir, "/data"s)
-            || !android::base::GetBoolProperty("ro.virtual_ab.enabled", false)) {
+    // No need to retain any space if we were not installing to the internal
+    // storage, device is not using VAB or device is virtual device.
+    if (!android::base::StartsWith(install_dir, "/data"s) ||
+        android::base::GetBoolProperty("ro.hardware.virtual_device", false) ||
+        !android::base::GetBoolProperty("ro.virtual_ab.enabled", false)) {
         return 0;
     }
     // Dynamic Partitions device must have a "super" block device.

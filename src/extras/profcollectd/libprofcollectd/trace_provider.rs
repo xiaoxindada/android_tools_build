@@ -24,6 +24,7 @@ mod logging;
 
 use anyhow::{anyhow, Result};
 use chrono::Utc;
+use nix::libc::{c_int, mallopt};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -54,6 +55,23 @@ pub trait TraceProvider {
     fn process(&self, trace_dir: &Path, profile_dir: &Path, binary_filter: &str) -> Result<()>;
     fn set_log_file(&self, filename: &Path);
     fn reset_log_file(&self);
+}
+
+pub fn prune_memory() {
+    // M_PURGE is defined as -101 in Android's <malloc.h>
+    // It forces the allocator (Scudo or jemalloc) to release cached pages to the OS.
+    const M_PURGE: c_int = -101;
+    // SAFETY: mallopt is a standard allocator control function. M_PURGE is a valid
+    // option in Android's bionic to release cached memory, and 0 is a valid placeholder
+    // value for the second argument.
+    unsafe {
+        // The second argument is ignored for M_PURGE, but 0 is standard.
+        // Returns 1 on success, 0 on failure.
+        let result = mallopt(M_PURGE, 0);
+        if result != 1 {
+            log::warn!("Failed to purge memory via mallopt");
+        }
+    }
 }
 
 pub fn get_trace_provider() -> Result<Arc<Mutex<dyn TraceProvider + Send>>> {

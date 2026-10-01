@@ -115,6 +115,14 @@ void ColdBoot::Run() {
     runner->Wait();
 
     android::base::SetProperty(kColdBootDoneProp, "true");
+
+    // When we handle the uevents in the thread pool, the unused memory is not immediately unmapped
+    // and brought back to the kernel, even after joining the threads, as opposed to handling
+    // uevents in subprocesses where the memory is cleaned up upon process termination. Therefore,
+    // we explicitly purge all the unused memory here when the coldboot is done in the thread pool.
+    if constexpr (flags::enable_threadpool_coldboot()) {
+        mallopt(M_PURGE_ALL, 0);
+    }
     LOG(INFO) << "Coldboot took " << cold_boot_timer.duration().count() / 1000.0f << " seconds";
 }
 

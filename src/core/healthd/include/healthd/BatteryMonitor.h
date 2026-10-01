@@ -19,7 +19,9 @@
 
 #include <memory>
 #include <optional>
+#include <unordered_set>
 
+#include <android-base/result.h>
 #include <batteryservice/BatteryService.h>
 #include <utils/String8.h>
 #include <utils/Vector.h>
@@ -84,20 +86,35 @@ class BatteryMonitor {
     int setChargingPolicy(int value);
     int getChargingPolicy();
     int getBatteryHealthData(int id);
+    int getFullChargeUah() const;
+    int getFullChargeDesignCapacityUah() const;
 
     status_t getSerialNumber(std::optional<std::string>* out);
+    base::Result<std::optional<std::string>, base::Errno, false> getManufacturer() const;
+    base::Result<std::optional<std::string>, base::Errno, false> getModelName() const;
+    base::Result<int64_t, base::Errno, false> getVoltageMinDesign() const;
 
     static void logValues(const android::hardware::health::V2_1::HealthInfo& health_info,
                           const struct healthd_config& healthd_config);
 
+    void updateChargerPresence(const char* const device_name,
+                               std::optional<PowerSupplyType> ty = std::nullopt);
+
   private:
     struct healthd_config *mHealthdConfig;
-    Vector<String8> mChargerNames;
+    std::unordered_set<std::string> mChargerNames;
     bool mBatteryDevicePresent;
     int mBatteryFixedCapacity;
     int mBatteryFixedTemperature;
     int mBatteryHealthStatus;
     std::unique_ptr<aidl::android::hardware::health::HealthInfo> mHealthInfo;
+    android::String8 mDevPath;
+    std::optional<std::pair<std::chrono::time_point<std::chrono::steady_clock>, int32_t>>
+            mLastGoodBatteryLevel;
+
+    static constexpr std::chrono::seconds kMaximumLevelStaleness = std::chrono::seconds(70);
+
+    void initWithBatteryDevice(const char* const name);
 };
 
 }; // namespace android

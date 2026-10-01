@@ -39,7 +39,7 @@ protected:
 
     virtual void doTask() = 0;
 
-    virtual bool threadLoop() {
+    bool threadLoop() override {
         usleep(mDelayMillis * 1000);
         doTask();
         return false;
@@ -55,9 +55,7 @@ public:
     }
 
 protected:
-    virtual void doTask() {
-        mLooper->wake();
-    }
+  void doTask() override { mLooper->wake(); }
 };
 
 class DelayedWriteSignal : public DelayedTask {
@@ -69,9 +67,7 @@ public:
     }
 
 protected:
-    virtual void doTask() {
-        mPipe->writeSignal();
-    }
+  void doTask() override { mPipe->writeSignal(); }
 };
 
 class CallbackHandler {
@@ -104,34 +100,28 @@ public:
     }
 
 protected:
-    virtual int handler(int fd, int events) {
-        callbackCount += 1;
-        this->fd = fd;
-        this->events = events;
-        return nextResult;
-    }
+  int handler(int fd, int events) override {
+      callbackCount += 1;
+      this->fd = fd;
+      this->events = events;
+      return nextResult;
+  }
 };
 
 class StubMessageHandler : public MessageHandler {
 public:
-    Vector<Message> messages;
+  std::vector<Message> messages;
 
-    virtual void handleMessage(const Message& message) {
-        messages.push(message);
-    }
+  void handleMessage(const Message& message) override { messages.push_back(message); }
 };
 
 class LooperTest : public testing::Test {
 protected:
     sp<Looper> mLooper;
 
-    virtual void SetUp() {
-        mLooper = new Looper(true);
-    }
+    void SetUp() override { mLooper = new Looper(true); }
 
-    virtual void TearDown() {
-        mLooper.clear();
-    }
+    void TearDown() override { mLooper.clear(); }
 };
 
 
@@ -770,6 +760,103 @@ class LooperEventCallback : public LooperCallback {
   private:
     Callback mCallback;
 };
+
+/**
+ * When 3 callbacks (on 3 separate fds) are signaled in a single pollOnce iteration, they must all
+ * fire.
+ * This test is useful as a 'baseline' for the tests 'PollOnce_RemovePendingFdInCallback' and
+ * 'PollOnce_RemoveMultiplePendingFdsInCallback'.
+ */
+TEST_F(LooperTest, ThreeCallbacksSignalInOnePoll) {
+    Pipe pipe1;
+    Pipe pipe2;
+    Pipe pipe3;
+
+    size_t callbackCount = 0;
+    sp<LooperEventCallback> looperCallback =
+            sp<LooperEventCallback>::make([&](int /*fd*/, int /*events*/) {
+                callbackCount++;
+                return 1;
+            });
+    mLooper->addFd(pipe1.receiveFd, 0, Looper::EVENT_INPUT, looperCallback, nullptr);
+    mLooper->addFd(pipe2.receiveFd, 0, Looper::EVENT_INPUT, looperCallback, nullptr);
+    mLooper->addFd(pipe3.receiveFd, 0, Looper::EVENT_INPUT, looperCallback, nullptr);
+
+    ASSERT_EQ(OK, pipe1.writeSignal());
+    ASSERT_EQ(OK, pipe2.writeSignal());
+    ASSERT_EQ(OK, pipe3.writeSignal());
+
+    mLooper->pollOnce(-1);
+    ASSERT_EQ(3u, callbackCount);
+}
+
+/**
+ * When there are 2 pending callbacks, it's possible that callback 1 removes the fd for callback 2.
+ * In this test, we ensure that after the callback for fd 2 is removed, it is never invoked.
+ *
+ * Ideally, we would test this by creating 2 separate callbacks, one for fd1 and another for fd2.
+ * In practice, epoll does not provide any ordering guarantee for these callbacks. Therefore, the
+ * test should be robust against these ordering changes.
+ *
+ * In this test, we register 2 FDs with the same callback. The callback removes all FDs.
+ * Regardless of which FD is processed first, the callback should run exactly once.
+ * If the first callback removes the other FDs, the subsequent callbacks should be skipped.
+ */
+TEST_F(LooperTest, PollOnce_RemovePendingFdInCallback) {
+    Pipe pipe1;
+    Pipe pipe2;
+
+    size_t callbackCount = 0;
+    sp<LooperCallback> looperCallback =
+            sp<LooperEventCallback>::make([&](int /*fd*/, int /*events*/) {
+                callbackCount++;
+                mLooper->removeFd(pipe1.receiveFd);
+                mLooper->removeFd(pipe2.receiveFd);
+                return 1;
+            });
+
+    mLooper->addFd(pipe1.receiveFd, 0, Looper::EVENT_INPUT, looperCallback, nullptr);
+    mLooper->addFd(pipe2.receiveFd, 0, Looper::EVENT_INPUT, looperCallback, nullptr);
+
+    ASSERT_EQ(OK, pipe1.writeSignal());
+    ASSERT_EQ(OK, pipe2.writeSignal());
+
+    mLooper->pollOnce(-1);
+    // Since we are removing both fds inside the callback, only 1 invocation should occur.
+    ASSERT_EQ(1u, callbackCount);
+}
+
+/**
+ * Similar to PollOnce_RemovePendingFdInCallback, but with 3 FDs to ensure that removing multiple
+ * FDs is handled correctly inside the Looper's loop. An incorrect implementation could lead to the
+ * triggering of the third callback after the second callback is skipped.
+ */
+TEST_F(LooperTest, PollOnce_RemoveMultiplePendingFdsInCallback) {
+    Pipe pipe1;
+    Pipe pipe2;
+    Pipe pipe3;
+
+    size_t callbackCount = 0;
+    sp<LooperCallback> looperCallback =
+            sp<LooperEventCallback>::make([&](int /*fd*/, int /*events*/) {
+                callbackCount++;
+                mLooper->removeFd(pipe1.receiveFd);
+                mLooper->removeFd(pipe2.receiveFd);
+                mLooper->removeFd(pipe3.receiveFd);
+                return 1;
+            });
+
+    mLooper->addFd(pipe1.receiveFd, 0, Looper::EVENT_INPUT, looperCallback, nullptr);
+    mLooper->addFd(pipe2.receiveFd, 0, Looper::EVENT_INPUT, looperCallback, nullptr);
+    mLooper->addFd(pipe3.receiveFd, 0, Looper::EVENT_INPUT, looperCallback, nullptr);
+
+    ASSERT_EQ(OK, pipe1.writeSignal());
+    ASSERT_EQ(OK, pipe2.writeSignal());
+    ASSERT_EQ(OK, pipe3.writeSignal());
+
+    mLooper->pollOnce(-1);
+    ASSERT_EQ(1u, callbackCount);
+}
 
 // A utility class that allows for pipes to be added and removed from the looper, and polls the
 // looper from a different thread.

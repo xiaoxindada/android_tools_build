@@ -212,6 +212,9 @@ uint32_t ZLIB_INTERNAL crc32_avx512_simd_(  /* AVX512+PCLMUL */
 #include <smmintrin.h>
 #include <wmmintrin.h>
 
+#if defined(__GNUC__)
+__attribute__((__target__("sse4.2,pclmul")))
+#endif
 uint32_t ZLIB_INTERNAL crc32_sse42_simd_(  /* SSE4.2+PCLMUL */
     const unsigned char *buf,
     z_size_t len,

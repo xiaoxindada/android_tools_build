@@ -8,7 +8,11 @@ TMPDIR=/tmp/android-bootchart
 rm -rf $TMPDIR
 mkdir -p $TMPDIR
 
-LOGROOT=/data/bootchart
+if [ "$(adb shell getprop ro.boot.bootchart.enabled | tr -d '\r')" = "1" ]; then
+    LOGROOT=/dev/bootchart
+else
+    LOGROOT=/data/bootchart
+fi
 TARBALL=bootchart.tgz
 
 FILES="header proc_stat.log proc_ps.log proc_diskstats.log"

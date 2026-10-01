@@ -27,8 +27,7 @@ MapFieldGenerator::MapFieldGenerator(const FieldDescriptor* descriptor,
     : FieldGeneratorBase(descriptor, presenceIndex, options) {
 }
 
-MapFieldGenerator::~MapFieldGenerator() {
-}
+MapFieldGenerator::~MapFieldGenerator() = default;
 
 void MapFieldGenerator::GenerateMembers(io::Printer* printer) {
   const FieldDescriptor* key_descriptor =
@@ -53,7 +52,7 @@ void MapFieldGenerator::GenerateMembers(io::Printer* printer) {
     variables_,
     ", $tag$);\n"
     "private readonly pbc::MapField<$key_type_name$, $value_type_name$> $name$_ = new pbc::MapField<$key_type_name$, $value_type_name$>();\n");
-  WritePropertyDocComment(printer, descriptor_);
+  WritePropertyDocComment(printer, options(), descriptor_);
   AddPublicMemberAttributes(printer);
   printer->Print(
     variables_,

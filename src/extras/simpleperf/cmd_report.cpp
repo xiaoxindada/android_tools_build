@@ -31,6 +31,7 @@
 #include <android-base/strings.h>
 
 #include "RecordFilter.h"
+#include "SPEDecoder.h"
 #include "command.h"
 #include "event_attr.h"
 #include "event_type.h"
@@ -503,6 +504,8 @@ RECORD_FILTER_OPTION_HELP_MSG_FOR_REPORTING
 
   std::unique_ptr<ReportCmdSampleTreeSorter> sample_tree_sorter_;
   std::unique_ptr<ReportCmdSampleTreeDisplayer> sample_tree_displayer_;
+  bool is_etm_trace_;
+  std::unique_ptr<SPEDecoder> spe_decoder_;
   bool use_branch_address_;
   std::string record_cmdline_;
   bool accumulate_callchain_;
@@ -861,7 +864,8 @@ bool ReportCommand::ReadMetaInfoFromRecordFile() {
 }
 
 bool ReportCommand::ReadEventAttrFromRecordFile() {
-  for (const EventAttrWithId& attr_with_id : record_file_reader_->AttrSection()) {
+  auto& event_attrs = record_file_reader_->AttrSection();
+  for (const EventAttrWithId& attr_with_id : event_attrs) {
     const perf_event_attr& attr = attr_with_id.attr;
     attr_names_.emplace_back(GetEventNameByAttr(attr));
 
@@ -871,6 +875,25 @@ bool ReportCommand::ReadEventAttrFromRecordFile() {
       continue;
     }
     event_attrs_.emplace_back(attr);
+    if (IsSpeEventName(attr_names_.back())) {
+      // In case of SPE just one perf_event_open syscall is sent to the kernel to enable SPE,
+      // unlike with PMUs where each event is enabled with a separate syscall.
+      // For SPE all events are enabled by default. Some can be filtered with the config parameters
+      // while issuing the record command but at this point we can't tell which events will have
+      // samples and which won't.
+      // To be able to display the records separately for each event, we need to replicate the
+      // single syscall attribute to all possible events.
+      // Event attributes were already sorted when they were read out from perf.data file so SPE
+      // event attribute is already the last in the list. Pop that and add the new attributes.
+      if (event_attrs_.size() != event_attrs.size()) {
+        LOG(ERROR) << "SPE should be the last in the list!";
+      }
+      event_attrs_.pop_back();
+      attr_names_.pop_back();
+      spe_perf_event_attr_with_name spe_attr = ReplicateSpeEventAttr(attr);
+      event_attrs_.insert(event_attrs_.end(), spe_attr.attr.begin(), spe_attr.attr.end());
+      attr_names_.insert(attr_names_.end(), spe_attr.attr_name.begin(), spe_attr.attr_name.end());
+    }
   }
   if (use_branch_address_) {
     bool has_branch_stack = true;
@@ -975,6 +998,49 @@ bool ReportCommand::ProcessRecord(std::unique_ptr<Record> record) {
     if (!ProcessTracingData(std::vector<char>(r.data, r.data + r.data_size))) {
       return false;
     }
+  } else if (record->type() == PERF_RECORD_AUXTRACE_INFO) {
+    const auto& auxtrace_info = static_cast<AuxTraceInfoRecord&>(*record);
+    if (auxtrace_info.data->aux_type == AuxTraceInfoRecord::AUX_TYPE_SPE) {
+      spe_decoder_ = SPEDecoder::Create();
+    } else if (auxtrace_info.data->aux_type == AuxTraceInfoRecord::AUX_TYPE_ETM) {
+      is_etm_trace_ = true;
+    }
+  } else if (record->type() == PERF_RECORD_AUX) {
+    if (is_etm_trace_) {
+      LOG(DEBUG) << "Report command is not supported for ETM, silently ignoring AUX records";
+      return true;
+    }
+    const auto& aux = *static_cast<AuxRecord*>(record.get());
+    size_t size = aux.data->aux_size;
+    if (size > SIZE_MAX) {
+      LOG(ERROR) << "Invalid aux size, is " << aux.data->aux_size << ", should not exceed "
+                 << SIZE_MAX;
+      return false;
+    }
+    if (size > 0) {
+      std::vector<uint8_t> data;
+      bool error = false;
+      if (!record_file_reader_->ReadAuxData(aux.Cpu(), aux.data->aux_offset, size, data, error)) {
+        return !error;
+      }
+      if (!spe_decoder_) {
+        LOG(ERROR) << "SPEDecoder isn't created";
+        return false;
+      }
+      // attr_id is the index of the first SPE attribute in the list.
+      size_t attr_id = record_file_reader_->GetAttrIndexOfRecord(record.get());
+      std::vector<SpeSampleRecord> samples_with_id =
+          spe_decoder_->ProcessData(data.data(), size, &aux.sample_id, event_attrs_[attr_id]);
+      for (auto& spe_sample : samples_with_id) {
+        uint64_t spe_event_id = spe_sample.GetSpeEventId();
+        if ((attr_id + spe_event_id) < sample_tree_builder_.size()) {
+          sample_tree_builder_[attr_id + spe_event_id]->ReportCmdProcessSampleRecord(spe_sample);
+        } else {
+          LOG(ERROR) << "SPE event id out of range; attr id: " << attr_id
+                     << " SPE event id: " << spe_event_id;
+        }
+      }
+    }
   }
   return true;
 }
@@ -1030,8 +1096,9 @@ bool ReportCommand::PrintReport() {
       fprintf(report_fp, "\n");
     }
     SampleTree& sample_tree = sample_tree_[i];
-    fprintf(report_fp, "Event: %s (type %u, config %llu)\n", attr_names_[i].c_str(),
-            event_attrs_[i].type, event_attrs_[i].config);
+    fprintf(report_fp, "Event: %s (type %u, config 0x%llx, config1 0x%llx, config2: 0x%llx)\n",
+            attr_names_[i].c_str(), event_attrs_[i].type, event_attrs_[i].config,
+            event_attrs_[i].config1, event_attrs_[i].config2);
     fprintf(report_fp, "Samples: %" PRIu64 "\n", sample_tree.total_samples);
     if (sample_tree.total_error_callchains != 0) {
       fprintf(report_fp, "Error Callchains: %" PRIu64 ", %f%%\n",

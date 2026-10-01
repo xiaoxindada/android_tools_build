@@ -255,9 +255,12 @@ rust_bindgen {
         "//system/security/keystore2:__subpackages__",
         "//packages/modules/Virtualization:__subpackages__",
         "//system/software_defined_vehicle:__subpackages__",
+        "//system/zygote:__subpackages__",
+        "//vendor:__subpackages__",
     ],
     source_stem: "bindings",
     local_include_dirs: ["include"],
+    shared_libs: ["libselinux"],
 
     // Generate bindings only for the symbols that are actually exported (see exported.map.txt).
     // This makes the generated bindings much more concise and improves compilation
@@ -322,6 +325,7 @@ rust_bindgen {
 
     // This is mainly to run layout tests for generated bindings on the host.
     host_supported: true,
+    vendor_available: true,
 
     apex_available: [
         "com.android.virt",

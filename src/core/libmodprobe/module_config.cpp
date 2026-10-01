@@ -118,7 +118,6 @@ bool ModuleConfig::ParseAliasCallback(const std::vector<std::string>& args) {
 bool ModuleConfig::ParseSoftdepCallback(const std::vector<std::string>& args) {
     auto it = args.begin();
     const std::string& type = *it++;
-    std::string state = "";
 
     if (type != "softdep") {
         LOG(ERROR) << "non-softdep line encountered in modules.softdep, found " << type;
@@ -131,6 +130,14 @@ bool ModuleConfig::ParseSoftdepCallback(const std::vector<std::string>& args) {
     }
 
     const std::string& module = *it++;
+    return ParseSoftdepParams(module, std::vector<std::string>(it, args.end()));
+}
+
+bool ModuleConfig::ParseSoftdepParams(const std::string& module,
+                                      const std::vector<std::string>& args) {
+    auto it = args.begin();
+    std::string state = "";
+
     while (it != args.end()) {
         const std::string& token = *it++;
         if (token == "pre:" || token == "post:") {
@@ -183,6 +190,12 @@ bool ModuleConfig::ParseOptionsCallback(const std::vector<std::string>& args) {
     }
 
     const std::string& module = *it++;
+
+    if (it != args.end() && *it == "softdep") {
+        it++;
+        return ParseSoftdepParams(module, std::vector<std::string>(it, args.end()));
+    }
+
     std::string options = "";
 
     const std::string& canonical_name = CanonicalizeModulePath(module);

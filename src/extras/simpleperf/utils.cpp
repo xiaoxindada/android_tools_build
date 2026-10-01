@@ -60,7 +60,7 @@ void OneTimeFreeAllocator::Clear() {
 
 const char* OneTimeFreeAllocator::AllocateString(std::string_view s) {
   size_t size = s.size() + 1;
-  if (cur_ + size > end_) {
+  if (size > static_cast<size_t>(end_ - cur_)) {
     size_t alloc_size = std::max(size, unit_size_);
     char* p = new char[alloc_size];
     v_.push_back(p);
@@ -157,22 +157,6 @@ bool ArchiveHelper::GetEntryData(ZipEntry& entry, std::vector<uint8_t>* data) {
 
 int ArchiveHelper::GetFd() {
   return GetFileDescriptor(handle_);
-}
-
-void PrintIndented(size_t indent, const char* fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  printf("%*s", static_cast<int>(indent * 2), "");
-  vprintf(fmt, ap);
-  va_end(ap);
-}
-
-void FprintIndented(FILE* fp, size_t indent, const char* fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  fprintf(fp, "%*s", static_cast<int>(indent * 2), "");
-  vfprintf(fp, fmt, ap);
-  va_end(ap);
 }
 
 bool IsPowerOfTwo(uint64_t value) {
@@ -494,7 +478,7 @@ std::optional<std::set<pid_t>> GetPidsFromStrings(const std::vector<std::string>
         continue;
       }
       for (const auto& reg : regs) {
-        if (reg->Search(process_name)) {
+        if (reg->ThreadUnsafeSearch(process_name)) {
           pids.insert(pid);
           break;
         }
@@ -553,6 +537,15 @@ std::string ReadableBytes(uint64_t bytes) {
     return StringPrintf("%.2f KB", static_cast<double>(bytes) / kKilobyte);
   }
   return StringPrintf("%" PRIu64 " B", bytes);
+}
+
+std::string BitsToString(const std::vector<bool>& bits) {
+  std::string s = "0b";
+  s.reserve(bits.size() + 2);
+  for (auto it = bits.rbegin(); it != bits.rend(); ++it) {
+    s.push_back(*it ? '1' : '0');
+  }
+  return s;
 }
 
 }  // namespace simpleperf

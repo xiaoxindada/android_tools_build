@@ -24,7 +24,7 @@ from typing import List, Optional, Set
 from binary_cache_builder import BinaryCacheBuilder
 from pprof_proto_generator import load_pprof_profile, PprofProfileGenerator
 from . test_utils import TestBase, TestHelper
-from simpleperf_utils import ReportLibOptions
+from simpleperf_utils import ReportLibOptions, ToolFinder
 
 
 class TestPprofProtoGenerator(TestBase):
@@ -54,7 +54,7 @@ class TestPprofProtoGenerator(TestBase):
         self.assertIn(key, self.run_generator(['--pid', '10419', '10416']))
         self.assertNotIn(key, self.run_generator(['--pid', '10416']))
 
-    def test_thread_labels(self):
+    def test_labels(self):
         output = self.run_generator()
         self.assertIn('label[0] = thread:Binder:10419_1', output)
         self.assertIn('label[0] = thread:Binder:10419_2', output)
@@ -63,6 +63,7 @@ class TestPprofProtoGenerator(TestBase):
         self.assertIn('label[1] = threadpool:Binder:%d_%d', output)
         self.assertIn('label[2] = pid:10419', output)
         self.assertIn('label[3] = tid:10459', output)
+        self.assertIn('label[4] = cpu:2', output)
 
     def test_tid_filter(self):
         key1 = 'art::ProfileSaver::Run()'  # function in thread 10459
@@ -98,7 +99,7 @@ class TestPprofProtoGenerator(TestBase):
 
     def test_time_nanos(self):
         """ Test the timestamp is adjusted to be nanoseconds. """
-        self.assertIn('time_nanos: 1516268753000000000\n', self.run_generator())
+        self.assertIn('time_nanos: 1516268753000000000', self.run_generator())
 
     def test_build_id_with_binary_cache(self):
         """ Test the build ids for elf files in binary_cache are not padded with zero. """
@@ -222,7 +223,7 @@ class TestPprofProtoGenerator(TestBase):
 
         # Read recording file.
         config = {'ndk_path': TestHelper.ndk_path, 'max_chain_length': 1000000,
-                  'report_lib_options': ReportLibOptions(False, None, '', None, None, None),
+                  'report_lib_options': ReportLibOptions(False, None, '', None, None, None, False),
                   'show_event_counters': False}
         generator = PprofProfileGenerator(config)
         generator.load_record_file(testdata_file)
@@ -349,3 +350,28 @@ class TestPprofProtoGenerator(TestBase):
         self.assertIn('type=cpu-cycles_counter_samples, unit=samples', output)
         self.assertIn('type=instructions_counter, unit=count', output)
         self.assertIn('type=instructions_counter_samples, unit=samples', output)
+
+    def test_without_llvm_tools(self):
+        """ Test that pprof_proto_generator can run without llvm tools in ndk. """
+        # Step 1: Make sure we can't find llvm-readelf.
+        saved_tools = ToolFinder.EXPECTED_TOOLS
+        ToolFinder.EXPECTED_TOOLS = {}
+        self.assertIsNone(ToolFinder.find_tool_path('llvm-readelf', TestHelper.ndk_path))
+        # Step 2. Run PprofProfileGenerator.
+        config = {'ndk_path': TestHelper.ndk_path, 'max_chain_length': 1000000,
+                  'report_lib_options': ReportLibOptions(False, None, '', None, None, None, False),
+                  'show_event_counters': False}
+        generator = PprofProfileGenerator(config)
+        testdata_file = TestHelper.testdata_path('perf_with_interpreter_frames.data')
+        generator.load_record_file(testdata_file)
+        self.assertIsNotNone(generator.gen(1))
+        # Step 3. Restore tools.
+        ToolFinder.EXPECTED_TOOLS = saved_tools
+
+    def test_no_demangle(self):
+        output = self.run_generator(['--no-demangle'])
+        self.assertIn('name: _ZN7android14IPCThreadState14talkWithDriverEb', output)
+
+    def test_app_type(self):
+        output = self.run_generator(None, 'perf_with_trace_offcpu_v2.data')
+        self.assertRegex(output, r'App Type:\s*debuggable')

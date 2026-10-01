@@ -30,14 +30,13 @@ cc_test_host {
     defaults: ["fec_test_defaults"],
     gtest: false,
     srcs: ["test_read.cpp"],
+    shared_libs: ["libfec_rs"],
     static_libs: [
         "libfec",
-        "libfec_rs",
         "libavb",
         "libcrypto_utils",
         "libcrypto",
         "libext4_utils",
-        "libsquashfs_utils",
         "libbase",
     ],
 }
@@ -47,7 +46,7 @@ cc_test_host {
     defaults: ["fec_test_defaults"],
     gtest: false,
     srcs: ["test_rs.c"],
-    static_libs: ["libfec_rs"],
+    shared_libs: ["libfec_rs"],
 }
 
 cc_test_host {
@@ -64,14 +63,13 @@ cc_test_host {
     test_options: {
         unit_test: true,
     },
+    shared_libs: ["libfec_rs"],
     static_libs: [
         "libverity_tree",
         "libfec",
-        "libfec_rs",
         "libavb",
         "libcrypto_utils",
         "libext4_utils",
-        "libsquashfs_utils",
         "libcrypto",
         "libcutils",
         "liblog",

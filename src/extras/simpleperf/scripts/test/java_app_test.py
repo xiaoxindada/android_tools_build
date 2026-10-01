@@ -59,7 +59,8 @@ class TestExampleJava(TestExampleBase):
         self.adb.check_run(['shell', 'am', 'start', '-n', self.package_name + '/.MainActivity'])
         time.sleep(1)
         args = [sys.executable, TestHelper.script_path("app_profiler.py"),
-                "--app", self.package_name, "-r", "--duration 10000", "--disable_adb_root"]
+                "--app", self.package_name, "-r", "--duration 10000", "--disable_adb_root",
+                '--unrepresentative_profile_debug_app']
         if TestHelper.ndk_path:
             args += ['--ndk_path', TestHelper.ndk_path]
         subproc = subprocess.Popen(args)
@@ -74,7 +75,8 @@ class TestExampleJava(TestExampleBase):
         self.adb.check_run(['shell', 'am', 'start', '-n', self.package_name + '/.MainActivity'])
         time.sleep(1)
         args = [sys.executable, TestHelper.script_path('app_profiler.py'),
-                '--app', self.package_name, '-r', '--duration 10000', '--disable_adb_root']
+                '--app', self.package_name, '-r', '--duration 10000', '--disable_adb_root',
+                '--unrepresentative_profile_debug_app']
         if TestHelper.ndk_path:
             args += ['--ndk_path', TestHelper.ndk_path]
         subproc = subprocess.Popen(args)
@@ -87,7 +89,7 @@ class TestExampleJava(TestExampleBase):
     def test_app_profiler_with_ndk_path(self):
         # Although we pass an invalid ndk path, it should be able to find tools in default ndk path.
         self.run_cmd(['app_profiler.py', '--app', self.package_name, '-a', self.activity_name,
-                      '--ndk_path', '.'])
+                      '--ndk_path', '.', '--unrepresentative_profile_debug_app'])
 
     def test_report(self):
         self.common_test_report()
@@ -151,7 +153,8 @@ class TestExampleJava(TestExampleBase):
         os.mkdir(test_dir)
         os.chdir(test_dir)
         self.run_cmd(['app_profiler.py', '--app', self.package_name,
-                      '-r', '-e task-clock:u -g --duration 3'])
+                      '-r', '-e task-clock:u -g --duration 3',
+                      '--unrepresentative_profile_debug_app'])
         self.check_exist(filename="perf.data")
         self.run_cmd([INFERNO_SCRIPT, "-sc"])
 

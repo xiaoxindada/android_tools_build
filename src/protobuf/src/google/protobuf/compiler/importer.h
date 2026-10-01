@@ -83,16 +83,36 @@ class PROTOBUF_EXPORT SourceTreeDescriptorDatabase : public DescriptorDatabase {
     return &validation_error_collector_;
   }
 
+  // Instructs the SourceTreeDescriptorDatabase to read extension declarations
+  // from the specified file. The message_name parameter is the name of the
+  // extendee message relative to the top level of the .proto file, without the
+  // package name. Nested messages are not supported yet.
+  //
+  // If the declaration file is not found, the database will continue without
+  // raising an error.
+  //
+  // All declarations in a single file must be part of the same extension
+  // range.
+  void AddExtensionDeclarationsFile(absl::string_view proto_file_name,
+                                    absl::string_view message_name,
+                                    absl::string_view declarations_file_name) {
+    declarations_files_[proto_file_name].emplace_back(message_name,
+                                                      declarations_file_name);
+  }
+
   // implements DescriptorDatabase -----------------------------------
-  bool FindFileByName(const std::string& filename,
+  bool FindFileByName(StringViewArg filename,
                       FileDescriptorProto* output) override;
-  bool FindFileContainingSymbol(const std::string& symbol_name,
+  bool FindFileContainingSymbol(StringViewArg symbol_name,
                                 FileDescriptorProto* output) override;
-  bool FindFileContainingExtension(const std::string& containing_type,
+  bool FindFileContainingExtension(StringViewArg containing_type,
                                    int field_number,
                                    FileDescriptorProto* output) override;
 
  private:
+  bool ReadExtensionDeclarations(absl::string_view filename,
+                                 FileDescriptorProto* output) const;
+
   class SingleFileErrorCollector;
 
   SourceTree* source_tree_;
@@ -123,6 +143,9 @@ class PROTOBUF_EXPORT SourceTreeDescriptorDatabase : public DescriptorDatabase {
   bool using_validation_error_collector_;
   SourceLocationTable source_locations_;
   ValidationErrorCollector validation_error_collector_;
+  absl::flat_hash_map<std::string,
+                      std::vector<std::pair<std::string, std::string>>>
+      declarations_files_;
 };
 
 // Simple interface for parsing .proto files.  This wraps the process
@@ -159,9 +182,19 @@ class PROTOBUF_EXPORT Importer {
   // contents are stored.
   inline const DescriptorPool* pool() const { return &pool_; }
 
-  void AddUnusedImportTrackFile(const std::string& file_name,
-                                bool is_error = false);
-  void ClearUnusedImportTrackFiles();
+  void AddDirectInputFile(absl::string_view file_name,
+                          bool unused_import_is_error = false);
+  void ClearDirectInputFiles();
+
+#if !defined(PROTOBUF_FUTURE_RENAME_ADD_UNUSED_IMPORT) && !defined(SWIG)
+  ABSL_DEPRECATED("Use AddDirectInputFile")
+  void AddUnusedImportTrackFile(absl::string_view file_name,
+                                bool is_error = false) {
+    AddDirectInputFile(file_name, is_error);
+  }
+  ABSL_DEPRECATED("Use AddDirectInputFile")
+  void ClearUnusedImportTrackFiles() { ClearDirectInputFiles(); }
+#endif  // !PROTOBUF_FUTURE_RENAME_ADD_UNUSED_IMPORT && !SWIG
 
 
  private:
@@ -173,7 +206,7 @@ class PROTOBUF_EXPORT Importer {
 // it reports them to a MultiFileErrorCollector.
 class PROTOBUF_EXPORT MultiFileErrorCollector {
  public:
-  MultiFileErrorCollector() {}
+  MultiFileErrorCollector() = default;
   MultiFileErrorCollector(const MultiFileErrorCollector&) = delete;
   MultiFileErrorCollector& operator=(const MultiFileErrorCollector&) = delete;
   virtual ~MultiFileErrorCollector();
@@ -181,30 +214,12 @@ class PROTOBUF_EXPORT MultiFileErrorCollector {
   // Line and column numbers are zero-based.  A line number of -1 indicates
   // an error with the entire file (e.g. "not found").
   virtual void RecordError(absl::string_view filename, int line, int column,
-                           absl::string_view message) {
-    PROTOBUF_IGNORE_DEPRECATION_START
-    AddError(std::string(filename), line, column, std::string(message));
-    PROTOBUF_IGNORE_DEPRECATION_STOP
-  }
+                           absl::string_view message)
+      = 0;
   virtual void RecordWarning(absl::string_view filename, int line, int column,
                              absl::string_view message) {
-    PROTOBUF_IGNORE_DEPRECATION_START
-    AddWarning(std::string(filename), line, column, std::string(message));
-    PROTOBUF_IGNORE_DEPRECATION_STOP
   }
 
- private:
-  // These should never be called directly, but if a legacy class overrides
-  // them they'll get routed to by the Record* methods.
-  ABSL_DEPRECATED("Use RecordError")
-  virtual void AddError(const std::string& filename, int line, int column,
-                        const std::string& message) {
-    ABSL_LOG(FATAL) << "AddError or RecordError must be implemented.";
-  }
-
-  ABSL_DEPRECATED("Use RecordWarning")
-  virtual void AddWarning(const std::string& filename, int line, int column,
-                          const std::string& message) {}
 };
 
 // Abstract interface which represents a directory tree containing proto files.
@@ -213,7 +228,7 @@ class PROTOBUF_EXPORT MultiFileErrorCollector {
 // below.
 class PROTOBUF_EXPORT SourceTree {
  public:
-  SourceTree() {}
+  SourceTree() = default;
   SourceTree(const SourceTree&) = delete;
   SourceTree& operator=(const SourceTree&) = delete;
   virtual ~SourceTree();

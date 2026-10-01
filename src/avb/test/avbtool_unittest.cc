@@ -139,6 +139,58 @@ TEST_F(AvbToolTest, ReleaseStringAppendTruncated) {
   EXPECT_EQ(expected_str, std::string((const char*)h.release_string));
 }
 
+TEST_F(AvbToolTest, BasicMldsa) {
+  GenerateVBMetaImage(
+      "vbmeta.img", "MLDSA65", 0, "test/data/testkey_mldsa65.pem");
+  EXPECT_EQ(AVB_VBMETA_VERIFY_RESULT_OK,
+            avb_vbmeta_image_verify(
+                vbmeta_image_.data(), vbmeta_image_.size(), nullptr, nullptr));
+}
+
+TEST_F(AvbToolTest, BasicMldsa87) {
+  GenerateVBMetaImage(
+      "vbmeta.img", "MLDSA87", 0, "test/data/testkey_mldsa87.pem");
+  EXPECT_EQ(AVB_VBMETA_VERIFY_RESULT_OK,
+            avb_vbmeta_image_verify(
+                vbmeta_image_.data(), vbmeta_image_.size(), nullptr, nullptr));
+}
+
+TEST_F(AvbToolTest, MldsaWrongKey) {
+  GenerateVBMetaImage(
+      "vbmeta.img", "MLDSA65", 0, "test/data/testkey_mldsa65.pem");
+  // Attempt to verify with a different key type.
+  EXPECT_COMMAND(1,
+                 "./avbtool.py verify_image --image %s --key %s",
+                 vbmeta_image_path_.c_str(),
+                 "test/data/testkey_rsa2048.pem");
+  // Attempt to verify with a different MLDSA key.
+  EXPECT_COMMAND(1,
+                 "./avbtool.py verify_image --image %s --key %s",
+                 vbmeta_image_path_.c_str(),
+                 "test/data/testkey_mldsa87.pem");
+}
+
+TEST_F(AvbToolTest, MldsaTamperedSignature) {
+  GenerateVBMetaImage(
+      "vbmeta.img", "MLDSA65", 0, "test/data/testkey_mldsa65.pem");
+  // Corrupt the signature block.
+  vbmeta_image_[512]++;
+  EXPECT_EQ(AVB_VBMETA_VERIFY_RESULT_SIGNATURE_MISMATCH,
+            avb_vbmeta_image_verify(
+                vbmeta_image_.data(), vbmeta_image_.size(), nullptr, nullptr));
+}
+
+TEST_F(AvbToolTest, MldsaTamperedVBMeta) {
+  GenerateVBMetaImage(
+      "vbmeta.img", "MLDSA65", 0, "test/data/testkey_mldsa65.pem");
+  // Corrupt a byte in the release string.
+  AvbVBMetaImageHeader* header = (AvbVBMetaImageHeader*)vbmeta_image_.data();
+  header->release_string[0]++;
+  EXPECT_EQ(AVB_VBMETA_VERIFY_RESULT_SIGNATURE_MISMATCH,
+            avb_vbmeta_image_verify(
+                vbmeta_image_.data(), vbmeta_image_.size(), nullptr, nullptr));
+}
+
 TEST_F(AvbToolTest, ExtractPublicKey) {
   GenerateVBMetaImage("vbmeta.img",
                       "SHA256_RSA2048",
@@ -2697,7 +2749,7 @@ TEST_F(AvbToolTest, AppendVBMetaImage) {
       "Rollback Index:           0\n"
       "Flags:                    0\n"
       "Rollback Index Location:  0\n"
-      "Release String:           'avbtool 1.3.0 '\n"
+      "Release String:           'avbtool 1.4.0 '\n"
       "Descriptors:\n"
       "    Kernel Cmdline descriptor:\n"
       "      Flags:                 0\n"
@@ -3695,7 +3747,7 @@ TEST_F(AvbToolTest_UpdatePartitionDescriptor, HashDescriptor) {
       "Rollback Index:           0\n"
       "Flags:                    0\n"
       "Rollback Index Location:  0\n"
-      "Release String:           'avbtool 1.3.0'\n"
+      "Release String:           'avbtool 1.4.0'\n"
       "Descriptors:\n"
       "    Hash descriptor:\n"
       "      Image Size:            1024 bytes\n"
@@ -3734,7 +3786,7 @@ TEST_F(AvbToolTest_UpdatePartitionDescriptor, HashDescriptor) {
       "Rollback Index:           0\n"
       "Flags:                    0\n"
       "Rollback Index Location:  0\n"
-      "Release String:           'avbtool 1.3.0'\n"
+      "Release String:           'avbtool 1.4.0'\n"
       "Descriptors:\n"
       "    Hash descriptor:\n"
       "      Image Size:            2048 bytes\n"
@@ -3804,7 +3856,7 @@ TEST_F(AvbToolTest_UpdatePartitionDescriptor, HashtreeDescriptor) {
       "Rollback Index:           0\n"
       "Flags:                    0\n"
       "Rollback Index Location:  0\n"
-      "Release String:           'avbtool 1.3.0'\n"
+      "Release String:           'avbtool 1.4.0'\n"
       "Descriptors:\n"
       "    Hash descriptor:\n"
       "      Image Size:            1024 bytes\n"
@@ -3843,7 +3895,7 @@ TEST_F(AvbToolTest_UpdatePartitionDescriptor, HashtreeDescriptor) {
       "Rollback Index:           0\n"
       "Flags:                    0\n"
       "Rollback Index Location:  0\n"
-      "Release String:           'avbtool 1.3.0'\n"
+      "Release String:           'avbtool 1.4.0'\n"
       "Descriptors:\n"
       "    Hash descriptor:\n"
       "      Image Size:            1024 bytes\n"
@@ -4567,4 +4619,117 @@ TEST_F(AvbToolResignImageTest, ResignCorruptedImage) {
                  "SHA256_RSA2048");
 }
 
+TEST_F(AvbToolResignImageTest, MismatchPubkey) {
+  const size_t partition_size = 1024 * 1024;
+  const size_t image_size = 512 * 1024;
+  GeneratePartitionWithFooter("test.img",
+                              "SHA256_RSA2048",
+                              "test/data/testkey_rsa2048.pem",
+                              partition_size,
+                              image_size);
+  std::filesystem::path pk_path = testdir_ / "testkey_rsa2048.avbpubkey";
+  ASSERT_COMMAND(
+      0,
+      "./avbtool.py extract_public_key --key test/data/testkey_rsa2048.pem"
+      " --output %s",
+      pk_path.c_str());
+
+  std::string image_path = (testdir_ / "test.img").string();
+  std::filesystem::path vbmeta_path = testdir_ / "vbmeta_test.img";
+  ASSERT_COMMAND(0,
+                 "./avbtool.py make_vbmeta_image "
+                 "--output %s "
+                 "--algorithm SHA256_RSA2048 "
+                 "--key test/data/testkey_rsa2048.pem "
+                 "--chain_partition test:1:%s",
+                 vbmeta_path.c_str(),
+                 pk_path.c_str());
+  ASSERT_COMMAND(0,
+                 "./avbtool.py verify_image "
+                 " --image %s"
+                 " --follow_chain_partitions",
+                 vbmeta_path.c_str());
+  // Sign test partition with a different key
+  ASSERT_COMMAND(0,
+                 "./avbtool.py add_hash_footer "
+                 " --image %s"
+                 " --partition_size %zu"
+                 " --key test/data/testkey_rsa2048_2.pem"
+                 " --partition_name test",
+                 image_path.c_str(),
+                 partition_size);
+  // Now public key in vbmeta_test mismtaches public key in test.img
+  ASSERT_COMMAND(1,
+                 "./avbtool.py verify_image "
+                 " --image %s"
+                 " --follow_chain_partitions",
+                 vbmeta_path.c_str());
+}
+
+TEST_F(AvbToolResignImageTest,
+       Partition_WithFooter_ResignChangeRollbackIndex_Succeeds) {
+  const size_t partition_size = 1024 * 1024;
+  const size_t image_size = 512 * 1024;
+  GeneratePartitionWithFooter("test.img",
+                              "SHA256_RSA2048",
+                              "test/data/testkey_rsa2048.pem",
+                              partition_size,
+                              image_size);
+  std::string original_info = InfoImage((testdir_ / "test.img").c_str());
+
+  EXPECT_COMMAND(0,
+                 "./avbtool.py resign_image"
+                 " --image %s"
+                 " --key test/data/testkey_rsa2048.pem"
+                 " --algorithm SHA256_RSA2048"
+                 " --rollback_index 1",
+                 (testdir_ / "test.img").c_str());
+
+  std::string new_info = InfoImage((testdir_ / "test.img").c_str());
+  const std::string expected_diff =
+      "--- original\n"
+      "+++ new\n"
+      "@@ -10,7 +10,7 @@\n"
+      " Auxiliary Block:          768 bytes\n"
+      " Public key (sha1):        " TESTKEY_RSA2048_SHA
+      "\n"
+      " Algorithm:                SHA256_RSA2048\n"
+      "-Rollback Index:           0\n"
+      "+Rollback Index:           1\n"
+      " Flags:                    0\n"
+      " Rollback Index Location:  0\n"
+      " Release String:           ''\n";
+  EXPECT_DIFF(original_info, new_info, expected_diff);
+}
+
+TEST_F(AvbToolResignImageTest,
+       LooseImage_WithHeader_ResignChangeRollbackIndex_Succeeds) {
+  GenerateVBMetaImage(
+      "vbmeta.img", "SHA256_RSA2048", 0, "test/data/testkey_rsa2048.pem");
+  std::string original_info = InfoImage(vbmeta_image_path_.c_str());
+
+  EXPECT_COMMAND(0,
+                 "./avbtool.py resign_image"
+                 " --image %s"
+                 " --key test/data/testkey_rsa2048.pem"
+                 " --algorithm SHA256_RSA2048"
+                 " --rollback_index 2",
+                 vbmeta_image_path_.c_str());
+
+  std::string new_info = InfoImage(vbmeta_image_path_.c_str());
+  const std::string expected_diff =
+      "--- original\n"
+      "+++ new\n"
+      "@@ -4,7 +4,7 @@\n"
+      " Auxiliary Block:          576 bytes\n"
+      " Public key (sha1):        " TESTKEY_RSA2048_SHA
+      "\n"
+      " Algorithm:                SHA256_RSA2048\n"
+      "-Rollback Index:           0\n"
+      "+Rollback Index:           2\n"
+      " Flags:                    0\n"
+      " Rollback Index Location:  0\n"
+      " Release String:           'avbtool 1.4.0'\n";
+  EXPECT_DIFF(original_info, new_info, expected_diff);
+}
 }  // namespace avb

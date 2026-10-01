@@ -451,7 +451,7 @@ int ufdt_combine_all_overlays(struct ufdt** overlay_trees, size_t overlay_count,
     for (size_t i = 1; i < overlay_count; i++) {
         struct ufdt_node** it = nullptr;
         struct ufdt_node* root_node = overlay_trees[i]->root;
-        for_each_node(it, root_node) {
+        for_each_child(it, root_node) {
             ufdt_node_add_child(combined_root_node, *it);
         }
         ((struct ufdt_node_fdt_node *)root_node)->child = nullptr;

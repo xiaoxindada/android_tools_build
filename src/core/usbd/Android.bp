@@ -14,6 +14,10 @@ cc_binary {
         "libutils",
         "libhardware",
         "android.hardware.usb.gadget@1.0",
-        "android.hardware.usb.gadget-V1-ndk",
+        "android.hardware.usb.gadget-V2-ndk",
+        "libaconfig_storage_read_api_cc",
+    ],
+    static_libs: [
+        "android.hardware.usb.flags-aconfig-cc-lib",
     ],
 }

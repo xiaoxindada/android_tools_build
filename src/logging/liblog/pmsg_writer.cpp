@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-#include "pmsg_writer.h"
-
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -26,6 +24,7 @@
 #include <atomic>
 
 #include <log/log_properties.h>
+#include <log/pmsg_writer.h>
 #include <private/android_logger.h>
 
 #include "logger.h"
@@ -69,7 +68,8 @@ void PmsgClose() {
   pmsg_fd = 0;
 }
 
-int PmsgWrite(log_id_t logId, struct timespec* ts, struct iovec* vec, size_t nr) {
+int PmsgWrite(log_id_t logId, struct timespec* ts, struct iovec* vec, size_t nr,
+              uint16_t uid, uint16_t pid, uint16_t tid) {
   static const unsigned headerLength = 2;
   struct iovec newVec[nr + headerLength];
   android_log_header_t header;
@@ -121,11 +121,11 @@ int PmsgWrite(log_id_t logId, struct timespec* ts, struct iovec* vec, size_t nr)
 
   pmsgHeader.magic = LOGGER_MAGIC;
   pmsgHeader.len = sizeof(pmsgHeader) + sizeof(header);
-  pmsgHeader.uid = getuid();
-  pmsgHeader.pid = getpid();
+  pmsgHeader.uid = uid;
+  pmsgHeader.pid = pid;
 
   header.id = logId;
-  header.tid = gettid();
+  header.tid = tid;
   header.realtime.tv_sec = ts->tv_sec;
   header.realtime.tv_nsec = ts->tv_nsec;
 
@@ -243,7 +243,7 @@ ssize_t __android_log_pmsg_file_write(log_id_t logId, char prio, const char* fil
     vec[2].iov_base = (unsigned char*)buf;
     vec[2].iov_len = transfer;
 
-    ret = PmsgWrite(logId, &ts, vec, sizeof(vec) / sizeof(vec[0]));
+    ret = PmsgWrite(logId, &ts, vec, sizeof(vec) / sizeof(vec[0]), getuid(), getpid(), gettid());
 
     if (ret <= 0) {
       free(cp);

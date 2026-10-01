@@ -80,6 +80,7 @@ LOCAL_POST_INSTALL_CMD += ; mkdir -p $(TARGET_ROOT_OUT)/odm
 # without /odm partition. For devices with /odm partition, mount odm.img under
 # /odm will hide those symlinks.
 LOCAL_POST_INSTALL_CMD += ; ln -sf /vendor/odm/app $(TARGET_ROOT_OUT)/odm/app
+LOCAL_POST_INSTALL_CMD += ; ln -sf /vendor/odm/apex $(TARGET_ROOT_OUT)/odm/apex
 LOCAL_POST_INSTALL_CMD += ; ln -sf /vendor/odm/bin $(TARGET_ROOT_OUT)/odm/bin
 LOCAL_POST_INSTALL_CMD += ; ln -sf /vendor/odm/etc $(TARGET_ROOT_OUT)/odm/etc
 LOCAL_POST_INSTALL_CMD += ; ln -sf /vendor/odm/firmware $(TARGET_ROOT_OUT)/odm/firmware
@@ -92,6 +93,7 @@ LOCAL_POST_INSTALL_CMD += ; ln -sf /vendor/odm/usr $(TARGET_ROOT_OUT)/odm/usr
 
 ALL_ROOTDIR_SYMLINKS += \
   $(TARGET_ROOT_OUT)/odm/app \
+  $(TARGET_ROOT_OUT)/odm/apex \
   $(TARGET_ROOT_OUT)/odm/bin \
   $(TARGET_ROOT_OUT)/odm/etc \
   $(TARGET_ROOT_OUT)/odm/firmware \

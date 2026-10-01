@@ -83,6 +83,8 @@ perf_event_attr CreateDefaultPerfEventAttr(const EventType& event_type) {
   attr.size = sizeof(perf_event_attr);
   attr.type = event_type.type;
   attr.config = event_type.config;
+  attr.config1 = event_type.config1;
+  attr.config2 = event_type.config2;
   attr.disabled = 0;
   // Changing read_format affects the layout of the data read from perf_event_file, namely
   // PerfCounter in event_fd.h.
@@ -102,54 +104,55 @@ perf_event_attr CreateDefaultPerfEventAttr(const EventType& event_type) {
 
 void DumpPerfEventAttr(const perf_event_attr& attr, size_t indent) {
   std::string event_name = GetEventNameByAttr(attr);
-  PrintIndented(indent, "event_attr: for event type %s\n", event_name.c_str());
+  PrintIndented(indent, "event_attr: for event type {}\n", event_name);
 
-  PrintIndented(indent + 1, "type %u, size %u, config %llu\n", attr.type, attr.size, attr.config);
+  PrintIndented(indent + 1, "type {}, size {}, config {}\n", attr.type, attr.size, attr.config);
 
   if (attr.freq != 0) {
-    PrintIndented(indent + 1, "sample_freq %llu\n", attr.sample_freq);
+    PrintIndented(indent + 1, "sample_freq {}\n", attr.sample_freq);
   } else {
-    PrintIndented(indent + 1, "sample_period %llu\n", attr.sample_period);
+    PrintIndented(indent + 1, "sample_period {}\n", attr.sample_period);
   }
 
-  PrintIndented(indent + 1, "sample_type (0x%llx) %s\n", attr.sample_type,
-                SampleTypeToString(attr.sample_type).c_str());
+  PrintIndented(indent + 1, "sample_type (0x{:x}) {}\n", attr.sample_type,
+                SampleTypeToString(attr.sample_type));
 
-  PrintIndented(indent + 1, "read_format (0x%llx) %s\n", attr.read_format,
-                ReadFormatToString(attr.read_format).c_str());
+  PrintIndented(indent + 1, "read_format (0x{:x}) {}\n", attr.read_format,
+                ReadFormatToString(attr.read_format));
 
-  PrintIndented(indent + 1, "disabled %u, inherit %u, pinned %u, exclusive %u\n", attr.disabled,
+  PrintIndented(indent + 1, "disabled {}, inherit {}, pinned {}, exclusive {}\n", attr.disabled,
                 attr.inherit, attr.pinned, attr.exclusive);
 
-  PrintIndented(indent + 1, "exclude_user %u, exclude_kernel %u, exclude_hv %u\n",
+  PrintIndented(indent + 1, "exclude_user {}, exclude_kernel {}, exclude_hv {}\n",
                 attr.exclude_user, attr.exclude_kernel, attr.exclude_hv);
 
-  PrintIndented(indent + 1, "exclude_idle %u, mmap %u, mmap2 %u, comm %u, freq %u\n",
+  PrintIndented(indent + 1, "exclude_idle {}, mmap {}, mmap2 {}, comm {}, freq {}\n",
                 attr.exclude_idle, attr.mmap, attr.mmap2, attr.comm, attr.freq);
 
-  PrintIndented(indent + 1, "inherit_stat %u, enable_on_exec %u, task %u\n", attr.inherit_stat,
+  PrintIndented(indent + 1, "inherit_stat {}, enable_on_exec {}, task {}\n", attr.inherit_stat,
                 attr.enable_on_exec, attr.task);
 
-  PrintIndented(indent + 1, "watermark %u, precise_ip %u, mmap_data %u\n", attr.watermark,
+  PrintIndented(indent + 1, "watermark {}, precise_ip {}, mmap_data {}\n", attr.watermark,
                 attr.precise_ip, attr.mmap_data);
 
-  PrintIndented(indent + 1, "sample_id_all %u, exclude_host %u, exclude_guest %u\n",
+  PrintIndented(indent + 1, "sample_id_all {}, exclude_host {}, exclude_guest {}\n",
                 attr.sample_id_all, attr.exclude_host, attr.exclude_guest);
-  PrintIndented(indent + 1, "config2 0x%llx\n", attr.config2);
-  PrintIndented(indent + 1, "branch_sample_type 0x%" PRIx64 "\n", attr.branch_sample_type);
-  PrintIndented(indent + 1, "exclude_callchain_kernel %u, exclude_callchain_user %u\n",
+  PrintIndented(indent + 1, "config1 0x{:x}\n", attr.config1);
+  PrintIndented(indent + 1, "config2 0x{:x}\n", attr.config2);
+  PrintIndented(indent + 1, "branch_sample_type 0x{:x}\n", attr.branch_sample_type);
+  PrintIndented(indent + 1, "exclude_callchain_kernel {}, exclude_callchain_user {}\n",
                 attr.exclude_callchain_kernel, attr.exclude_callchain_user);
-  PrintIndented(indent + 1, "comm_exec %u, use_clockid %u, context_switch %u\n", attr.comm_exec,
+  PrintIndented(indent + 1, "comm_exec {}, use_clockid {}, context_switch {}\n", attr.comm_exec,
                 attr.use_clockid, attr.context_switch);
-  PrintIndented(indent + 1, "sample_regs_user 0x%" PRIx64 "\n", attr.sample_regs_user);
-  PrintIndented(indent + 1, "sample_stack_user 0x%" PRIx64 "\n", attr.sample_stack_user);
-  PrintIndented(indent + 1, "clockid %d\n", attr.clockid);
-  PrintIndented(indent + 1, "sample_regs_intr %" PRIu64 "\n", attr.sample_regs_intr);
-  PrintIndented(indent + 1, "aux_watermark %u\n", attr.aux_watermark);
-  PrintIndented(indent + 1, "sample_max_stack %u\n", attr.sample_max_stack);
-  PrintIndented(indent + 1, "aux_sample_size %u\n", attr.aux_sample_size);
-  PrintIndented(indent + 1, "sig_data 0x%" PRIx64 "\n", attr.sig_data);
-  PrintIndented(indent + 1, "config3 0x%" PRIx64 "\n", attr.config3);
+  PrintIndented(indent + 1, "sample_regs_user 0x{:x}\n", attr.sample_regs_user);
+  PrintIndented(indent + 1, "sample_stack_user 0x{:x}\n", attr.sample_stack_user);
+  PrintIndented(indent + 1, "clockid {}\n", attr.clockid);
+  PrintIndented(indent + 1, "sample_regs_intr {}\n", attr.sample_regs_intr);
+  PrintIndented(indent + 1, "aux_watermark {}\n", attr.aux_watermark);
+  PrintIndented(indent + 1, "sample_max_stack {}\n", attr.sample_max_stack);
+  PrintIndented(indent + 1, "aux_sample_size {}\n", attr.aux_sample_size);
+  PrintIndented(indent + 1, "sig_data 0x{:x}\n", attr.sig_data);
+  PrintIndented(indent + 1, "config3 0x{:x}\n", attr.config3);
 }
 
 bool GetCommonEventIdPositionsForAttrs(const EventAttrIds& attrs,
@@ -243,10 +246,10 @@ bool IsCpuSupported(const perf_event_attr& attr) {
 std::string GetEventNameByAttr(const perf_event_attr& attr) {
   std::string name = "unknown";
   auto callback = [&](const EventType& event_type) {
-    // An event type uses both type and config value to define itself. But etm event type
-    // only uses type value (whose config value is used to set etm options).
+    // An event type uses both type and config value to define itself. But etm/spe event types
+    // only use type value (whose config value is used to set etm/spe options).
     if (event_type.type == attr.type &&
-        (event_type.config == attr.config || event_type.IsEtmEvent())) {
+        (event_type.config == attr.config || event_type.IsEtmEvent() || event_type.IsSpeEvent())) {
       name = event_type.name;
       if (attr.exclude_user && !attr.exclude_kernel) {
         name += ":k";

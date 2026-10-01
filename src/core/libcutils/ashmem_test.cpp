@@ -31,20 +31,14 @@
 
 #include "ashmem-internal.h"
 
+#define SKIP_IF_NOT_USING_MEMFD()                 \
+    do {                                          \
+        if (GetParam() && !use_memfd()) { \
+            GTEST_SKIP();                         \
+        }                                         \
+    } while (false)
+
 using android::base::unique_fd;
-
-static void TestCreateRegion(size_t size, unique_fd &fd, int prot, const char *name=nullptr) {
-    fd = unique_fd(ashmem_create_region(name, size));
-    ASSERT_TRUE(fd >= 0);
-    ASSERT_TRUE(ashmem_valid(fd));
-    ASSERT_EQ(size, static_cast<size_t>(ashmem_get_size_region(fd)));
-    ASSERT_EQ(0, ashmem_set_prot_region(fd, prot));
-
-    // We've been inconsistent historically about whether or not these file
-    // descriptors were CLOEXEC. Make sure we're consistent going forward.
-    // https://issuetracker.google.com/165667331
-    ASSERT_EQ(FD_CLOEXEC, (fcntl(fd, F_GETFD) & FD_CLOEXEC));
-}
 
 static void TestMmap(const unique_fd& fd, size_t size, int prot, void** region, off_t off = 0) {
     ASSERT_TRUE(fd >= 0);
@@ -269,20 +263,42 @@ static void ForkMultiRegionTest(unique_fd fds[], int nRegions, size_t size) {
 
 }
 
-static void GetNameAshmemTest(const std::string &name) {
-    // We use __ashmem_open() to guarantee we get an ashmem fd. We need to do this since ashmem and
-    // memfd have different maximum name lengths.
-    unique_fd fd(__ashmem_open());
-    ASSERT_TRUE(fd >= 0);
+class SharedMemoryRegionAllocator {
+    protected:
+        const bool use_memfd_;
 
-    ASSERT_EQ(0, ioctl(fd, ASHMEM_SET_NAME, name.c_str()));
+        SharedMemoryRegionAllocator(bool use_memfd) : use_memfd_(use_memfd) {}
 
-    char retName[ASHMEM_NAME_LEN];
-    ASSERT_EQ(0, ioctl(fd, ASHMEM_GET_NAME, retName));
-    ASSERT_STREQ(retName, name.substr(0, ASHMEM_NAME_LEN - 1).c_str());
-}
+        void TestCreateRegion(size_t size, unique_fd& fd, int prot, const char* name=nullptr) {
+            if (name == nullptr) name = "none";
 
-TEST(AshmemTest, ForkTest) {
+            if (use_memfd_) {
+                fd = unique_fd(__memfd_create_region(name, size));
+            } else {
+                fd = unique_fd(__ashmem_create_region(name, size));
+            }
+
+            ASSERT_TRUE(fd >= 0);
+            ASSERT_TRUE(ashmem_valid(fd));
+            ASSERT_EQ(size, static_cast<size_t>(ashmem_get_size_region(fd)));
+            ASSERT_EQ(0, ashmem_set_prot_region(fd, prot));
+
+            // We've been inconsistent historically about whether or not these file
+            // descriptors were CLOEXEC. Make sure we're consistent going forward.
+            // https://issuetracker.google.com/165667331
+            ASSERT_EQ(FD_CLOEXEC, (fcntl(fd, F_GETFD) & FD_CLOEXEC));
+        }
+};
+
+// Common ashmem and memfd tests.
+class AshmemMemfdTest : public testing::TestWithParam<bool>,
+                        public SharedMemoryRegionAllocator {
+    public:
+        AshmemMemfdTest() : SharedMemoryRegionAllocator(use_memfd() && GetParam()) {}
+};
+
+TEST_P(AshmemMemfdTest, ForkTest) {
+    SKIP_IF_NOT_USING_MEMFD();
     const size_t size = getpagesize();
     unique_fd fd;
 
@@ -290,18 +306,19 @@ TEST(AshmemTest, ForkTest) {
     ASSERT_NO_FATAL_FAILURE(ForkTest(fd, size));
 }
 
-TEST(AshmemTest, FileOperationsTest) {
-    const size_t pageSize = getpagesize();
+TEST_P(AshmemMemfdTest, FileOperationsTest) {
+    SKIP_IF_NOT_USING_MEMFD();
     // Allocate a 4-page buffer, but leave page-sized holes on either side in
     // the test.
-    const size_t size = pageSize * 4;
+    const size_t size = getpagesize() * 4;
     unique_fd fd;
 
     ASSERT_NO_FATAL_FAILURE(TestCreateRegion(size, fd, PROT_READ | PROT_WRITE));
     ASSERT_NO_FATAL_FAILURE(FileOperationsTest(fd, size));
 }
 
-TEST(AshmemTest, ProtTest) {
+TEST_P(AshmemMemfdTest, ProtTest) {
+    SKIP_IF_NOT_USING_MEMFD();
     unique_fd fd;
     const size_t size = getpagesize();
 
@@ -312,7 +329,8 @@ TEST(AshmemTest, ProtTest) {
     ASSERT_NO_FATAL_FAILURE(ProtTestRWBuffer(fd, size));
 }
 
-TEST(AshmemTest, ForkProtTest) {
+TEST_P(AshmemMemfdTest, ForkMultiRegionTest) {
+    SKIP_IF_NOT_USING_MEMFD();
     unique_fd fd;
     const size_t size = getpagesize();
 
@@ -320,7 +338,8 @@ TEST(AshmemTest, ForkProtTest) {
     ASSERT_NO_FATAL_FAILURE(ForkProtTest(fd, size));
 }
 
-TEST(AshmemTest, ForkMultiRegionTest) {
+TEST_P(AshmemMemfdTest, ForkProtTest) {
+    SKIP_IF_NOT_USING_MEMFD();
     const size_t size = getpagesize();
     constexpr int nRegions = 16;
     unique_fd fds[nRegions];
@@ -332,9 +351,34 @@ TEST(AshmemTest, ForkMultiRegionTest) {
     ASSERT_NO_FATAL_FAILURE(ForkMultiRegionTest(fds, nRegions, size));
 }
 
+INSTANTIATE_TEST_SUITE_P(AshmemMemfdCommonTests, AshmemMemfdTest, testing::Bool(),
+                         [](const testing::TestParamInfo<bool>& info) {
+                             return info.param ? "Memfd" : "Ashmem";
+                         });
+
+// Ashmem specific tests.
+class AshmemTest : public ::testing::Test,
+                   public SharedMemoryRegionAllocator {
+ public:
+     AshmemTest() : SharedMemoryRegionAllocator(false) {}
+ protected:
+     void GetNameAshmemTest(const std::string& name) {
+        unique_fd fd;
+
+        // We need to use ashmem specifically since ashmem and memfd have different maximum name
+        // lengths.
+        ASSERT_NO_FATAL_FAILURE(TestCreateRegion(getpagesize(), fd, PROT_READ | PROT_WRITE,
+                                name.c_str()));
+
+        char retName[ASHMEM_NAME_LEN];
+        ASSERT_EQ(0, ioctl(fd, ASHMEM_GET_NAME, retName));
+        ASSERT_STREQ(retName, name.substr(0, ASHMEM_NAME_LEN - 1).c_str());
+    }
+};
+
 // We don't run a similar test as part of the AshmemTestMemfdAshmemCompat tests, since the SET_NAME
 // ioctl is not supported.
-TEST(AshmemTest, SetNameKernelAccessTest) {
+TEST_F(AshmemTest, SetNameKernelAccessTest) {
     size_t pageSize = getpagesize();
     // We use mmap to get a page-aligned area, since the smallest accessibility granule is a page.
     // We also allocate 2 pages worth of virtual address space so that when we unmap the 2nd page
@@ -367,25 +411,29 @@ TEST(AshmemTest, SetNameKernelAccessTest) {
     ASSERT_EQ(0, munmap(testArea, pageSize));
 }
 
-TEST(AshmemTest, GetLongNameAshmemTests) {
+TEST_F(AshmemTest, GetLongNameAshmemTests) {
     std::string longName(ASHMEM_NAME_LEN - 1, 'A');
-    ASSERT_NO_FATAL_FAILURE(GetNameAshmemTest(longName));
+    ASSERT_NO_FATAL_FAILURE(this->GetNameAshmemTest(longName));
 
     longName.append(1, 'A');
     // This should not fail because ashmem will just truncate the name if it is too long.
-    ASSERT_NO_FATAL_FAILURE(GetNameAshmemTest(longName));
+    ASSERT_NO_FATAL_FAILURE(this->GetNameAshmemTest(longName));
 }
 
-class AshmemTestMemfdAshmemCompat : public ::testing::Test {
+// Memfd specific tests.
+class MemfdTest : public ::testing::Test,
+                  public SharedMemoryRegionAllocator {
+ public:
+     MemfdTest() : SharedMemoryRegionAllocator(true) {}
  protected:
-  void SetUp() override {
-    if (!has_memfd_support()){
-        GTEST_SKIP() << "No memfd support; skipping memfd-ashmem compat tests";
+     void SetUp() override {
+        if (!use_memfd()) {
+            GTEST_SKIP() << "No memfd support; skipping memfd tests";
+        }
     }
-  }
 };
 
-TEST_F(AshmemTestMemfdAshmemCompat, SetNameTest) {
+TEST_F(MemfdTest, AshmemCompatSetNameTest) {
     unique_fd fd;
 
     // ioctl() should fail, since memfd names cannot be changed after the buffer has been created.
@@ -394,18 +442,18 @@ TEST_F(AshmemTestMemfdAshmemCompat, SetNameTest) {
     ASSERT_LT(ioctl(fd, ASHMEM_SET_NAME, "invalid-command"), 0);
 }
 
-TEST_F(AshmemTestMemfdAshmemCompat, GetNameTest) {
+TEST_F(MemfdTest, AshmemCompatGetNameTest) {
     unique_fd fd;
     ASSERT_NO_FATAL_FAILURE(TestCreateRegion(getpagesize(), fd, PROT_READ | PROT_WRITE |
                                                                 PROT_EXEC));
 
     char testBuf[ASHMEM_NAME_LEN];
     ASSERT_EQ(0, ioctl(fd, ASHMEM_GET_NAME, &testBuf));
-    // ashmem_create_region(nullptr, ...) creates memfds with the name "none".
+    // TestCreateRegion() with no name creates memfds with the name "none".
     ASSERT_STREQ(testBuf, "none");
 }
 
-TEST_F(AshmemTestMemfdAshmemCompat, GetLongNameMemfdTests) {
+TEST_F(MemfdTest, AshmemCompatGetLongNameMemfdTests) {
     // memfd names have a maximum length of 249 bytes excluding the NUL terminating byte.
     // See: https://man7.org/linux/man-pages/man2/memfd_create.2.html
     const size_t max_memfd_name_len = 249;
@@ -425,7 +473,7 @@ TEST_F(AshmemTestMemfdAshmemCompat, GetLongNameMemfdTests) {
     ASSERT_LT(ashmem_create_region(longName.c_str(), pageSize), 0);
 }
 
-TEST_F(AshmemTestMemfdAshmemCompat, SetSizeTest) {
+TEST_F(MemfdTest, AshmemCompatSetSizeTest) {
     unique_fd fd;
 
     // ioctl() should fail, since libcutils sets and seals the buffer size after creating it.
@@ -434,7 +482,7 @@ TEST_F(AshmemTestMemfdAshmemCompat, SetSizeTest) {
     ASSERT_LT(ioctl(fd, ASHMEM_SET_SIZE, 2 * getpagesize()), 0);
 }
 
-TEST_F(AshmemTestMemfdAshmemCompat, GetSizeTest) {
+TEST_F(MemfdTest, AshmemCompatGetSizeTest) {
     unique_fd fd;
     size_t bufSize = getpagesize();
 
@@ -442,7 +490,7 @@ TEST_F(AshmemTestMemfdAshmemCompat, GetSizeTest) {
     ASSERT_EQ(static_cast<int>(bufSize), ioctl(fd, ASHMEM_GET_SIZE, 0));
 }
 
-TEST_F(AshmemTestMemfdAshmemCompat, ProtMaskTest) {
+TEST_F(MemfdTest, AshmemCompatProtMaskTest) {
     unique_fd fd;
     ASSERT_NO_FATAL_FAILURE(TestCreateRegion(getpagesize(), fd, PROT_READ | PROT_WRITE |
                                                                 PROT_EXEC));
@@ -481,7 +529,7 @@ TEST_F(AshmemTestMemfdAshmemCompat, ProtMaskTest) {
     ASSERT_LT(ioctl(fd2, ASHMEM_SET_PROT_MASK, PROT_READ | PROT_WRITE | PROT_EXEC), 0);
 }
 
-TEST_F(AshmemTestMemfdAshmemCompat, FileIDTest) {
+TEST_F(MemfdTest, AshmemCompatFileIDTest) {
     unique_fd fd;
     ASSERT_NO_FATAL_FAILURE(TestCreateRegion(getpagesize(), fd, PROT_READ | PROT_WRITE |
                                                                 PROT_EXEC));
@@ -493,7 +541,7 @@ TEST_F(AshmemTestMemfdAshmemCompat, FileIDTest) {
     ASSERT_EQ(ino, st.st_ino);
 }
 
-TEST_F(AshmemTestMemfdAshmemCompat, UnpinningTest) {
+TEST_F(MemfdTest, AshmemCompatUnpinningTest) {
     unique_fd fd;
     size_t bufSize = getpagesize();
     ASSERT_NO_FATAL_FAILURE(TestCreateRegion(getpagesize(), fd, PROT_READ | PROT_WRITE |

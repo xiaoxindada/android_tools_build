@@ -21,6 +21,7 @@
 #include <mutex>
 
 #include <fcntl.h>
+#include <inttypes.h>
 #include <log/log.h>
 
 #include <utils/AllocatorTracker.h>
@@ -506,7 +507,8 @@ void RefBase::decStrong(const void* id) const
     if (c == 1) {
         std::atomic_thread_fence(std::memory_order_acquire);
         refs->mBase->onLastStrongRef(id);
-        int32_t flags = refs->mFlags.load(std::memory_order_relaxed);
+        const int32_t flags = refs->mFlags.load(std::memory_order_relaxed);
+
         if ((flags&OBJECT_LIFETIME_MASK) == OBJECT_LIFETIME_STRONG) {
             // The destructor does not delete refs in this case.
             ANDROID_DELETE(RefBase, this);
@@ -762,6 +764,40 @@ void RefBase::weakref_type::trackMe(bool enable, bool retain)
     static_cast<weakref_impl*>(this)->trackMe(enable, retain);
 }
 
+static int32_t tryTagOldTags(int32_t tag, std::atomic<int32_t>* mFlags) {
+    LOG_ALWAYS_FATAL_IF((tag & ~RefBase::OBJECT_TAG_MASK) != 0,
+                        "RBSAN: Invalid RefBase tag to tag: %" PRId32, tag);
+
+    int32_t oldFlags = mFlags->fetch_or(tag, std::memory_order_acq_rel);
+    int32_t oldTags = oldFlags & RefBase::OBJECT_TAG_MASK;
+    return oldTags;
+}
+
+void RefBase::weakref_type::tag(int32_t tag) {
+    int32_t oldTags = tryTagOldTags(tag, &(static_cast<weakref_impl*>(this)->mFlags));
+    const bool tookTagOwnership = (oldTags & tag) == 0;
+    LOG_ALWAYS_FATAL_IF(!tookTagOwnership,
+                        "RBSAN: Can't set flag %" PRId32 " when it's set: %" PRId32, oldTags, tag);
+}
+
+bool RefBase::weakref_type::tryTag(int32_t tag) {
+    int32_t oldTags = tryTagOldTags(tag, &(static_cast<weakref_impl*>(this)->mFlags));
+    const bool tookTagOwnership = (oldTags & tag) == 0;
+    return tookTagOwnership;
+}
+
+void RefBase::weakref_type::untag(int32_t tag) {
+    LOG_ALWAYS_FATAL_IF((tag & ~OBJECT_TAG_MASK) != 0,
+                        "RBSAN: Invalid RefBase tag to untag: %" PRId32, tag);
+
+    int32_t oldFlags =
+            static_cast<weakref_impl*>(this)->mFlags.fetch_and(~tag, std::memory_order_acq_rel);
+    int32_t oldTags = oldFlags & OBJECT_TAG_MASK;
+    LOG_ALWAYS_FATAL_IF((oldTags & tag) == 0,
+                        "RBSAN: Can't unset flag %" PRId32 " when it's not set: %" PRId32, tag,
+                        oldTags);
+}
+
 RefBase::weakref_type* RefBase::createWeak(const void* id) const
 {
     mRefs->incWeak(id);
@@ -777,7 +813,13 @@ RefBase::RefBase() : mRefs(ANDROID_NEW(weakref_impl, this)) {}
 
 RefBase::~RefBase()
 {
-    int32_t flags = mRefs->mFlags.load(std::memory_order_relaxed);
+    const int32_t flags = mRefs->mFlags.load(std::memory_order_acquire);
+
+    // NOTE: if 'c' is 2 and 2 tags are set, we could also crash. However, we don't
+    // currently as this would require adding additional atomic reads.
+    const int32_t tags = flags & OBJECT_TAG_MASK;
+    LOG_ALWAYS_FATAL_IF(tags != 0, "RBSAN: Object is deleted, but it is tagged: %" PRId32, tags);
+
     // Life-time of this object is extended to WEAK, in
     // which case weakref_impl doesn't out-live the object and we
     // can free it now.

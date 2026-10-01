@@ -22,7 +22,7 @@
 class BacktraceFrame;
 class Tombstone;
 
-bool tombstone_proto_to_text(
-    const Tombstone& tombstone,
-    std::function<void(const std::string& line, bool should_log)> callback,
-    std::function<void(const BacktraceFrame& frame)> symbolize);
+bool tombstone_proto_to_text(const Tombstone& tombstone,
+                             std::function<void(const std::string& line, bool should_log)> callback,
+                             std::function<void(const BacktraceFrame& frame)> symbolize,
+                             bool display_sp = false);

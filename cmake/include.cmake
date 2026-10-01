@@ -98,7 +98,6 @@ set(libzucchini_headers
     CACHE STRING "" FORCE)
 set(libbsdiff_headers "${CMAKE_SOURCE_DIR}/src/bsdiff/include" CACHE STRING "" FORCE)
 set(libjsoncpp_headers "${CMAKE_SOURCE_DIR}/src/jsoncpp/include" CACHE STRING "" FORCE)
-set(libjsonpbparse_headers "${CMAKE_SOURCE_DIR}/src/extras/libjsonpb/parse/include" CACHE STRING "" FORCE)
 set(libgsi_headers
     "${CMAKE_SOURCE_DIR}/src/gsid"
     "${CMAKE_SOURCE_DIR}/src/gsid/include"
@@ -110,20 +109,21 @@ set(libavb_headers
 set(gsid_headers "${CMAKE_SOURCE_DIR}/src/gsid/include" CACHE STRING "" FORCE)
 set(puffin_headers "${CMAKE_SOURCE_DIR}/src/puffin/src/include" CACHE STRING "" FORCE)
 set(update_engine_headers "${CMAKE_SOURCE_DIR}/src/update_engine" CACHE STRING "" FORCE)
+set(fs_mgr_aconfig_headers "${CMAKE_SOURCE_DIR}/aconfig/fs_mgr"  CACHE STRING "" FORCE)
 set(fs_mgr_headers
-    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr"
-    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libstorage_literals"
-    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/include"
-    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libsnapshot"
-    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libsnapshot/include"
-    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libsnapshot/snapuserd/include"
-    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/ibsnapshot/libsnapshot_cow"
-    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/ibsnapshot/libsnapshot_cow/include" 
-    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/liblp/include"
-    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libfstab/include"
-    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libfs_avb/include"
-    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libdm/include"
-    "${CMAKE_SOURCE_DIR}/src/core/fs_mgr/libfiemap/include"
+    "${CMAKE_SOURCE_DIR}/src/fs_mgr"
+    "${CMAKE_SOURCE_DIR}/src/fs_mgr/libstorage_literals"
+    "${CMAKE_SOURCE_DIR}/src/fs_mgr/include"
+    "${CMAKE_SOURCE_DIR}/src/fs_mgr/libsnapshot"
+    "${CMAKE_SOURCE_DIR}/src/fs_mgr/libsnapshot/include"
+    "${CMAKE_SOURCE_DIR}/src/fs_mgr/libsnapshot/snapuserd/include"
+    "${CMAKE_SOURCE_DIR}/src/fs_mgr/ibsnapshot/libsnapshot_cow"
+    "${CMAKE_SOURCE_DIR}/src/fs_mgr/ibsnapshot/libsnapshot_cow/include" 
+    "${CMAKE_SOURCE_DIR}/src/fs_mgr/liblp/include"
+    "${CMAKE_SOURCE_DIR}/src/fs_mgr/libfstab/include"
+    "${CMAKE_SOURCE_DIR}/src/fs_mgr/libfs_avb/include"
+    "${CMAKE_SOURCE_DIR}/src/fs_mgr/libdm/include"
+    "${CMAKE_SOURCE_DIR}/src/fs_mgr/libfiemap/include"
     CACHE STRING "" FORCE)
 set(libziparchive_headers 
     "${CMAKE_SOURCE_DIR}/src/libziparchive/include"

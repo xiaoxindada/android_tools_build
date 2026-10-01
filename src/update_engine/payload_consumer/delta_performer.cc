@@ -16,16 +16,27 @@
 
 #include "update_engine/payload_consumer/delta_performer.h"
 
+#include <fcntl.h>
 #include <linux/fs.h>
+
+#include <base/files/file_util.h>
+#include <base/files/file_path.h>
+#include <unistd.h>
+
+#include "update_engine/common/hash_calculator.h"
+#include "update_engine/common/constants.h"
+#ifdef __ANDROID__
+#include "update_engine/common/platform_constants.h"
+#endif
 
 #include <algorithm>
 #include <chrono>
-#include <cstring>
 #include <memory>
 #include <set>
 #include <string>
 #include <utility>
 #include <vector>
+#include <iterator>
 
 #include <android-base/properties.h>
 #include <android-base/strings.h>
@@ -47,6 +58,7 @@
 #include "update_engine/common/error_code_utils.h"
 #include "update_engine/common/hardware_interface.h"
 #include "update_engine/common/prefs_interface.h"
+#include "update_engine/common/platform_constants.h"
 #include "update_engine/common/terminator.h"
 #include "update_engine/common/utils.h"
 #include "update_engine/payload_consumer/partition_update_generator_interface.h"
@@ -57,6 +69,7 @@
 #endif  // USE_FEC
 #include "update_engine/payload_consumer/payload_constants.h"
 #include "update_engine/payload_consumer/payload_verifier.h"
+#include "update_engine/payload_consumer/zstd_extent_writer.h"
 
 using google::protobuf::RepeatedPtrField;
 using std::min;
@@ -71,7 +84,6 @@ const unsigned DeltaPerformer::kProgressOperationsWeight = 50;
 const uint64_t DeltaPerformer::kCheckpointFrequencySeconds = 1;
 
 namespace {
-const int kUpdateStateOperationInvalid = -1;
 const int kMaxResumedUpdateFailures = 10;
 
 }  // namespace
@@ -169,12 +181,47 @@ void DeltaPerformer::UpdateOverallProgress(bool force_log,
   last_progress_chunk_ = curr_progress_chunk;
 }
 
+namespace {
+const char* GetTempDir() {
+  const char* tmpdir = getenv("TMPDIR");
+  if (tmpdir != nullptr) {
+    return tmpdir;
+  }
+  return "/tmp";
+}
+}  // namespace
+
 size_t DeltaPerformer::CopyDataToBuffer(const char** bytes_p,
                                         size_t* count_p,
                                         size_t max) {
   const size_t count = *count_p;
   if (!count)
     return 0;  // Special case shortcut.
+
+  // We don't support parsing manifest's protobuf message from file descriptor
+  // yet, so writing manifest to disk doesn't save any memory.
+  if (max > kMaxPayloadBufferSize && manifest_valid_) {
+    if (!payload_fd_.ok()) {
+      int fd = open(GetTempDir(), O_TMPFILE | O_RDWR | O_CLOEXEC, 0600);
+      if (fd < 0) {
+        PLOG(ERROR) << "Failed to open temporary file for payload";
+        return 0;
+      }
+      payload_fd_.reset(fd);
+      payload_file_size_ = 0;
+    }
+
+    size_t to_write = min(count, max - static_cast<size_t>(payload_file_size_));
+    if (!utils::WriteAll(payload_fd_.get(), *bytes_p, to_write)) {
+      PLOG(ERROR) << "Failed to write to payload file";
+      return 0;
+    }
+    payload_file_size_ += to_write;
+    *bytes_p += to_write;
+    *count_p -= to_write;
+    return to_write;
+  }
+
   size_t read_len = min(count, max - buffer_.size());
   const char* bytes_start = *bytes_p;
   const char* bytes_end = bytes_start + read_len;
@@ -201,15 +248,12 @@ bool DeltaPerformer::HandleOpResult(bool op_result,
 }
 
 int DeltaPerformer::Close() {
-  // Checkpoint update progress before canceling, so that subsequent attempts
-  // can resume from exactly where update_engine left last time.
-  CheckpointUpdateProgress(true);
   int err = -CloseCurrentPartition();
   LOG_IF(ERROR,
          !payload_hash_calculator_.Finalize() ||
              !signed_hash_calculator_.Finalize())
       << "Unable to finalize the hash.";
-  if (!buffer_.empty()) {
+  if (!buffer_.empty() || payload_fd_.ok()) {
     LOG(INFO) << "Discarding " << buffer_.size() << " unused downloaded bytes";
     if (err >= 0)
       err = 1;
@@ -482,6 +526,7 @@ bool DeltaPerformer::Write(const void* bytes, size_t count, ErrorCode* error) {
         LOG(ERROR) << "Failed to close partition "
                    << partitions_[current_partition_].partition_name() << " "
                    << strerror(-err);
+        *error = ErrorCode::kDownloadWriteError;
         return false;
       }
       // Skip until there are operations for current_partition_.
@@ -749,6 +794,7 @@ bool DeltaPerformer::ProcessOperation(const InstallOperation* op,
     case InstallOperation::REPLACE:
     case InstallOperation::REPLACE_BZ:
     case InstallOperation::REPLACE_XZ:
+    case InstallOperation::REPLACE_ZSTD:
       op_result = PerformReplaceOperation(*op);
       OP_DURATION_HISTOGRAM("REPLACE", op_start_time);
       break;
@@ -784,8 +830,8 @@ bool DeltaPerformer::IsManifestValid() {
 }
 
 bool DeltaPerformer::ParseManifestPartitions(ErrorCode* error) {
-  partitions_.assign(manifest_.partitions().begin(),
-                     manifest_.partitions().end());
+  partitions_.assign(std::make_move_iterator(manifest_.partitions().begin()),
+                     std::make_move_iterator(manifest_.partitions().end()));
 
   // For VAB and partial updates, the partition preparation will copy the
   // dynamic partitions metadata to the target metadata slot, and rename the
@@ -806,6 +852,12 @@ bool DeltaPerformer::ParseManifestPartitions(ErrorCode* error) {
 
   // Partitions in manifest are no longer needed after preparing partitions.
   manifest_.clear_partitions();
+  // Protobuf doesn't automatically free memory used by RepeatedPtrField
+  // There's no shrink_to_fit() in protobuf, so we use swap to actually
+  // release memory
+  RepeatedPtrField<chromeos_update_engine::PartitionUpdate> empty;
+  manifest_.mutable_partitions()->Swap(&empty);
+
   // TODO(xunchang) TBD: allow partial update only on devices with dynamic
   // partition.
   if (manifest_.partial_update()) {
@@ -951,6 +1003,10 @@ bool DeltaPerformer::CanPerformInstallOperation(
     return false;
   }
 
+  if (payload_fd_.ok()) {
+    return (operation.data_offset() + operation.data_length() <=
+            buffer_offset_ + payload_file_size_);
+  }
   return (operation.data_offset() + operation.data_length() <=
           buffer_offset_ + buffer_.size());
 }
@@ -959,16 +1015,24 @@ bool DeltaPerformer::PerformReplaceOperation(
     const InstallOperation& operation) {
   CHECK(operation.type() == InstallOperation::REPLACE ||
         operation.type() == InstallOperation::REPLACE_BZ ||
-        operation.type() == InstallOperation::REPLACE_XZ);
+        operation.type() == InstallOperation::REPLACE_XZ ||
+        operation.type() == InstallOperation::REPLACE_ZSTD);
 
   // Since we delete data off the beginning of the buffer as we use it,
   // the data we need should be exactly at the beginning of the buffer.
-  TEST_AND_RETURN_FALSE(buffer_.size() >= operation.data_length());
+  TEST_AND_RETURN_FALSE(
+      buffer_.size() >= operation.data_length() ||
+      (payload_fd_.ok() && payload_file_size_ >= operation.data_length()));
 
-  TEST_AND_RETURN_FALSE(partition_writer_->PerformReplaceOperation(
-      operation, buffer_.data(), buffer_.size()));
+  if (payload_fd_.ok()) {
+    TEST_AND_RETURN_FALSE(partition_writer_->PerformReplaceOperation(
+        operation, payload_fd_.get(), 0, operation.data_length()));
+  } else {
+    TEST_AND_RETURN_FALSE(partition_writer_->PerformReplaceOperation(
+        operation, buffer_.data(), buffer_.size()));
+  }
   // Update buffer
-  DiscardBuffer(true, buffer_.size());
+  DiscardBuffer(true, operation.data_length());
   return true;
 }
 
@@ -1021,15 +1085,22 @@ bool DeltaPerformer::PerformDiffOperation(const InstallOperation& operation,
   // Since we delete data off the beginning of the buffer as we use it,
   // the data we need should be exactly at the beginning of the buffer.
   TEST_AND_RETURN_FALSE(buffer_offset_ == operation.data_offset());
-  TEST_AND_RETURN_FALSE(buffer_.size() >= operation.data_length());
+  TEST_AND_RETURN_FALSE(
+      buffer_.size() >= operation.data_length() ||
+      (payload_fd_.ok() && payload_file_size_ >= operation.data_length()));
   if (operation.has_src_length())
     TEST_AND_RETURN_FALSE(operation.src_length() % block_size_ == 0);
   if (operation.has_dst_length())
     TEST_AND_RETURN_FALSE(operation.dst_length() % block_size_ == 0);
 
-  TEST_AND_RETURN_FALSE(partition_writer_->PerformDiffOperation(
-      operation, error, buffer_.data(), buffer_.size()));
-  DiscardBuffer(true, buffer_.size());
+  if (payload_fd_.ok()) {
+    TEST_AND_RETURN_FALSE(partition_writer_->PerformDiffOperation(
+        operation, error, payload_fd_.get(), 0, operation.data_length()));
+  } else {
+    TEST_AND_RETURN_FALSE(partition_writer_->PerformDiffOperation(
+        operation, error, buffer_.data(), buffer_.size()));
+  }
+  DiscardBuffer(true, operation.data_length());
   return true;
 }
 
@@ -1287,8 +1358,20 @@ ErrorCode DeltaPerformer::ValidateOperationHash(
                            operation.data_sha256_hash().size()));
 
   brillo::Blob calculated_op_hash;
-  if (!HashCalculator::RawHashOfBytes(
-          buffer_.data(), operation.data_length(), &calculated_op_hash)) {
+  bool hash_ok = false;
+  if (payload_fd_ && payload_file_size_ >= operation.data_length()) {
+    if (lseek(payload_fd_, 0, SEEK_SET) < 0) {
+      PLOG(ERROR) << "Failed to seek to beginning of tmp operation data file";
+    }
+    hash_ok = HashCalculator::RawHashOfFile(payload_fd_.get(),
+                                            operation.data_length(),
+                                            &calculated_op_hash) >= 0;
+  } else {
+    hash_ok = HashCalculator::RawHashOfBytes(
+        buffer_.data(), operation.data_length(), &calculated_op_hash);
+  }
+
+  if (!hash_ok) {
     LOG(ERROR) << "Unable to compute actual hash of operation "
                << next_operation_num_;
     return ErrorCode::kDownloadOperationHashVerificationError;
@@ -1369,12 +1452,33 @@ ErrorCode DeltaPerformer::VerifyPayload(
 void DeltaPerformer::DiscardBuffer(bool do_advance_offset,
                                    size_t signed_hash_buffer_size) {
   // Update the buffer offset.
-  if (do_advance_offset)
-    buffer_offset_ += buffer_.size();
+  if (do_advance_offset) {
+    if (payload_fd_.get() != -1) {
+      buffer_offset_ += payload_file_size_;
+    } else {
+      buffer_offset_ += buffer_.size();
+    }
+  }
 
   // Hash the content.
-  payload_hash_calculator_.Update(buffer_.data(), buffer_.size());
-  signed_hash_calculator_.Update(buffer_.data(), signed_hash_buffer_size);
+  if (payload_fd_.get() != -1) {
+    // If we have a temporary file, hash its content.
+    // HashCalculator::UpdateFile does not seek, so we must seek to the
+    // beginning of the file.
+    if (lseek(payload_fd_.get(), 0, SEEK_SET) != 0) {
+      PLOG(ERROR) << "Failed to seek to the beginning of payload file";
+    } else {
+      payload_hash_calculator_.UpdateFile(payload_fd_.get(), payload_file_size_);
+      lseek(payload_fd_.get(), 0, SEEK_SET);
+      signed_hash_calculator_.UpdateFile(payload_fd_.get(),
+                                         signed_hash_buffer_size);
+    }
+    payload_fd_.reset();
+    payload_file_size_ = 0;
+  } else {
+    payload_hash_calculator_.Update(buffer_.data(), buffer_.size());
+    signed_hash_calculator_.Update(buffer_.data(), signed_hash_buffer_size);
+  }
 
   // Swap content with an empty vector to ensure that all memory is released.
   brillo::Blob().swap(buffer_);
@@ -1456,14 +1560,14 @@ bool DeltaPerformer::ResetUpdateProgress(
   TEST_AND_RETURN_FALSE(prefs->SetInt64(kPrefsUpdateStateNextOperation,
                                         kUpdateStateOperationInvalid));
   if (!quick) {
-    prefs->SetInt64(kPrefsUpdateStateNextDataOffset, -1);
-    prefs->SetInt64(kPrefsUpdateStateNextDataLength, 0);
-    prefs->SetString(kPrefsUpdateStateSHA256Context, "");
-    prefs->SetString(kPrefsUpdateStateSignedSHA256Context, "");
-    prefs->SetString(kPrefsUpdateStateSignatureBlob, "");
-    prefs->SetInt64(kPrefsManifestMetadataSize, -1);
-    prefs->SetInt64(kPrefsManifestSignatureSize, -1);
-    prefs->SetInt64(kPrefsResumedUpdateFailures, 0);
+    prefs->Delete(kPrefsUpdateStateNextDataOffset);
+    prefs->Delete(kPrefsUpdateStateNextDataLength);
+    prefs->Delete(kPrefsUpdateStateSHA256Context);
+    prefs->Delete(kPrefsUpdateStateSignedSHA256Context);
+    prefs->Delete(kPrefsUpdateStateSignatureBlob);
+    prefs->Delete(kPrefsManifestMetadataSize);
+    prefs->Delete(kPrefsManifestSignatureSize);
+    prefs->Delete(kPrefsResumedUpdateFailures);
     prefs->Delete(kPrefsPostInstallSucceeded);
     prefs->Delete(kPrefsVerityWritten);
     if (!skip_dynamic_partititon_metadata_updated) {
@@ -1484,6 +1588,10 @@ bool DeltaPerformer::ShouldCheckpoint() {
 }
 
 bool DeltaPerformer::CheckpointUpdateProgress(bool force) {
+  // in recovery /data is not mounted so checkpointing will always fail
+  if (constants::kIsRecovery) {
+    return true;
+  }
   if (!force && !ShouldCheckpoint()) {
     return false;
   }
@@ -1538,7 +1646,7 @@ bool DeltaPerformer::CheckpointUpdateProgress(bool force) {
       partition_writer_->CheckpointUpdateProgress(GetPartitionOperationNum());
     } else {
       CHECK_EQ(next_operation_num_, num_total_operations_)
-          << "Partition writer is null, we are expected to finish all "
+          << " Partition writer is null, we are expected to finish all "
              "operations: "
           << next_operation_num_ << "/" << num_total_operations_;
     }

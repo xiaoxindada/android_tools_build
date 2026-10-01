@@ -105,7 +105,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     LogReaderList reader_list;
     LogTags tags;
     PruneList prune_list;
-    LogStatistics stats(true, true);
+    LogStatistics stats(true);
     std::unique_ptr<LogBuffer> log_buffer;
     log_buffer.reset(new SerializedLogBuffer(&reader_list, &tags, &stats));
     size_t data_left = size;

@@ -106,8 +106,9 @@ impl Default for Metadata {
     }
 }
 
-static COOKIES: LazyLock<Mutex<HashMap<i32, fn() -> StatsPullResult>>> =
-    LazyLock::new(|| Mutex::new(HashMap::new()));
+static COOKIES: LazyLock<
+    Mutex<HashMap<i32, Box<dyn Fn() -> StatsPullResult + Send + Sync + 'static>>>,
+> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
 /// # Safety
 ///
@@ -145,9 +146,9 @@ unsafe extern "C" fn callback_wrapper(
 pub fn set_pull_atom_callback(
     atom: Atoms,
     metadata: Option<&Metadata>,
-    callback: fn() -> StatsPullResult,
+    callback: impl Fn() -> StatsPullResult + Send + Sync + 'static,
 ) {
-    COOKIES.lock().unwrap().insert(atom as i32, callback);
+    COOKIES.lock().unwrap().insert(atom as i32, Box::new(callback));
     let metadata_raw = match metadata {
         Some(m) => m.metadata,
         None => std::ptr::null_mut(),

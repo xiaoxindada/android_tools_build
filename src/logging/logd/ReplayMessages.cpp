@@ -160,8 +160,8 @@ class Operation {
 class PrintInteresting : public Operation {
   public:
     PrintInteresting(log_time first_log_timestamp)
-        : stats_simple_{false, false, first_log_timestamp},
-          stats_serialized_{false, true, first_log_timestamp} {}
+        : stats_simple_{false, first_log_timestamp},
+          stats_serialized_{true, first_log_timestamp} {}
 
     void Begin() override {
         printf("message_count,simple_main_lines,simple_radio_lines,simple_events_lines,simple_"
@@ -224,10 +224,10 @@ class SingleBufferOperation : public Operation {
   public:
     SingleBufferOperation(log_time first_log_timestamp, const char* buffer) {
         if (!strcmp(buffer, "simple")) {
-            stats_.reset(new LogStatistics{false, false, first_log_timestamp});
+            stats_.reset(new LogStatistics{false, first_log_timestamp});
             log_buffer_.reset(new SimpleLogBuffer(&reader_list_, &tags_, stats_.get()));
         } else if (!strcmp(buffer, "serialized")) {
-            stats_.reset(new LogStatistics{false, true, first_log_timestamp});
+            stats_.reset(new LogStatistics{true, first_log_timestamp});
             log_buffer_.reset(new SerializedLogBuffer(&reader_list_, &tags_, stats_.get()));
         } else {
             fprintf(stderr, "invalid log buffer type '%s'\n", buffer);

@@ -21,7 +21,13 @@
 #include <windows.h>
 
 
-void OPENSSL_cpuid_setup(void) {
+#if !defined(PF_ARM_SHA512_INSTRUCTIONS_AVAILABLE)
+#define PF_ARM_SHA512_INSTRUCTIONS_AVAILABLE 65
+#endif
+
+using namespace bssl;
+
+void bssl::OPENSSL_cpuid_setup() {
   // We do not need to check for the presence of NEON, as Armv8-A always has it
   OPENSSL_armcap_P |= ARMV7_NEON;
 
@@ -32,8 +38,9 @@ void OPENSSL_cpuid_setup(void) {
     OPENSSL_armcap_P |= ARMV8_SHA1;
     OPENSSL_armcap_P |= ARMV8_SHA256;
   }
-  // As of writing, Windows does not have a |PF_*| value for ARMv8.2 SHA-512
-  // extensions. When it does, add it here.
+  if (IsProcessorFeaturePresent(PF_ARM_SHA512_INSTRUCTIONS_AVAILABLE)) {
+    OPENSSL_armcap_P |= ARMV8_SHA512;
+  }
 }
 
 #endif  // OPENSSL_AARCH64 && OPENSSL_WINDOWS && !OPENSSL_STATIC_ARMCAP

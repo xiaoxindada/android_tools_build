@@ -847,6 +847,53 @@ TEST_F(ResultMatchers, has_error_message_correct_message) {
   EXPECT_THAT(listener.message(), HasSubstr(error.error().message()));
 }
 
+enum class SimpleEnumError {
+  FOO,
+  BAR = 2,
+  BAZ = 300,
+};
+
+TEST(result, result_with_raw_enum) {
+  // Test named enumerator (FOO)
+  Result<void, SimpleEnumError> err = Error<SimpleEnumError>(SimpleEnumError::FOO) << "test error";
+  EXPECT_FALSE(err.ok());
+  EXPECT_EQ(SimpleEnumError::FOO, err.error().code());
+  EXPECT_EQ("test error: FOO", err.error().message());
+
+  // Test named enumerator with assigned value (BAR = 2)
+  Result<void, SimpleEnumError> err2 = Error<SimpleEnumError>(SimpleEnumError::BAR);
+  EXPECT_EQ("BAR", err2.error().message());
+
+  // BAZ is 300, which is outside the [0, 128) range currently scanned in EnumToString
+  // So it should fallback to its numeric value.
+  Result<void, SimpleEnumError> err3 = Error<SimpleEnumError>(SimpleEnumError::BAZ);
+  EXPECT_EQ("300", err3.error().message());
+
+  // Unnamed value (fallback to number)
+  Result<void, SimpleEnumError> err4 = Error<SimpleEnumError>(static_cast<SimpleEnumError>(99));
+  EXPECT_EQ("99", err4.error().message());
+}
+
+enum class Uint8Enum : uint8_t { MIN_VAL = 0, MAX_VAL = 255 };
+
+enum class Int8Enum : int8_t { MIN_VAL = -128, MAX_VAL = 127 };
+
+TEST(result, result_with_8bit_enum) {
+  // Exhaustive unsigned 8-bit search
+  Result<void, Uint8Enum> err_u1 = Error<Uint8Enum>(Uint8Enum::MIN_VAL);
+  EXPECT_EQ("MIN_VAL", err_u1.error().message());
+
+  Result<void, Uint8Enum> err_u2 = Error<Uint8Enum>(Uint8Enum::MAX_VAL);
+  EXPECT_EQ("MAX_VAL", err_u2.error().message());
+
+  // Exhaustive signed 8-bit search (negative values)
+  Result<void, Int8Enum> err_i1 = Error<Int8Enum>(Int8Enum::MIN_VAL);
+  EXPECT_EQ("MIN_VAL", err_i1.error().message());
+
+  Result<void, Int8Enum> err_i2 = Error<Int8Enum>(Int8Enum::MAX_VAL);
+  EXPECT_EQ("MAX_VAL", err_i2.error().message());
+}
+
 }  // namespace testing
 }  // namespace base
 }  // namespace android

@@ -19,6 +19,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "google/protobuf/util/internal_timeval.h"  // IWYU pragma: keep for timeval
 
 // Must go after other includes.
 #include "google/protobuf/port_def.inc"
@@ -311,11 +312,13 @@ int64_t TimeUtil::DurationToNanoseconds(const Duration& duration) {
 }
 
 int64_t TimeUtil::DurationToMicroseconds(const Duration& duration) {
-  return RoundTowardZero(DurationToNanoseconds(duration), kNanosPerMicrosecond);
+  return DurationToSeconds(duration) * kMicrosPerSecond +
+         RoundTowardZero(duration.nanos(), kNanosPerMicrosecond);
 }
 
 int64_t TimeUtil::DurationToMilliseconds(const Duration& duration) {
-  return RoundTowardZero(DurationToNanoseconds(duration), kNanosPerMillisecond);
+  return DurationToSeconds(duration) * kMillisPerSecond +
+         RoundTowardZero(duration.nanos(), kNanosPerMillisecond);
 }
 
 int64_t TimeUtil::DurationToSeconds(const Duration& duration) {
@@ -387,25 +390,25 @@ time_t TimeUtil::TimestampToTimeT(const Timestamp& value) {
   return static_cast<time_t>(value.seconds());
 }
 
-Timestamp TimeUtil::TimevalToTimestamp(const timeval& value) {
+Timestamp TimeUtil::TimevalToTimestamp(const struct timeval& value) {
   return CreateNormalized<Timestamp>(value.tv_sec,
                                      value.tv_usec * kNanosPerMicrosecond);
 }
 
-timeval TimeUtil::TimestampToTimeval(const Timestamp& value) {
-  timeval result;
+struct timeval TimeUtil::TimestampToTimeval(const Timestamp& value) {
+  struct timeval result;
   result.tv_sec = value.seconds();
   result.tv_usec = RoundTowardZero(value.nanos(), kNanosPerMicrosecond);
   return result;
 }
 
-Duration TimeUtil::TimevalToDuration(const timeval& value) {
+Duration TimeUtil::TimevalToDuration(const struct timeval& value) {
   return CreateNormalized<Duration>(value.tv_sec,
                                     value.tv_usec * kNanosPerMicrosecond);
 }
 
-timeval TimeUtil::DurationToTimeval(const Duration& value) {
-  timeval result;
+struct timeval TimeUtil::DurationToTimeval(const Duration& value) {
+  struct timeval result;
   result.tv_sec = value.seconds();
   result.tv_usec = RoundTowardZero(value.nanos(), kNanosPerMicrosecond);
   // timeval.tv_usec's range is [0, 1000000)
@@ -439,7 +442,7 @@ void ToUint128(const Duration& value, absl::uint128* result, bool* negative) {
   }
 }
 
-void ToDuration(const absl::uint128& value, bool negative, Duration* duration) {
+void ToDuration(const absl::uint128 value, bool negative, Duration* duration) {
   int64_t seconds =
       static_cast<int64_t>(absl::Uint128Low64(value / kNanosPerSecond));
   int32_t nanos =
@@ -558,3 +561,5 @@ Duration operator-(const Timestamp& t1, const Timestamp& t2) {
 }
 }  // namespace protobuf
 }  // namespace google
+
+#include "google/protobuf/port_undef.inc"

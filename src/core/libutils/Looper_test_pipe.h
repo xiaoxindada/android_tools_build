@@ -16,6 +16,7 @@
 
 #pragma once
 #include <unistd.h>
+#include <utils/Errors.h>
 /**
  * A pipe class for use when testing or fuzzing Looper
  */

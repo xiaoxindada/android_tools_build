@@ -247,13 +247,8 @@ void dump_memory(log_t* log, unwindstack::Memory* memory, uint64_t addr, const s
 }
 
 void drop_capabilities() {
-  __user_cap_header_struct capheader;
-  memset(&capheader, 0, sizeof(capheader));
-  capheader.version = _LINUX_CAPABILITY_VERSION_3;
-  capheader.pid = 0;
-
-  __user_cap_data_struct capdata[2];
-  memset(&capdata, 0, sizeof(capdata));
+  __user_cap_header_struct capheader = {.version = _LINUX_CAPABILITY_VERSION_3};
+  __user_cap_data_struct capdata[2] = {};
 
   if (capset(&capheader, &capdata[0]) == -1) {
     async_safe_fatal("failed to drop capabilities: %s", strerror(errno));

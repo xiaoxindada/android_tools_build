@@ -222,21 +222,27 @@ class UpdateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     self.end_headers()
 
     f.seek(serving_start + start_range)
-    CopyFileObjLength(f, self.wfile, copy_length=end_range -
+    try:
+      CopyFileObjLength(f, self.wfile, copy_length=end_range -
                       start_range, speed_limit=self.speed_limit)
+    except BrokenPipeError:
+      logging.info('Client closed connection')
+    finally:
+      f.close()
 
 
 class ServerThread(threading.Thread):
   """A thread for serving HTTP requests."""
 
-  def __init__(self, ota_filename, serving_range, speed_limit):
+  def __init__(self, ota_filename, serving_range, speed_limit, server_port):
     threading.Thread.__init__(self)
     # serving_payload and serving_range are class attributes and the
     # UpdateHandler class is instantiated with every request.
     UpdateHandler.serving_payload = ota_filename
     UpdateHandler.serving_range = serving_range
     UpdateHandler.speed_limit = speed_limit
-    self._httpd = BaseHTTPServer.HTTPServer(('127.0.0.1', 0), UpdateHandler)
+    self._httpd = BaseHTTPServer.HTTPServer(('127.0.0.1', server_port),
+                                            UpdateHandler)
     self.port = self._httpd.server_port
 
   def run(self):
@@ -251,8 +257,8 @@ class ServerThread(threading.Thread):
     self._httpd.socket.close()
 
 
-def StartServer(ota_filename, serving_range, speed_limit):
-  t = ServerThread(ota_filename, serving_range, speed_limit)
+def StartServer(ota_filename, serving_range, speed_limit, server_port):
+  t = ServerThread(ota_filename, serving_range, speed_limit, server_port)
   t.start()
   return t
 
@@ -415,6 +421,8 @@ def main():
   parser.add_argument('--speed-limit', type=str,
                       help='Speed limit for serving payloads over HTTP. For '
                       'example: 10K, 5m, 1G, input is case insensitive')
+  parser.add_argument('--server-port', type=int, default=0,
+                      help='Server port for the HTTP server. Default is 0 (random port).')
 
   args = parser.parse_args()
   if args.speed_limit:
@@ -513,7 +521,8 @@ def main():
     # command.
     payload_url = 'http://127.0.0.1:%d/payload' % DEVICE_PORT
     serving_range = (0, os.stat(args.otafile).st_size)
-    server_thread = StartServer(args.otafile, serving_range, args.speed_limit)
+    server_thread = StartServer(args.otafile, serving_range, args.speed_limit,
+                                args.server_port)
     cmds.append(
         ['reverse', 'tcp:%d' % DEVICE_PORT, 'tcp:%d' % server_thread.port])
     finalize_cmds.append(['reverse', '--remove', 'tcp:%d' % DEVICE_PORT])

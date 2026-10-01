@@ -10,12 +10,49 @@
 
 namespace bsdiff {
 
-std::unique_ptr<DecompressorInterface> CreateDecompressor(CompressorType type) {
+std::unique_ptr<DecompressorInterface> CreateDecompressor(
+    CompressorType type,
+    const uint8_t* input_data,
+    size_t size) {
   switch (type) {
-    case CompressorType::kBZ2:
-      return std::unique_ptr<DecompressorInterface>(new BZ2Decompressor());
-    case CompressorType::kBrotli:
-      return std::unique_ptr<DecompressorInterface>(new BrotliDecompressor());
+    case CompressorType::kBZ2: {
+      auto decompressor = std::make_unique<BZ2MemoryDecompressor>();
+      if (decompressor->SetInputData(input_data, size))
+        return decompressor;
+      return nullptr;
+    }
+    case CompressorType::kBrotli: {
+      auto decompressor = std::make_unique<BrotliMemoryDecompressor>();
+      if (decompressor->SetInputData(input_data, size))
+        return decompressor;
+      return nullptr;
+    }
+    default:
+      LOG(ERROR) << "unsupported compressor type: "
+                 << static_cast<uint8_t>(type);
+      return nullptr;
+  }
+}
+
+std::unique_ptr<DecompressorInterface> CreateDecompressor(CompressorType type,
+                                                          int fd,
+                                                          off_t offset,
+                                                          size_t size) {
+  switch (type) {
+    case CompressorType::kBZ2: {
+      auto decompressor = std::make_unique<BZ2FileDecompressor>();
+      if (decompressor->SetInputFile(fd, offset, size)) {
+        return decompressor;
+      }
+      return nullptr;
+    }
+    case CompressorType::kBrotli: {
+      auto decompressor = std::make_unique<BrotliFileDecompressor>();
+      if (decompressor->SetInputFile(fd, offset, size)) {
+        return decompressor;
+      }
+      return nullptr;
+    }
     default:
       LOG(ERROR) << "unsupported compressor type: "
                  << static_cast<uint8_t>(type);

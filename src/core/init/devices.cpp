@@ -18,6 +18,7 @@
 
 #include <errno.h>
 #include <fnmatch.h>
+#include <glob.h>
 #include <sys/sysmacros.h>
 #include <unistd.h>
 
@@ -162,6 +163,12 @@ bool Permissions::Match(const std::string& path) const {
     }
 }
 
+SysfsPermissions::SysfsPermissions(const std::string& name, const std::string& attribute,
+                                   mode_t perm, uid_t uid, gid_t gid, bool no_fnm_pathname)
+    : Permissions(name, perm, uid, gid, no_fnm_pathname),
+      attribute_(attribute),
+      wildcard_(attribute.find('*') != std::string::npos) {}
+
 bool SysfsPermissions::MatchWithSubsystem(const std::string& path,
                                           const std::string& subsystem) const {
     std::string path_basename = Basename(path);
@@ -173,18 +180,57 @@ bool SysfsPermissions::MatchWithSubsystem(const std::string& path,
 }
 
 void SysfsPermissions::SetPermissions(const std::string& path) const {
+    if (wildcard_) {
+        for (const auto& attribute_file : FindMatchingAttributes(path)) {
+            SetPermissionsInternal(attribute_file);
+        }
+        return;
+    }
+
     std::string attribute_file = path + "/" + attribute_;
+    SetPermissionsInternal(attribute_file);
+}
+
+std::vector<std::string> SysfsPermissions::FindMatchingAttributes(const std::string& path) const {
+    glob_t glob_data;
+    std::string attribute_glob = path + "/" + attribute_;
+    if (glob(attribute_glob.c_str(), 0, nullptr, &glob_data) != 0) {
+        // glob failed, so there are no matching paths.
+        return std::vector<std::string>();
+    }
+
+    std::vector<std::string> matching_paths;
+    for (size_t i = 0; i < glob_data.gl_pathc; i++) {
+        // nullptr marks the end of the gl_pathv array
+        if (!glob_data.gl_pathv[i]) break;
+        matching_paths.push_back(std::string(glob_data.gl_pathv[i]));
+    }
+    globfree(&glob_data);
+
+    std::vector<std::string> filtered_paths;
+    for (const auto& matching_path : matching_paths) {
+        std::string resolved_path;
+        // resolve symlinks and other directory traversal, ensure the target path
+        // is still within the current device's sysfs tree
+        if (!Realpath(matching_path, &resolved_path)) continue;
+        if (!StartsWith(resolved_path, path)) continue;
+        filtered_paths.push_back(resolved_path);
+    }
+    return filtered_paths;
+}
+
+void SysfsPermissions::SetPermissionsInternal(const std::string& attribute_file) const {
+    if (access(attribute_file.c_str(), F_OK) != 0) {
+        return;
+    }
     LOG(VERBOSE) << "fixup " << attribute_file << " " << uid() << " " << gid() << " " << std::oct
                  << perm();
 
-    if (access(attribute_file.c_str(), F_OK) == 0) {
-        if (chown(attribute_file.c_str(), uid(), gid()) != 0) {
-            PLOG(ERROR) << "chown(" << attribute_file << ", " << uid() << ", " << gid()
-                        << ") failed";
-        }
-        if (chmod(attribute_file.c_str(), perm()) != 0) {
-            PLOG(ERROR) << "chmod(" << attribute_file << ", " << perm() << ") failed";
-        }
+    if (chown(attribute_file.c_str(), uid(), gid()) != 0) {
+        PLOG(ERROR) << "chown(" << attribute_file << ", " << uid() << ", " << gid() << ") failed";
+    }
+    if (chmod(attribute_file.c_str(), perm()) != 0) {
+        PLOG(ERROR) << "chmod(" << attribute_file << ", " << perm() << ") failed";
     }
 }
 
@@ -533,7 +579,7 @@ std::vector<std::string> DeviceHandler::GetBlockDeviceSymlinks(const Uevent& uev
     }
 
     std::string model;
-    if (ReadFileToString("/sys/class/block/" + uevent.device_name + "/queue/zoned", &model) &&
+    if (ReadFileToString("/sys/block/" + uevent.device_name + "/queue/zoned", &model) &&
         !StartsWith(model, "none")) {
         links.emplace_back("/dev/block/by-name/zoned_device");
         links.emplace_back("/dev/sys/block/by-name/zoned_device");
@@ -589,7 +635,7 @@ void DeviceHandler::HandleDevice(const std::string& action, const std::string& d
             if (StartsWith(link, "/dev/block/")) {
                 target = devpath;
             } else if (StartsWith(link, "/dev/sys/block/")) {
-                target = "/sys/class/block/" + Basename(devpath);
+                target = "/sys/block/" + Basename(devpath);
             } else {
                 LOG(ERROR) << "Unrecognized link type: " << link;
                 continue;

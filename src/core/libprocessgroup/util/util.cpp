@@ -30,7 +30,6 @@
 #include <json/reader.h>
 #include <json/value.h>
 
-#include "../build_flags.h"
 #include "../internal.h"
 
 using android::base::GetUintProperty;

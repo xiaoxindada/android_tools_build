@@ -38,7 +38,7 @@ set(zlib_cflags
         "-D_LARGEFILE64_SOURCE=1"
 )
 
-configure_file("${libz_srcs_dir}/zconf.h.cmakein" "${libz_srcs_dir}/zconf.h")
+configure_file("${libz_srcs_dir}/zconf.h.in" "${libz_srcs_dir}/zconf.h")
 
 include(CheckFunctionExists)
 check_function_exists(fseeko HAVE_FSEEKO)

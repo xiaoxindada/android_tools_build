@@ -26,7 +26,7 @@ TEST(BrotliCompressorTest, BrotliCompressorSmoke) {
 
   // Run decompressor and check we can get the exact same data as kHelloWorld.
   std::vector<uint8_t> decompressed_data(sizeof(kHelloWorld));
-  BrotliDecompressor brotli_decompressor;
+  BrotliMemoryDecompressor brotli_decompressor;
   EXPECT_TRUE(brotli_decompressor.SetInputData(compressed_data.data(),
                                                compressed_data.size()));
   EXPECT_TRUE(
@@ -46,7 +46,7 @@ TEST(BrotliCompressorTest, BrotliCompressorEmptyStream) {
   std::vector<uint8_t> compressed_data = brotli_compressor.GetCompressedData();
 
   // Check that we can close the decompressor without errors.
-  BrotliDecompressor brotli_decompressor;
+  BrotliMemoryDecompressor brotli_decompressor;
   EXPECT_TRUE(brotli_decompressor.SetInputData(compressed_data.data(),
                                                compressed_data.size()));
   EXPECT_TRUE(brotli_decompressor.Close());

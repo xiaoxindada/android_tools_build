@@ -60,6 +60,7 @@ use crate::{
     ForeignTypeRef, InvalidSignatureError,
 };
 use alloc::vec::Vec;
+use bssl_sys::RSA_up_ref;
 use core::ptr::null_mut;
 
 /// An RSA public key.
@@ -92,6 +93,7 @@ impl PublicKey {
         let alg = unsafe { bssl_sys::EVP_pkey_rsa() };
         let mut pkey =
             scoped::EvpPkey::from_der_subject_public_key_info(spki, core::slice::from_ref(&alg))?;
+        // Safety: we exclusively own pkey here
         let rsa = unsafe { bssl_sys::EVP_PKEY_get1_RSA(pkey.as_ffi_ptr()) };
         if !rsa.is_null() {
             // Safety: `EVP_PKEY_get1_RSA` adds a reference so we are not
@@ -106,7 +108,9 @@ impl PublicKey {
     /// in, for example, X.509 certificates.
     pub fn to_der_subject_public_key_info(&self) -> Buffer {
         let mut pkey = scoped::EvpPkey::new();
-        // Safety: this takes a reference to `self.0` and so doesn't steal ownership.
+        // Safety:
+        // - This takes a reference to `self.0` and so doesn't steal ownership.
+        // - The pkey is still exclusively owned.
         assert_eq!(1, unsafe {
             bssl_sys::EVP_PKEY_set1_RSA(pkey.as_ffi_ptr(), self.0)
         });
@@ -127,7 +131,7 @@ impl PublicKey {
     ) -> Result<(), InvalidSignatureError> {
         let digest = Hash::hash_to_vec(signed_msg);
         // Safety: `get_md` always returns a valid pointer.
-        let hash_nid = unsafe { bssl_sys::EVP_MD_nid(Hash::get_md(sealed::Sealed).as_ptr()) };
+        let hash_nid = unsafe { bssl_sys::EVP_MD_nid(Hash::get_md(sealed::SealedType).as_ptr()) };
         let result = unsafe {
             // Safety: all buffers are valid and `self.0` is valid by construction.
             bssl_sys::RSA_verify(
@@ -182,6 +186,16 @@ pub enum KeySize {
 /// An RSA private key.
 pub struct PrivateKey(*mut bssl_sys::RSA);
 
+impl Clone for PrivateKey {
+    fn clone(&self) -> Self {
+        // Safety:
+        // `self.0` is valid by construction and
+        // at this point we definitely own one reference to the object.
+        unsafe { RSA_up_ref(self.0) };
+        Self(self.0)
+    }
+}
+
 impl PrivateKey {
     /// Generate a fresh RSA private key of the given size.
     pub fn generate(size: KeySize) -> Self {
@@ -221,13 +235,16 @@ impl PrivateKey {
     pub fn from_der_private_key_info(der: &[u8]) -> Option<Self> {
         // Safety: `EVP_pkey_rsa` is always safe to call.
         let alg = unsafe { bssl_sys::EVP_pkey_rsa() };
-        let mut pkey =
-            scoped::EvpPkey::from_der_private_key_info(der, core::slice::from_ref(&alg))?;
-        // Safety: `pkey` is valid and was created just above.
+        let pkey = scoped::EvpPkey::from_der_private_key_info(der, core::slice::from_ref(&alg))?;
+        // Safety: `pkey` is valid and exclusively owned.
+        unsafe { Self::from_evp_pkey(pkey) }
+    }
+
+    // Safety: the EVP_PKEY must not be aliased through the `as_ffi_ptr`
+    pub(crate) unsafe fn from_evp_pkey(mut pkey: scoped::EvpPkey) -> Option<Self> {
         let rsa = unsafe { bssl_sys::EVP_PKEY_get1_RSA(pkey.as_ffi_ptr()) };
         // We only passed one allowed algorithm, an RSA algorithm.
-        assert!(!rsa.is_null());
-        Some(Self(rsa))
+        (!rsa.is_null()).then_some(Self(rsa))
     }
 
     /// Serialize to a DER-encrypted PrivateKeyInfo struct (from RFC 5208). This is often called "PKCS#8 format".
@@ -252,7 +269,7 @@ impl PrivateKey {
     pub fn sign_pkcs1<Hash: digest::Algorithm>(&self, to_be_signed: &[u8]) -> Vec<u8> {
         let digest = Hash::hash_to_vec(to_be_signed);
         // Safety: `get_md` always returns a valid pointer.
-        let hash_nid = unsafe { bssl_sys::EVP_MD_nid(Hash::get_md(sealed::Sealed).as_ptr()) };
+        let hash_nid = unsafe { bssl_sys::EVP_MD_nid(Hash::get_md(sealed::SealedType).as_ptr()) };
         let max_output = unsafe { bssl_sys::RSA_size(self.0) } as usize;
 
         unsafe {

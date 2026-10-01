@@ -34,12 +34,12 @@
 
 #include <string>
 
-#include <absl/strings/str_cat.h>
-#include <google/protobuf/compiler/javanano/javanano_params.h>
-#include <google/protobuf/compiler/javanano/javanano_enum.h>
-#include <google/protobuf/compiler/javanano/javanano_helpers.h>
-#include <google/protobuf/io/printer.h>
-#include <google/protobuf/descriptor.pb.h>
+#include "absl/strings/str_cat.h"
+#include "google/protobuf/compiler/javanano/javanano_params.h"
+#include "google/protobuf/compiler/javanano/javanano_enum.h"
+#include "google/protobuf/compiler/javanano/javanano_helpers.h"
+#include "google/protobuf/io/printer.h"
+#include "google/protobuf/descriptor.h"
 
 namespace google {
 namespace protobuf {

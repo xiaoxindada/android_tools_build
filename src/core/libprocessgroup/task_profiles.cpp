@@ -19,6 +19,7 @@
 
 #include <task_profiles.h>
 
+#include <cinttypes>
 #include <map>
 #include <string>
 
@@ -36,8 +37,6 @@
 #include <android-base/strings.h>
 #include <android-base/threads.h>
 
-#include <build_flags.h>
-
 #include <cutils/android_filesystem_config.h>
 
 #include <json/reader.h>
@@ -52,6 +51,7 @@ using android::base::WriteStringToFile;
 
 static constexpr const char* TASK_PROFILE_DB_FILE = "/etc/task_profiles.json";
 static constexpr const char* TASK_PROFILE_DB_VENDOR_FILE = "/vendor/etc/task_profiles.json";
+static constexpr const char* TASK_PROFILE_DB_SYSTEM_EXT_FILE = "/system_ext/etc/task_profiles.json";
 
 static constexpr const char* TEMPLATE_TASK_PROFILE_API_FILE =
         "/etc/task_profiles/task_profiles_%u.json";
@@ -142,7 +142,7 @@ static bool isSystemApp(uid_t uid) {
 }
 
 std::string ConvertUidToPath(const char* root_cgroup_path, uid_t uid, bool v2_path) {
-    if (android::libprocessgroup_flags::cgroup_v2_sys_app_isolation() && v2_path) {
+    if (v2_path) {
         if (isSystemApp(uid))
             return StringPrintf("%s/system/uid_%u", root_cgroup_path, uid);
         else
@@ -154,6 +154,16 @@ std::string ConvertUidToPath(const char* root_cgroup_path, uid_t uid, bool v2_pa
 std::string ConvertUidPidToPath(const char* root_cgroup_path, uid_t uid, pid_t pid, bool v2_path) {
     const std::string uid_path = ConvertUidToPath(root_cgroup_path, uid, v2_path);
     return StringPrintf("%s/pid_%d", uid_path.c_str(), pid);
+}
+
+std::string GetPathForCloneInto(const char* root_cgroup_path, uid_t uid, pid_t zygote_pid,
+                                uint64_t start_seq) {
+    const std::string uid_path = ConvertUidToPath(root_cgroup_path, uid, true);
+    return JoinPathForCloneInto(uid_path.c_str(), zygote_pid, start_seq);
+}
+
+std::string JoinPathForCloneInto(const char* uid_path, pid_t zygote_pid, uint64_t start_seq) {
+    return StringPrintf("%s/%d-%" PRIu64 "x", uid_path, zygote_pid, start_seq);
 }
 
 bool ProfileAttribute::GetPathForProcess(uid_t uid, pid_t pid, std::string* path) const {
@@ -308,7 +318,7 @@ SetCgroupAction::SetCgroupAction(const CgroupControllerWrapper& c, const std::st
 
 bool SetCgroupAction::AddTidToCgroup(pid_t tid, int fd, ResourceCacheType cache_type) const {
     if (tid <= 0) {
-        return true;
+        return false;
     }
 
     std::string value = std::to_string(tid);
@@ -345,8 +355,18 @@ bool SetCgroupAction::AddTidToCgroup(pid_t tid, int fd, ResourceCacheType cache_
 
 ProfileAction::CacheUseResult SetCgroupAction::UseCachedFd(ResourceCacheType cache_type,
                                                            int id) const {
+    if (cache_type < RCT_TASK || cache_type >= RCT_COUNT) {
+        LOG(ERROR) << "Invalid cache_type " << cache_type;
+        return ProfileAction::FAIL;
+    }
+
     std::lock_guard<std::mutex> lock(fd_mutex_);
     if (FdCacheHelper::IsCached(fd_[cache_type])) {
+        if (int fd = fd_[cache_type]; fcntl(fd, F_GETFD) == -1) {
+            PLOG(ERROR) << "FD (" << fd << ") is invalid for cache_type " << cache_type;
+            return ProfileAction::FAIL;
+        }
+
         // fd is cached, reuse it
         if (!AddTidToCgroup(id, fd_[cache_type], cache_type)) {
             LOG(ERROR) << "Failed to add task into cgroup";
@@ -914,6 +934,13 @@ TaskProfiles::TaskProfiles() {
         !Load(CgroupMap::GetInstance(), TASK_PROFILE_DB_VENDOR_FILE)) {
         LOG(ERROR) << "Loading " << TASK_PROFILE_DB_VENDOR_FILE << " for [" << getpid()
                    << "] failed";
+    }
+
+    // load system_ext task profiles if the file exists
+    if (!access(TASK_PROFILE_DB_SYSTEM_EXT_FILE, F_OK) &&
+        !Load(CgroupMap::GetInstance(), TASK_PROFILE_DB_SYSTEM_EXT_FILE)) {
+        LOG(ERROR) << "Loading " << TASK_PROFILE_DB_SYSTEM_EXT_FILE
+                   << " for [" << getpid() << "] failed";
     }
 }
 

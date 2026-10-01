@@ -18,7 +18,7 @@ package android.os.storaged;
 
 import android.os.storaged.UidInfo;
 
-/** {@hide} */
+/** @hide */
 interface IStoragedPrivate {
     UidInfo[] dumpUids();
     int[] dumpPerfHistory();

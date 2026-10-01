@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+import argparse
 import textwrap
 from .base import ANDROID_SDK_VERSION_T, ValidationError
 
@@ -49,6 +50,98 @@ def create_ftrace_events_string(predefined_ftrace_events,
   ftrace_events_string = ("ftrace_events: \"%s\"" % ("""\"
           ftrace_events: \"""".join(predefined_ftrace_events)))
   return ftrace_events_string, None
+
+
+def create_common_config_parser():
+  common_config_args = argparse.ArgumentParser(add_help=False)
+  common_config_args.add_argument(
+      '-d',
+      '--dur-ms',
+      type=int,
+      help=('The duration (ms) of the event. Determines when'
+            ' to stop collecting performance data.'))
+  common_config_args.add_argument(
+      '--excluded-ftrace-events',
+      action='append',
+      help=('Excludes specified ftrace event from the perfetto'
+            ' config events.'))
+  common_config_args.add_argument(
+      '--included-ftrace-events',
+      action='append',
+      help=('Includes specified ftrace event in the perfetto'
+            ' config events.'))
+  common_config_args.add_argument(
+      '--trigger-names',
+      action='extend',
+      default=[],
+      nargs="+",
+      help='Specifies the names of triggers for perfetto'
+      ' background tracing.')
+  common_config_args.add_argument(
+      '--trigger-timeout-ms',
+      type=int,
+      help='Specifies the time in milliseconds for Perfetto to'
+      ' wait for a trigger before ending.')
+  common_config_args.add_argument(
+      '--trigger-stop-delay-ms',
+      type=int,
+      action='extend',
+      default=[],
+      nargs="+",
+      help='Specifies the time in milliseconds to extend trace'
+      ' collection past a trigger event. If you have'
+      ' multiple triggers, you can include a different'
+      ' stop-delay-ms for each or include one to use for'
+      ' them all.')
+  common_config_args.add_argument(
+      '--trigger-mode',
+      choices=[
+          'stop', 'start', 'clone', 'STOP_TRACING', 'START_TRACING',
+          'CLONE_SNAPSHOT'
+      ],
+      help='Specifies the trigger config mode. stop'
+      ' will stop tracing when a trigger is'
+      ' received. start will start tracing when a'
+      ' trigger is received until stop-delay-ms.'
+      ' clone will return tracing data when a'
+      ' trigger is received and continue tracing'
+      ' until the timeout.')
+
+  return common_config_args
+
+
+def create_trigger_config(trigger_names, trigger_mode, trigger_timeout_ms,
+                          trigger_stop_delay_ms):
+  config_trigger_mode = trigger_mode
+  use_clone_snapshot_if_available = "false"
+
+  if config_trigger_mode == "CLONE_SNAPSHOT":
+    # The use_clone_snapshot_if_available flag will default to STOP_TRACING
+    # on Android versions without CLONE_SNAPSHOT, and will default to
+    # CLONE_SNAPSHOT on Android versions that do have it. When using this
+    # flag, the tracing mode must be STOP_TRACING.
+    config_trigger_mode = "STOP_TRACING"
+    use_clone_snapshot_if_available = "true"
+
+  trigger_config = f'''
+  trigger_config: {{
+      trigger_mode: {config_trigger_mode}
+
+      trigger_timeout_ms: {trigger_timeout_ms}
+
+      use_clone_snapshot_if_available: {use_clone_snapshot_if_available}'''
+
+  for i, name in enumerate(trigger_names):
+    trigger_config += f'''
+      triggers {{
+          name: "{name}"
+
+          stop_delay_ms: {trigger_stop_delay_ms[i % len(trigger_stop_delay_ms)]}
+      }}'''
+
+  trigger_config += f'''
+    }}'''
+  return trigger_config
 
 
 def build_predefined_config(command,
@@ -170,6 +263,15 @@ def build_predefined_config(command,
   if android_sdk_version < ANDROID_SDK_VERSION_T:
     cpufreq_period_string = ""
 
+  trigger_config = ""
+  if command.trigger_names:
+    trigger_config = create_trigger_config(command.trigger_names,
+                                           command.trigger_mode,
+                                           command.trigger_timeout_ms,
+                                           command.trigger_stop_delay_ms)
+
+  write_into_file = "true" if trigger_config == "" else "false"
+
   duration_string = ""
   if command.dur_ms is not None:
     duration_string = f'''
@@ -270,7 +372,7 @@ def build_predefined_config(command,
 
   if miscellaneous_options is None:
     miscellaneous_options = f'''
-    write_into_file: true
+    write_into_file: {write_into_file}
     file_write_period_ms: 5000
     max_file_size_bytes: 100000000000
     flush_period_ms: 5000'''
@@ -295,6 +397,7 @@ def build_predefined_config(command,
     {duration_string.lstrip()}
     {miscellaneous_options.lstrip()}
     {incremental_state.lstrip()}
+    {trigger_config.lstrip()}
 
     EOF'''
   return textwrap.dedent(config), None

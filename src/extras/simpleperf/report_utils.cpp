@@ -151,7 +151,8 @@ void ProguardMappingRetrace::MoveToNextLine() {
 }
 
 bool ProguardMappingRetrace::DeObfuscateJavaMethods(std::string_view obfuscated_name,
-                                                    std::string* original_name, bool* synthesized) {
+                                                    std::string* original_name,
+                                                    bool* synthesized) const {
   if (auto split_pos = obfuscated_name.rfind('.'); split_pos != obfuscated_name.npos) {
     std::string obfuscated_classname(obfuscated_name.substr(0, split_pos));
 

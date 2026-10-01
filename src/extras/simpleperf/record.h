@@ -406,9 +406,10 @@ struct SampleRecord : public Record {
 
   SampleRecord() {}
   SampleRecord(const perf_event_attr& attr, uint64_t id, uint64_t ip, uint32_t pid, uint32_t tid,
-               uint64_t time, uint32_t cpu, uint64_t period, const PerfSampleReadType& read_data,
-               const std::vector<uint64_t>& ips, const std::vector<char>& stack,
-               uint64_t dyn_stack_size);
+               uint64_t time, uint32_t cpu, uint64_t period, uint64_t addr,
+               const PerfSampleReadType& read_data, const std::vector<uint64_t>& ips,
+               const std::vector<char>& stack, uint64_t dyn_stack_size, bool in_kernel = false,
+               uint64_t additional_sample_type = 0);
 
   bool Parse(const perf_event_attr& attr, char* p, char* end) override;
   void ReplaceRegAndStackWithCallChain(const std::vector<uint64_t>& ips);
@@ -483,8 +484,10 @@ struct BuildIdRecord : public Record {
 struct AuxTraceInfoRecord : public Record {
   // magic values to be compatible with linux perf
   static constexpr uint32_t AUX_TYPE_ETM = 3;
+  static constexpr uint32_t AUX_TYPE_SPE = 4;
   static constexpr uint64_t MAGIC_ETM4 = 0x4040404040404040ULL;
   static constexpr uint64_t MAGIC_ETE = 0x5050505050505050ULL;
+  static constexpr uint64_t MAGIC_SPE = 0x1010101010101010ULL;
 
   struct ETM4Info {
     uint64_t magic;
@@ -513,6 +516,14 @@ struct AuxTraceInfoRecord : public Record {
     uint64_t trcdevarch;
   };
 
+  struct SPEInfo {
+    uint64_t magic;
+    uint64_t cpu;
+    uint64_t cap_min_ival;
+    uint64_t cpu_midr;
+    uint64_t enabled;
+  };
+
   struct DataType {
     uint32_t aux_type;
     uint32_t reserved;
@@ -525,6 +536,7 @@ struct AuxTraceInfoRecord : public Record {
 
   AuxTraceInfoRecord() {}
   AuxTraceInfoRecord(const DataType& data, const std::vector<ETEInfo>& ete_info);
+  AuxTraceInfoRecord(const DataType& data, const std::vector<SPEInfo>& spe_info);
   bool Parse(const perf_event_attr& attr, char* p, char* end) override;
 
  protected:

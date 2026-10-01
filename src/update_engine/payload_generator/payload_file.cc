@@ -199,12 +199,12 @@ bool PayloadFile::WritePayload(const string& payload_file,
     PayloadSigner::AddSignatureToManifest(
         next_blob_offset, signature_blob_length, &manifest_);
   }
-  WritePayload(payload_file,
+  TEST_AND_RETURN_FALSE(WritePayload(payload_file,
                ordered_blobs_file.path(),
                private_key_path,
                major_version_,
                manifest_,
-               metadata_size_out);
+               metadata_size_out));
 
   ReportPayloadUsage(*metadata_size_out);
   return true;

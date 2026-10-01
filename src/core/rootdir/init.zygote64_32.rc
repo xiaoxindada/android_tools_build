@@ -9,3 +9,6 @@ service zygote_secondary /system/bin/app_process32 -Xzygote /system/bin --zygote
     socket usap_pool_secondary stream 660 root system
     onrestart restart zygote
     task_profiles ProcessCapacityHigh MaxPerformance
+    # The stdio implementation for arm32/x86 stores fds in a short.
+    # This is part of the ABI, so 32Ki is the max for nofile for ilp32.
+    rlimit nofile 32768 32768

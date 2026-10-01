@@ -71,21 +71,20 @@ void SignalFirstStageSnapuserd(pid_t pid, int signal);
 // used to later execveat() snapuserd.
 void SaveRamdiskPathToSnapuserd();
 
-// Returns true if first-stage snapuserd is running.
-bool IsFirstStageSnapuserdRunning();
-
+#ifndef MICRODROID
 // Return the pid of the first-stage instances of snapuserd, if it was started.
 std::optional<pid_t> GetSnapuserdFirstStagePid();
-
-// Return snapuserd info strings that were set during first-stage init.
-std::vector<std::string> GetSnapuserdFirstStageInfo();
-
-// Save an open fd to /system/bin (in the ramdisk) into an environment. This is
-// used to later execveat() snapuserd.
-void SaveRamdiskPathToSnapuserd();
-
 // Returns true if first-stage snapuserd is running.
 bool IsFirstStageSnapuserdRunning();
+#else
+constexpr std::optional<pid_t> GetSnapuserdFirstStagePid() {
+    return {};
+}
+
+constexpr bool IsFirstStageSnapuserdRunning() {
+    return false;
+}
+#endif
 
 }  // namespace init
 }  // namespace android

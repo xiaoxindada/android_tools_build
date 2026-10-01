@@ -55,6 +55,9 @@ ZLIB_INTERNAL void crc_fold_init(deflate_state *const s)
     s->strm->adler = 0;
 }
 
+#if defined(__GNUC__)
+__attribute__((__target__("pclmul")))
+#endif
 local void fold_1(deflate_state *const s,
         __m128i *xmm_crc0, __m128i *xmm_crc1,
         __m128i *xmm_crc2, __m128i *xmm_crc3)
@@ -81,6 +84,9 @@ local void fold_1(deflate_state *const s,
     *xmm_crc3 = _mm_castps_si128(ps_res);
 }
 
+#if defined(__GNUC__)
+__attribute__((__target__("pclmul")))
+#endif
 local void fold_2(deflate_state *const s,
         __m128i *xmm_crc0, __m128i *xmm_crc1,
         __m128i *xmm_crc2, __m128i *xmm_crc3)
@@ -115,6 +121,9 @@ local void fold_2(deflate_state *const s,
     *xmm_crc3 = _mm_castps_si128(ps_res31);
 }
 
+#if defined(__GNUC__)
+__attribute__((__target__("pclmul")))
+#endif
 local void fold_3(deflate_state *const s,
         __m128i *xmm_crc0, __m128i *xmm_crc1,
         __m128i *xmm_crc2, __m128i *xmm_crc3)
@@ -155,6 +164,9 @@ local void fold_3(deflate_state *const s,
     *xmm_crc3 = _mm_castps_si128(ps_res32);
 }
 
+#if defined(__GNUC__)
+__attribute__((__target__("pclmul")))
+#endif
 local void fold_4(deflate_state *const s,
         __m128i *xmm_crc0, __m128i *xmm_crc1,
         __m128i *xmm_crc2, __m128i *xmm_crc3)
@@ -221,6 +233,9 @@ local const unsigned zalign(32) pshufb_shf_table[60] = {
 	0x0201008f,0x06050403,0x0a090807,0x0e0d0c0b  /* shl  1 (16 -15)/shr15*/
 };
 
+#if defined(__GNUC__)
+__attribute__((__target__("sse4.2,pclmul")))
+#endif
 local void partial_fold(deflate_state *const s, const size_t len,
         __m128i *xmm_crc0, __m128i *xmm_crc1,
         __m128i *xmm_crc2, __m128i *xmm_crc3,
@@ -427,6 +442,9 @@ local const unsigned zalign(16) crc_mask2[4] = {
     0x00000000, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF
 };
 
+#if defined(__GNUC__)
+__attribute__((__target__("pclmul")))
+#endif
 unsigned ZLIB_INTERNAL crc_fold_512to32(deflate_state *const s)
 {
     const __m128i xmm_mask  = _mm_load_si128((__m128i *)crc_mask);

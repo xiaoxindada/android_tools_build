@@ -21,6 +21,7 @@
 #include <inttypes.h>
 #include <linux/securebits.h>
 #include <sched.h>
+#include <signal.h>
 #include <sys/prctl.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -41,6 +42,8 @@
 #include <sys/signalfd.h>
 
 #include <string>
+
+#include <com_android_init_flags.h>
 
 #include "interprocess_fifo.h"
 #include "lmkd_service.h"
@@ -133,6 +136,22 @@ static bool ExpandArgsAndExecv(const std::vector<std::string>& args, bool sigsto
     if (sigstop) {
         kill(getpid(), SIGSTOP);
     }
+
+#if defined(__BIONIC__)
+    if (com::android::init::flags::ignore_bionic_signal_profiler_before_exec()) {
+        // The below execv will remove the signal handler for BIONIC_SIGNAL_PROFILER and revert to
+        // the default behavior, which is to kill the process. This means there is a race, where if
+        // the profiler sends the signal after the execv, but before bionic can install the
+        // appropriate handler, the process will be killed. We can work around that by ignoring the
+        // signal here, which is preserved across the execv, and then bionic will re-install the
+        // handler later.
+        struct sigaction sa = {};
+        sa.sa_handler = SIG_IGN;
+        sa.sa_flags = 0;
+        sigemptyset(&sa.sa_mask);
+        sigaction(BIONIC_SIGNAL_PROFILER, &sa, nullptr);
+    }
+#endif
 
     return execv(c_strings[0], c_strings.data()) == 0;
 }
@@ -817,7 +836,7 @@ void Service::SetMountNamespace() {
     }
     // Services in the following list start in the "default" mount namespace.
     // Note that they should use bootstrap bionic if they start before APEXes are ready.
-    static const std::set<std::string> kUseDefaultMountNamespace = {
+    [[clang::no_destroy]] static const std::set<std::string> kUseDefaultMountNamespace = {
             "ueventd",           // load firmwares from APEXes
             "hwservicemanager",  // load VINTF fragments from APEXes
             "servicemanager",    // load VINTF fragments from APEXes

@@ -49,6 +49,7 @@ subsystem vfio
 /dev/hwbinder             0666   root       root
 /dev/vndbinder            0666   root       root
 /dev/vfio/*               0666   root       root
+/dev/wrapfd               0666   root       root
 
 /dev/pmsg0                0222   root       log
 /dev/dma_heap/system      0444   system     system
@@ -84,7 +85,7 @@ subsystem vfio
 
 # apexd creates DM for downloaded APEX files, which should be readable by
 # system_server (PackageManager).
-/dev/block/dm-*           0640   root       system
+/dev/block/mapper/*.apex  0644   root       system
 
 # sysfs properties
 /sys/devices/platform/trusty.*      trusty_version        0440  root   log
@@ -95,3 +96,7 @@ subsystem vfio
 /sys/devices/system/cpu/cpu*   cpufreq/scaling_min_freq   0664  system system
 /sys/devices/virtual/misc/uhid/*/leds/* brightness   0664  system system
 /sys/devices/virtual/misc/uhid/*/leds/* multi_intensity   0664  system system
+/sys/bus/usb/devices/* authorized	0664 root system
+/sys/bus/usb/devices/* authorized_default	0664 root system
+/sys/devices/*/usb[0-9]/* authorized_default 0664  root system
+/sys/devices/*/usb[0-9]/* authorized 0664  root system

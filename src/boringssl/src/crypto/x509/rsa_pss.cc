@@ -19,14 +19,18 @@
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+#include <openssl/bytestring.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/obj.h>
+#include <openssl/rsa.h>
 
 #include "../rsa/internal.h"
 #include "internal.h"
 
+
+using namespace bssl;
 
 static int rsa_pss_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                       void *exarg) {
@@ -61,7 +65,7 @@ static int rsa_pss_decode(const X509_ALGOR *alg, rsa_pss_params_t *out) {
          CBS_len(&cbs) == 0;
 }
 
-int x509_rsa_ctx_to_pss(EVP_MD_CTX *ctx, X509_ALGOR *algor) {
+int bssl::x509_rsa_ctx_to_pss(EVP_MD_CTX *ctx, X509_ALGOR *algor) {
   const EVP_MD *sigmd, *mgf1md;
   int saltlen;
   if (!EVP_PKEY_CTX_get_signature_md(ctx->pctx, &sigmd) ||
@@ -103,8 +107,7 @@ int x509_rsa_ctx_to_pss(EVP_MD_CTX *ctx, X509_ALGOR *algor) {
   if (!rsa_marshal_pss_params(&cbb, params)) {
     return 0;
   }
-  bssl::UniquePtr<ASN1_STRING> params_str(
-      ASN1_STRING_type_new(V_ASN1_SEQUENCE));
+  UniquePtr<ASN1_STRING> params_str(ASN1_STRING_type_new(V_ASN1_SEQUENCE));
   if (params_str == nullptr ||
       !ASN1_STRING_set(params_str.get(), CBB_data(&cbb), CBB_len(&cbb))) {
     return 0;
@@ -118,8 +121,8 @@ int x509_rsa_ctx_to_pss(EVP_MD_CTX *ctx, X509_ALGOR *algor) {
   return 1;
 }
 
-int x509_rsa_pss_to_ctx(EVP_MD_CTX *ctx, const X509_ALGOR *sigalg,
-                        EVP_PKEY *pkey) {
+int bssl::x509_rsa_pss_to_ctx(EVP_MD_CTX *ctx, const X509_ALGOR *sigalg,
+                              EVP_PKEY *pkey) {
   assert(OBJ_obj2nid(sigalg->algorithm) == NID_rsassaPss);
   rsa_pss_params_t params;
   if (!rsa_pss_decode(sigalg, &params)) {
@@ -139,8 +142,8 @@ int x509_rsa_pss_to_ctx(EVP_MD_CTX *ctx, const X509_ALGOR *sigalg,
   return 1;
 }
 
-int x509_print_rsa_pss_params(BIO *bp, const X509_ALGOR *sigalg, int indent,
-                              ASN1_PCTX *pctx) {
+int bssl::x509_print_rsa_pss_params(BIO *bp, const X509_ALGOR *sigalg,
+                                    int indent, ASN1_PCTX *pctx) {
   assert(OBJ_obj2nid(sigalg->algorithm) == NID_rsassaPss);
   rsa_pss_params_t params;
   if (!rsa_pss_decode(sigalg, &params)) {
@@ -150,6 +153,10 @@ int x509_print_rsa_pss_params(BIO *bp, const X509_ALGOR *sigalg, int indent,
   const char *hash_str = nullptr;
   uint32_t salt_len = 0;
   switch (params) {
+    case rsa_pss_none:
+      // |rsa_pss_decode| will never return this.
+      OPENSSL_PUT_ERROR(X509, ERR_R_INTERNAL_ERROR);
+      return 0;
     case rsa_pss_sha256:
       hash_str = "sha256";
       salt_len = 32;

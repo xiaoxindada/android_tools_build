@@ -292,7 +292,11 @@ class PprofProfileGenerator(object):
 
         # Map from dso_name in perf.data to (binary path, build_id).
         self.binary_map = {}
-        self.read_elf = ReadElf(self.config['ndk_path'])
+        readelf_path = ToolFinder.find_tool_path('llvm-readelf', self.config['ndk_path'])
+        if not readelf_path:
+            self.read_elf = None
+        else:
+            self.read_elf = ReadElf(self.config['ndk_path'], readelf_path)
         self.binary_finder = BinaryFinder(config['binary_cache_dir'], self.read_elf)
 
     def load_record_file(self, record_file):
@@ -316,6 +320,8 @@ class PprofProfileGenerator(object):
         meta_info = self.lib.MetaInfo()
         if "app_versioncode" in meta_info:
             comments.append("App Version Code:\n" + meta_info["app_versioncode"])
+        if "app_type" in meta_info:
+            comments.append("App Type:\n" + meta_info["app_type"])
         for comment in comments:
             self.profile.comment.append(self.get_string_id(comment))
         if "timestamp" in meta_info:
@@ -356,6 +362,9 @@ class PprofProfileGenerator(object):
             sample.labels.append(Label(
                 self.get_string_id("tid"),
                 self.get_string_id(str(report_sample.tid))))
+            sample.labels.append(Label(
+                self.get_string_id("cpu"),
+                self.get_string_id(str(report_sample.cpu))))
             if self._filter_symbol(symbol):
                 location_id = self.get_location_id(report_sample.ip, symbol)
                 sample.add_location_id(location_id)

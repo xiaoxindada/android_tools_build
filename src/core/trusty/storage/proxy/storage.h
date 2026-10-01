@@ -16,7 +16,8 @@
 #pragma once
 
 #include <interface/storage/storage.h>
-#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 /* Defined in watchdog.h */
 struct watcher;

@@ -19,6 +19,9 @@
     },
     {
       "name": "libbssl_sys_raw_test"
+    },
+    {
+      "name": "hwtrust_boringssl_tests"
     }
   ],
   "postsubmit": [

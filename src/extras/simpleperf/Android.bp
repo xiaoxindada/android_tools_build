@@ -56,6 +56,7 @@ cc_defaults {
 
 cc_defaults {
     name: "simpleperf_cflags",
+    cpp_std: "gnu++23",
     target: {
         host: {
             cflags: [
@@ -110,16 +111,18 @@ cc_library_static {
     },
 }
 
-// Build regex support in a separate library to catch std::regex_error exception.
 cc_library_static {
     name: "libsimpleperf_regex",
     host_supported: true,
     srcs: ["RegEx.cpp"],
-    cppflags: ["-fexceptions"],
-    static_libs: ["libbase"],
+    static_libs: [
+        "libbase",
+        "libpcre2",
+    ],
     target: {
         windows: {
             enabled: true,
+            cflags: ["-DPCRE2_STATIC"],
         },
     },
 }
@@ -129,11 +132,13 @@ cc_defaults {
     defaults: [
         "libsimpleperf_readelf_defaults",
         "simpleperf_cflags",
+        "rust_static_std",
     ],
     host_supported: true,
     static_libs: [
         "libsimpleperf_etm_decoder",
         "libsimpleperf_regex",
+        "libpcre2",
         "libbase",
         "liblog",
         "liblzma",
@@ -150,9 +155,13 @@ cc_defaults {
             static_libs: [
                 "libunwindstack",
                 "libcutils",
+                "libdexfile_support",
                 "libprocinfo",
                 "libevent",
                 "librustc_demangle_static",
+            ],
+            runtime_libs: [
+                "libdexfile", // libdexfile_support dependency
             ],
         },
         windows: {
@@ -171,42 +180,33 @@ cc_defaults {
     defaults: [
         "simpleperf_cflags",
         "libsimpleperf_readelf_defaults",
+        "rust_static_std",
     ],
-    host_supported: true,
-    shared_libs: [
-        "libbase",
-        "liblog",
-        "liblzma",
-        "libprotobuf-cpp-lite",
-        "libz",
-        "libziparchive",
-    ],
+    host_supported: false,
     static_libs: [
         "libsimpleperf_etm_decoder",
         "libsimpleperf_regex",
+        "libdexfile_support",
         "libopencsd_decoder",
+        "librustc_demangle_static",
         "libzstd",
     ],
-    target: {
-        linux: {
-            shared_libs: [
-                "libcutils",
-                "libevent",
-                "libprocinfo",
-                "libunwindstack",
-            ],
-            static_libs: [
-                "libdexfile_support",
-                "librustc_demangle_static",
-            ],
-            runtime_libs: [
-                "libdexfile", // libdexfile_support dependency
-            ],
-        },
-        windows: {
-            enabled: true,
-        },
-    },
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "libevent",
+        "liblog",
+        "liblzma",
+        "libpcre2",
+        "libprocinfo",
+        "libprotobuf-cpp-lite",
+        "libunwindstack",
+        "libz",
+        "libziparchive",
+    ],
+    runtime_libs: [
+        "libdexfile", // libdexfile_support dependency
+    ],
     use_version_lib: true,
 }
 
@@ -251,6 +251,7 @@ cc_defaults {
         "record_file_reader.cpp",
         "record_file_writer.cpp",
         "report_utils.cpp",
+        "SPEDecoder.cpp",
         "thread_tree.cpp",
         "tracing.cpp",
         "utils.cpp",
@@ -265,6 +266,7 @@ cc_defaults {
         },
         linux: {
             srcs: [
+                "AddrFilter.cpp",
                 "CallChainJoiner.cpp",
                 "cmd_api.cpp",
                 "cmd_debug_unwind.cpp",
@@ -284,6 +286,7 @@ cc_defaults {
                 "ProbeEvents.cpp",
                 "read_dex_file.cpp",
                 "RecordReadThread.cpp",
+                "SPERecorder.cpp",
                 "workload.cpp",
             ],
         },
@@ -309,13 +312,6 @@ cc_library_static {
         "libbuildversion",
     ],
     use_version_lib: false,
-
-    target: {
-        linux: {
-            static_libs: ["libdexfile_support"],
-            runtime_libs: ["libdexfile"], // libdexfile_support dependency
-        },
-    },
 }
 
 // simpleperf shipped in system image
@@ -343,9 +339,15 @@ cc_library {
     srcs: ["profcollect.cpp"],
     host_supported: false,
     ldflags: ["-Wl,--exclude-libs=ALL"],
-    static_libs: ["libsimpleperf"],
+    static_libs: [
+        "libcmd",
+        "libsimpleperf",
+    ],
     shared_libs: [
+        "libbinder",
         "libpower",
+        "libselinux",
+        "libutils",
     ],
 }
 
@@ -396,8 +398,14 @@ cc_binary {
         "libsimpleperf",
     ],
 
-    min_sdk_version: "31",
+    min_sdk_version: "29",
     target: {
+        android: {
+            static_libs: [
+                // On Android 10 (sdk version 29), libc.so doesn't export libunwind symbols.
+                "libunwind",
+            ],
+        },
         android_arm: {
             dist: {
                 dir: "simpleperf/android/arm",
@@ -433,10 +441,6 @@ cc_binary {
             dist: {
                 dir: "simpleperf/darwin/x86_64",
             },
-        },
-        linux: {
-            static_libs: ["libdexfile_support"],
-            runtime_libs: ["libdexfile"], // libdexfile_support dependency
         },
         linux_glibc_x86: {
             dist: {
@@ -489,10 +493,6 @@ cc_library {
         darwin: {
             enabled: false,
         },
-        linux: {
-            static_libs: ["libdexfile_support"],
-            runtime_libs: ["libdexfile"], // libdexfile_support dependency
-        },
         windows: {
             enabled: false,
         },
@@ -510,6 +510,7 @@ cc_library_shared {
     },
     srcs: [
         "report_lib_interface.cpp",
+        "report_utils_interface.cpp",
     ],
     static_libs: ["libsimpleperf"],
 
@@ -613,6 +614,7 @@ cc_defaults {
                 "cmd_record_test.cpp",
             ],
             srcs: [
+                "AddrFilter_test.cpp",
                 "CallChainJoiner_test.cpp",
                 "cmd_api_test.cpp",
                 "cmd_debug_unwind_test.cpp",
@@ -623,6 +625,7 @@ cc_defaults {
                 "cmd_stat_test.cpp",
                 "cmd_trace_sched_test.cpp",
                 "environment_test.cpp",
+                "ETMRecorder_test.cpp",
                 "event_selection_set_test.cpp",
                 "IOEventLoop_test.cpp",
                 "JITDebugReader_test.cpp",
@@ -641,7 +644,7 @@ cc_test {
     name: "simpleperf_unit_test",
     defaults: [
         "simpleperf_test_srcs",
-        "simpleperf_shared_libs",
+        "simpleperf_static_libs",
     ],
     static_libs: [
         "libgmock",
@@ -650,6 +653,11 @@ cc_test {
     target: {
         android: {
             test_suites: ["device-tests"],
+        },
+        darwin: {
+            host_ldlibs: [
+                "-framework CoreFoundation",
+            ],
         },
     },
     data: [
@@ -732,9 +740,24 @@ filegroup {
     srcs: ["CtsSimpleperfTestCases_testdata/**/*"],
 }
 
+cc_defaults {
+    name: "simpleperf_fuzzer_defaults",
+    fuzz_config: {
+        vector: "local_with_developer_options",
+        service_privilege: "privileged",
+        users: "multi_user",
+        fuzzed_code_usage: "shipped",
+
+        triage_assignee: "yabinc@google.com",
+        componentid: 1284821,
+        cc: ["android-llvm-dev@google.com"],
+    },
+}
+
 cc_fuzz {
     name: "libsimpleperf_report_fuzzer",
     defaults: [
+        "simpleperf_fuzzer_defaults",
         "simpleperf_static_libs",
         "libdexfile_static_transitive_defaults",
     ],
@@ -764,6 +787,7 @@ cc_fuzz {
 cc_fuzz {
     name: "simpleperf_writer_fuzzer",
     defaults: [
+        "simpleperf_fuzzer_defaults",
         "simpleperf_static_libs",
         "libdexfile_static_transitive_defaults",
     ],

@@ -206,6 +206,15 @@ static int handle_req(struct storage_msg* msg, const void* req, size_t req_len) 
             rc = rpmb_send(msg, req, req_len, watcher);
             break;
 
+        case STORAGE_CHECKPOINTING_STATE:
+            rc = checkpointing_get_state(msg, req, req_len, watcher);
+            break;
+
+        case STORAGE_READY_FOR_CLIENTS:
+            msg->result = STORAGE_NO_ERROR;
+            rc = ipc_respond(msg, NULL, 0);
+            break;
+
         default:
             ALOGE("unhandled command 0x%x\n", msg->cmd);
             msg->result = STORAGE_ERR_UNIMPLEMENTED;
@@ -341,7 +350,8 @@ int main(int argc, char* argv[]) {
      * starts faster. We set the max thread count to 0 because startThreadPool
      * "Starts one thread, PLUS those requested in setThreadPoolMaxThreadCount,
      * PLUS those manually requested in joinThreadPool." We only need a single
-     * binder thread to receive notifications on.
+     * binder thread to receive notifications on, even though we can receive
+     * notifications from both wakelock and vold.
      */
     ABinderProcess_setThreadPoolMaxThreadCount(0);
     ABinderProcess_startThreadPool();
@@ -356,6 +366,10 @@ int main(int argc, char* argv[]) {
 
     /* connect to Trusty secure storage server */
     rc = ipc_connect(trusty_devname, ss_srv_name);
+    if (rc < 0) return EXIT_FAILURE;
+
+    /* register vold listener to track checkpointing state */
+    rc = vold_connect();
     if (rc < 0) return EXIT_FAILURE;
 
     /* enter main loop */

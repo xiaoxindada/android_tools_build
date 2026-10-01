@@ -156,7 +156,8 @@ bool ExtractImageFromPartition(const DeltaArchiveManifest& manifest,
           executor.ExecuteZeroOrDiscardOperation(op, std::move(direct_writer)));
     } else if (op.type() == InstallOperation::REPLACE ||
                op.type() == InstallOperation::REPLACE_BZ ||
-               op.type() == InstallOperation::REPLACE_XZ) {
+               op.type() == InstallOperation::REPLACE_XZ ||
+               op.type() == InstallOperation::REPLACE_ZSTD) {
       TEST_AND_RETURN_FALSE(executor.ExecuteReplaceOperation(
           op, std::move(direct_writer), blob.data()));
     } else if (op.type() == InstallOperation::SOURCE_COPY) {

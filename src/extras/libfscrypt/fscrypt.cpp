@@ -159,8 +159,15 @@ bool OptionsToStringForApiLevel(unsigned int first_api_level, const EncryptionOp
     if ((options.flags & FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32)) {
         *options_string += "+emmc_optimized";
     }
-    if (options.use_hw_wrapped_key) {
-        *options_string += "+wrappedkey_v0";
+    switch (options.key_type) {
+        case KeyType::kRaw:
+            break;
+        case KeyType::kHwWrappedV0:
+            *options_string += "+wrappedkey_v0";
+            break;
+        case KeyType::kHwWrapped:
+            *options_string += "+wrappedkey";
+            break;
     }
     if (options.dusize_4k) {
         *options_string += "+dusize_4k";
@@ -212,7 +219,7 @@ bool ParseOptionsForApiLevel(unsigned int first_api_level, const std::string& op
     options->version = first_api_level > __ANDROID_API_Q__ ? 2 : 1;
     options->flags = 0;
     options->dusize_4k = false;
-    options->use_hw_wrapped_key = false;
+    options->key_type = KeyType::kRaw;
     if (parts.size() > 2 && !parts[2].empty()) {
         auto flags = android::base::Split(parts[2], "+");
         for (const auto& flag : flags) {
@@ -225,7 +232,9 @@ bool ParseOptionsForApiLevel(unsigned int first_api_level, const std::string& op
             } else if (flag == "emmc_optimized") {
                 options->flags |= FSCRYPT_POLICY_FLAG_IV_INO_LBLK_32;
             } else if (flag == "wrappedkey_v0") {
-                options->use_hw_wrapped_key = true;
+                options->key_type = KeyType::kHwWrappedV0;
+            } else if (flag == "wrappedkey") {
+                options->key_type = KeyType::kHwWrapped;
             } else if (flag == "dusize_4k") {
                 options->dusize_4k = true;
             } else {

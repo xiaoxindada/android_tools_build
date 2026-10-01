@@ -16,8 +16,10 @@
 
 #include <arpa/inet.h>
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/prctl.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
@@ -34,7 +36,8 @@
 #include <limits>
 #include <map>
 #include <memory>
-#include <set>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <android-base/errno_restorer.h>
@@ -51,7 +54,6 @@
 #include <bionic/tls_defines.h>
 #include <cutils/sockets.h>
 #include <log/log.h>
-#include <private/android_filesystem_config.h>
 #include <procinfo/process.h>
 
 #define ATRACE_TAG ATRACE_TAG_BIONIC
@@ -270,9 +272,10 @@ static void Initialize(char** argv) {
   });
 }
 
-static void ParseArgs(int argc, char** argv, pid_t* pseudothread_tid, DebuggerdDumpType* dump_type) {
-  if (argc != 4) {
-    LOG(FATAL) << "wrong number of args: " << argc << " (expected 4)";
+static void ParseArgs(int argc, char** argv, pid_t* pseudothread_tid, DebuggerdDumpType* dump_type,
+                      pid_t* ppid) {
+  if (argc != 5) {
+    LOG(FATAL) << "wrong number of args: " << argc << " (expected 5)";
   }
 
   if (!android::base::ParseInt(argv[1], &g_target_thread, 1, std::numeric_limits<pid_t>::max())) {
@@ -298,12 +301,17 @@ static void ParseArgs(int argc, char** argv, pid_t* pseudothread_tid, DebuggerdD
     default:
       LOG(FATAL) << "invalid requested dump type: " << dump_type_int;
   }
+
+  if (!android::base::ParseInt(argv[4], ppid, 1, std::numeric_limits<pid_t>::max())) {
+    LOG(FATAL) << "invalid ppid: " << argv[4];
+  }
+
 }
 
 static void ReadCrashInfo(unique_fd& fd, siginfo_t* siginfo,
                           std::unique_ptr<unwindstack::Regs>* regs, ProcessInfo* process_info,
                           bool* recoverable_crash) {
-  std::aligned_storage<sizeof(CrashInfo) + 1, alignof(CrashInfo)>::type buf = {};
+  alignas(CrashInfo) std::byte buf[sizeof(CrashInfo) + 1] = {};
   CrashInfo* crash_info = reinterpret_cast<CrashInfo*>(&buf);
   ssize_t rc = TEMP_FAILURE_RETRY(read(fd.get(), &buf, sizeof(buf)));
   *recoverable_crash = false;
@@ -520,12 +528,11 @@ static void ReadGuestRegisters(std::unique_ptr<unwindstack::Regs>* regs, pid_t t
 #if defined(__LP64__)
     case NATIVE_BRIDGE_ARCH_ARM64: {
       unwindstack::arm64_user_regs arm64_user_regs = {};
-      for (size_t i = 0; i < unwindstack::ARM64_REG_R31; i++) {
-        arm64_user_regs.regs[i] = guest_regs.regs_arm64.x[i];
-      }
-      arm64_user_regs.sp = guest_regs.regs_arm64.sp;
-      arm64_user_regs.pc = guest_regs.regs_arm64.ip;
-      regs->reset(unwindstack::RegsArm64::Read(&arm64_user_regs));
+      memcpy(&arm64_user_regs.regs[0], &guest_regs.regs_arm64.x[0],
+             sizeof(uint64_t) * (unwindstack::ARM64_REG_R30 + 1));
+      arm64_user_regs.regs[unwindstack::ARM64_REG_SP] = guest_regs.regs_arm64.sp;
+      arm64_user_regs.regs[unwindstack::ARM64_REG_PC] = guest_regs.regs_arm64.ip;
+      regs->reset(unwindstack::RegsArm64::Read(&arm64_user_regs, tid));
 
       g_guest_arch = Architecture::ARM64;
       break;
@@ -534,7 +541,7 @@ static void ReadGuestRegisters(std::unique_ptr<unwindstack::Regs>* regs, pid_t t
       unwindstack::riscv64_user_regs riscv64_user_regs = {};
       // RISCV64_REG_PC is at the first position.
       riscv64_user_regs.regs[0] = guest_regs.regs_riscv64.ip;
-      for (size_t i = 1; i < unwindstack::RISCV64_REG_REAL_COUNT; i++) {
+      for (size_t i = 1; i < unwindstack::RISCV64_REG_LAST; i++) {
         riscv64_user_regs.regs[i] = guest_regs.regs_riscv64.x[i];
       }
       regs->reset(unwindstack::RegsRiscv64::Read(&riscv64_user_regs, tid));
@@ -583,6 +590,7 @@ int main(int argc, char** argv) {
   if (getppid() != target_process) {
     LOG(FATAL) << "parent died";
   }
+
   atrace_end(ATRACE_TAG);
 
   // Reparent ourselves to init, so that the signal handler can waitpid on the
@@ -613,10 +621,11 @@ int main(int argc, char** argv) {
   ATRACE_NAME("after reparent");
   pid_t pseudothread_tid;
   DebuggerdDumpType dump_type;
+  pid_t crashing_process_ppid;
   ProcessInfo process_info;
 
   Initialize(argv);
-  ParseArgs(argc, argv, &pseudothread_tid, &dump_type);
+  ParseArgs(argc, argv, &pseudothread_tid, &dump_type, &crashing_process_ppid);
 
   // Die if we take too long.
   //
@@ -635,13 +644,13 @@ int main(int argc, char** argv) {
   // the threads, fetch their registers and associated information, and then
   // fork a separate process as a snapshot of the process's address space.
   std::set<pid_t> threads;
-  if (!android::procinfo::GetProcessTids(g_target_thread, &threads)) {
-    PLOG(FATAL) << "failed to get process threads";
+  std::string error;
+  if (!android::procinfo::GetProcessTids(g_target_thread, &threads, &error)) {
+    PLOG(FATAL) << "failed to get process threads: " << error;
   }
 
   std::map<pid_t, ThreadInfo> thread_info;
   siginfo_t siginfo;
-  std::string error;
   bool recoverable_crash = false;
 
   {
@@ -659,6 +668,7 @@ int main(int argc, char** argv) {
 
       ThreadInfo info;
       info.pid = target_process;
+      info.ppid = crashing_process_ppid;
       info.tid = thread;
       info.uid = getuid();
       info.thread_name = get_thread_name(thread);
@@ -766,6 +776,9 @@ int main(int argc, char** argv) {
     }
   }
 
+  std::unordered_map<uint64_t, std::string> vmflags;
+  get_vmflags(g_target_thread, vmflags);
+
   // Drop our capabilities now that we've fetched all of the information we need.
   drop_capabilities();
 
@@ -845,13 +858,13 @@ int main(int argc, char** argv) {
           break;
       }
       if (regs_arch == unwindstack::ARCH_UNKNOWN) {
-        engrave_tombstone(std::move(g_output_fd), std::move(g_proto_fd), &unwinder, thread_info,
-                          g_target_thread, process_info, &open_files, &amfd_data);
+        engrave_tombstone(std::move(g_output_fd), std::move(g_proto_fd), &unwinder, vmflags,
+                          thread_info, g_target_thread, process_info, &open_files, &amfd_data);
       } else {
         unwindstack::AndroidRemoteUnwinder guest_unwinder(vm_pid, regs_arch);
-        engrave_tombstone(std::move(g_output_fd), std::move(g_proto_fd), &unwinder, thread_info,
-                          g_target_thread, process_info, &open_files, &amfd_data, &g_guest_arch,
-                          &guest_unwinder);
+        engrave_tombstone(std::move(g_output_fd), std::move(g_proto_fd), &unwinder, vmflags,
+                          thread_info, g_target_thread, process_info, &open_files, &amfd_data,
+                          &g_guest_arch, &guest_unwinder);
       }
     }
   }

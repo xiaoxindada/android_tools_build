@@ -32,7 +32,7 @@ const PROFCOLLECT_CONFIG_NAMESPACE: &str = "profcollect_native_boot";
 const PROFCOLLECT_NODE_ID_PROPERTY: &str = "persist.profcollectd.node_id";
 
 const DEFAULT_BINARY_FILTER: &str = "(^/(system|apex/.+|vendor)/(bin|lib64)/.+)|\
-    (^/data/app/.+\\.so$)|kernel.kallsyms";
+    (^/data/app/.+\\.so$)|kernel.kallsyms|(^/system/framework/arm64/.+\\.oat$)";
 pub const REPORT_RETENTION_SECS: u64 = 14 * 24 * 60 * 60; // 14 days.
 
 // Static configs that cannot be changed.
@@ -110,7 +110,7 @@ fn get_build_fingerprint() -> Result<String> {
     get_property("ro.build.fingerprint", "unknown".to_string())
 }
 
-fn get_device_config<T>(key: &str, default_value: T) -> Result<T>
+pub fn get_device_config<T>(key: &str, default_value: T) -> Result<T>
 where
     T: FromStr + ToString,
     T::Err: Error + Send + Sync + 'static,
@@ -134,7 +134,8 @@ where
     T::Err: Error + Send + Sync + 'static,
 {
     let default_value = default_value.to_string();
-    let value = rustutils::system_properties::read(key).unwrap_or(None).unwrap_or(default_value);
+    let value =
+        rustutils::android::system_properties::read(key).unwrap_or(None).unwrap_or(default_value);
     Ok(T::from_str(&value)?)
 }
 
@@ -143,7 +144,7 @@ where
     T: ToString,
 {
     let value = value.to_string();
-    Ok(rustutils::system_properties::write(key, &value)?)
+    Ok(rustutils::android::system_properties::write(key, &value)?)
 }
 
 fn generate_random_node_id() -> MacAddr6 {

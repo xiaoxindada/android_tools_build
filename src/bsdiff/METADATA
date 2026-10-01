@@ -1,3 +1,12 @@
+name: "bsdiff",
+description: "bsdiff and bspatch are tools for building and applying patches to binary files",
+
 third_party {
   license_type: NOTICE
+  identifier: {
+    type: "Git",
+    value: "https://github.com/mendsley/bsdiff.git",
+    version: "b817e9491cf7b8699c8462ef9e2657ca4ccd7667",
+  }
+  version: "4.3.1"
 }

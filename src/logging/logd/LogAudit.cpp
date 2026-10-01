@@ -222,7 +222,7 @@ void LogAudit::logDecodedPath(const std::string& denial) {
     // string.
     std::string path = denialParse(denial, ' ', "path=");
     std::vector<uint8_t> bytes;
-    if (path.empty() || !android::base::HexToBytes(path, &bytes)) {
+    if (path.empty() || path.starts_with('"') || !android::base::HexToBytes(path, &bytes)) {
         return;
     }
 

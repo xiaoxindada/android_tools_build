@@ -48,5 +48,7 @@ int StopServicesFromApex(const std::string& apex_name);
 
 void RemoveServiceAndActionFromApex(const std::string& apex_name);
 
+int CountFilesIn(const char* path);
+
 }  // namespace init
 }  // namespace android

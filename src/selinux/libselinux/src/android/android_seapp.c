@@ -847,9 +847,11 @@ int seapp_context_lookup_internal(enum seapp_kind kind,
 	} else if (appid < AID_SDK_SANDBOX_PROCESS_START) {
 		username = "_app";
 		appid -= AID_APP_START;
-	} else if (appid < AID_ISOLATED_START) {
+	} else if (appid < AID_PCC_COMPONENT_PROCESS_START) {
 		username = "_sdksandbox";
 		appid -= AID_SDK_SANDBOX_PROCESS_START;
+	} else if (appid <= AID_PCC_COMPONENT_PROCESS_END) {
+		username = "_pcc_component";
 	} else {
 		username = "_isolated";
 		appid -= AID_ISOLATED_START;

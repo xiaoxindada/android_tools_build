@@ -17,7 +17,10 @@ cc_defaults {
         "-fno-finite-loops",
         "-DANDROID_DEBUGGABLE=0",
         "-DANDROID_DISABLE_TLS_FOR_LINKER=1",
-    ],
+    ] + select(release_flag("RELEASE_DEPRECATE_RUNTIME_APEX"), {
+        true: ["-DRELEASE_DEPRECATE_RUNTIME_APEX"],
+        default: [],
+    }),
 
     local_include_dirs: ["include"],
     product_variables: {
@@ -90,7 +93,10 @@ cc_library_static {
 
     export_header_lib_headers: ["libdebuggerd_common_headers"],
     export_include_dirs: ["tombstoned/include"],
-    apex_available: ["com.android.runtime"],
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.runtime",
+    ],
 }
 
 // Core implementation, linked into libdebuggerd_handler and the dynamic linker.
@@ -110,13 +116,13 @@ cc_library_static {
 
     whole_static_libs: [
         "libasync_safe",
-        "libcutils",
         "libdebuggerd",
     ],
 
     export_header_lib_headers: ["libdebuggerd_common_headers"],
     export_include_dirs: ["include"],
     apex_available: [
+        "//apex_available:platform",
         "com.android.runtime",
     ],
 }
@@ -124,7 +130,10 @@ cc_library_static {
 // Implementation with a no-op fallback.
 cc_library_static {
     name: "libdebuggerd_handler",
-    defaults: ["debuggerd_defaults"],
+    defaults: [
+        "debuggerd_defaults",
+        "rust_static_std",
+    ],
     srcs: ["handler/debuggerd_fallback_nop.cpp"],
 
     header_libs: ["bionic_libc_platform_headers"],
@@ -158,9 +167,8 @@ cc_library_static {
         "libasync_safe",
         "libbase",
         "libdebuggerd",
-        "libunwindstack_no_dex",
+        "libunwindstack_no_dex_no_std",
         "liblzma",
-        "libcutils",
     ],
 
     header_libs: ["bionic_libc_platform_headers"],
@@ -171,7 +179,10 @@ cc_library_static {
 
 cc_library {
     name: "libdebuggerd_client",
-    defaults: ["debuggerd_defaults"],
+    defaults: [
+        "debuggerd_defaults",
+        "rust_static_std",
+    ],
     srcs: [
         "client/debuggerd_client.cpp",
         "util.cpp",
@@ -266,11 +277,9 @@ cc_library_static {
     ],
 
     static_libs: [
-        "libdexfile_support", // libunwindstack dependency
-        "libunwindstack",
+        "libunwindstack_no_dex_no_std",
         "liblzma",
         "libbase",
-        "libcutils",
     ],
 
     whole_static_libs: [
@@ -326,6 +335,7 @@ cc_library_static {
         },
     },
     apex_available: [
+        "//apex_available:platform",
         "com.android.runtime",
     ],
 }
@@ -355,7 +365,10 @@ cc_test_library {
 
 cc_test {
     name: "debuggerd_test",
-    defaults: ["debuggerd_defaults"],
+    defaults: [
+        "debuggerd_defaults",
+        "rust_static_std",
+    ],
     require_root: true,
 
     cflags: ["-Wno-missing-field-initializers"],
@@ -376,6 +389,7 @@ cc_test {
             ],
             static_libs: [
                 "libasync_safe",
+                "libcutils",
                 "libtombstoned_client_static",
             ],
         },
@@ -387,7 +401,6 @@ cc_test {
 
     shared_libs: [
         "libbase",
-        "libcutils",
         "libdebuggerd_client",
         "liblog",
         "libnativehelper",
@@ -443,7 +456,10 @@ cc_binary {
         "tombstone_handler.cpp",
         "util.cpp",
     ],
-    defaults: ["debuggerd_defaults"],
+    defaults: [
+        "debuggerd_defaults",
+        "rust_static_std",
+    ],
 
     compile_multilib: "both",
     multilib: {
@@ -479,6 +495,7 @@ cc_binary {
     ],
 
     apex_available: [
+        "//apex_available:platform",
         "com.android.runtime",
     ],
 

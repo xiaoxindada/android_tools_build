@@ -32,7 +32,7 @@
 
 namespace chromeos_update_engine {
 
-class FakeCowWriter : public android::snapshot::ICowWriter {
+class FakeCowWriter final : public android::snapshot::ICowWriter {
  public:
   struct CowOp {
     enum { COW_COPY, COW_REPLACE, COW_ZERO } type;
@@ -91,7 +91,7 @@ class FakeCowWriter : public android::snapshot::ICowWriter {
   uint32_t GetBlockSize() const override { return 4096; }
   std::optional<uint32_t> GetMaxBlocks() const override { return {}; }
 
-  std::unique_ptr<android::snapshot::ICowReader> OpenReader() override {
+  std::unique_ptr<android::snapshot::ICowReader> OpenReader(bool) override {
     return nullptr;
   }
   std::unique_ptr<FileDescriptor> OpenFileDescriptor(

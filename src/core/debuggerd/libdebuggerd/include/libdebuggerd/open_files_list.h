@@ -30,6 +30,7 @@
 struct FDInfo {
   std::optional<std::string> path;
   std::optional<uint64_t> fdsan_owner;
+  std::optional<std::string> details;
 };
 
 using OpenFilesList = std::map<int, FDInfo>;

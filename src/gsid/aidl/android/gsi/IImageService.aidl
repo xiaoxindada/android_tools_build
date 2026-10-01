@@ -20,7 +20,7 @@ import android.gsi.AvbPublicKey;
 import android.gsi.MappedImage;
 import android.gsi.IProgressCallback;
 
-/** {@hide} */
+/** @hide */
 interface IImageService {
     /* These flags match fiemap::ImageManager::CreateBackingImage. */
     const int CREATE_IMAGE_DEFAULT = 0x0;

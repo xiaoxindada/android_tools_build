@@ -59,3 +59,13 @@
 #define PROJECT_ID_APP_CACHE_START 60000
 /* End of project IDs for apps to mark internal app cache data. */
 #define PROJECT_ID_APP_CACHE_END 69999
+
+/* Start of project IDs for pcc to mark internal pcc data. */
+#define PROJECT_ID_PCC_START 70000
+/* End of project IDs for pcc to mark internal pcc data. */
+#define PROJECT_ID_PCC_END 79999
+
+/* Start of project IDs for pcc to mark internal pcc cache data. */
+#define PROJECT_ID_PCC_CACHE_START 80000
+/* End of project IDs for pcc to mark internal pcc cache data. */
+#define PROJECT_ID_PCC_CACHE_END 89999

@@ -21,11 +21,7 @@
 // Build benchmarks for the device. Run with:
 //   adb shell liblog-benchmarks
 package {
-    // A large-scale-change added 'default_applicable_licenses' to import
-    // the below license kinds from "system_logging_liblog_license":
-    //   SPDX-license-identifier-Apache-2.0
     default_applicable_licenses: ["system_logging_liblog_license"],
-    default_team: "trendy_team_native_tools_libraries",
 }
 
 cc_benchmark {
@@ -130,10 +126,6 @@ cc_test {
 sh_test {
     name: "liblog_device_preparer.sh",
     src: "liblog_device_preparer.sh",
-    test_suites: [
-        "cts",
-        "general-tests",
-    ],
 }
 
 cc_test_host {

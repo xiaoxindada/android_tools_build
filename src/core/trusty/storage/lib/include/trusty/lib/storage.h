@@ -19,7 +19,21 @@
 #include <interface/storage/storage.h>
 #include <stdint.h>
 
-#define STORAGE_MAX_NAME_LENGTH_BYTES 159
+/**
+ * define STORAGE_MAX_NAME_LENGTH - the maximum length (as defined by strlen())
+ * of a file name.
+ */
+#define STORAGE_MAX_NAME_LENGTH 255
+
+/**
+ * define STORAGE_MAX_NAME_SIZE - the size required for a char array to contain
+ * a file name of maximum length.
+ *
+ * Includes space for a terminating NUL character.
+ */
+#define STORAGE_MAX_NAME_SIZE (STORAGE_MAX_NAME_LENGTH + 1 /* nul byte */)
+
+#define STORAGE_MAX_NAME_LENGTH_BYTES STORAGE_MAX_NAME_SIZE
 
 __BEGIN_DECLS
 
@@ -58,7 +72,7 @@ void storage_close_session(storage_session_t session);
  * @session:  the storage_session_t returned from a call to storage_open_session
  * @handle_p: pointer to location in which to store file handle in case of success
  * @name:     a null-terminated string identifier of the file to open.
- *            Cannot be more than STORAGE_MAX_NAME_LENGTH_BYTES in length.
+ *            strlen(@name) cannot be more than STORAGE_MAX_NAME_LENGTH.
  * @flags:    A bitmask consisting any storage_file_flag value or'ed together:
  * - STORAGE_FILE_OPEN_CREATE:           if this file does not exist, create it.
  * - STORAGE_FILE_OPEN_CREATE_EXCLUSIVE: when specified, opening file with

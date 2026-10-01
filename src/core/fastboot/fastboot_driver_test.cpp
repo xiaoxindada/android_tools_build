@@ -17,9 +17,12 @@
 #include "fastboot_driver.h"
 
 #include <memory>
-#include <optional>
 
+#include <android-base/file.h>
 #include <gtest/gtest.h>
+#include "constants.h"
+#include "fastboot_driver_interface.h"
+#include "gmock/gmock.h"
 #include "mock_transport.h"
 
 using namespace ::testing;
@@ -60,6 +63,35 @@ TEST_F(DriverTest, InfoMessage) {
     ASSERT_EQ(driver.RawCommand("oem dmesg", "", nullptr, &info), SUCCESS) << driver.Error();
     ASSERT_EQ(info.size(), size_t(1));
     ASSERT_EQ(info[0], "this is an info line");
+}
+
+TEST_F(DriverTest, FetchToFd) {
+    std::string text;
+    std::unique_ptr<MockTransport> transport_pointer = std::make_unique<MockTransport>();
+    MockTransport& transport = *transport_pointer;
+
+    DriverCallbacks callbacks;
+    callbacks.text = [&text](const std::string& extra_text) { text += extra_text; };
+    EXPECT_CALL(transport, Write(_, _))
+            .With(AllArgs(RawData("fetch:super")))
+            .WillOnce(ReturnArg<1>());
+    EXPECT_CALL(transport, Read(_, FB_RESPONSE_SZ)).WillOnce(Invoke(CopyData("DATA1000")));
+    EXPECT_CALL(transport, Read(_, 4096)).WillOnce([](void* buf, size_t size) -> ssize_t {
+        memset(buf, 0xCC, size);
+        return size;
+    });
+    EXPECT_CALL(transport, Read(_, FB_RESPONSE_SZ)).WillOnce(Invoke(CopyData("OKAY")));
+
+    FastBootDriver driver(std::move(transport_pointer), callbacks);
+    TemporaryFile tmp;
+    ASSERT_EQ(driver.FetchToFd("super", tmp.fd), SUCCESS);
+    std::vector<uint8_t> buf;
+    buf.resize(0x1000);
+    android::base::ReadFullyAtOffset(tmp.fd, buf.data(), buf.size(), 0);
+
+    for (const auto& byte : buf) {
+        ASSERT_EQ(byte, 0xCC);
+    }
 }
 
 TEST_F(DriverTest, TextMessage) {

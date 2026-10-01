@@ -16,7 +16,7 @@
 
 package android.gsi;
 
-/** {@hide} */
+/** @hide */
 oneway interface IGsiServiceCallback {
     void onResult(int result);
 }

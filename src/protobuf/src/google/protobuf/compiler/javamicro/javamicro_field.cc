@@ -32,13 +32,13 @@
 //  Based on original Protocol Buffers design by
 //  Sanjay Ghemawat, Jeff Dean, and others.
 
-#include <absl/log/absl_check.h>
-#include <google/protobuf/compiler/javamicro/javamicro_field.h>
-#include <google/protobuf/compiler/javamicro/javamicro_helpers.h>
-#include <google/protobuf/compiler/javamicro/javamicro_primitive_field.h>
-#include <google/protobuf/compiler/javamicro/javamicro_enum_field.h>
-#include <google/protobuf/compiler/javamicro/javamicro_message_field.h>
-#include <google/protobuf/stubs/common.h>
+#include "absl/log/absl_check.h"
+#include "google/protobuf/compiler/javamicro/javamicro_field.h"
+#include "google/protobuf/compiler/javamicro/javamicro_helpers.h"
+#include "google/protobuf/compiler/javamicro/javamicro_primitive_field.h"
+#include "google/protobuf/compiler/javamicro/javamicro_enum_field.h"
+#include "google/protobuf/compiler/javamicro/javamicro_message_field.h"
+#include "google/protobuf/stubs/common.h"
 
 namespace google {
 namespace protobuf {

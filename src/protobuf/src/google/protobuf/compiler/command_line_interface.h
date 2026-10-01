@@ -26,7 +26,10 @@
 #include "absl/container/flat_hash_map.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/strings/string_view.h"
+#include "google/protobuf/compiler/code_generator_lite.h"
+#include "google/protobuf/compiler/plugin.pb.h"
 #include "google/protobuf/descriptor.pb.h"
+#include "google/protobuf/descriptor_database.h"
 #include "google/protobuf/port.h"
 
 // Must be included last.
@@ -193,6 +196,11 @@ class PROTOC_EXPORT CommandLineInterface {
   void SetVersionInfo(const std::string& text) { version_info_ = text; }
 
 
+  // Configure protoc to act as if we're in opensource.
+  void set_opensource_runtime(bool opensource) {
+    opensource_runtime_ = opensource;
+  }
+
  private:
   // -----------------------------------------------------------------
 
@@ -216,10 +224,7 @@ class PROTOC_EXPORT CommandLineInterface {
   bool MakeInputsBeProtoPathRelative(DiskSourceTree* source_tree,
                                      DescriptorDatabase* fallback_database);
 
-  // Fails if these files use proto3 optional and the code generator doesn't
-  // support it. This is a permanent check.
-  bool EnforceProto3OptionalSupport(
-      const std::string& codegen_name, uint64_t supported_features,
+  bool EnforceProtocEditionsSupport(
       const std::vector<const FileDescriptor*>& parsed_files) const;
 
 
@@ -235,7 +240,7 @@ class PROTOC_EXPORT CommandLineInterface {
 
   // Read an argument file and append the file's content to the list of
   // arguments. Return false if the file cannot be read.
-  bool ExpandArgumentFile(const std::string& file,
+  bool ExpandArgumentFile(const char* file,
                           std::vector<std::string>* arguments);
 
   // Parses a command-line argument into a name/value pair.  Returns
@@ -281,6 +286,30 @@ class PROTOC_EXPORT CommandLineInterface {
       const std::vector<const FileDescriptor*>& parsed_files,
       const std::string& plugin_name, const std::string& parameter,
       GeneratorContext* generator_context, std::string* error);
+  bool GenerateBuiltInOutput(
+      const std::vector<const FileDescriptor*>& parsed_files,
+      const OutputDirective& output_directive,
+      GeneratorContext* generator_context, std::string* error);
+
+  // Common code for both plugins and built-in generators.
+  CodeGeneratorRequest CreateCodeGeneratorRequest(
+      std::vector<const FileDescriptor*> parsed_files, std::string parameter,
+      bool copy_json_name = false, bool bootstrap = false) const;
+  bool GenerateCodeFromResponse(const CodeGeneratorResponse& response,
+                                GeneratorContext* generator_context,
+                                bool bootstrap, std::string plugin_name,
+                                std::string* error);
+
+  // Fails if these files use proto3 optional and the code generator doesn't
+  // support it. This is a permanent check.
+  bool EnforceProto3OptionalSupport(
+      const std::string& codegen_name, uint64_t supported_features,
+      const std::vector<const FileDescriptor*>& parsed_files) const;
+
+  bool EnforceEditionsSupport(
+      const std::string& codegen_name, uint64_t supported_features,
+      Edition minimum_edition, Edition maximum_edition,
+      const std::vector<const FileDescriptor*>& parsed_files) const;
 
   // Implements --encode and --decode.
   bool EncodeOrDecode(const DescriptorPool* pool);
@@ -289,8 +318,8 @@ class PROTOC_EXPORT CommandLineInterface {
   bool WriteDescriptorSet(
       const std::vector<const FileDescriptor*>& parsed_files);
 
-  // Implements the --experimental_edition_defaults_out option.
-  bool WriteExperimentalEditionDefaults(const DescriptorPool& pool);
+  // Implements the --edition_defaults_out option.
+  bool WriteEditionDefaults(const DescriptorPool& pool);
 
   // Implements the --dependency_out option
   bool GenerateDependencyManifestFile(
@@ -328,7 +357,8 @@ class PROTOC_EXPORT CommandLineInterface {
       absl::flat_hash_set<const FileDescriptor*>* already_seen,
       RepeatedPtrField<FileDescriptorProto>* output,
       const TransitiveDependencyOptions& options =
-          TransitiveDependencyOptions());
+          TransitiveDependencyOptions()) const;
+
 
   // -----------------------------------------------------------------
 
@@ -356,7 +386,8 @@ class PROTOC_EXPORT CommandLineInterface {
   //   protoc --foo_out=outputdir --foo_opt=enable_bar ...
   // Then there will be an entry ("--foo_out", "enable_bar") in this map.
   absl::flat_hash_map<std::string, std::string> generator_parameters_;
-  // Similar to generator_parameters_, but stores the parameters for plugins.
+  // Similar to generator_parameters_, stores the parameters for plugins but the
+  // key is the actual plugin name e.g. "protoc-gen-foo".
   absl::flat_hash_map<std::string, std::string> plugin_parameters_;
 
   // See AllowPlugins().  If this is empty, plugins aren't allowed.
@@ -407,6 +438,16 @@ class PROTOC_EXPORT CommandLineInterface {
   // presented to the user. "%s" will be replaced with the violating import.
   std::string direct_dependencies_violation_msg_;
 
+  // Names of proto files which are allowed to be option imported. Used by build
+  // systems to enforce option-depend-on-what-you-option-import.
+  absl::flat_hash_set<std::string> option_dependencies_;
+  bool option_dependencies_explicitly_set_ = false;
+
+  // If there's a violation of option-depend-on-what-you-option-import, this
+  // string will be presented to the user. "%s" will be replaced with the
+  // violating import.
+  std::string option_dependencies_violation_msg_;
+
   // output_directives_ lists all the files we are supposed to output and what
   // generator to use for each.
   struct OutputDirective {
@@ -429,9 +470,9 @@ class PROTOC_EXPORT CommandLineInterface {
   // FileDescriptorSet should be written.  Otherwise, empty.
   std::string descriptor_set_out_name_;
 
-  std::string experimental_edition_defaults_out_name_;
-  Edition experimental_edition_defaults_minimum_;
-  Edition experimental_edition_defaults_maximum_;
+  std::string edition_defaults_out_name_;
+  Edition edition_defaults_minimum_;
+  Edition edition_defaults_maximum_;
 
   // If --dependency_out was given, this is the path to the file where the
   // dependency file will be written. Otherwise, empty.
@@ -458,6 +499,9 @@ class PROTOC_EXPORT CommandLineInterface {
 
   // When using --encode, this will be passed to SetSerializationDeterministic.
   bool deterministic_output_ = false;
+
+  bool opensource_runtime_ = google::protobuf::internal::IsOss();
+
 };
 
 }  // namespace compiler

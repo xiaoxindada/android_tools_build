@@ -41,6 +41,7 @@ struct key_state {
 // Health info that interests charger
 struct ChargerHealthInfo {
     int32_t battery_level;
+    int32_t battery_temp;
     aidl::android::hardware::health::BatteryStatus battery_status;
 };
 
@@ -125,6 +126,7 @@ class Charger {
 
     animation batt_anim_;
     GRSurface* surf_unknown_ = nullptr;
+    GRSurface* surf_overheat_ = nullptr;
     int boot_min_cap_ = 0;
 
     ChargerHealthInfo health_info_ = {};

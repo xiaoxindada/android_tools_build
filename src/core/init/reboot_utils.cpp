@@ -31,6 +31,7 @@
 #include <unwindstack/AndroidUnwinder.h>
 
 #include "capabilities.h"
+#include "ota_utils.h"
 #include "reboot_utils.h"
 #include "util.h"
 
@@ -99,8 +100,8 @@ bool IsRebootCapable() {
     return value == CAP_SET;
 }
 
-void __attribute__((noreturn))
-RebootSystem(unsigned int cmd, const std::string& rebootTarget, const std::string& reboot_reason) {
+void __attribute__((noreturn)) RebootSystem(unsigned int cmd, const std::string& rebootTarget,
+                                            const std::string& reboot_reason) {
     LOG(INFO) << "Reboot ending, jumping to kernel";
 
     if (!IsRebootCapable()) {
@@ -111,7 +112,10 @@ RebootSystem(unsigned int cmd, const std::string& rebootTarget, const std::strin
 
     switch (cmd) {
         case ANDROID_RB_POWEROFF:
-            reboot(RB_POWER_OFF);
+            // `reboot_reason` is ignored on Linux, but can be meaningfull for
+            // Starnix on Fuchsia.
+            syscall(__NR_reboot, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2,
+                    LINUX_REBOOT_CMD_POWER_OFF, reboot_reason.c_str());
             break;
 
         case ANDROID_RB_RESTART2:
@@ -120,15 +124,18 @@ RebootSystem(unsigned int cmd, const std::string& rebootTarget, const std::strin
             break;
 
         case ANDROID_RB_THERMOFF:
-            if (android::base::GetBoolProperty("ro.thermal_warmreset", false)) {
-                std::string reason = "shutdown,thermal";
-                if (!reboot_reason.empty()) reason = reboot_reason;
+            std::string reason = "shutdown,thermal";
+            if (!reboot_reason.empty()) reason = reboot_reason;
 
+            if (android::base::GetBoolProperty("ro.thermal_warmreset", false)) {
                 LOG(INFO) << "Try to trigger a warm reset for thermal shutdown";
                 syscall(__NR_reboot, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2,
                         LINUX_REBOOT_CMD_RESTART2, reason.c_str());
             } else {
-                reboot(RB_POWER_OFF);
+                // `reboot_reason` is ignored on Linux, but can be meaningfull
+                // for Starnix on Fuchsia.
+                syscall(__NR_reboot, LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2,
+                        LINUX_REBOOT_CMD_POWER_OFF, reason.c_str());
             }
             break;
     }

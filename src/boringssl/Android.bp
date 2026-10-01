@@ -58,7 +58,6 @@ cc_defaults {
     cppflags: [
         "-Wall",
         "-Werror",
-        "-std=c++17",
     ],
 
     // Build BoringSSL and its tests against the same STL.
@@ -82,6 +81,7 @@ cc_defaults {
         "cc_baremetal_defaults",
     ],
     apex_available: [
+        "com.android.compos",
         "com.android.virt",
     ],
 }
@@ -187,6 +187,7 @@ cc_object {
         "com.android.extservices",
         "com.android.ondevicepersonalization",
         "com.android.resolv",
+        "com.android.tethering",
         "com.android.virt",
         "com.android.wifi",
     ],
@@ -291,6 +292,7 @@ cc_library {
         "com.android.extservices",
         "com.android.ondevicepersonalization",
         "com.android.resolv",
+        "com.android.tethering",
         "com.android.virt",
         "com.android.wifi",
     ],
@@ -371,9 +373,9 @@ cc_library_static {
         "//packages/modules/DnsResolver/tests:__subpackages__",
         "//packages/modules/NeuralNetworks:__subpackages__",
         "//system/core/init",
-        "//system/core/fs_mgr/liblp",
-        "//system/core/fs_mgr/liblp/vts_core",
-        "//system/core/fs_mgr/libsnapshot",
+        "//system/fs/fs_mgr/liblp",
+        "//system/fs/fs_mgr/liblp/vts_core",
+        "//system/fs/fs_mgr/libsnapshot",
         "//system/libvintf/test",
         "//system/security/keystore/tests",
         "//system/security/provisioner",
@@ -481,9 +483,11 @@ cc_library {
         "//apex_available:platform",
         "com.android.adbd",
         "com.android.bt",
+        "com.android.compos",
         "com.android.configinfrastructure",
         "com.android.conscrypt",
         "com.android.resolv",
+        "com.android.tethering",
         "com.android.virt",
         "com.android.wifi",
     ],
@@ -596,6 +600,7 @@ cc_library_static {
     vendor_available: true,
     srcs: [
         "src/util/fipstools/acvp/modulewrapper/modulewrapper.cc",
+        "src/util/fipstools/acvp/modulewrapper/proto.cc",
     ],
     target: {
         android: {
@@ -769,6 +774,7 @@ rust_bindgen {
     min_sdk_version: "29",
     apex_available: [
         "//apex_available:platform",
+        "com.android.compos",
         "com.android.configinfrastructure",
         "com.android.virt",
     ],
@@ -787,6 +793,7 @@ cc_library_static {
     min_sdk_version: "29",
     apex_available: [
         "//apex_available:platform",
+        "com.android.compos",
         "com.android.configinfrastructure",
         "com.android.virt",
     ],
@@ -810,6 +817,7 @@ rust_bindgen {
         "libssl_baremetal",
     ],
     apex_available: [
+        "com.android.compos",
         "com.android.virt",
     ],
     handle_static_inline: true,
@@ -823,6 +831,7 @@ cc_library_static {
     include_dirs: ["."],
     local_include_dirs: ["include/"],
     apex_available: [
+        "com.android.compos",
         "com.android.virt",
     ],
 
@@ -853,9 +862,12 @@ rust_defaults {
     visibility: [
         "//external/rust/crates/openssl",
         "//external/rust/android-crates-io/crates/tokio-openssl",
+        "//external/rust/android-crates-io/crates/aws-lc-rs",
         "//system/gatekeeper/rust/boringssl",
         "//system/keymint/boringssl",
         "//system/security/prng_seeder",
+        // [POC: vikramgaur@, bug component id: 1424296]
+        "//tools/security/remote_provisioning/hwtrust",
     ],
     srcs: [
         "src/rust/bssl-sys/src/lib.rs",
@@ -885,6 +897,7 @@ rust_library_rlib {
     min_sdk_version: "29",
     apex_available: [
         "//apex_available:platform",
+        "com.android.compos",
         "com.android.configinfrastructure",
         "com.android.virt",
     ],
@@ -927,6 +940,9 @@ rust_library_rlib {
     whole_static_libs: [
         "libbssl_sys_raw_nostd_staticfns",
     ],
+    apex_available: [
+        "com.android.compos",
+    ],
 }
 
 // High-level Rust crate `bssl-crypto`
@@ -938,6 +954,10 @@ rust_defaults {
     features: ["std"],
     srcs: ["src/rust/bssl-crypto/src/lib.rs"],
     rustlibs: ["libbssl_sys"],
+    no_std: {
+        features: [],
+        enabled: true,
+    },
 }
 
 rust_library {
@@ -946,6 +966,7 @@ rust_library {
     host_supported: true,
     apex_available: [
         "//apex_available:platform",
+        "com.android.compos",
         "com.android.virt",
     ],
     vendor_available: true,

@@ -17,17 +17,21 @@
 #include <gtest/gtest.h>
 
 #include <string.h>
+#include <sys/stat.h>
 
 #include <memory>
 #include <vector>
 
 #include <android-base/file.h>
+#include <android-base/scopeguard.h>
 
+#include "dso.h"
 #include "environment.h"
 #include "event_attr.h"
 #include "event_type.h"
 #include "record.h"
 #include "record_file.h"
+#include "thread_tree.h"
 #include "utils.h"
 
 #include "record_equal_test.h"
@@ -341,4 +345,57 @@ TEST_F(RecordFileTest, compression) {
     CheckRecordEqual(comm_record, *records[i * 2 + 1]);
   }
   ASSERT_TRUE(reader->Close());
+}
+
+TEST_F(RecordFileTest, load_build_id_and_file_features_inaccessible_vdso) {
+  // This test ensures that simpleperf doesn't crash when encountering a vdso file
+  // with restricted permissions. The code under test should handle the filesystem
+  // error gracefully.
+
+  // Create a temporary file to act as an inaccessible vdso file.
+  TemporaryFile inaccessible_vdso_file;
+  std::string inaccessible_path = inaccessible_vdso_file.path;
+  // Close the file descriptor before changing permissions.
+  close(inaccessible_vdso_file.release());
+  ASSERT_TRUE(android::base::WriteStringToFile("fake_vdso", inaccessible_path));
+
+  // Remove all permissions from the file, making it inaccessible.
+  ASSERT_EQ(chmod(inaccessible_path.c_str(), 0), 0);
+  auto guard = android::base::make_scope_guard(
+      [&]() { chmod(inaccessible_path.c_str(), S_IRUSR | S_IWUSR); });
+
+  // Write a record file with a build-id feature pointing to the inaccessible vdso.
+  std::unique_ptr<RecordFileWriter> writer = RecordFileWriter::CreateInstance(tmpfile_.path);
+  ASSERT_TRUE(writer != nullptr);
+  AddEventType("cpu-cycles");
+  ASSERT_TRUE(writer->WriteAttrSection(attr_ids_));
+
+  ASSERT_TRUE(writer->BeginWriteFeatures(1));
+  char p[BuildId::Size()];
+  memset(p, 1, sizeof(p));
+  BuildId build_id(p);
+  std::vector<BuildIdRecord> build_id_records;
+  // Add a record for [vdso] to identify the build_id for vdso.
+  build_id_records.emplace_back(false, getpid(), build_id, "[vdso]");
+  // Add another record for the inaccessible file with the same build_id.
+  build_id_records.emplace_back(false, getpid(), build_id, inaccessible_path);
+  ASSERT_TRUE(writer->WriteBuildIdFeature(build_id_records));
+  ASSERT_TRUE(writer->EndWriteFeatures());
+  ASSERT_TRUE(writer->Close());
+
+  // Read the record file and load features.
+  std::unique_ptr<RecordFileReader> reader = RecordFileReader::CreateInstance(tmpfile_.path);
+  ASSERT_TRUE(reader != nullptr);
+  ThreadTree thread_tree;
+
+  // Reset Dso's vdso file path before the test.
+  Dso::SetVdsoFile("", false);
+
+  // LoadBuildIdAndFileFeatures should handle the inaccessible file gracefully
+  // without crashing and return true.
+  ASSERT_TRUE(reader->LoadBuildIdAndFileFeatures(thread_tree));
+
+  // Ideally, we would assert that Dso::SetVdsoFile was not called. However,
+  // there is no public getter for the vdso file path. The test's success
+  // (not crashing) is the primary verification.
 }

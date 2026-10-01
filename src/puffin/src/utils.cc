@@ -4,16 +4,14 @@
 
 #include "puffin/src/include/puffin/utils.h"
 
-#include <inttypes.h>
-
 #include <algorithm>
 #include <iterator>
 #include <set>
 #include <string>
 #include <vector>
 
+
 #include "puffin/file_stream.h"
-#include "puffin/memory_stream.h"
 #include "puffin/src/bit_reader.h"
 #include "puffin/src/include/puffin/common.h"
 #include "puffin/src/include/puffin/puffer.h"
@@ -66,6 +64,10 @@ struct ExtentData {
   bool operator<(const ExtentData& other) const { return Compare(other) < 0; }
   bool operator==(const ExtentData& other) const { return Compare(other) == 0; }
 };
+
+static bool IsPrintable(std::string_view str) {
+  return std::all_of(str.begin(), str.end(), isprint);
+}
 
 }  // namespace
 
@@ -282,7 +284,27 @@ bool LocateDeflatesInZipArchive(const Buffer& data,
     auto compressed_size = get_unaligned<uint32_t>(data.data() + pos + 18);
     auto file_name_length = get_unaligned<uint16_t>(data.data() + pos + 26);
     auto extra_field_length = get_unaligned<uint16_t>(data.data() + pos + 28);
+    if (file_name_length > PATH_MAX) {
+      // Filename is too long, probably an invalid zip header, just continue.
+      pos += 4;
+      continue;
+    }
     uint64_t header_size = 30 + file_name_length + extra_field_length;
+    if (pos + compressed_size + header_size > data.size()) {
+      // The compressed size is invalid, probably an invalid zip header, just
+      // continue.
+      pos += 4;
+      continue;
+    }
+    auto filename =
+        std::string_view(reinterpret_cast<const char*>(data.data()) + pos + 30,
+                         file_name_length);
+    if (!IsPrintable(filename)) {
+      // filenames should not contain any non-printable characters, just
+      // continue.
+      pos += 4;
+      continue;
+    }
 
     // sanity check
     if (static_cast<uint64_t>(header_size) + compressed_size > data.size() ||
@@ -298,7 +320,8 @@ bool LocateDeflatesInZipArchive(const Buffer& data,
             data.data() + offset, data.size() - offset, offset, &tmp_deflates,
             &calculated_compressed_size)) {
       LOG(ERROR) << "Failed to decompress the zip entry starting from: " << pos
-                 << ", skip adding deflates for this entry.";
+                 << ", skip adding deflates for this entry. entry name: \'"
+                 << filename << "\'";
       pos += 4;
       continue;
     }
@@ -324,10 +347,10 @@ bool FindPuffLocations(const UniqueStreamPtr& src,
   Puffer puffer;
   Buffer deflate_buffer;
 
-  // Here accumulate the size difference between each corresponding deflate and
-  // puff. At the end we add this cummulative size difference to the size of the
-  // deflate stream to get the size of the puff stream. We use signed size
-  // because puff size could be smaller than deflate size.
+  // Here accumulate the size difference between each corresponding deflate
+  // and puff. At the end we add this cummulative size difference to the size
+  // of the deflate stream to get the size of the puff stream. We use signed
+  // size because puff size could be smaller than deflate size.
   int64_t total_size_difference = 0;
   for (auto deflate = deflates.begin(); deflate != deflates.end(); ++deflate) {
     // Read from src into deflate_buffer.
@@ -349,16 +372,17 @@ bool FindPuffLocations(const UniqueStreamPtr& src,
     TEST_AND_RETURN_FALSE(deflate_buffer.size() == bit_reader.Offset());
 
     // 1 if a deflate ends at the same byte that the next deflate starts and
-    // there is a few bits gap between them. In practice this may never happen,
-    // but it is a good idea to support it anyways. If there is a gap, the value
-    // of the gap will be saved as an integer byte to the puff stream. The parts
-    // of the byte that belogs to the deflates are shifted out.
+    // there is a few bits gap between them. In practice this may never
+    // happen, but it is a good idea to support it anyways. If there is a gap,
+    // the value of the gap will be saved as an integer byte to the puff
+    // stream. The parts of the byte that belogs to the deflates are shifted
+    // out.
     int gap = 0;
     if (deflate != deflates.begin()) {
       auto prev_deflate = std::prev(deflate);
       if ((prev_deflate->offset + prev_deflate->length == deflate->offset)
-          // If deflates are on byte boundary the gap will not be counted later,
-          // so we won't worry about it.
+          // If deflates are on byte boundary the gap will not be counted
+          // later, so we won't worry about it.
           && (deflate->offset % 8 != 0)) {
         gap = 1;
       }
@@ -368,8 +392,9 @@ bool FindPuffLocations(const UniqueStreamPtr& src,
     end_byte = (deflate->offset + deflate->length) / 8;
     int64_t deflate_length_in_bytes = end_byte - start_byte;
 
-    // If there was no gap bits between the current and previous deflates, there
-    // will be no extra gap byte, so the offset will be shifted one byte back.
+    // If there was no gap bits between the current and previous deflates,
+    // there will be no extra gap byte, so the offset will be shifted one byte
+    // back.
     auto puff_offset = start_byte - gap + total_size_difference;
     auto puff_size = puff_writer.Size();
     // Add the location into puff.

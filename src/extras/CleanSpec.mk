@@ -49,7 +49,6 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/EXECUTABLES/taskstats_intermedi
 $(call add-clean-step, rm -f $(TARGET_OUT_OPTIONAL_EXECUTABLES)/anrd)
 $(call add-clean-step, rm -f $(TARGET_OUT_OPTIONAL_EXECUTABLES)/cpustats)
 $(call add-clean-step, rm -f $(TARGET_OUT_OPTIONAL_EXECUTABLES)/crypto)
-$(call add-clean-step, rm -f $(TARGET_OUT_OPTIONAL_EXECUTABLES)/kexecload)
 $(call add-clean-step, rm -f $(TARGET_OUT_OPTIONAL_EXECUTABLES)/ksminfo)
 $(call add-clean-step, rm -f $(TARGET_OUT_OPTIONAL_EXECUTABLES)/latencytop)
 $(call add-clean-step, rm -f $(TARGET_OUT_OPTIONAL_EXECUTABLES)/memtrack_share)

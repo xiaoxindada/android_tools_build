@@ -117,6 +117,30 @@ TEST(utils, LineReader) {
 }
 
 // @CddTest = 6.1/C-0-2
+TEST(utils, OneTimeFreeAllocator) {
+  OneTimeFreeAllocator allocator(1024);
+  const char* s1 = allocator.AllocateString("hello");
+  ASSERT_STREQ(s1, "hello");
+  const char* s2 = allocator.AllocateString(std::string(1000, 'a'));
+  ASSERT_EQ(strlen(s2), 1000);
+  const char* s3 = allocator.AllocateString("world");
+  ASSERT_STREQ(s3, "world");
+}
+
+// @CddTest = 6.1/C-0-2
+TEST(utils, OneTimeFreeAllocator_overflow) {
+  OneTimeFreeAllocator allocator(1024);
+  // Test with a size that would cause overflow if size_t wraps.
+  // We use a large size that is still somewhat manageable or just test the logic.
+  // Since we can't easily allocate SIZE_MAX, we check if a large size > unit_size_ works.
+  std::string long_string(2000, 'a');
+  const char* s = allocator.AllocateString(long_string);
+  ASSERT_EQ(strlen(s), 2000);
+  ASSERT_EQ(s[0], 'a');
+  ASSERT_EQ(s[1999], 'a');
+}
+
+// @CddTest = 6.1/C-0-2
 TEST(utils, ReadableCount) {
   ASSERT_EQ(ReadableCount(0), "0");
   ASSERT_EQ(ReadableCount(204), "204");

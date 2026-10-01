@@ -53,6 +53,7 @@
 #include <base/strings/string_number_conversions.h>
 #include <base/strings/string_split.h>
 #include <android-base/stringprintf.h>
+#include <android-base/unique_fd.h>
 #include <brillo/data_encoding.h>
 
 #include "update_engine/common/constants.h"
@@ -359,6 +360,15 @@ bool ReadFileChunk(const string& path,
   return ReadFileChunkAndAppend(path, offset, size, out_p);
 }
 
+off64_t BlockDevSize(const char* path) {
+  android::base::unique_fd fd(open(path, O_RDONLY | O_CLOEXEC));
+  if (fd == -1) {
+    PLOG(ERROR) << "Error opening " << path;
+    return fd;
+  }
+  return BlockDevSize(fd);
+}
+
 off64_t BlockDevSize(int fd) {
   uint64_t dev_size{};
   int rc = ioctl(fd, BLKGETSIZE64, &dev_size);
@@ -425,6 +435,25 @@ bool DeleteDirectory(const char* dirname) {
   return true;
 }
 
+bool Fsync(const char* path) {
+  android::base::unique_fd fd(
+      TEMP_FAILURE_RETRY(open(path, O_RDONLY | O_CLOEXEC)));
+  if (fd == -1) {
+    PLOG(ERROR) << "Failed to open " << path;
+    return false;
+  }
+  if (fsync(fd) == -1) {
+    if (errno == EROFS || errno == EINVAL) {
+      PLOG(WARNING) << "Skip fsync " << path
+                    << " on a file system does not support synchronization";
+    } else {
+      PLOG(ERROR) << "Failed to fsync " << path;
+      return false;
+    }
+  }
+  return true;
+}
+
 bool FsyncDirectoryContents(const char* dirname) {
   std::filesystem::path dir_path(dirname);
 
@@ -437,18 +466,7 @@ bool FsyncDirectoryContents(const char* dirname) {
 
   for (const auto& entry : std::filesystem::directory_iterator(dirname, ec)) {
     if (entry.is_regular_file()) {
-      int fd = open(entry.path().c_str(), O_RDONLY | O_CLOEXEC);
-      if (fd == -1) {
-        LOG(ERROR) << "open failed: " << entry.path();
-        return false;
-      }
-
-      if (fsync(fd) == -1) {
-        LOG(ERROR) << "fsync failed";
-        return false;
-      }
-
-      close(fd);
+      Fsync(entry.path().c_str());
     }
   }
 
@@ -460,22 +478,7 @@ bool FsyncDirectory(const char* dirname) {
     LOG(ERROR) << "failed to fsync directory contents";
     return false;
   }
-  android::base::unique_fd fd(
-      TEMP_FAILURE_RETRY(open(dirname, O_RDONLY | O_CLOEXEC)));
-  if (fd == -1) {
-    PLOG(ERROR) << "Failed to open " << dirname;
-    return false;
-  }
-  if (fsync(fd) == -1) {
-    if (errno == EROFS || errno == EINVAL) {
-      PLOG(WARNING) << "Skip fsync " << dirname
-                    << " on a file system does not support synchronization";
-    } else {
-      PLOG(ERROR) << "Failed to fsync " << dirname;
-      return false;
-    }
-  }
-  return true;
+  return Fsync(dirname);
 }
 
 bool WriteStringToFileAtomic(const std::string& path,
@@ -503,7 +506,7 @@ bool WriteStringToFileAtomic(const std::string& path,
     PLOG(ERROR) << "rename failed from " << tmp_path << " to " << path;
     return false;
   }
-  return FsyncDirectory(std::filesystem::path(path).parent_path().c_str());
+  return Fsync(std::filesystem::path(path).parent_path().c_str());
 }
 
 void HexDumpArray(const uint8_t* const arr, const size_t length) {
@@ -707,7 +710,7 @@ bool MountFilesystem(const string& device,
                      const string& fs_mount_options) {
   vector<const char*> fstypes;
   if (type.empty()) {
-    fstypes = {"ext2", "ext3", "ext4", "squashfs", "erofs"};
+    fstypes = {"ext2", "ext3", "ext4", "erofs"};
   } else {
     fstypes = {type.c_str()};
   }

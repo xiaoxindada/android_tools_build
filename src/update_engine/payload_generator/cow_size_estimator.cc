@@ -113,7 +113,8 @@ bool CowDryRun(
       }
       case InstallOperation::REPLACE:
       case InstallOperation::REPLACE_BZ:
-      case InstallOperation::REPLACE_XZ: {
+      case InstallOperation::REPLACE_XZ:
+      case InstallOperation::REPLACE_ZSTD: {
         TEST_AND_RETURN_FALSE(extent_writer.Init(op.dst_extents(), block_size));
         for (const auto& ext : op.dst_extents()) {
           visited.AddExtent(ext);

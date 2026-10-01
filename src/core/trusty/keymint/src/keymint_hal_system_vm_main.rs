@@ -17,21 +17,28 @@
 //! the Trusty VM.
 
 use android_trusty_commservice::aidl::android::trusty::commservice::ICommService::ICommService;
+use android_trusty_provisioning::aidl::android::trusty::provisioning::IProvisioning::IProvisioning;
 use anyhow::{anyhow, bail, Context, Result};
 use binder::{self, AccessorProvider, ProcessState, Strong};
-use kmr_hal::{register_binder_services, send_hal_info, SerializedChannel, ALL_HALS};
+use clap::Parser;
+use kmr_hal::{register_binder_services, send_hal_info, Hal, SerializedChannel, ALL_HALS};
 use log::{error, info, warn};
 use std::{
     ops::DerefMut,
     panic,
+    path::PathBuf,
     sync::{Arc, Mutex},
 };
 
 const SERVICE_INSTANCE: &str = "default";
 
-const ACCESSOR_SERVICE_NAME: &str = "android.os.IAccessor/ICommService/security_vm_keymint";
-const INTERNAL_RPC_SERVICE_NAME: &str =
+const ACCESSOR_COMM_SERVICE_NAME: &str = "android.os.IAccessor/ICommService/security_vm_keymint";
+const INTERNAL_RPC_COMM_SERVICE_NAME: &str =
     "android.trusty.commservice.ICommService/security_vm_keymint";
+const ACCESSOR_PROVISIONING_SERVICE_NAME: &str =
+    "android.os.IAccessor/IProvisioning/security_vm_keymint";
+const INTERNAL_RPC_PROVISIONING_SERVICE_NAME: &str =
+    "android.trusty.provisioning.IProvisioning/security_vm_keymint";
 
 #[derive(Debug)]
 struct CommServiceChannel {
@@ -65,6 +72,27 @@ impl From<CommServiceChannel> for HalChannel {
     }
 }
 
+#[derive(Parser, Debug)]
+struct Args {
+    /// HALs to skip registering, e.g., --skip-hal shared-secret
+    #[arg(long = "skip-hal", value_parser = parse_hal)]
+    skip_hals: Vec<Hal>,
+
+    /// Path to the UDS certificates file for injection.
+    #[arg(long, value_name = "FILE")]
+    set_uds_certs: Option<PathBuf>,
+}
+
+fn parse_hal(s: &str) -> Result<Hal, String> {
+    match s {
+        "keymint-device" => Ok(Hal::KeyMintDevice),
+        "remotely-provisioned-component" => Ok(Hal::RemotelyProvisionedComponent),
+        "secure-clock" => Ok(Hal::SecureClock),
+        "shared-secret" => Ok(Hal::SharedSecret),
+        _ => Err(format!("Unknown HAL: {s}")),
+    }
+}
+
 fn main() {
     if let Err(e) = inner_main() {
         panic!("HAL service failed: {e:?}");
@@ -72,12 +100,19 @@ fn main() {
 }
 
 fn inner_main() -> Result<()> {
+    let args = Args::parse();
     setup_logging_and_panic_hook();
 
-    if cfg!(feature = "nonsecure") {
-        warn!("Non-secure Trusty KM HAL service is starting.");
-    } else {
-        info!("Trusty KM HAL service is starting.");
+    info!("Trusty KM HAL service is starting.");
+    if cfg!(feature = "vm_rot_nonsecure") {
+        warn!("Trusty KM HAL: non-secure RoT initialization.");
+    }
+    if cfg!(feature = "vm_reprovisioning_via_hal") {
+        // only works when provisioning is allowed
+        // shall only be used on test devices as  this erases
+        // previous provisioning
+        // note: only enabled on userdebug and eng builds
+        warn!("Trusty KM HAL: Reprovisioning from android properties!");
     }
 
     info!("Starting thread pool.");
@@ -85,22 +120,47 @@ fn inner_main() -> Result<()> {
 
     // TODO(b/429217397): Use a proper way to register an accessor and get the internal RPC
     // service via accessor here.
-    let _accessor_provider = AccessorProvider::new(&[INTERNAL_RPC_SERVICE_NAME.to_owned()], |s| {
-        binder::wait_for_service(ACCESSOR_SERVICE_NAME)
-            .and_then(|service| binder::Accessor::from_binder(s, service))
-    })
-    .ok_or(anyhow!("failed to create accessor provider"))?;
-    let comm_service = binder::wait_for_interface(INTERNAL_RPC_SERVICE_NAME)
+    let _accessor_provider =
+        AccessorProvider::new(&[INTERNAL_RPC_COMM_SERVICE_NAME.to_owned()], |s| {
+            binder::wait_for_service(ACCESSOR_COMM_SERVICE_NAME)
+                .and_then(|service| binder::Accessor::from_binder(s, service))
+        })
+        .ok_or(anyhow!("failed to create commservice accessor provider"))?;
+    let comm_service = binder::wait_for_interface(INTERNAL_RPC_COMM_SERVICE_NAME)
         .context("failed to get ICommService interface from accessor")?;
     let channel: HalChannel = CommServiceChannel { comm_service }.into();
 
-    #[cfg(feature = "nonsecure")]
-    kmr_hal_nonsecure::send_boot_info_and_attestation_id_info(&channel.0)?;
+    #[cfg(feature = "vm_rot_nonsecure")]
+    kmr_hal_nonsecure::send_boot_info(&channel.0)?;
 
-    register_binder_services(&channel.0, ALL_HALS, SERVICE_INSTANCE)?;
+    #[cfg(feature = "vm_reprovisioning_via_hal")]
+    kmr_hal_nonsecure::send_attestation_id_info(&channel.0)?;
+
+    let hals_to_register: Vec<_> =
+        ALL_HALS.iter().filter(|&x| !args.skip_hals.contains(x)).copied().collect();
+
+    register_binder_services(&channel.0, hals_to_register.as_slice(), SERVICE_INSTANCE)?;
 
     // Send the HAL service information to the TA
     channel.with(|c| send_hal_info(c).context("failed to populate HAL info"))?;
+
+    if let Some(uds_certs_path) = args.set_uds_certs {
+        info!("Attempting to inject UDS certs from {:?}", uds_certs_path);
+        let _prov_accessor =
+            AccessorProvider::new(&[INTERNAL_RPC_PROVISIONING_SERVICE_NAME.to_owned()], move |s| {
+                binder::wait_for_service(ACCESSOR_PROVISIONING_SERVICE_NAME)
+                    .and_then(|service| binder::Accessor::from_binder(s, service))
+            })
+            .ok_or(anyhow!("failed to create provisioning accessor provider"))?;
+        let provisioning =
+            binder::get_interface::<dyn IProvisioning>(INTERNAL_RPC_PROVISIONING_SERVICE_NAME)
+                .context("Failed to connect to Provisioning service")?;
+
+        // TODO(b/478166729): Fetch uds_certs from the file system
+        // Pass an empty slice &[] to simulate empty data
+        provisioning.setUdsCerts(&[]).context("Failed to get uds_certs")?;
+        info!("Successfully injected UdsCerts");
+    }
 
     info!("Successfully registered KeyMint HAL services. Joining thread pool now.");
 

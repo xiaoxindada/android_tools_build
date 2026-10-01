@@ -10,6 +10,7 @@ ${0##*/} OUTPUT_FILE SIZE
          [-s FILE_CONTEXTS] [-t MOUNT_POINT] [-T TIMESTAMP] [-B block_map]
          [-L LABEL] [--prjquota] [--casefold] [--compression] [--readonly]
          [--sldc <num> [sload compression sub-options]] [-b <block_size>]
+         [--packed_ssa]
 <num>: number of the sload compression args, e.g.  -a LZ4 counts as 2
        when sload compression args are not given, <num> must be 0,
        and the default flags will be used.
@@ -23,6 +24,7 @@ MKFS_OPTS=""
 SLOAD_OPTS=""
 BLOCK_MAP_FILE=""
 BLOCK_MAP_OPT=""
+SRC_DIR=""
 
 if [ $# -lt 2 ]; then
   usage
@@ -47,6 +49,7 @@ if [[ "$1" == "-C" ]]; then
   shift; shift
 fi
 if [[ "$1" == "-f" ]]; then
+  SRC_DIR="$2"
   SLOAD_OPTS+=" -f $2"
   shift; shift
 fi
@@ -143,6 +146,11 @@ if [[ "$1" == "-b" ]]; then
   MKFS_OPTS+=" -w $BLOCKSIZE"
 fi
 
+if [[ "$1" == "--packed_ssa" ]]; then
+  MKFS_OPTS+=" -O packed_ssa"
+  shift;
+fi
+
 if [ -z $SIZE ]; then
   echo "Need size of filesystem"
   exit 2
@@ -172,6 +180,10 @@ function _build()
       rm -f $OUTPUT_FILE
     fi
     exit 4
+  fi
+
+  if [ -n "$SRC_DIR" ] && [ -d "$SRC_DIR" ] && [ -z "$(ls -A "$SRC_DIR")" ]; then
+    SLOAD_OPTS=$(echo "$SLOAD_OPTS" | sed -E 's/-s [^ ]+//')
   fi
 
   SLOAD_F2FS_CMD="sload_f2fs $SLOAD_OPTS $OUTPUT_FILE"

@@ -20,7 +20,6 @@
 #include <gtest/gtest.h>
 #include <libsnapshot/snapshot.h>
 #include <libsnapshot/mock_snapshot.h>
-#include <libsnapshot/mock_snapshot_merge_stats.h>
 
 #include "update_engine/aosp/cleanup_previous_update_action.h"
 #include "update_engine/common/mock_boot_control.h"
@@ -31,7 +30,6 @@ namespace chromeos_update_engine {
 
 using android::snapshot::AutoDevice;
 using android::snapshot::MockSnapshotManager;
-using android::snapshot::MockSnapshotMergeStats;
 using android::snapshot::UpdateState;
 using testing::_;
 using testing::AtLeast;
@@ -59,8 +57,6 @@ class CleanupPreviousUpdateActionTest : public ::testing::Test {
     ON_CALL(boot_control_, GetDynamicPartitionControl())
         .WillByDefault(Return(&dynamic_control_));
     ON_CALL(boot_control_, GetCurrentSlot()).WillByDefault(Return(0));
-    ON_CALL(mock_snapshot_, GetSnapshotMergeStatsInstance())
-        .WillByDefault(Return(&mock_stats_));
     action_.SetProcessor(&mock_processor_);
     loop_.SetAsCurrent();
   }
@@ -72,7 +68,6 @@ class CleanupPreviousUpdateActionTest : public ::testing::Test {
   MockBootControl boot_control_;
   MockDynamicPartitionControl dynamic_control_{};
   MockCleanupPreviousUpdateActionDelegate mock_delegate_;
-  MockSnapshotMergeStats mock_stats_;
   MockActionProcessor mock_processor_;
   brillo::FakeMessageLoop loop_{nullptr};
   CleanupPreviousUpdateAction action_{
@@ -82,7 +77,6 @@ class CleanupPreviousUpdateActionTest : public ::testing::Test {
 TEST_F(CleanupPreviousUpdateActionTest, NonVabTest) {
   // Since VAB isn't even enabled, |GetSnapshotMergeStatsInstance| shouldn't be
   // called at all
-  EXPECT_CALL(mock_snapshot_, GetSnapshotMergeStatsInstance()).Times(0);
   EXPECT_CALL(dynamic_control_, GetVirtualAbFeatureFlag())
       .Times(AtLeast(1))
       .WillRepeatedly(Return(NONE));
@@ -90,10 +84,6 @@ TEST_F(CleanupPreviousUpdateActionTest, NonVabTest) {
 }
 
 TEST_F(CleanupPreviousUpdateActionTest, VABSlotSuccessful) {
-  // Expectaion: if VABC is enabled, Clenup action should call
-  // |SnapshotMergeStats::Start()| to start merge, and wait for it to finish
-  EXPECT_CALL(mock_snapshot_, GetSnapshotMergeStatsInstance())
-      .Times(AtLeast(1));
   EXPECT_CALL(mock_snapshot_, EnsureMetadataMounted())
       .Times(AtLeast(1))
       .WillRepeatedly(
@@ -113,9 +103,6 @@ TEST_F(CleanupPreviousUpdateActionTest, VABSlotSuccessful) {
       .Times(AtLeast(2))
       .WillOnce(Return(UpdateState::Merging))
       .WillRepeatedly(Return(UpdateState::MergeCompleted));
-  EXPECT_CALL(mock_stats_, Start())
-      .Times(AtLeast(1))
-      .WillRepeatedly(Return(true));
   EXPECT_CALL(mock_processor_, ActionComplete(&action_, ErrorCode::kSuccess))
       .Times(1);
   action_.PerformAction();
@@ -129,8 +116,6 @@ TEST_F(CleanupPreviousUpdateActionTest, VabSlotNotReady) {
   // successful.
   static constexpr auto MAX_TIMEPOINT =
       std::chrono::steady_clock::time_point::max();
-  EXPECT_CALL(mock_snapshot_, GetSnapshotMergeStatsInstance())
-      .Times(AtLeast(1));
   EXPECT_CALL(mock_snapshot_, EnsureMetadataMounted())
       .Times(AtLeast(1))
       .WillRepeatedly(
@@ -147,14 +132,6 @@ TEST_F(CleanupPreviousUpdateActionTest, VabSlotNotReady) {
       .WillOnce([&slot_success_time]() {
         slot_success_time =
             std::min(slot_success_time, std::chrono::steady_clock::now());
-        return true;
-      });
-
-  EXPECT_CALL(mock_stats_, Start())
-      .Times(1)
-      .WillRepeatedly([&merge_start_time]() {
-        merge_start_time =
-            std::min(merge_start_time, std::chrono::steady_clock::now());
         return true;
       });
 

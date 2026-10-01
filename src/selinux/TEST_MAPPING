@@ -1,0 +1,26 @@
+{
+  "presubmit": [
+    {
+      "name": "SuspendSepolicyTests"
+    },
+    {
+       "name": "netd_integration_test",
+       "options": [
+           {
+               "include-filter": "netd_integration_test32.NetdSELinuxTest"
+           },
+           {
+               "include-filter": "netd_integration_test64.NetdSELinuxTest"
+           }
+       ]
+    },
+    {
+       "name": "CtsSecurityHostTestCases",
+       "options": [
+           {
+               "include-filter": "android.security.cts.SELinuxHostTest#testNoBugreportDenials"
+           }
+       ]
+    }
+  ]
+}

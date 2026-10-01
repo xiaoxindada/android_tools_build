@@ -236,8 +236,8 @@ static int RunTests(const std::vector<Test>& tests) {
 
     if (!failed) {
       V("running command \"%s\"", test.command.c_str());
-      CapturedStdout test_stdout;
-      CapturedStderr test_stderr;
+      android::base::CapturedStdout test_stdout;
+      android::base::CapturedStderr test_stderr;
       int status = system(test.command.c_str());
       test_stdout.Stop();
       test_stderr.Stop();

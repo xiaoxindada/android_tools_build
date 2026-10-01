@@ -22,6 +22,22 @@ cc_binary {
     shared_libs: [
         "libbootloader_message",
         "libbase",
+        "lib_com_android_kcmdline_cc_flags",
     ],
     init_rc: ["kcmdlinectrl.rc"],
+}
+
+aconfig_declarations {
+    name: "kcmdline_flags",
+    package: "com.android.kcmdline",
+    container: "system",
+    srcs: [
+        "kcmdline.aconfig",
+    ],
+}
+
+cc_aconfig_library {
+    name: "lib_com_android_kcmdline_cc_flags",
+    aconfig_declarations: "kcmdline_flags",
+    visibility: ["//system/extras/kcmdlinectrl:__pkg__"],
 }

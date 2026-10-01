@@ -991,34 +991,42 @@ int Logcat::Run(int argc, char** argv) {
     }
 
     if (output_file_name_) {
+        int unlink_errors = 0;
+
         if (setLogSize || getLogSize || printStatistics || getPruneList || setPruneList) {
             error(EXIT_FAILURE, 0, "-f is incompatible with -g/-G, -S, and -p/-P.");
         }
 
         if (clearLog || setId) {
-            int max_rotation_count_digits =
-                    max_rotated_logs_ > 0 ? (int)(floor(log10(max_rotated_logs_) + 1)) : 0;
+            std::string log_dir = android::base::Dirname(output_file_name_);
+            std::string output_filename = android::base::Basename(output_file_name_);
+            std::string rotated_format = output_filename + ".%d%n";
 
-            for (int i = max_rotated_logs_; i >= 0; --i) {
-                std::string file;
+            // Delete all log files by scanning the directory
+            std::unique_ptr<DIR, int (*)(DIR*)> dir(opendir(log_dir.c_str()), closedir);
+            if (!dir.get()) {
+                error(EXIT_FAILURE, errno, "failed to open log directory '%s'", log_dir.c_str());
+            }
 
-                if (!i) {
-                    file = output_file_name_;
-                } else {
-                    file = StringPrintf("%s.%.*d", output_file_name_, max_rotation_count_digits, i);
-                }
+            dirent* entry;
+            while ((entry = readdir(dir.get())) != nullptr) {
+                std::string filename = entry->d_name;
+                int index, chars_read = 0;
 
-                int err = unlink(file.c_str());
-
-                if (err < 0 && errno != ENOENT) {
-                    fprintf(stderr, "failed to delete log file '%s': %s\n", file.c_str(),
-                            strerror(errno));
+                if (filename == output_filename ||
+                    (sscanf(filename.c_str(), rotated_format.c_str(), &index, &chars_read) == 1 &&
+                     chars_read == filename.length())) {
+                    std::string full_path = log_dir + "/" + filename;
+                    if (unlink(full_path.c_str()) < 0 && errno != ENOENT) {
+                        error(0, errno, "failed to delete log file '%s'", full_path.c_str());
+                        unlink_errors++;
+                    }
                 }
             }
         }
 
         if (clearLog) {
-            return EXIT_SUCCESS;
+            return unlink_errors ? EXIT_FAILURE : EXIT_SUCCESS;
         }
     }
 

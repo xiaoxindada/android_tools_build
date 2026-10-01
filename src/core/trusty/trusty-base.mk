@@ -38,8 +38,13 @@ endif
 
 PRODUCT_PACKAGES += \
 	$(LOCAL_SECRETKEEPER_PRODUCT_PACKAGE) \
-	android.hardware.gatekeeper-service.trusty \
 	trusty_apploader \
+
+ifeq ($(GATEKEEPER_HAL_VENDOR_APEX_SELECT), true)
+    PRODUCT_PACKAGES += android.hardware.gatekeeper-service.trusty_tee
+else
+    PRODUCT_PACKAGES += android.hardware.gatekeeper-service.trusty
+endif
 
 PRODUCT_PROPERTY_OVERRIDES += \
 	ro.hardware.keystore_desede=true \

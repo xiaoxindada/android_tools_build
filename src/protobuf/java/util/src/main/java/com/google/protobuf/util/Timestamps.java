@@ -7,15 +7,12 @@
 
 package com.google.protobuf.util;
 
-import static com.google.common.math.IntMath.checkedAdd;
-import static com.google.common.math.IntMath.checkedSubtract;
-import static com.google.common.math.LongMath.checkedAdd;
-import static com.google.common.math.LongMath.checkedMultiply;
-import static com.google.common.math.LongMath.checkedSubtract;
+import static java.lang.Math.addExact;
+import static java.lang.Math.multiplyExact;
+import static java.lang.Math.subtractExact;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CompileTimeConstant;
-import com.google.j2objc.annotations.J2ObjCIncompatible;
 import com.google.protobuf.Duration;
 import com.google.protobuf.Timestamp;
 import java.io.Serializable;
@@ -137,13 +134,23 @@ public final class Timestamps {
    */
   @SuppressWarnings("GoodTime") // this is a legacy conversion API
   public static boolean isValid(long seconds, int nanos) {
-    if (seconds < TIMESTAMP_SECONDS_MIN || seconds > TIMESTAMP_SECONDS_MAX) {
+    if (!isValidSeconds(seconds)) {
       return false;
     }
     if (nanos < 0 || nanos >= NANOS_PER_SECOND) {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Returns true if the given number of seconds is valid, if combined with a valid number of nanos.
+   * The {@code seconds} value must be in the range [-62,135,596,800, +253,402,300,799] (i.e.,
+   * between 0001-01-01T00:00:00Z and 9999-12-31T23:59:59Z).
+   */
+  @SuppressWarnings("GoodTime") // this is a legacy conversion API
+  private static boolean isValidSeconds(long seconds) {
+    return seconds >= TIMESTAMP_SECONDS_MIN && seconds <= TIMESTAMP_SECONDS_MAX;
   }
 
   /** Throws an {@link IllegalArgumentException} if the given {@link Timestamp} is not valid. */
@@ -153,11 +160,13 @@ public final class Timestamps {
     int nanos = timestamp.getNanos();
     if (!isValid(seconds, nanos)) {
       throw new IllegalArgumentException(
-          String.format(
-              "Timestamp is not valid. See proto definition for valid values. "
-                  + "Seconds (%s) must be in range [-62,135,596,800, +253,402,300,799]. "
-                  + "Nanos (%s) must be in range [0, +999,999,999].",
-              seconds, nanos));
+          "Timestamp is not valid. See proto definition for valid values. "
+              + "Seconds ("
+              + seconds
+              + ") must be in range [-62,135,596,800, +253,402,300,799]. "
+              + "Nanos ("
+              + nanos
+              + ") must be in range [0, +999,999,999].");
     }
     return timestamp;
   }
@@ -174,9 +183,9 @@ public final class Timestamps {
 
   /**
    * Convert Timestamp to RFC 3339 date string format. The output will always be Z-normalized and
-   * uses 3, 6 or 9 fractional digits as required to represent the exact value. Note that Timestamp
-   * can only represent time from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. See
-   * https://www.ietf.org/rfc/rfc3339.txt
+   * uses 0, 3, 6 or 9 fractional digits as required to represent the exact value. Note that
+   * Timestamp can only represent time from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z.
+   * See https://www.ietf.org/rfc/rfc3339.txt
    *
    * <p>Example of generated format: "1972-01-01T10:00:20.021Z"
    *
@@ -289,11 +298,14 @@ public final class Timestamps {
 
   // the following 3 constants contain references to java.time.Instant methods (if that class is
   // available at runtime); otherwise, they are null.
-  @Nullable private static final Method INSTANT_NOW = instantMethod("now");
+  @Nullable
+  private static final Method INSTANT_NOW = instantMethod("now");
 
-  @Nullable private static final Method INSTANT_GET_EPOCH_SECOND = instantMethod("getEpochSecond");
+  @Nullable
+  private static final Method INSTANT_GET_EPOCH_SECOND = instantMethod("getEpochSecond");
 
-  @Nullable private static final Method INSTANT_GET_NANO = instantMethod("getNano");
+  @Nullable
+  private static final Method INSTANT_GET_NANO = instantMethod("getNano");
 
   @Nullable
   private static Method instantMethod(String methodName) {
@@ -311,6 +323,7 @@ public final class Timestamps {
    * you're unable to mock the current time. Instead, you may want to consider injecting a clock
    * instance to read the current time.
    */
+  @SuppressWarnings("nullness")
   public static Timestamp now() {
     if (INSTANT_NOW != null) {
       try {
@@ -358,7 +371,6 @@ public final class Timestamps {
    * @throws IllegalArgumentException if the year is before 1 CE or after 9999 CE
    */
   @SuppressWarnings("GoodTime") // this is a legacy conversion API
-  @J2ObjCIncompatible
   public static Timestamp fromDate(Date date) {
     if (date instanceof java.sql.Timestamp) {
       java.sql.Timestamp sqlTimestamp = (java.sql.Timestamp) date;
@@ -385,8 +397,8 @@ public final class Timestamps {
   @SuppressWarnings("GoodTime") // this is a legacy conversion API
   public static long toMillis(Timestamp timestamp) {
     checkValid(timestamp);
-    return checkedAdd(
-        checkedMultiply(timestamp.getSeconds(), MILLIS_PER_SECOND),
+    return addExact(
+        multiplyExact(timestamp.getSeconds(), (long) MILLIS_PER_SECOND),
         timestamp.getNanos() / NANOS_PER_MILLISECOND);
   }
 
@@ -407,8 +419,8 @@ public final class Timestamps {
   @SuppressWarnings("GoodTime") // this is a legacy conversion API
   public static long toMicros(Timestamp timestamp) {
     checkValid(timestamp);
-    return checkedAdd(
-        checkedMultiply(timestamp.getSeconds(), MICROS_PER_SECOND),
+    return addExact(
+        multiplyExact(timestamp.getSeconds(), (long) MICROS_PER_SECOND),
         timestamp.getNanos() / NANOS_PER_MICROSECOND);
   }
 
@@ -423,81 +435,56 @@ public final class Timestamps {
   @SuppressWarnings("GoodTime") // this is a legacy conversion API
   public static long toNanos(Timestamp timestamp) {
     checkValid(timestamp);
-    return checkedAdd(
-        checkedMultiply(timestamp.getSeconds(), NANOS_PER_SECOND), timestamp.getNanos());
+    return addExact(
+        multiplyExact(timestamp.getSeconds(), (long) NANOS_PER_SECOND), timestamp.getNanos());
   }
 
-  /**
-   * Calculate the difference between two timestamps.
-   *
-   * <!-- MOE:begin_intracomment_strip -->
-   * <p>Do not use this method for new code. Instead, convert to {@link java.time.Instant} using
-   * {@link com.google.protobuf.util.JavaTimeConversions#toJavaInstant}, do the arithmetic there,
-   * and convert back using {@link com.google.protobuf.util.JavaTimeConversions#toProtoDuration}.
-   *
-   * <p>This method will be deprecated once most uses have been eliminated.
-   * <!-- MOE:end_intracomment_strip -->
-   */
+  /** Calculate the difference between two timestamps. */
   public static Duration between(Timestamp from, Timestamp to) {
     checkValid(from);
     checkValid(to);
     return Durations.normalizedDuration(
-        checkedSubtract(to.getSeconds(), from.getSeconds()),
-        checkedSubtract(to.getNanos(), from.getNanos()));
+        subtractExact(to.getSeconds(), from.getSeconds()),
+        subtractExact(to.getNanos(), from.getNanos()));
   }
 
-  /**
-   * Add a duration to a timestamp.
-   *
-   * <!-- MOE:begin_intracomment_strip -->
-   * <p>Do not use this method for new code. Instead, convert to {@link java.time.Instant} and
-   * {@link java.time.Duration} using {@link
-   * com.google.protobuf.util.JavaTimeConversions#toJavaInstant} and {@link
-   * com.google.protobuf.util.JavaTimeConversions#toJavaDuration}, do the arithmetic there, and
-   * convert back using {@link com.google.protobuf.util.JavaTimeConversions#toProtoTimestamp}.
-   *
-   * <p>This method will be deprecated once most uses have been eliminated.
-   * <!-- MOE:end_intracomment_strip -->
-   */
+  /** Add a duration to a timestamp. */
   public static Timestamp add(Timestamp start, Duration length) {
     checkValid(start);
     Durations.checkValid(length);
     return normalizedTimestamp(
-        checkedAdd(start.getSeconds(), length.getSeconds()),
-        checkedAdd(start.getNanos(), length.getNanos()));
+        addExact(start.getSeconds(), length.getSeconds()),
+        addExact(start.getNanos(), length.getNanos()));
   }
 
-  /**
-   * Subtract a duration from a timestamp.
-   *
-   * <!-- MOE:begin_intracomment_strip -->
-   * <p>Do not use this method for new code. Instead, convert to {@link java.time.Instant} and
-   * {@link java.time.Duration} using {@link
-   * com.google.protobuf.util.JavaTimeConversions#toJavaInstant} and {@link
-   * com.google.protobuf.util.JavaTimeConversions#toJavaDuration}, do the arithmetic there, and
-   * convert back using {@link com.google.protobuf.util.JavaTimeConversions#toProtoTimestamp}.
-   *
-   * <p>This method will be deprecated once most uses have been eliminated.
-   * <!-- MOE:end_intracomment_strip -->
-   */
+  /** Subtract a duration from a timestamp. */
   public static Timestamp subtract(Timestamp start, Duration length) {
     checkValid(start);
     Durations.checkValid(length);
     return normalizedTimestamp(
-        checkedSubtract(start.getSeconds(), length.getSeconds()),
-        checkedSubtract(start.getNanos(), length.getNanos()));
+        subtractExact(start.getSeconds(), length.getSeconds()),
+        subtractExact(start.getNanos(), length.getNanos()));
   }
 
   static Timestamp normalizedTimestamp(long seconds, int nanos) {
+    // This only checks seconds, because nanos can intentionally overflow to increment the seconds
+    // when normalized.
+    if (!isValidSeconds(seconds)) {
+      throw new IllegalArgumentException(
+          "Timestamp is not valid. Input seconds is too large. "
+              + "Seconds ("
+              + seconds
+              + ") must be in range [-62,135,596,800, +253,402,300,799]. ");
+    }
     if (nanos <= -NANOS_PER_SECOND || nanos >= NANOS_PER_SECOND) {
-      seconds = checkedAdd(seconds, nanos / NANOS_PER_SECOND);
+      seconds = addExact(seconds, nanos / NANOS_PER_SECOND);
       nanos = (int) (nanos % NANOS_PER_SECOND);
     }
     if (nanos < 0) {
       nanos =
           (int)
               (nanos + NANOS_PER_SECOND); // no overflow since nanos is negative (and we're adding)
-      seconds = checkedSubtract(seconds, 1);
+      seconds = subtractExact(seconds, 1);
     }
     Timestamp timestamp = Timestamp.newBuilder().setSeconds(seconds).setNanos(nanos).build();
     return checkValid(timestamp);

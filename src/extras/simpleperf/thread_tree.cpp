@@ -375,6 +375,10 @@ bool ThreadTree::AddDsoInfo(FileFeature& file) {
   if (dso_type == DSO_KERNEL) {
     dso = FindKernelDsoOrNew();
   } else if (dso_type == DSO_KERNEL_MODULE) {
+    if (file.min_vaddr == 0 && file.file_offset_of_min_vaddr == 0 && file.symbols.empty()) {
+      // Skip empty kernel module info.
+      return true;
+    }
     dso = FindKernelModuleDsoOrNew(file.path, 0, 0);
   } else {
     dso = FindUserDsoOrNew(file.path, 0, dso_type);

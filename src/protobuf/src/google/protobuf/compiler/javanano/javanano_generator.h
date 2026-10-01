@@ -38,8 +38,9 @@
 #define GOOGLE_PROTOBUF_COMPILER_JAVANANO_NANO_GENERATOR_H__
 
 #include <string>
-#include <google/protobuf/compiler/code_generator.h>
-#include <google/protobuf/stubs/port.h>
+
+#include "google/protobuf/compiler/code_generator.h"
+#include "google/protobuf/stubs/port.h"
 
 namespace google {
 namespace protobuf {

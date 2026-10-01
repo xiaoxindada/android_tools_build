@@ -9,12 +9,14 @@ service profcollectd /system/bin/profcollectd
 service profcollectctl_set_property /system/bin/profcollectctl set-property
     class main
     user root
+    group root shell
     disabled
     oneshot
 
 service profcollectctl_reset /system/bin/profcollectctl reset
     class main
     user root
+    group root shell
     disabled
     oneshot
 
@@ -26,6 +28,9 @@ on post-fs-data
     mkdir /data/misc/profcollectd/report 0770 shell shell
 
 on property:sys.boot_completed=1
+    # Sync device configs to system properties. This is a workaround for b/433651427,
+    # where device configs for profcollect_native_boot may not be synced to system
+    # properties on some devices due to a race condition.
     start profcollectctl_set_property
 
 on property:persist.profcollectd.enabled=true

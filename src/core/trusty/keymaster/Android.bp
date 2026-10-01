@@ -128,7 +128,7 @@ cc_binary {
     vintf_fragments: [
         "keymint/android.hardware.security.keymint-service.trusty.xml",
     ],
-    required: ["android.hardware.hardware_keystore.xml"],
+    required: ["android.hardware.hardware_keystore_V4.xml"],
 }
 
 // Keymint hal service in vendor, enabled by vendor apex.
@@ -265,4 +265,10 @@ cc_binary {
         "-Wall",
         "-Werror",
     ],
+}
+
+filegroup {
+    name: "trusty_keymaster_soft_attestation_keys",
+    srcs: ["set_attestation_key/keymaster_soft_attestation_keys.xml"],
+    visibility: ["//system/core/trusty/keymint/provisioning:__subpackages__"],
 }

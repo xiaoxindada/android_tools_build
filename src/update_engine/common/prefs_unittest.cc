@@ -581,6 +581,79 @@ TEST_F(PrefsTest, UnsuccessfulCallsNotObserved) {
   prefs_.RemoveObserver(kInvalidKey, &mock_obserser);
 }
 
+TEST_F(PrefsTest, TransactionAcidTest) {
+  const char kKey1[] = "key1";
+  const char kKey2[] = "key2";
+  const char kValue1[] = "value1";
+  const char kValue2[] = "value2";
+  const char kNewValue1[] = "new-value1";
+
+  // Initial state
+  ASSERT_TRUE(prefs_.SetString(kKey1, kValue1));
+  ASSERT_TRUE(prefs_.SetString(kKey2, kValue2));
+
+  // Start transaction
+  ASSERT_TRUE(prefs_.StartTransaction());
+
+  // Modify key1 in transaction
+  ASSERT_TRUE(prefs_.SetString(kKey1, kNewValue1));
+
+  // Verify Isolation: The original directory should remain UNCHANGED until commit.
+  string val;
+  ASSERT_TRUE(base::ReadFileToString(prefs_dir_.Append(kKey1), &val));
+  ASSERT_EQ(kValue1, val);
+
+  // Unmodified key2 should also be preserved in the original directory.
+  ASSERT_TRUE(base::ReadFileToString(prefs_dir_.Append(kKey2), &val));
+  ASSERT_EQ(kValue2, val);
+
+  // Current prefs object should see the new value (it reads from the transaction state).
+  ASSERT_TRUE(prefs_.GetString(kKey1, &val));
+  ASSERT_EQ(kNewValue1, val);
+
+  // Submit transaction (Atomicity & Durability)
+  ASSERT_TRUE(prefs_.SubmitTransaction());
+
+  // After submit, the main directory should have the new values.
+  ASSERT_TRUE(prefs_.GetString(kKey1, &val));
+  ASSERT_EQ(kNewValue1, val);
+  ASSERT_TRUE(prefs_.GetString(kKey2, &val));
+  ASSERT_EQ(kValue2, val);
+
+  // Verify persistence with a fresh Prefs object
+  Prefs fresh_prefs;
+  ASSERT_TRUE(fresh_prefs.Init(prefs_dir_));
+  ASSERT_TRUE(fresh_prefs.GetString(kKey1, &val));
+  ASSERT_EQ(kNewValue1, val);
+}
+
+TEST_F(PrefsTest, TransactionCancelAcidTest) {
+  const char kKey[] = "cancel-key";
+  const char kOldValue[] = "old";
+  const char kNewValue[] = "new";
+
+  ASSERT_TRUE(prefs_.SetString(kKey, kOldValue));
+  ASSERT_TRUE(prefs_.StartTransaction());
+  ASSERT_TRUE(prefs_.SetString(kKey, kNewValue));
+
+  // Should see new value in current context
+  string val;
+  ASSERT_TRUE(prefs_.GetString(kKey, &val));
+  ASSERT_EQ(kNewValue, val);
+
+  // Cancel transaction
+  ASSERT_TRUE(prefs_.CancelTransaction());
+
+  // Should be back to old value everywhere
+  ASSERT_TRUE(prefs_.GetString(kKey, &val));
+  ASSERT_EQ(kOldValue, val);
+
+  Prefs fresh_prefs;
+  ASSERT_TRUE(fresh_prefs.Init(prefs_dir_));
+  ASSERT_TRUE(fresh_prefs.GetString(kKey, &val));
+  ASSERT_EQ(kOldValue, val);
+}
+
 TEST_F(PrefsTest, MultiNamespaceKeyTest) {
   MultiNamespaceKeyTest();
 }

@@ -28,6 +28,7 @@
 #include "ETMRecorder.h"
 #include "IOEventLoop.h"
 #include "RecordReadThread.h"
+#include "SPERecorder.h"
 #include "environment.h"
 #include "event_attr.h"
 #include "event_type.h"
@@ -239,7 +240,7 @@ bool EventSelectionSet::BuildAndCheckEventSelection(const std::string& event_nam
   selection->event_attr.precise_ip = event_type->precise_ip;
   if (event_type->event_type.IsEtmEvent()) {
     auto& etm_recorder = ETMRecorder::GetInstance();
-    bool need_etr = event_type->event_type.name.find("@tmc_etr0") != std::string::npos;
+    bool need_etr = event_type->event_type.name.find("etr") != std::string::npos;
     if (auto result = etm_recorder.CheckEtmSupport(need_etr); !result.ok()) {
       LOG(ERROR) << result.error();
       return false;
@@ -251,7 +252,10 @@ bool EventSelectionSet::BuildAndCheckEventSelection(const std::string& event_nam
       return false;
     }
 #endif
-    ETMRecorder::GetInstance().SetEtmPerfEventAttr(event_type->event_type, selection->event_attr);
+    if (!ETMRecorder::GetInstance().SetEtmPerfEventAttr(event_type->event_type,
+                                                        selection->event_attr)) {
+      return false;
+    }
     if (IsKernelUsingContiguousAuxBuffer()) {
       // The kernel (rb_allocate_aux) allocates high order of pages based on aux_watermark.
       // To avoid that, use aux_watermark <= 1 page size.
@@ -270,6 +274,16 @@ bool EventSelectionSet::BuildAndCheckEventSelection(const std::string& event_nam
       selection->event_attr.sample_period = 1;
       // An ETM event can't be enabled without mmap aux buffer. So disable it by default.
       selection->event_attr.disabled = 1;
+    } else if (IsSpeEventName(event_name)) {
+      selection->event_attr.freq = 0;
+      // If min interval cannot be read from SPE HW, use default 4096.
+      uint64_t min_interval = SPERecorder::GetInstance().GetMinInterval();
+      selection->event_attr.sample_period = min_interval ? min_interval : 4096;
+      if (IsKernelUsingContiguousAuxBuffer()) {
+        // The kernel (rb_allocate_aux) allocates high order of pages based on aux_watermark.
+        // To avoid that, use aux_watermark <= 1 page size.
+        selection->event_attr.aux_watermark = 4096;
+      }
     } else {
       selection->event_attr.freq = 1;
       // Set default sample freq here may print msg "Adjust sample freq to max allowed sample
@@ -300,7 +314,8 @@ bool EventSelectionSet::BuildAndCheckEventSelection(const std::string& event_nam
           return false;
         }
       }
-      LOG(ERROR) << "Event type '" << event_type->name << "' is not supported on the device";
+      LOG(ERROR) << "Event type '" << event_type->name
+                 << "' (or one of the config parameters) is not supported on the device";
       return false;
     }
   }
@@ -342,14 +357,18 @@ bool EventSelectionSet::AddEventGroup(const std::vector<std::string>& event_name
     if (!BuildAndCheckEventSelection(event_name, first_event, &selection, check)) {
       return false;
     }
-    if (selection.event_type_modifier.event_type.IsEtmEvent()) {
-      has_aux_trace_ = true;
+    auto& event_type = selection.event_type_modifier.event_type;
+    if (event_type.IsEtmEvent()) {
+      has_aux_trace_etm_ = true;
     }
     if (first_in_group) {
-      auto& event_type = selection.event_type_modifier.event_type;
-      if (event_type.IsPmuEvent()) {
+      if (event_type.IsPmuEvent() || event_type.IsSpeEvent()) {
         selection.allowed_cpus = event_type.GetPmuCpumask();
       }
+    }
+    if (IsSpeEventName(event_name)) {
+      has_aux_trace_spe_ = true;
+      SPERecorder::GetInstance().ReadSpeMidrInfo(selection.allowed_cpus);
     }
     first_event = false;
     first_in_group = false;
@@ -818,7 +837,7 @@ bool EventSelectionSet::ApplyAddrFilters() {
   if (addr_filters_.empty()) {
     return true;
   }
-  if (!has_aux_trace_) {
+  if (!HasAuxTraceEtm()) {
     LOG(ERROR) << "addr filters only take effect in cs-etm instruction tracing";
     return false;
   }
@@ -907,10 +926,11 @@ bool EventSelectionSet::ReadCounters(std::vector<CountersInfo>* counters) {
 
 bool EventSelectionSet::MmapEventFiles(size_t min_mmap_pages, size_t max_mmap_pages,
                                        size_t aux_buffer_size, size_t record_buffer_size,
-                                       bool allow_truncating_samples, bool exclude_perf) {
+                                       bool allow_truncating_samples, bool exclude_perf,
+                                       std::chrono::milliseconds etm_flush_interval) {
   record_read_thread_.reset(new simpleperf::RecordReadThread(
       record_buffer_size, groups_[0].selections[0].event_attr, min_mmap_pages, max_mmap_pages,
-      aux_buffer_size, allow_truncating_samples, exclude_perf));
+      aux_buffer_size, allow_truncating_samples, exclude_perf, etm_flush_interval));
   return true;
 }
 

@@ -65,8 +65,9 @@ static std::optional<size_t> GetBufferSizePropertyOverride(log_id_t log_id) {
 /* This method should only be used for debuggable devices. */
 static bool isAllowedToOverrideBufferSize() {
     const auto hwType = android::base::GetProperty("ro.hardware.type", "");
+    const auto hardware = android::base::GetProperty("ro.hardware", "");
     /* Allow automotive and desktop devices to optionally override the default. */
-    return (hwType == "automotive" || hwType == "desktop");
+    return (hwType == "automotive" || hardware == "android-desktop");
 }
 
 size_t GetBufferSizeFromProperties(log_id_t log_id) {

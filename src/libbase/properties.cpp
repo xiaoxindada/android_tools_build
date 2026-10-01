@@ -65,52 +65,78 @@ struct prop_info_cmp {
   bool operator()(const prop_info& lhs, std::string_view rhs) const { return lhs.key < rhs; }
 };
 
-static auto& g_properties_lock = *new std::mutex;
-static auto& g_properties GUARDED_BY(g_properties_lock) = *new std::set<prop_info, prop_info_cmp>;
+class HostProperties {
+ public:
+  int Set(const char* key, const char* value) {
+    if (key == nullptr || *key == '\0') return -1;
+    if (value == nullptr) value = "";
+    bool read_only = !strncmp(key, "ro.", 3);
+    if (!read_only && strlen(value) >= PROP_VALUE_MAX) return -1;
+
+    std::lock_guard lock(lock_);
+    auto [it, success] = properties_.emplace(key, value);
+    if (read_only) return success ? 0 : -1;
+    if (!success) {
+      it->value = value;
+      ++it->serial;
+    }
+    return 0;
+  }
+
+  int Get(const char* key, char* value) {
+    std::lock_guard lock(lock_);
+    auto it = properties_.find(key);
+    if (it == properties_.end()) {
+      *value = '\0';
+      return 0;
+    }
+    snprintf(value, PROP_VALUE_MAX, "%s", it->value.c_str());
+    return strlen(value);
+  }
+
+  const prop_info* Find(const char* key) {
+    std::lock_guard lock(lock_);
+    auto it = properties_.find(key);
+    if (it == properties_.end()) {
+      return nullptr;
+    } else {
+      return &*it;
+    }
+  }
+
+  void ReadCallback(const prop_info* pi,
+                    void (*callback)(void*, const char*, const char*, uint32_t), void* cookie) {
+    std::lock_guard lock(lock_);
+    callback(cookie, pi->key.c_str(), pi->value.c_str(), pi->serial);
+  }
+
+ private:
+  std::mutex lock_;
+  std::set<prop_info, prop_info_cmp> properties_;
+};
+
+static HostProperties& GetHostProperties() {
+  static HostProperties& properties = *new HostProperties;
+  return properties;
+}
 
 SYSPROP_WEAK int __system_property_set(const char* key, const char* value) {
-  if (key == nullptr || *key == '\0') return -1;
-  if (value == nullptr) value = "";
-  bool read_only = !strncmp(key, "ro.", 3);
-  if (!read_only && strlen(value) >= PROP_VALUE_MAX) return -1;
-
-  std::lock_guard lock(g_properties_lock);
-  auto [it, success] = g_properties.emplace(key, value);
-  if (read_only) return success ? 0 : -1;
-  if (!success) {
-    it->value = value;
-    ++it->serial;
-  }
-  return 0;
+  return GetHostProperties().Set(key, value);
 }
 
 SYSPROP_WEAK int __system_property_get(const char* key, char* value) {
-  std::lock_guard lock(g_properties_lock);
-  auto it = g_properties.find(key);
-  if (it == g_properties.end()) {
-    *value = '\0';
-    return 0;
-  }
-  snprintf(value, PROP_VALUE_MAX, "%s", it->value.c_str());
-  return strlen(value);
+  return GetHostProperties().Get(key, value);
 }
 
 SYSPROP_WEAK const prop_info* __system_property_find(const char* key) {
-  std::lock_guard lock(g_properties_lock);
-  auto it = g_properties.find(key);
-  if (it == g_properties.end()) {
-    return nullptr;
-  } else {
-    return &*it;
-  }
+  return GetHostProperties().Find(key);
 }
 
 SYSPROP_WEAK void __system_property_read_callback(const prop_info* pi,
                                                   void (*callback)(void*, const char*, const char*,
                                                                    uint32_t),
                                                   void* cookie) {
-  std::lock_guard lock(g_properties_lock);
-  callback(cookie, pi->key.c_str(), pi->value.c_str(), pi->serial);
+  GetHostProperties().ReadCallback(pi, callback, cookie);
 }
 
 #endif  // __BIONIC__

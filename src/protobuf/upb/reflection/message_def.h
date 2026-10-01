@@ -136,6 +136,8 @@ int upb_MessageDef_RealOneofCount(const upb_MessageDef* m);
 
 const UPB_DESC(MessageOptions) *
     upb_MessageDef_Options(const upb_MessageDef* m);
+const UPB_DESC(FeatureSet) *
+    upb_MessageDef_ResolvedFeatures(const upb_MessageDef* m);
 
 upb_StringView upb_MessageDef_ReservedName(const upb_MessageDef* m, int i);
 int upb_MessageDef_ReservedNameCount(const upb_MessageDef* m);
@@ -146,6 +148,8 @@ int upb_MessageDef_ReservedRangeCount(const upb_MessageDef* m);
 
 UPB_API upb_Syntax upb_MessageDef_Syntax(const upb_MessageDef* m);
 UPB_API upb_WellKnown upb_MessageDef_WellKnownType(const upb_MessageDef* m);
+UPB_API UPB_DESC(SymbolVisibility)
+    upb_MessageDef_Visibility(const upb_MessageDef* m);
 
 #ifdef __cplusplus
 } /* extern "C" */

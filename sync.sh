@@ -2,9 +2,9 @@
 LOCALDIR=$(pwd)
 
 USE_MIRROR=true
-TAG="android-16.0.0_r4"
+TAG="android-17.0.0_r1"
 FETCH_FROM="https://android.googlesource.com"
-[[ "$USE_MIRROR" == true ]] && FETCH_FROM="https://mirrors.tuna.tsinghua.edu.cn/git/AOSP"
+[[ "$USE_MIRROR" == true ]] && FETCH_FROM="https://mirrors.ustc.edu.cn/aosp"
 
 GIT_CLONE_ARGS=(
 	"--depth=1"
@@ -50,6 +50,7 @@ GIT_CLONE_REPOS=(
 	"platform/external/dtc"
 	"platform/system/libufdt"
 	"platform/system/gsid"
+	"platform/system/fs/fs_mgr"
 )
 
 GIT_CLONE_VERSION_REPOS=(

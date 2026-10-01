@@ -16,7 +16,6 @@
 
 package {
     default_applicable_licenses: ["system_logging_logcat_license"],
-    default_team: "trendy_team_native_tools_libraries",
 }
 
 // Added automatically by a large-scale-change
@@ -100,4 +99,16 @@ cc_test {
         "logcat_test.cpp",
         "logcatd_test.cpp",
     ],
+}
+
+java_library_host {
+    name: "logcat-proto-java",
+    srcs: [
+        "logcat.proto",
+    ],
+    proto: {
+        type: "full",
+    },
+    // b/267831518: Pin tradefed and dependencies to Java 11.
+    java_version: "11",
 }

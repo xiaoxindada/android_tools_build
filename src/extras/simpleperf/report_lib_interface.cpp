@@ -26,6 +26,7 @@
 #include "ETMDecoder.h"
 #include "JITDebugReader.h"
 #include "RecordFilter.h"
+#include "SPEDecoder.h"
 #include "dso.h"
 #include "event_attr.h"
 #include "event_type.h"
@@ -245,6 +246,7 @@ class ReportLib {
   bool SetTraceOffCpuMode(const char* mode);
   bool SetSampleFilter(const char** filters, int filters_len);
   bool AggregateThreads(const char** thread_name_regex, int thread_name_regex_len);
+  void DisableDemangle() { demangle_ = false; }
 
   Sample* GetNextSample();
   Event* GetEventOfCurrentSample() { return &current_event_; }
@@ -316,11 +318,13 @@ class ReportLib {
 
   ETMThreadTreeSimple etm_thread_tree_;
   std::unique_ptr<ETMDecoder> etm_decoder_;
+  std::unique_ptr<SPEDecoder> spe_decoder_;
   UserCallback callback_;
   std::vector<uint8_t> aux_data_buffer_;
   std::string filepath_;
   std::string comm_;
   std::vector<SymbolEntry> symbols_;
+  bool demangle_ = true;
 };
 
 bool ReportLib::SetLogSeverity(const char* log_level) {
@@ -467,16 +471,20 @@ std::unique_ptr<SampleRecord> ReportLib::GetNextSampleRecord() {
         return nullptr;
       }
     } else if (record->type() == PERF_RECORD_AUXTRACE_INFO) {
-      if (!callback_) {
-        LOG(ERROR) << "ETM trace found but no callback was set!";
-        return nullptr;
+      const auto& auxtrace_info = static_cast<AuxTraceInfoRecord&>(*record);
+      if (auxtrace_info.data->aux_type == AuxTraceInfoRecord::AUX_TYPE_SPE) {
+        spe_decoder_ = SPEDecoder::Create();
+      } else {
+        if (!callback_) {
+          LOG(ERROR) << "ETM trace found but no callback was set!";
+          return nullptr;
+        }
+        etm_decoder_ = ETMDecoder::Create(auxtrace_info, etm_thread_tree_);
+        if (!etm_decoder_) {
+          return nullptr;
+        }
+        etm_decoder_->RegisterCallback(callback_);
       }
-      etm_decoder_ =
-          ETMDecoder::Create(static_cast<AuxTraceInfoRecord&>(*record), etm_thread_tree_);
-      if (!etm_decoder_) {
-        return nullptr;
-      }
-      etm_decoder_->RegisterCallback(callback_);
     } else if (record->type() == PERF_RECORD_AUX) {
       if (!ProcessAuxData(std::move(record))) {
         return nullptr;
@@ -564,12 +572,23 @@ bool ReportLib::ProcessAuxData(std::unique_ptr<Record> r) {
                                           aux_data_buffer_, error)) {
       return !error;
     }
-    if (!etm_decoder_) {
-      LOG(ERROR) << "ETMDecoder has not been created";
+    if (etm_decoder_) {
+      return etm_decoder_->ProcessData(aux_data_buffer_.data(), aux_size, !aux.Unformatted(),
+                                       aux.Cpu());
+    } else if (spe_decoder_) {
+      const EventAttrIds& attrs = record_file_reader_->AttrSection();
+      size_t attr_id = record_file_reader_->GetAttrIndexOfRecord(&aux);
+      std::vector<SpeSampleRecord> spe_samples = spe_decoder_->ProcessData(
+          aux_data_buffer_.data(), aux_size, &aux.sample_id, attrs[attr_id].attr);
+      for (auto& spe_sample : spe_samples) {
+        auto s = std::make_unique<SpeSampleRecord>(std::move(spe_sample));
+        ProcessSampleRecord(std::move(s));
+      }
+      return true;
+    } else {
+      LOG(ERROR) << "Neither ETM nor SPE Decoder has been created";
       return false;
     }
-    return etm_decoder_->ProcessData(aux_data_buffer_.data(), aux_size, !aux.Unformatted(),
-                                     aux.Cpu());
   }
   return true;
 }
@@ -614,7 +633,8 @@ bool ReportLib::SetCurrentSample(std::unique_ptr<SampleRecord> sample_record) {
       entry.symbol.dso_name = report_entry.dso->GetReportPath().data();
     }
     entry.symbol.vaddr_in_file = report_entry.vaddr_in_file;
-    entry.symbol.symbol_name = report_entry.symbol->DemangledName();
+    entry.symbol.symbol_name =
+        demangle_ ? report_entry.symbol->DemangledName() : report_entry.symbol->Name();
     entry.symbol.symbol_addr = report_entry.symbol->addr;
     entry.symbol.symbol_len = report_entry.symbol->len;
     entry.symbol.mapping = AddMapping(*report_entry.map);
@@ -665,6 +685,16 @@ const EventInfo& ReportLib::FindEvent(const SampleRecord& r) {
     return events_[0];
   }
   size_t attr_index = record_file_reader_->GetAttrIndexOfRecord(&r);
+  if (IsSpeEventName(events_[attr_index].name)) {
+    const SpeSampleRecord& spe_record = static_cast<const SpeSampleRecord&>(r);
+    uint64_t index = spe_record.GetSpeEventId();
+    if ((attr_index + index) < events_.size()) {
+      return events_[attr_index + index];
+    } else {
+      LOG(ERROR) << "Invalid SPE event id, attribute index: " << attr_index
+                 << " event id: " << index << "; size of events array: " << events_.size();
+    }
+  }
   return events_[attr_index];
 }
 
@@ -674,6 +704,29 @@ void ReportLib::CreateEvents() {
   for (size_t i = 0; i < attrs.size(); ++i) {
     events_[i].attr = attrs[i].attr;
     events_[i].name = GetEventNameByAttr(events_[i].attr);
+    if (IsSpeEventName(events_[i].name)) {
+      // In case of SPE just one perf_event_open syscall is sent to the kernel to enable SPE,
+      // unlike with PMUs where each event is enabled with a separate syscall.
+      // For SPE all events are enabled by default. Some can be filtered with the config parameters
+      // while issuing the record command but at this point we can't tell which events will have
+      // samples and which won't.
+      // To be able to display the records separately for each event, we need to replicate the
+      // single syscall attribute to all possible events.
+      // SPE event attribute is already the last in the list, pop that and add the new attributes.
+      if (i != (events_.size() - 1)) {
+        // Event attributes should be already sorted when they were read out from perf.data file.
+        LOG(ERROR) << "SPE should be the last in the list!";
+      } else {
+        spe_perf_event_attr_with_name spe_attr = ReplicateSpeEventAttr(events_[i].attr);
+        events_.pop_back();
+        events_.resize(events_.size() + spe_attr.attr.size());
+        for (int spe_event_offset = 0; spe_event_offset < spe_attr.attr.size();
+             spe_event_offset++) {
+          events_[i + spe_event_offset].attr = events_[i].attr;
+          events_[i + spe_event_offset].name = spe_attr.attr_name[spe_event_offset];
+        }
+      }
+    }
     EventInfo::TracingInfo& tracing_info = events_[i].tracing_info;
     tracing_info.data_format.size = 0;
     tracing_info.data_format.field_count = 0;
@@ -798,7 +851,8 @@ SymbolEntry* ReportLib::ReadSymbolsForPath(const char* path) {
   symbols_.clear();
   symbols_.reserve(symbols.size() + 1);
   for (auto& symbol : symbols) {
-    symbols_.emplace_back(nullptr, 0, symbol.DemangledName(), symbol.addr, symbol.len, nullptr);
+    symbols_.emplace_back(nullptr, 0, demangle_ ? symbol.DemangledName() : symbol.Name(),
+                          symbol.addr, symbol.len, nullptr);
   }
   symbols_.emplace_back(nullptr, 0, nullptr, 0, 0, nullptr);
   return symbols_.data();
@@ -833,6 +887,7 @@ bool SetTraceOffCpuMode(ReportLib* report_lib, const char* mode) EXPORT;
 bool SetSampleFilter(ReportLib* report_lib, const char** filters, int filters_len) EXPORT;
 bool AggregateThreads(ReportLib* report_lib, const char** thread_name_regex,
                       int thread_name_regex_len) EXPORT;
+void DisableDemangle(ReportLib* report_lib) EXPORT;
 
 Sample* GetNextSample(ReportLib* report_lib) EXPORT;
 Event* GetEventOfCurrentSample(ReportLib* report_lib) EXPORT;
@@ -913,6 +968,10 @@ bool SetSampleFilter(ReportLib* report_lib, const char** filters, int filters_le
 bool AggregateThreads(ReportLib* report_lib, const char** thread_name_regex,
                       int thread_name_regex_len) {
   return report_lib->AggregateThreads(thread_name_regex, thread_name_regex_len);
+}
+
+void DisableDemangle(ReportLib* report_lib) {
+  report_lib->DisableDemangle();
 }
 
 Sample* GetNextSample(ReportLib* report_lib) {

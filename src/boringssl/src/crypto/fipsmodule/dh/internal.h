@@ -19,10 +19,6 @@
 
 #include "../../internal.h"
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
 
 struct dh_st {
   BIGNUM *p;
@@ -35,12 +31,14 @@ struct dh_st {
   // the private value will be the same length as |p|.
   unsigned priv_length;
 
-  CRYPTO_MUTEX method_mont_p_lock;
+  bssl::CRYPTO_MUTEX method_mont_p_lock;
   BN_MONT_CTX *method_mont_p;
 
   int flags;
-  CRYPTO_refcount_t references;
+  bssl::CRYPTO_refcount_t references;
 };
+
+BSSL_NAMESPACE_BEGIN
 
 // dh_check_params_fast checks basic invariants on |dh|'s domain parameters. It
 // does not check that |dh| forms a valid group, only that the sizes are within
@@ -53,9 +51,6 @@ int dh_check_params_fast(const DH *dh);
 int dh_compute_key_padded_no_self_test(unsigned char *out,
                                        const BIGNUM *peers_key, DH *dh);
 
-
-#if defined(__cplusplus)
-}
-#endif
+BSSL_NAMESPACE_END
 
 #endif  // OPENSSL_HEADER_CRYPTO_FIPSMODULE_DH_INTERNAL_H

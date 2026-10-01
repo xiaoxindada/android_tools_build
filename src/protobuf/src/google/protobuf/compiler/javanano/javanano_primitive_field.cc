@@ -35,13 +35,14 @@
 #include <map>
 #include <string>
 
-#include <absl/log/absl_log.h>
-#include <absl/strings/substitute.h>
-#include <google/protobuf/compiler/javanano/javanano_primitive_field.h>
-#include <google/protobuf/stubs/common.h>
-#include <google/protobuf/compiler/javanano/javanano_helpers.h>
-#include <google/protobuf/io/printer.h>
-#include <google/protobuf/wire_format.h>
+#include "absl/log/absl_log.h"
+#include "absl/strings/substitute.h"
+#include "absl/strings/string_view.h"
+#include "google/protobuf/compiler/javanano/javanano_primitive_field.h"
+#include "google/protobuf/compiler/javanano/javanano_helpers.h"
+#include "google/protobuf/descriptor.h"
+#include "google/protobuf/io/printer.h"
+#include "google/protobuf/wire_format.h"
 
 namespace google {
 namespace protobuf {
@@ -154,7 +155,7 @@ int FixedSize(FieldDescriptor::Type type) {
   return -1;
 }
 
-bool AllAscii(const std::string& text) {
+bool AllAscii(absl::string_view text) {
   for (int i = 0; i < text.size(); i++) {
     if ((text[i] & 0x80) != 0) {
       return false;

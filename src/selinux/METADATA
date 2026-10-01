@@ -16,4 +16,7 @@ third_party {
     month: 8
     day: 6
   }
+  security: {
+    tag: "NVD-CPE2.3:cpe:/a:selinux_project:selinux:3.7"
+  }
 }

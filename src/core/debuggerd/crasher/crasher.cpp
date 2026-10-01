@@ -123,6 +123,18 @@ noinline int do_action_on_thread(const char* arg) {
     return reinterpret_cast<uintptr_t>(result);
 }
 
+noinline int do_action_on_signal(const char* arg, bool use_alt_stack) {
+  struct sigaction sa = {.sa_flags = SA_SIGINFO};
+  if (use_alt_stack) {
+    sa.sa_flags |= SA_ONSTACK;
+  }
+  static const char* action = arg;
+  sa.sa_sigaction = [](int, siginfo_t*, void*) { do_action(action); };
+  sigaction(SIGUSR1, &sa, nullptr);
+  kill(getpid(), SIGUSR1);
+  return 0;
+}
+
 noinline int crash_null() {
   int (*null_func)() = nullptr;
   return null_func();
@@ -268,6 +280,10 @@ static int usage() {
     fprintf(stderr, "\n");
     fprintf(stderr, "prefix any of the above with 'thread-' to run on a new thread\n");
     fprintf(stderr, "prefix any of the above with 'exhaustfd-' to exhaust\n");
+    fprintf(stderr, "prefix any of the above with 'signal-' to call in a signal handler.\n");
+    fprintf(stderr,
+            "prefix any of the above with 'signal-altstack-' to call in a signal handler using the "
+            "alternate stack.\n");
     fprintf(stderr, "all available file descriptors before crashing.\n");
     fprintf(stderr, "prefix any of the above with 'wait-' to wait until input is received on stdin\n");
 
@@ -303,6 +319,10 @@ noinline int do_action(const char* arg) {
       return do_action(arg + strlen("exhaustfd-"));
     } else if (!strncmp(arg, "thread-", strlen("thread-"))) {
         return do_action_on_thread(arg + strlen("thread-"));
+    } else if (!strncmp(arg, "signal-altstack-", strlen("signal-altstack-"))) {
+      return do_action_on_signal(arg + strlen("signal-altstack-"), /*use_alt_stack*/ true);
+    } else if (!strncmp(arg, "signal-", strlen("signal-"))) {
+      return do_action_on_signal(arg + strlen("signal-"), /*use_alt_stack*/ false);
     }
 
     // Actions.
@@ -431,7 +451,7 @@ noinline int do_action(const char* arg) {
         }
         abort();
     } else {
-        return usage();
+      return usage();
     }
 
     fprintf(stderr, "%s: exiting normally (which is unexpected)!\n", getprogname());

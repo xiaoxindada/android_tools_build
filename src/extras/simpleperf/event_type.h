@@ -25,6 +25,8 @@
 #include <string>
 #include <vector>
 
+#include <android-base/strings.h>
+
 #include "perf_event.h"
 
 namespace simpleperf {
@@ -33,17 +35,26 @@ static inline bool IsEtmEventName(const std::string& name) {
   return name.find("cs-etm") != std::string::npos;
 }
 
+inline const std::string kSPEEventName = "arm_spe";
+inline const std::string kSPEDefaultDeviceName = "arm_spe_0";
+
+static inline bool IsSpeEventName(const std::string& name) {
+  return android::base::StartsWith(name, kSPEEventName);
+}
+
 // EventType represents one type of event, like cpu_cycle_event, cache_misses_event.
 // The user knows one event type by its name, and the kernel knows one event type by its
 // (type, config) pair. EventType connects the two representations, and tells the user if
 // the event type is supported by the kernel.
 
 struct EventType {
-  EventType(const std::string& name, uint32_t type, uint64_t config, const std::string& description,
-            const std::string& limited_arch)
+  EventType(const std::string& name, uint32_t type, uint64_t config, uint64_t config1,
+            uint64_t config2, const std::string& description, const std::string& limited_arch)
       : name(name),
         type(type),
         config(config),
+        config1(config1),
+        config2(config2),
         description(description),
         limited_arch(limited_arch) {}
 
@@ -55,17 +66,20 @@ struct EventType {
 
   bool IsPmuEvent() const { return name.find('/') != std::string::npos && !IsEtmEvent(); }
   bool IsEtmEvent() const { return IsEtmEventName(name); }
+  bool IsSpeEvent() const { return IsSpeEventName(name); }
   bool IsHardwareEvent() const {
     return type == PERF_TYPE_HARDWARE || type == PERF_TYPE_HW_CACHE || type == PERF_TYPE_RAW;
   }
   bool IsTracepointEvent() const { return type == PERF_TYPE_TRACEPOINT; }
 
-  std::vector<int> GetPmuCpumask();
+  std::vector<int> GetPmuCpumask() const;
   uint64_t GetIntelAtomCpuConfig() const;
 
   std::string name;
   uint32_t type;
   uint64_t config;
+  uint64_t config1;
+  uint64_t config2;
   std::string description;
   std::string limited_arch;
 };
@@ -134,6 +148,7 @@ class EventTypeManager {
 
 const EventType* FindEventTypeByName(const std::string& name, bool report_error = true);
 std::unique_ptr<EventTypeAndModifier> ParseEventType(const std::string& event_type_str);
+bool IsSpeEventType(const perf_event_attr& attr);
 
 }  // namespace simpleperf
 

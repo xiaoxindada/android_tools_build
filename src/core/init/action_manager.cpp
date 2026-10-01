@@ -16,12 +16,17 @@
 
 #include "action_manager.h"
 
+#include <variant>
+
+#include <android-base/chrono_utils.h>
 #include <android-base/logging.h>
+#include <android-base/properties.h>
+
+#include "action.h"
+#include "util.h"
 
 namespace android {
 namespace init {
-
-ActionManager::ActionManager() : current_command_(0) {}
 
 size_t ActionManager::CheckAllCommands() {
     size_t failures = 0;
@@ -32,7 +37,7 @@ size_t ActionManager::CheckAllCommands() {
 }
 
 ActionManager& ActionManager::GetInstance() {
-    static ActionManager instance;
+    [[clang::no_destroy]] static ActionManager instance;
     return instance;
 }
 
@@ -65,8 +70,10 @@ void ActionManager::QueueBuiltinAction(BuiltinFunction func, const std::string& 
 }
 
 void ActionManager::ExecuteOneCommand() {
+    std::vector<EventTrigger> triggered_events;
     {
         auto lock = std::lock_guard{event_queue_lock_};
+        triggered_events.reserve(event_queue_.size());
         // Loop through the event queue until we have an action to execute
         while (current_executing_actions_.empty() && !event_queue_.empty()) {
             for (const auto& action : actions_) {
@@ -74,6 +81,9 @@ void ActionManager::ExecuteOneCommand() {
                                event_queue_.front())) {
                     current_executing_actions_.emplace(action.get());
                 }
+            }
+            if (EventTrigger* trigger = std::get_if<EventTrigger>(&event_queue_.front())) {
+                triggered_events.emplace_back(std::move(*trigger));
             }
             event_queue_.pop();
         }
@@ -89,6 +99,26 @@ void ActionManager::ExecuteOneCommand() {
         std::string trigger_name = action->BuildTriggersString();
         LOG(INFO) << "processing action (" << trigger_name << ") from (" << action->filename()
                   << ":" << action->line() << ")";
+    }
+
+    // Set a property outside the event_queue_lock_ to avoid a deadlock.
+    // Record when the first command for `on <event-name>` began execution.
+    if (enables_init_event_timestamp_) {
+        for (auto& event : triggered_events) {
+            std::string trigger_time_prop =
+                    property_prefix_for_testing_ + "ro.boottime.event." + event;
+            if (!IsLegalPropertyName(trigger_time_prop)) {
+                LOG(WARNING) << "an event boottime property '" << trigger_time_prop
+                             << "' is not a legal property name. Skipping.";
+                continue;
+            }
+            if (base::GetProperty(trigger_time_prop, "").empty()) {
+                uint64_t clock_ns = base::boot_clock::now().time_since_epoch().count();
+                if (!base::SetProperty(trigger_time_prop, std::to_string(clock_ns))) {
+                    LOG(WARNING) << "failed to set property '" << trigger_time_prop << "'";
+                }
+            }
+        }
     }
 
     action->ExecuteOneCommand(current_command_);

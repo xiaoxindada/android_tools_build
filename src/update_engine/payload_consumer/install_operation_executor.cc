@@ -22,7 +22,6 @@
 
 #include <memory>
 #include <utility>
-#include <vector>
 
 #include <base/files/memory_mapped_file.h>
 #include <base/files/file_util.h>
@@ -36,12 +35,12 @@
 #include "update_engine/lz4diff/lz4patch.h"
 #include "update_engine/lz4diff/lz4diff_compress.h"
 #include "update_engine/payload_consumer/bzip_extent_writer.h"
-#include "update_engine/payload_consumer/cached_file_descriptor.h"
 #include "update_engine/payload_consumer/extent_reader.h"
 #include "update_engine/payload_consumer/extent_writer.h"
 #include "update_engine/payload_consumer/file_descriptor.h"
 #include "update_engine/payload_consumer/file_descriptor_utils.h"
 #include "update_engine/payload_consumer/xz_extent_writer.h"
+#include "update_engine/payload_consumer/zstd_extent_writer.h"
 #include "update_engine/update_metadata.pb.h"
 
 namespace chromeos_update_engine {
@@ -181,16 +180,64 @@ bool InstallOperationExecutor::ExecuteReplaceOperation(
     const void* data) {
   TEST_AND_RETURN_FALSE(operation.type() == InstallOperation::REPLACE ||
                         operation.type() == InstallOperation::REPLACE_BZ ||
-                        operation.type() == InstallOperation::REPLACE_XZ);
+                        operation.type() == InstallOperation::REPLACE_XZ ||
+                        operation.type() == InstallOperation::REPLACE_ZSTD);
   // Setup the ExtentWriter stack based on the operation type.
   if (operation.type() == InstallOperation::REPLACE_BZ) {
-    writer.reset(new BzipExtentWriter(std::move(writer)));
+    writer = std::make_unique<BzipExtentWriter>(std::move(writer));
   } else if (operation.type() == InstallOperation::REPLACE_XZ) {
-    writer.reset(new XzExtentWriter(std::move(writer)));
+    writer = std::make_unique<XzExtentWriter>(std::move(writer));
+  } else if (operation.type() == InstallOperation::REPLACE_ZSTD) {
+    writer = std::make_unique<ZstdExtentWriter>(std::move(writer));
   }
   TEST_AND_RETURN_FALSE(writer->Init(operation.dst_extents(), block_size_));
   TEST_AND_RETURN_FALSE(writer->Write(data, operation.data_length()));
 
+  return true;
+}
+
+bool InstallOperationExecutor::ExecuteReplaceOperation(
+    const InstallOperation& operation,
+    std::unique_ptr<ExtentWriter> writer,
+    int data_fd,
+    off_t data_offset,
+    size_t data_size) {
+  TEST_AND_RETURN_FALSE(operation.type() == InstallOperation::REPLACE ||
+                        operation.type() == InstallOperation::REPLACE_BZ ||
+                        operation.type() == InstallOperation::REPLACE_XZ ||
+                        operation.type() == InstallOperation::REPLACE_ZSTD);
+  // Setup the ExtentWriter stack based on the operation type.
+  if (operation.type() == InstallOperation::REPLACE_BZ) {
+    writer = std::make_unique<BzipExtentWriter>(std::move(writer));
+  } else if (operation.type() == InstallOperation::REPLACE_XZ) {
+    writer = std::make_unique<XzExtentWriter>(std::move(writer));
+  } else if (operation.type() == InstallOperation::REPLACE_ZSTD) {
+    writer = std::make_unique<ZstdExtentWriter>(std::move(writer));
+  }
+  TEST_AND_RETURN_FALSE(writer->Init(operation.dst_extents(), block_size_));
+
+  // 1MB chunk size for replace ops should be big enough for most compressor's
+  // compression window
+  constexpr size_t kReplaceOpChunkSize = 1024 * 1024;
+  brillo::Blob buffer(kReplaceOpChunkSize);
+  size_t bytes_left = data_size;
+  off_t current_offset = data_offset;
+  while (bytes_left > 0) {
+    size_t to_read = std::min(bytes_left, buffer.size());
+    ssize_t bytes_read = 0;
+    if (!utils::PReadAll(
+            data_fd, buffer.data(), to_read, current_offset, &bytes_read)) {
+      LOG(ERROR) << "Failed to read data from fd " << data_fd;
+      return false;
+    }
+    if (static_cast<size_t>(bytes_read) != to_read) {
+      LOG(ERROR) << "Partial read from fd " << data_fd;
+      return false;
+    }
+    TEST_AND_RETURN_FALSE(writer->Write(buffer.data(), bytes_read));
+    bytes_left -= bytes_read;
+    current_offset += bytes_read;
+  }
   return true;
 }
 
@@ -260,6 +307,72 @@ bool InstallOperationExecutor::ExecuteDiffOperation(
   }
 }
 
+bool InstallOperationExecutor::ExecuteDiffOperation(
+    const InstallOperation& operation,
+    std::unique_ptr<ExtentWriter> writer,
+    FileDescriptorPtr source_fd,
+    int patch_fd,
+    off_t patch_offset,
+    size_t patch_size) {
+  TEST_AND_RETURN_FALSE(source_fd != nullptr);
+  TEST_AND_RETURN_FALSE(writer->Init(operation.dst_extents(), block_size_));
+  switch (operation.type()) {
+    case InstallOperation::SOURCE_BSDIFF:
+    case InstallOperation::BSDIFF:
+    case InstallOperation::BROTLI_BSDIFF:
+      return ExecuteSourceBsdiffOperation(operation,
+                                          std::move(writer),
+                                          source_fd,
+                                          patch_fd,
+                                          patch_offset,
+                                          patch_size);
+    case InstallOperation::PUFFDIFF:
+      return ExecutePuffDiffOperation(operation,
+                                      std::move(writer),
+                                      source_fd,
+                                      patch_fd,
+                                      patch_offset,
+                                      patch_size);
+    case InstallOperation::ZUCCHINI:
+    case InstallOperation::LZ4DIFF_BSDIFF:
+    case InstallOperation::LZ4DIFF_PUFFDIFF: {
+      brillo::Blob patch_data(patch_size);
+      ssize_t bytes_read = 0;
+      if (!utils::PReadAll(patch_fd,
+                           patch_data.data(),
+                           patch_size,
+                           patch_offset,
+                           &bytes_read)) {
+        LOG(ERROR) << "Failed to read patch data from fd " << patch_fd;
+        return false;
+      }
+      if (static_cast<size_t>(bytes_read) != patch_size) {
+        LOG(ERROR) << "Partial read of patch data. Expected: " << patch_size
+                   << " Read: " << bytes_read;
+        return false;
+      }
+      if (operation.type() == InstallOperation::ZUCCHINI) {
+        return ExecuteZucchiniOperation(operation,
+                                        std::move(writer),
+                                        source_fd,
+                                        patch_data.data(),
+                                        patch_size);
+      } else {
+        return ExecuteLz4diffOperation(operation,
+                                       std::move(writer),
+                                       source_fd,
+                                       patch_data.data(),
+                                       patch_size);
+      }
+    }
+    default:
+      LOG(ERROR) << "Unexpected operation type when executing diff ops "
+                 << operation.type() << " "
+                 << operation.Type_Name(operation.type());
+      return false;
+  }
+}
+
 bool InstallOperationExecutor::ExecuteLz4diffOperation(
     const InstallOperation& operation,
     std::unique_ptr<ExtentWriter> writer,
@@ -303,6 +416,60 @@ bool InstallOperationExecutor::ExecuteSourceBsdiffOperation(
                                         std::move(dst_file),
                                         reinterpret_cast<const uint8_t*>(data),
                                         count) == 0);
+  return true;
+}
+
+bool InstallOperationExecutor::ExecuteSourceBsdiffOperation(
+    const InstallOperation& operation,
+    std::unique_ptr<ExtentWriter> writer,
+    FileDescriptorPtr source_fd,
+    int patch_fd,
+    off_t patch_offset,
+    size_t patch_size) {
+  auto reader = std::make_unique<DirectExtentReader>();
+  TEST_AND_RETURN_FALSE(
+      reader->Init(source_fd, operation.src_extents(), block_size_));
+  auto src_file = std::make_unique<BsdiffExtentFile>(
+      std::move(reader),
+      utils::BlocksInExtents(operation.src_extents()) * block_size_);
+
+  auto dst_file = std::make_unique<BsdiffExtentFile>(
+      std::move(writer),
+      utils::BlocksInExtents(operation.dst_extents()) * block_size_);
+
+  TEST_AND_RETURN_FALSE(bsdiff::bspatch(std::move(src_file),
+                                        std::move(dst_file),
+                                        patch_fd,
+                                        patch_offset,
+                                        patch_size) == 0);
+  return true;
+}
+
+bool InstallOperationExecutor::ExecutePuffDiffOperation(
+    const InstallOperation& operation,
+    std::unique_ptr<ExtentWriter> writer,
+    FileDescriptorPtr source_fd,
+    int patch_fd,
+    off_t patch_offset,
+    size_t patch_size) {
+  auto reader = std::make_unique<DirectExtentReader>();
+  TEST_AND_RETURN_FALSE(
+      reader->Init(source_fd, operation.src_extents(), block_size_));
+  puffin::UniqueStreamPtr src_stream(new PuffinExtentStream(
+      std::move(reader),
+      utils::BlocksInExtents(operation.src_extents()) * block_size_));
+
+  puffin::UniqueStreamPtr dst_stream(new PuffinExtentStream(
+      std::move(writer),
+      utils::BlocksInExtents(operation.dst_extents()) * block_size_));
+
+  constexpr size_t kMaxCacheSize = 5 * 1024 * 1024;  // Total 5MB cache.
+  TEST_AND_RETURN_FALSE(puffin::PuffPatch(std::move(src_stream),
+                                          std::move(dst_stream),
+                                          patch_fd,
+                                          patch_offset,
+                                          patch_size,
+                                          kMaxCacheSize));
   return true;
 }
 

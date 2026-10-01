@@ -39,6 +39,14 @@ message BranchList {
   LBRData lbr_data = 3;
 }
 
+message KernelModuleInfo {
+  uint64 memory_start = 1;
+  uint64 memory_end = 2;
+  string memory_symbol_name = 3;
+  uint64 memory_symbol_addr = 4;
+  uint64 memory_symbol_len = 5;
+}
+
 message ETMBinary {
   string path = 1;
   string build_id = 2;
@@ -75,6 +83,7 @@ message ETMBinary {
   }
 
   KernelBinaryInfo kernel_info = 5;
+  KernelModuleInfo kernel_module_info = 6;
 }
 
 message LBRData {

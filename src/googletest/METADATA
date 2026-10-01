@@ -17,4 +17,7 @@ third_party {
     value: "https://github.com/google/googletest.git"
     version: "ff233bdd4cac0a0bf6e5cd45bda3406814cb2796"
   }
+  security: {
+    tag: "NVD-CPE2.3:cpe:/a:google:google_test:1.15.2"
+  }
 }

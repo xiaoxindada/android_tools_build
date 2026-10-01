@@ -75,9 +75,9 @@
 #include "system/core/init/property_service.pb.h"
 #include "util.h"
 
-static constexpr char APPCOMPAT_OVERRIDE_PROP_FOLDERNAME[] =
+[[maybe_unused]] static constexpr char APPCOMPAT_OVERRIDE_PROP_FOLDERNAME[] =
         "/dev/__properties__/appcompat_override";
-static constexpr char APPCOMPAT_OVERRIDE_PROP_TREE_FILE[] =
+[[maybe_unused]] static constexpr char APPCOMPAT_OVERRIDE_PROP_TREE_FILE[] =
         "/dev/__properties__/appcompat_override/property_info";
 using namespace std::literals;
 
@@ -517,7 +517,13 @@ uint32_t CheckPermissions(const std::string& name, const std::string& value,
     property_info_area->GetPropertyInfo(name.c_str(), &target_context, &type);
 
     if (!CheckMacPerms(name, target_context, source_context.c_str(), cr)) {
-        *error = "SELinux permission check failed";
+        // Info about contexts are available also in the selinux denials in the kernel message,
+        // but they may be suppressed by the ratelimiter, in which case this log from init can be
+        // helpful.
+        *error = StringPrintf(
+                "SELinux permission check failed "
+                "(source_context=%s, target_context=%s)",
+                source_context.c_str(), target_context ?: "(null)");
         return PROP_ERROR_PERMISSION_DENIED;
     }
 
@@ -785,19 +791,28 @@ static void LoadProperties(char* data, const char* filter, const char* filename,
             }
 
             ucred cr = {.pid = 1, .uid = 0, .gid = 0};
+
+            auto expanded_value = ExpandProps(value);
+            if (!expanded_value.ok()) {
+                LOG(ERROR) << "Could not expand value for property '" << key
+                           << "': " << expanded_value.error();
+                continue;
+            }
+
             std::string error;
-            if (CheckPermissions(key, value, context, cr, &error) == PROP_SUCCESS) {
+            if (CheckPermissions(key, *expanded_value, context, cr, &error) == PROP_SUCCESS) {
                 auto it = properties->find(key);
                 if (it == properties->end()) {
-                    (*properties)[key] = value;
-                } else if (it->second != value) {
+                    (*properties)[key] = std::move(*expanded_value);
+                } else if (it->second != *expanded_value) {
                     LOG(WARNING) << "Overriding previous property '" << key << "':'" << it->second
-                                 << "' with new value '" << value << "'";
-                    it->second = value;
+                                 << "' with new value '" << *expanded_value << "'";
+                    it->second = std::move(*expanded_value);
                 }
             } else {
-                LOG(ERROR) << "Do not have permissions to set '" << key << "' to '" << value
-                           << "' in property file '" << filename << "': " << error;
+                LOG(ERROR) << "Do not have permissions to set '" << key << "' to '"
+                           << *expanded_value << "' in property file '" << filename
+                           << "': " << error;
             }
         }
     }
@@ -952,6 +967,17 @@ static void initialize_microdroid_properties(std::map<std::string, std::string>*
         return;
     }
 
+    // To ensure deterministic output of the microdroid image, build identity information is not
+    // included in the static build.prop. Instead, they are injected from the host via kernel
+    // parameters.
+    if (auto id = GetProperty("ro.boot.microdroid.build_id", ""); !id.empty()) {
+        (*properties)["ro.build.id"] = id;
+    }
+    if (auto incremental = GetProperty("ro.boot.microdroid.build_version_incremental", "");
+        !incremental.empty()) {
+        (*properties)["ro.build.version.incremental"] = incremental;
+    }
+
     char hostname_cstr[HOST_NAME_MAX];
     if (gethostname(hostname_cstr, sizeof(hostname_cstr)) != 0) {
         PLOG(ERROR) << "Failed to gethostname";
@@ -1082,12 +1108,18 @@ static void property_initialize_ro_vendor_api_level() {
         return;
     }
 
-    auto vendor_api_level = GetIntProperty("ro.board.first_api_level", __ANDROID_VENDOR_API_MAX__);
-    if (vendor_api_level != __ANDROID_VENDOR_API_MAX__) {
-        // Update the vendor_api_level with "ro.board.api_level" only if both "ro.board.api_level"
-        // and "ro.board.first_api_level" are defined.
-        vendor_api_level = GetIntProperty("ro.board.api_level", vendor_api_level);
-    }
+    const auto board_first_api_level =
+            GetIntProperty("ro.board.first_api_level", __ANDROID_VENDOR_API_MAX__);
+    const bool is_frozen_chipset = board_first_api_level != __ANDROID_VENDOR_API_MAX__;
+
+    // In Android U and earlier, ro.board.api_level may not be defined, so use the first api level
+    // instead.
+    const auto board_api_level = GetIntProperty("ro.board.api_level", board_first_api_level);
+
+    // If the chipset is frozen, ro.vendor.api_level may be lowered to the board API level, since
+    // the vendor image is frozen and not expected to change anymore.
+    const auto effective_board_api_level =
+            is_frozen_chipset ? board_api_level : __ANDROID_VENDOR_API_MAX__;
 
     auto product_first_api_level =
             GetIntProperty("ro.product.first_api_level", __ANDROID_API_FUTURE__);
@@ -1096,8 +1128,8 @@ static void property_initialize_ro_vendor_api_level() {
         product_first_api_level = GetIntProperty("ro.build.version.sdk", __ANDROID_API_FUTURE__);
     }
 
-    vendor_api_level =
-            std::min(AVendorSupport_getVendorApiLevelOf(product_first_api_level), vendor_api_level);
+    auto vendor_api_level = std::min(AVendorSupport_getVendorApiLevelOf(product_first_api_level),
+                                     effective_board_api_level);
 
     if (vendor_api_level < 0) {
         LOG(ERROR) << "Unexpected vendor api level for " << VENDOR_API_LEVEL_PROP << ". Check "

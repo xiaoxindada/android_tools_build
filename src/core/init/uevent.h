@@ -17,6 +17,7 @@
 #ifndef _INIT_UEVENT_H
 #define _INIT_UEVENT_H
 
+#include <ostream>
 #include <string>
 
 namespace android {
@@ -37,6 +38,8 @@ struct Uevent {
     int minor;
     long long seqnum;
 };
+
+std::ostream& operator<<(std::ostream& os, const Uevent& uevent);
 
 }  // namespace init
 }  // namespace android

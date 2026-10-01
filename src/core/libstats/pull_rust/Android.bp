@@ -22,9 +22,12 @@ rust_bindgen {
     name: "libstatspull_bindgen",
     wrapper_src: "statslog.h",
     crate_name: "statspull_bindgen",
+    host_supported: true,
     visibility: [
         "//frameworks/proto_logging/stats/stats_log_api_gen",
         "//packages/modules:__subpackages__",
+        "//system/memory/guardian",
+        "//system/zygote/zygote/libs/statslog",
     ],
     source_stem: "bindings",
     bindgen_flags: [
@@ -33,24 +36,15 @@ rust_bindgen {
         "--allowlist-function=AStatsManager_.*",
         "--allowlist-var=AStatsManager_.*",
     ],
-    target: {
-        android: {
-            shared_libs: [
-                "libstatspull",
-                "libstatssocket",
-            ],
-        },
-        host: {
-            static_libs: [
-                "libstatspull",
-                "libstatssocket",
-            ],
-        },
-    },
+    shared_libs: [
+        "libstatspull",
+        "libstatssocket",
+    ],
     min_sdk_version: "apex_inherit",
     apex_available: [
         "//apex_available:platform",
         "com.android.resolv",
+        "com.android.tethering",
         "com.android.uprobestats",
         "com.android.virt",
     ],

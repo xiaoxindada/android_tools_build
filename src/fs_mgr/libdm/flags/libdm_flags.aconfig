@@ -1,0 +1,10 @@
+package: "com.android.libdm"
+container: "system"
+
+flag {
+    name: "dm_verity_verify_in_tasklet"
+    namespace: "android_kernel"
+    description: "Turn on the DM-Verity optimization of in-line verification"
+    bug: "394514982"
+    is_fixed_read_only: true
+}

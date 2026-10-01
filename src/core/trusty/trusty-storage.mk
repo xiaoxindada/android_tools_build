@@ -41,3 +41,13 @@ PRODUCT_PACKAGES += \
 	rpmb_dev.wv.system \
 
 endif
+
+ifeq ($(TRUSTY_SYSTEM_VM),enabled)
+
+# when Trusty System VM is enabled, keep including storageproxyd system, backed by fake rpmb system service
+# for the purpose of enabling secure storage testing in the standalone Trusty System test_vm_os.
+PRODUCT_PACKAGES += \
+	storageproxyd.system \
+	rpmb_dev.test.system \
+
+endif

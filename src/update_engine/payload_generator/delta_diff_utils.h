@@ -121,7 +121,9 @@ bool ReadExtentsToDiff(const std::string& old_part,
 bool GenerateBestFullOperation(const brillo::Blob& new_data,
                                const PayloadVersion& version,
                                brillo::Blob* out_blob,
-                               InstallOperation::Type* out_type);
+                               InstallOperation::Type* out_type,
+                               bool enable_replace_zstd = false,
+                               bool disable_replace_compression = false);
 
 // Returns whether |op_type| is one of the REPLACE full operations.
 bool IsAReplaceOperation(InstallOperation::Type op_type);

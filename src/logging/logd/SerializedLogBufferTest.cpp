@@ -33,7 +33,7 @@
 TEST(SerializedLogBuffer, uid_prune_deletes_last_chunk) {
     LogReaderList reader_list;
     LogTags tags;
-    LogStatistics stats(false, true);
+    LogStatistics stats(true);
     SerializedLogBuffer log_buffer(&reader_list, &tags, &stats);
 
     log_buffer.SetSize(LOG_ID_MAIN, kLogBufferMinSize);

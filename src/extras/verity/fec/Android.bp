@@ -42,6 +42,21 @@ cc_binary_host {
         "image.cpp",
     ],
 
+    // Use the static version for internal tool usage that is not distributed
+    static: {
+        static_libs: [
+            "libfec_rs",
+        ],
+    },
+
+    // Use this shared version when distributing these tools and include
+    // the libfec_rs.so with the distribution
+    shared: {
+        shared_libs: [
+            "libfec_rs",
+        ],
+    },
+
     static_libs: [
         "libbase",
         "libsparse",
@@ -49,10 +64,8 @@ cc_binary_host {
         "libcrypto_utils",
         "libcrypto",
         "libfec",
-        "libfec_rs",
         "libext4_utils",
         "liblog",
-        "libsquashfs_utils",
     ],
     cflags: [
         "-Wall",

@@ -30,12 +30,12 @@
 
 // Author: bduff@google.com (Brian Duff)
 
-#include <absl/log/absl_log.h>
-#include <absl/strings/str_cat.h>
-#include <google/protobuf/compiler/javanano/javanano_extension.h>
-#include <google/protobuf/compiler/javanano/javanano_helpers.h>
-#include <google/protobuf/io/printer.h>
-#include <google/protobuf/wire_format.h>
+#include "absl/log/absl_log.h"
+#include "absl/strings/str_cat.h"
+#include "google/protobuf/compiler/javanano/javanano_extension.h"
+#include "google/protobuf/compiler/javanano/javanano_helpers.h"
+#include "google/protobuf/io/printer.h"
+#include "google/protobuf/wire_format.h"
 
 namespace google {
 namespace protobuf {

@@ -144,6 +144,42 @@ class DeltaDiffUtilsTest : public ::testing::Test {
                                                &old_zero_blocks);
   }
 
+  void RunReplaceSmallTestWithCompressionDisabled(
+      const brillo::Blob& data_to_test) {
+    // Pass an empty old_extents to prevent ReadExtentsToDiff from attempting
+    // to generate a diff operation. This allows us to test the
+    // disable_replace_compression flag in isolation.
+    vector<Extent> old_extents = {};
+    vector<Extent> new_extents = {ExtentForRange(2, 1)};
+
+    ASSERT_TRUE(
+        WriteExtents(new_part_.path, new_extents, kBlockSize, data_to_test));
+
+    brillo::Blob data;
+    AnnotatedOperation aop;
+    InstallOperation& op = aop.op;
+    PayloadGenerationConfig config{
+        .version = PayloadVersion(kBrilloMajorPayloadVersion,
+                                   kSourceMinorPayloadVersion),
+        .disable_replace_compression = true};
+    ASSERT_TRUE(diff_utils::ReadExtentsToDiff(old_part_.path,
+                                              new_part_.path,
+                                              old_extents,
+                                              new_extents,
+                                              {},  // old_file
+                                              {},  // new_file
+                                              config,
+                                              &data,
+                                              &aop));
+    ASSERT_FALSE(data.empty());
+    ASSERT_EQ(data, data_to_test);
+
+    ASSERT_TRUE(op.has_type());
+    // With compression disabled, we should always get REPLACE.
+    const InstallOperation::Type expected_type = InstallOperation::REPLACE;
+    ASSERT_EQ(expected_type, op.type());
+  }
+
   // Old and new temporary partitions used in the tests. These are initialized
   // with
   PartitionConfig old_part_{"part"};
@@ -238,6 +274,23 @@ TEST_F(DeltaDiffUtilsTest, ReplaceSmallTest) {
     ASSERT_FALSE(op.has_dst_length());
     ASSERT_EQ(1U, utils::BlocksInExtents(op.dst_extents()));
   }
+}
+
+TEST_F(DeltaDiffUtilsTest, ReplaceSmallTestWithCompressionDisabled) {
+  // Make a blob that's just 1's that will compress well.
+  brillo::Blob ones(kBlockSize, 1);
+
+  // Make a blob with random data that won't compress well.
+  brillo::Blob random_data(kBlockSize);
+  std::mt19937 gen(12345);
+  std::uniform_int_distribution<uint16_t> dis(0, 255);
+  for (uint32_t i = 0; i < kBlockSize; i++) {
+    random_data[i] = static_cast<uint8_t>(dis(gen));
+  }
+
+  ASSERT_NO_FATAL_FAILURE(
+      RunReplaceSmallTestWithCompressionDisabled(random_data));
+  ASSERT_NO_FATAL_FAILURE(RunReplaceSmallTestWithCompressionDisabled(ones));
 }
 
 TEST_F(DeltaDiffUtilsTest, SourceCopyTest) {

@@ -296,7 +296,7 @@ Result<void> SetProcessAttributes(const ProcessAttributes& attr, InterprocessFif
             return ErrnoError() << "setgid failed";
         }
     }
-    if (setgroups(attr.supp_gids.size(), const_cast<gid_t*>(&attr.supp_gids[0])) != 0) {
+    if (setgroups(attr.supp_gids.size(), attr.supp_gids.data()) != 0) {
         return ErrnoError() << "setgroups failed";
     }
     if (attr.uid()) {

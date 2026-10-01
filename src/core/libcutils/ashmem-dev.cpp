@@ -44,7 +44,7 @@
 /*
  * Implementation of the userspace ashmem API for devices.
  *
- * This may use ashmem or memfd. See has_memfd_support().
+ * This may use ashmem or memfd. See use_memfd().
  *
  * See ashmem-host.cpp for the temporary file based alternative for the host.
  */
@@ -55,61 +55,59 @@ static std::atomic<dev_t> __ashmem_rdev;
 /* set to true for verbose logging and other debug  */
 static bool debug_log = false;
 
-/* Determine if memfd can be supported. This is just one-time hardwork
- * which will be cached by the caller.
- */
-static bool __has_memfd_support() {
-    // Used to turn on/off the detection at runtime, in the future this
-    // property will be removed once we switch everything over to memfd.
-    //
-    // This can be set to true from the adb shell for debugging.
-    if (!android::base::GetBoolProperty("sys.use_memfd", false)) {
+static bool __use_memfd() {
+    // Used to force enable memfd usage. In the future this property will be removed once we switch
+    // everything over to memfd.
+    if (android::base::GetBoolProperty("sys.use_memfd", false)) {
         if (debug_log) {
-            ALOGD("sys.use_memfd=false so memfd disabled");
+            ALOGD("sys.use_memfd=true so using memfd");
+        }
+        return true;
+    }
+
+    // Ensure that the kernel supports the memfd_class policy capability.
+    if (access("/sys/fs/selinux/policy_capabilities/memfd_class", F_OK) != 0) {
+        if (debug_log) {
+            ALOGD("Not using memfd: kernel does not support memfd_class sepolicy capability");
         }
         return false;
     }
 
-    // Check that the kernel supports memfd_create().
-    // This code needs to build on API levels before 30,
-    // so we can't use the libc wrapper.
-    android::base::unique_fd fd(
-            syscall(__NR_memfd_create, "test_android_memfd", MFD_CLOEXEC | MFD_ALLOW_SEALING));
-    if (fd == -1) {
-        ALOGE("memfd_create() failed: %m, no memfd support");
+    // Per VSR-3.5.2-004, the memfd_class policy capability is required for devices with vendor API
+    // level 202604+, so use memfd on those devices.
+    const int min_vendor_api_level = 202604;
+    const int vendor_api_level = android::base::GetIntProperty("ro.vendor.api_level", -1);
+    if (vendor_api_level < min_vendor_api_level) {
+        if (debug_log) {
+            ALOGD("Not using memfd: device vendor API level %d < %d the minimum vendor API level required for memfd",
+                  vendor_api_level, min_vendor_api_level);
+        }
         return false;
     }
 
-    // Check that the kernel supports sealing.
-    if (fcntl(fd, F_ADD_SEALS, F_SEAL_FUTURE_WRITE) == -1) {
-        ALOGE("fcntl(F_ADD_SEALS) failed: %m, no memfd support");
-        return false;
-    }
-
-    // Check that the kernel supports truncation.
-    size_t buf_size = getpagesize();
-    if (ftruncate(fd, buf_size) == -1) {
-        ALOGE("ftruncate(%zd) failed to set memfd buffer size: %m, no memfd support", buf_size);
-        return false;
-    }
-
-    // Check that the kernel supports the ashmem ioctls on a memfd.
-    int ashmem_size = TEMP_FAILURE_RETRY(ioctl(fd, ASHMEM_GET_SIZE, 0));
-    if (ashmem_size != static_cast<int>(buf_size)) {
-        ALOGE("ioctl(ASHMEM_GET_SIZE): %d != buf_size: %zd , no ashmem-memfd compat support",
-              ashmem_size, buf_size);
+    // Make the minimum target SDK version match vendor API level 202604 to avoid breaking
+    // assumptions that older applications might make about the fd they allocate.
+    const int min_app_target_sdk_version = 37;
+    const int app_target_sdk_version = android_get_application_target_sdk_version();
+    if (app_target_sdk_version < min_app_target_sdk_version) {
+        if (debug_log) {
+            ALOGD("Not using memfd: application target SDK version %d < %d the minimum target SDK version required for memfd",
+                  app_target_sdk_version, min_app_target_sdk_version);
+        }
         return false;
     }
 
     if (debug_log) {
-        ALOGD("memfd: device has memfd support, using it");
+        ALOGD("memfd requirements satisfied: memfd_class capability supported, device vendor API level: %d, and application target SDK version: %d",
+              vendor_api_level, app_target_sdk_version);
     }
+
     return true;
 }
 
-bool has_memfd_support() {
-    static bool memfd_supported = __has_memfd_support();
-    return memfd_supported;
+bool use_memfd() {
+    static bool use_memfd = __use_memfd();
+    return use_memfd;
 }
 
 static std::string get_ashmem_device_path() {
@@ -214,7 +212,7 @@ int ashmem_valid(int fd) {
     return __ashmem_is_ashmem(fd, false) >= 0;
 }
 
-static int memfd_create_region(const char* name, size_t size) {
+int __memfd_create_region(const char* name, size_t size) {
     // This code needs to build on API levels before 30,
     // so we can't use the libc wrapper.
     android::base::unique_fd fd(syscall(__NR_memfd_create, name, MFD_CLOEXEC | MFD_ALLOW_SEALING));
@@ -241,6 +239,15 @@ static int memfd_create_region(const char* name, size_t size) {
     return fd.release();
 }
 
+int __ashmem_create_region(const char* name, size_t size) {
+    android::base::unique_fd fd(__ashmem_open());
+    if (!fd.ok() || TEMP_FAILURE_RETRY(ioctl(fd, ASHMEM_SET_NAME, name)) < 0 ||
+        TEMP_FAILURE_RETRY(ioctl(fd, ASHMEM_SET_SIZE, size)) < 0) {
+        return -1;
+    }
+    return fd.release();
+}
+
 /*
  * ashmem_create_region - creates a new ashmem region and returns the file
  * descriptor, or <0 on error
@@ -251,17 +258,8 @@ static int memfd_create_region(const char* name, size_t size) {
 int ashmem_create_region(const char* name, size_t size) {
     if (name == NULL) name = "none";
 
-    if (has_memfd_support()) {
-        return memfd_create_region(name, size);
-    }
-
-    android::base::unique_fd fd(__ashmem_open());
-    if (!fd.ok() ||
-        TEMP_FAILURE_RETRY(ioctl(fd, ASHMEM_SET_NAME, name)) < 0 ||
-        TEMP_FAILURE_RETRY(ioctl(fd, ASHMEM_SET_SIZE, size)) < 0) {
-        return -1;
-    }
-    return fd.release();
+    auto create_region = use_memfd() ? __memfd_create_region : __ashmem_create_region;
+    return create_region(name, size);
 }
 
 static int memfd_set_prot_region(int fd, int prot) {

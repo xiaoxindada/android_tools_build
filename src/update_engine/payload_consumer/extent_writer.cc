@@ -16,7 +16,6 @@
 
 #include "update_engine/payload_consumer/extent_writer.h"
 
-#include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
 

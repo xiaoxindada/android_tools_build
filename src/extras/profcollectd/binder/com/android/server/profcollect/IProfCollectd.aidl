@@ -18,7 +18,7 @@ package com.android.server.profcollect;
 
 import com.android.server.profcollect.IProviderStatusCallback;
 
-/** {@hide} */
+/** @hide */
 interface IProfCollectd {
     void trace_system(@utf8InCpp String tag, int durationMs);
     void trace_process(@utf8InCpp String tag, @utf8InCpp String processes, int durationMs);

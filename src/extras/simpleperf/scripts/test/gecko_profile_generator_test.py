@@ -154,3 +154,7 @@ class TestGeckoProfileGenerator(TestBase):
         got = [(testcase[0], testcase[0].category()) for testcase in want]
 
         self.assertEqual(want, got)
+
+    def test_app_type(self):
+        report = self.run_generator('perf_with_trace_offcpu_v2.data')
+        self.assertIn('"debug": 1,', report)

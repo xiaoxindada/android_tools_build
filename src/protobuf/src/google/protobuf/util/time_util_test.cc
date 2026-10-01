@@ -14,6 +14,7 @@
 #include "google/protobuf/timestamp.pb.h"
 #include "google/protobuf/testing/googletest.h"
 #include <gtest/gtest.h>
+#include "google/protobuf/util/internal_timeval.h"  // IWYU pragma: keep for timeval
 
 namespace google {
 namespace protobuf {
@@ -145,6 +146,12 @@ TEST(TimeUtilTest, DurationIntegerConversion) {
       1, TimeUtil::DurationToMilliseconds(TimeUtil::MillisecondsToDuration(1)));
   EXPECT_EQ(-1, TimeUtil::DurationToMilliseconds(
                     TimeUtil::MillisecondsToDuration(-1)));
+  // Test overflow issue
+  EXPECT_EQ(315576000000000, TimeUtil::DurationToMilliseconds(
+                                 TimeUtil::SecondsToDuration(315576000000)));
+  // Test overflow issue
+  EXPECT_EQ(315576000000000000, TimeUtil::DurationToMicroseconds(
+                                    TimeUtil::SecondsToDuration(315576000000)));
   EXPECT_EQ(1, TimeUtil::DurationToSeconds(TimeUtil::SecondsToDuration(1)));
   EXPECT_EQ(-1, TimeUtil::DurationToSeconds(TimeUtil::SecondsToDuration(-1)));
   EXPECT_EQ(1, TimeUtil::DurationToMinutes(TimeUtil::MinutesToDuration(1)));

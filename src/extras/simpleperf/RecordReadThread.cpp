@@ -416,9 +416,17 @@ bool RecordReadThread::HandleCmd(IOEventLoop& loop) {
   return true;
 }
 
-bool RecordReadThread::HandleAddEventFds(IOEventLoop& loop,
-                                         const std::vector<EventFd*>& event_fds) {
+bool RecordReadThread::HandleAddEventFds(IOEventLoop& loop, std::vector<EventFd*>& event_fds) {
   std::unordered_map<int, EventFd*> cpu_map;
+  // Buffers are created only for the first event on every CPU, and since AuxBuffers are not shared,
+  // the ones that require AuxBuffer need to come first.
+  // Sort the events to fulfill this requirement.
+  auto comp = [](const EventFd* fd1, const EventFd* fd2) {
+    bool fd1_needs_aux = IsEtmEventName(fd1->EventName()) || IsSpeEventName(fd1->EventName());
+    bool fd2_needs_aux = IsEtmEventName(fd2->EventName()) || IsSpeEventName(fd2->EventName());
+    return (fd1_needs_aux && !fd2_needs_aux);
+  };
+  std::sort(event_fds.begin(), event_fds.end(), comp);
   for (size_t pages = max_mmap_pages_; pages >= min_mmap_pages_; pages >>= 1) {
     bool success = true;
     bool report_error = pages == min_mmap_pages_;
@@ -429,21 +437,24 @@ bool RecordReadThread::HandleAddEventFds(IOEventLoop& loop,
           success = false;
           break;
         }
-        if (IsEtmEventName(fd->EventName())) {
+        if (IsEtmEventName(fd->EventName()) || IsSpeEventName(fd->EventName())) {
           if (!fd->CreateAuxBuffer(aux_buffer_size_, report_error)) {
             fd->DestroyMappedBuffer();
             success = false;
             break;
           }
-          has_etm_events_ = true;
-          // Ideally we only need to periodically disable and enable event fds to flush ETM data
-          // for ETR. Because TRBE has an interrupt to move ETM data automatically on buffer
-          // overflow. However, TRBE driver lacks a patch of handling CPU idle. As a result, TRBE
-          // can lose power in CPU idle, and we can no longer get ETM data after that. So before
-          // the kernel patch is available (which is currently in review in
-          // https://lists.infradead.org/pipermail/linux-arm-kernel/2025-May/1028966.html), we need
-          // a workaround to also periodically disable and enable event fds for TRBE.
-          etm_with_etr_fds_.push_back(fd);
+          has_aux_events_ = true;
+          if (IsEtmEventName(fd->EventName())) {
+            // Ideally we only need to periodically disable and enable event fds to flush ETM data
+            // for ETR. Because TRBE has an interrupt to move ETM data automatically on buffer
+            // overflow. However, TRBE driver lacks a patch of handling CPU idle. As a result, TRBE
+            // can lose power in CPU idle, and we can no longer get ETM data after that. So before
+            // the kernel patch is available (which is currently in review in
+            // https://lists.infradead.org/pipermail/linux-arm-kernel/2025-May/1028966.html), we
+            // need a workaround to also periodically disable and enable event fds for TRBE.
+            etm_with_etr_fds_.push_back(fd);
+            has_etm_events_ = true;
+          }
         }
         cpu_map[fd->Cpu()] = fd;
       } else {
@@ -664,7 +675,7 @@ void RecordReadThread::PushRecordToRecordBuffer(KernelRecordReader* kernel_recor
 }
 
 void RecordReadThread::ReadAuxDataFromKernelBuffer(bool* has_data) {
-  if (!has_etm_events_) {
+  if (!has_aux_events_) {
     return;
   }
   for (auto& reader : kernel_record_readers_) {
@@ -707,9 +718,9 @@ void RecordReadThread::ReadAuxDataFromKernelBuffer(bool* has_data) {
 
 bool RecordReadThread::SendDataNotificationToMainThread() {
   if (has_etm_events_) {
-    // For ETM recording, the default buffer size is large enough to hold ETM data for several
-    // seconds. To reduce impact of processing ETM data (especially when --decode-etm is used),
-    // delay processing ETM data until the buffer is half full.
+    // For ETM recording, the default buffer size is large enough to hold ETM data for
+    // several seconds. To reduce impact of processing ETM data (especially when --decode-etm is
+    // used), delay processing ETM data until the buffer is half full.
     if (record_buffer_.GetFreeSize() >= record_buffer_.size() / 2) {
       return true;
     }

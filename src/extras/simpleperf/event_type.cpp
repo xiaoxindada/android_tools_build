@@ -29,6 +29,7 @@
 #include <android-base/strings.h>
 
 #include "ETMRecorder.h"
+#include "SPERecorder.h"
 #include "environment.h"
 #include "event_attr.h"
 #include "utils.h"
@@ -52,9 +53,40 @@ enum class EventFinderType {
   TRACEPOINT_SYSTEM,
   PMU,
   ETM,
+  SPE,
   RAW,
   SCOPED,
 };
+
+static std::vector<EventFormat> ParseEventFormats(const std::string& evtdev_path) {
+  std::vector<EventFormat> v;
+  std::string formats_dirname = evtdev_path + "/format/";
+  for (const auto& format_name : GetEntriesInDir(formats_dirname)) {
+    std::string format_path = formats_dirname + format_name;
+    std::string format_content;
+    if (!android::base::ReadFileToString(format_path, &format_content)) {
+      continue;
+    }
+    // format files look like below:
+    //   # cat armv8_pmuv3/format/event
+    //   config:0-15
+    int shift;
+    std::string config;
+    if (sscanf(format_content.c_str(), "config:%d", &shift) == 1) {
+      config = "config";
+    } else if (sscanf(format_content.c_str(), "config1:%d", &shift) == 1) {
+      config = "config1";
+    } else if (sscanf(format_content.c_str(), "config2:%d", &shift) == 1) {
+      config = "config2";
+    } else {
+      LOG(DEBUG) << "Invalid or unsupported format; name:" << format_name
+                 << " content: " << format_content;
+      continue;
+    }
+    v.emplace_back(EventFormat(format_name, config, shift));
+  }
+  return v;
+}
 
 class EventTypeFinder {
  public:
@@ -73,7 +105,7 @@ class EventTypeFinder {
 
   virtual const EventType* FindType(const std::string& name) {
     const auto& types = GetTypes();
-    auto it = types.find(EventType(name, 0, 0, "", ""));
+    auto it = types.find(EventType(name, 0, 0, 0, 0, "", ""));
     if (it != types.end()) {
       return &*it;
     }
@@ -113,7 +145,7 @@ class TracepointStringFinder : public EventTypeFinder {
       std::string event_name = items[0];
       uint64_t id;
       CHECK(android::base::ParseUint(items[1].c_str(), &id));
-      types_.emplace(event_name, PERF_TYPE_TRACEPOINT, id, "", "");
+      types_.emplace(event_name, PERF_TYPE_TRACEPOINT, id, 0, 0, "", "");
     }
   }
 
@@ -126,7 +158,7 @@ class TracepointSystemFinder : public EventTypeFinder {
   TracepointSystemFinder() : EventTypeFinder(EventFinderType::TRACEPOINT_SYSTEM) {}
 
   const EventType* FindType(const std::string& name) override {
-    if (auto it = types_.find(EventType(name, 0, 0, "", "")); it != types_.end()) {
+    if (auto it = types_.find(EventType(name, 0, 0, 0, 0, "", "")); it != types_.end()) {
       return &*it;
     }
     std::vector<std::string> strs = android::base::Split(name, ":");
@@ -142,11 +174,11 @@ class TracepointSystemFinder : public EventTypeFinder {
     if (!ReadEventId(path, &id)) {
       return nullptr;
     }
-    auto res = types_.emplace(name, PERF_TYPE_TRACEPOINT, id, "", "");
+    auto res = types_.emplace(name, PERF_TYPE_TRACEPOINT, id, 0, 0, "", "");
     return &*res.first;
   }
 
-  void RemoveType(const std::string& name) { types_.erase(EventType(name, 0, 0, "", "")); }
+  void RemoveType(const std::string& name) { types_.erase(EventType(name, 0, 0, 0, 0, "", "")); }
 
   std::string ToString() {
     std::string result;
@@ -172,7 +204,7 @@ class TracepointSystemFinder : public EventTypeFinder {
         std::string id_path = system_path + "/" + event_name + "/id";
         uint64_t id;
         if (ReadEventId(id_path, &id)) {
-          types_.emplace(system_name + ":" + event_name, PERF_TYPE_TRACEPOINT, id, "", "");
+          types_.emplace(system_name + ":" + event_name, PERF_TYPE_TRACEPOINT, id, 0, 0, "", "");
         }
       }
     }
@@ -233,36 +265,12 @@ class PMUTypeFinder : public EventTypeFinder {
           LOG(DEBUG) << "cannot handle config format in " << event_name;
           continue;
         }
-        types_.emplace(device_name + "/" + event_name + "/", type_id, config, "", "");
+        types_.emplace(device_name + "/" + event_name + "/", type_id, config, 0, 0, "", "");
       }
     }
   }
 
  private:
-  std::vector<EventFormat> ParseEventFormats(const std::string& evtdev_path) {
-    std::vector<EventFormat> v;
-    std::string formats_dirname = evtdev_path + "/format/";
-    for (const auto& format_name : GetEntriesInDir(formats_dirname)) {
-      std::string format_path = formats_dirname + format_name;
-      std::string format_content;
-      if (!android::base::ReadFileToString(format_path, &format_content)) {
-        continue;
-      }
-
-      // format files look like below (currently only 'config' is supported) :
-      //   # cat armv8_pmuv3/format/event
-      //   config:0-15
-      int shift;
-      if (sscanf(format_content.c_str(), "config:%d", &shift) != 1) {
-        LOG(DEBUG) << "Invalid or unsupported event format: " << format_content;
-        continue;
-      }
-
-      v.emplace_back(EventFormat(format_name, "config", shift));
-    }
-    return v;
-  }
-
   uint64_t MakeEventConfig(const std::string& event_str, std::vector<EventFormat>& formats) {
     uint64_t config = 0;
 
@@ -308,6 +316,72 @@ class ETMTypeFinder : public EventTypeFinder {
   }
 };
 
+class SPETypeFinder : public EventTypeFinder {
+ public:
+  SPETypeFinder() : EventTypeFinder(EventFinderType::SPE) {}
+
+  const EventType* FindType(const std::string& name) override {
+    if (!IsSpeEventName(name)) {
+      return nullptr;
+    }
+    return EventTypeFinder::FindType(name);
+  }
+
+ protected:
+  void LoadTypes() override {
+#if defined(__linux__)
+    const std::string device_path = "/sys/bus/event_source/devices/";
+    for (const auto& device_name : GetSubDirs(device_path)) {
+      if (IsSpeEventName(device_name)) {
+        SPERecorder& recorder = SPERecorder::GetInstance();
+        std::vector<EventFormat> formats = ParseEventFormats(device_path + device_name);
+        uint64_t config = 0, config1 = 0, config2 = 0, config_val = 0;
+        for (auto& f : formats) {
+          if (recorder.FindSpeConfig(f.name, &config_val)) {
+            if (f.attr == "config") {
+              config |= (config_val << f.shift);
+            } else if (f.attr == "config1") {
+              config1 |= (config_val << f.shift);
+            } else if (f.attr == "config2") {
+              config2 |= (config_val << f.shift);
+            }
+          }
+          // Build these for list command.
+          std::unique_ptr<EventType> spe_event =
+              BuildEventType(device_name + "/" + f.name + "=<value>/", 0, 0, 0);
+          if (spe_event != nullptr) {
+            types_.emplace(std::move(*spe_event));
+          }
+        }
+        // Build an event to be looked up later.
+        std::unique_ptr<EventType> spe_event =
+            BuildEventType(device_name, config, config1, config2);
+        if (spe_event != nullptr) {
+          types_.emplace(std::move(*spe_event));
+        }
+      }
+    }
+#endif
+  }
+
+ private:
+#if defined(__linux__)
+  std::unique_ptr<EventType> BuildEventType(std::string spe_device_name, uint64_t config,
+                                            uint64_t config1, uint64_t config2) {
+    int spe_event_type = SPERecorder::GetInstance().GetSPEEventType();
+    if (spe_event_type == -1) {
+      return nullptr;
+    }
+    if (spe_device_name.find('/') != std::string::npos) {
+      return std::make_unique<EventType>(spe_device_name, spe_event_type, 0, 0, 0, "", "arm64");
+    } else {
+      return std::make_unique<EventType>(spe_device_name, spe_event_type, config, config1, config2,
+                                         "ARM Statistical Profiling Extension", "arm64");
+    }
+  }
+#endif
+};
+
 class RawTypeFinder : public EventTypeFinder {
  public:
   RawTypeFinder() : EventTypeFinder(EventFinderType::RAW) {}
@@ -338,6 +412,7 @@ EventTypeManager::EventTypeManager() {
   type_finders_.emplace_back(new TracepointSystemFinder());
   type_finders_.emplace_back(new PMUTypeFinder());
   type_finders_.emplace_back(new ETMTypeFinder());
+  type_finders_.emplace_back(new SPETypeFinder());
   type_finders_.emplace_back(new RawTypeFinder());
 }
 
@@ -425,7 +500,7 @@ const EventType* EventTypeManager::AddRawType(const std::string& name) {
     return nullptr;
   }
   auto& raw_finder = GetRawTypeFinder();
-  return raw_finder.AddType(EventType(name, PERF_TYPE_RAW, config, "", ""));
+  return raw_finder.AddType(EventType(name, PERF_TYPE_RAW, config, 0, 0, "", ""));
 }
 
 void EventTypeManager::RemoveProbeType(const std::string& name) {
@@ -436,11 +511,14 @@ void EventTypeManager::SetScopedFinder(std::unique_ptr<EventTypeFinder>&& finder
   scoped_finder_ = std::move(finder);
 }
 
-std::vector<int> EventType::GetPmuCpumask() {
+std::vector<int> EventType::GetPmuCpumask() const {
   std::vector<int> empty_result;
-  if (!IsPmuEvent()) return empty_result;
-
-  std::string pmu = name.substr(0, name.find('/'));
+  std::string pmu;
+  if (IsPmuEvent() || IsSpeEvent()) {
+    pmu = name.substr(0, name.find('/'));
+  } else {
+    return empty_result;
+  }
   std::string cpumask_path = "/sys/bus/event_source/devices/" + pmu + "/cpumask";
   std::string cpumask_content;
   if (!android::base::ReadFileToString(cpumask_path, &cpumask_content)) {
@@ -482,7 +560,7 @@ ScopedEventTypes::ScopedEventTypes(const std::string& event_type_str) {
     uint32_t type;
     uint64_t config;
     sscanf(s.c_str() + name.size(), ",%u,%" PRIu64, &type, &config);
-    event_types.emplace(name, type, config, "", "");
+    event_types.emplace(name, type, config, 0, 0, "", "");
   }
   CHECK(EventTypeManager::Instance().GetScopedFinder() == nullptr);
   EventTypeManager::Instance().SetScopedFinder(
@@ -582,6 +660,11 @@ std::unique_ptr<EventTypeAndModifier> ParseEventType(const std::string& event_ty
   }
   event_type_modifier->modifier = modifier;
   return event_type_modifier;
+}
+
+bool IsSpeEventType(const perf_event_attr& attr) {
+  std::string event_name = GetEventNameByAttr(attr);
+  return IsSpeEventName(event_name);
 }
 
 }  // namespace simpleperf

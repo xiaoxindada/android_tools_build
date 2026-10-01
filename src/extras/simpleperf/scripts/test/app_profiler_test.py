@@ -15,6 +15,7 @@
 # limitations under the License.
 
 from app_profiler import NativeLibDownloader
+import os
 import shutil
 import subprocess
 import sys
@@ -57,9 +58,9 @@ class TestNativeProfiling(TestBase):
 
     def test_device_not_connected(self):
         args = [sys.executable, TestHelper.script_path('app_profiler.py'), '-cmd', 'ls']
-        proc = subprocess.run(
-            args, env={'ANDROID_SERIAL': 'not_exist_device'},
-            stderr=subprocess.PIPE, text=True)
+        environ = os.environ.copy()
+        environ['ANDROID_SERIAL'] = 'not_exist_device'
+        proc = subprocess.run(args, env=environ, stderr=subprocess.PIPE, text=True)
         self.assertIn('No Android device is connected via ADB.', proc.stderr)
 
     def test_android_version(self):

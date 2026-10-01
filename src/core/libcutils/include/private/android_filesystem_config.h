@@ -28,10 +28,14 @@
  *   mediadrm
  * Whose friendly names do not match the #define statements.
  *
- * This file must only be used for platform (Google managed, and submitted through AOSP), AIDs.  3rd
+ * This file must only be used for platform (Google managed, with partner contributions), AIDs.  3rd
  * party AIDs must be added via config.fs, which will place them in the corresponding partition's
  * passwd and group files.  There are ranges in this file reserved for AIDs for each 3rd party
  * partition, from which the system reads passwd and group files.
+ *
+ * For all services launched by init, the use of ambient capabilities is recommended instead of
+ * configuring caps in config.fs files. https://source.android.com/docs/core/permissions/ambient
+ *
  */
 
 #pragma once
@@ -146,8 +150,13 @@
 #define AID_MMD 1095                 /* uid for memory management daemon */
 #define AID_UPDATE_ENGINE_LOG 1096   /* GID for accessing update_engine logs */
 #define AID_AP_FIRMWARE 1097         /* GID for accessing AP firmware related resources */
-// Additions to this file must be made in AOSP, *not* in internal branches.
-// You will also need to update expect_ids() in bionic/tests/grp_pwd_test.cpp.
+#define AID_PMGD 1098                /* process memory guardian daemon */
+#define AID_SDV_SD_AGENT 1099        /* Software defined vehicle service discovery agent */
+#define AID_SDV_DT_AGENT 1100        /* Software defined vehicle data tunnel agent */
+#define AID_SDV_RPC_AGENT 1101       /* Software defined vehicle RPC agent */
+#define AID_SDV_INIT_OPEN_DICE 1102  /* Software defined vehicle init open dice driver */
+// Additions to this file must be accompanied by updates to expect_ids() in
+// bionic/tests/grp_pwd_test.cpp.
 
 #define AID_SHELL 2000 /* adb and debug shell user */
 #define AID_CACHE 2001 /* cache access */
@@ -176,8 +185,8 @@
 #define AID_UHID 3011         /* Allow read/write to /dev/uhid node */
 #define AID_READTRACEFS 3012  /* Allow tracefs read */
 #define AID_VIRTUALMACHINE 3013 /* Allows VMs to tune for performance*/
-// Additions to this file must be made in AOSP, *not* in internal branches.
-// You will also need to update expect_ids() in bionic/tests/grp_pwd_test.cpp.
+// Additions to this file must be accompanied by updates to expect_ids() in
+// bionic/tests/grp_pwd_test.cpp.
 
 /* The range 5000-5999 is also reserved for vendor partition. */
 #define AID_OEM_RESERVED_2_START 5000
@@ -230,6 +239,14 @@
 /* use the ranges below to determine whether a process is sdk sandbox */
 #define AID_SDK_SANDBOX_PROCESS_START 20000 /* start of uids allocated to sdk sandbox processes */
 #define AID_SDK_SANDBOX_PROCESS_END 29999   /* end of uids allocated to sdk sandbox processes */
+
+/* use the ranges below to determine whether a process is a pcc component */
+#define AID_PCC_COMPONENT_PROCESS_START \
+    30000                                   /* start of uids allocated to pcc component processes */
+#define AID_PCC_COMPONENT_PROCESS_END 39999 /* end of uids allocated to pcc component processes */
+
+#define AID_PCC_CACHE_GID_START 60000 /* start of gids for pcc to mark cached data */
+#define AID_PCC_CACHE_GID_END 69999   /* end of gids for pcc to mark cached data */
 
 /* use the ranges below to determine whether a process is isolated */
 #define AID_ISOLATED_START 90000 /* start of uids for fully isolated sandboxed processes */

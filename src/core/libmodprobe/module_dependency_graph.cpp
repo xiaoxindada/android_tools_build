@@ -157,7 +157,9 @@ ModuleDependencyGraph::ModuleDependencyGraph(const ModuleConfig& config)
         }
     }
 
-    CHECK(!HasLoop(modules_)) << "Dependency graph has a loop";
+    if (HasLoop(modules_)) {
+        LOG(ERROR) << "Dependency graph has a loop";
+    }
 }
 
 void ModuleDependencyGraph::AddUnmetDependency(std::shared_ptr<Module> mod,

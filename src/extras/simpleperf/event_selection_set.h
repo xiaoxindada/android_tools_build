@@ -17,6 +17,7 @@
 #ifndef SIMPLE_PERF_EVENT_SELECTION_SET_H_
 #define SIMPLE_PERF_EVENT_SELECTION_SET_H_
 
+#include <chrono>
 #include <functional>
 #include <map>
 #include <set>
@@ -25,6 +26,7 @@
 
 #include <android-base/macros.h>
 
+#include "AddrFilter.h"
 #include "IOEventLoop.h"
 #include "RecordReadThread.h"
 #include "event_attr.h"
@@ -66,25 +68,6 @@ struct SampleRate {
   }
 };
 
-struct AddrFilter {
-  enum Type {
-    FILE_RANGE,
-    FILE_START,
-    FILE_STOP,
-    KERNEL_RANGE,
-    KERNEL_START,
-    KERNEL_STOP,
-  } type;
-  uint64_t addr;
-  uint64_t size;
-  std::string file_path;
-
-  AddrFilter(AddrFilter::Type type, uint64_t addr, uint64_t size, const std::string& file_path)
-      : type(type), addr(addr), size(size), file_path(file_path) {}
-
-  std::string ToString() const;
-};
-
 // EventSelectionSet helps to monitor events. It is used in following steps:
 // 1. Create an EventSelectionSet, and add event types to monitor by calling
 //    AddEventType() or AddEventGroup().
@@ -115,7 +98,9 @@ class EventSelectionSet {
   std::vector<const EventType*> GetEvents() const;
   std::vector<const EventType*> GetTracepointEvents() const;
   bool ExcludeKernel() const;
-  bool HasAuxTrace() const { return has_aux_trace_; }
+  bool HasAuxTrace() const { return (has_aux_trace_etm_ || has_aux_trace_spe_); }
+  bool HasAuxTraceEtm() const { return has_aux_trace_etm_; }
+  bool HasAuxTraceSpe() const { return has_aux_trace_spe_; }
   EventAttrIds GetEventAttrWithId() const;
   std::unordered_map<uint64_t, std::string> GetEventNamesById() const;
   std::unordered_map<uint64_t, int> GetCpusById() const;
@@ -168,7 +153,8 @@ class EventSelectionSet {
   bool OpenEventFilesForThreads(const std::set<pid_t>& threads);
   bool ReadCounters(std::vector<CountersInfo>* counters);
   bool MmapEventFiles(size_t min_mmap_pages, size_t max_mmap_pages, size_t aux_buffer_size,
-                      size_t record_buffer_size, bool allow_truncating_samples, bool exclude_perf);
+                      size_t record_buffer_size, bool allow_truncating_samples, bool exclude_perf,
+                      std::chrono::milliseconds etm_flush_interval = 100ms);
   bool PrepareToReadMmapEventData(const std::function<bool(Record*)>& callback);
   bool SyncKernelBuffer();
   bool FinishReadMmapEventData();
@@ -238,7 +224,8 @@ class EventSelectionSet {
 
   std::unique_ptr<simpleperf::RecordReadThread> record_read_thread_;
 
-  bool has_aux_trace_ = false;
+  bool has_aux_trace_etm_ = false;
+  bool has_aux_trace_spe_ = false;
   std::vector<AddrFilter> addr_filters_;
   std::optional<SampleRate> sample_rate_;
   std::optional<std::vector<int>> cpus_;

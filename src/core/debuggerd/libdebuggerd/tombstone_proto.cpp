@@ -38,8 +38,8 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include <set>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -62,7 +62,6 @@
 #include <log/log.h>
 #include <log/log_read.h>
 #include <log/logprint.h>
-#include <private/android_filesystem_config.h>
 
 #include <procinfo/process.h>
 #include <unwindstack/AndroidUnwinder.h>
@@ -87,9 +86,6 @@ using android::base::StringPrintf;
 // The maximum number of messages to save in the protobuf per file.
 static constexpr size_t kMaxLogMessages = 500;
 
-// Use the demangler from libc++.
-extern "C" char* __cxa_demangle(const char*, char*, size_t*, int* status);
-
 static Architecture get_arch() {
 #if defined(__arm__)
   return Architecture::ARM32;
@@ -106,8 +102,8 @@ static Architecture get_arch() {
 #endif
 }
 
-static std::optional<std::string> get_stack_overflow_cause(uint64_t fault_addr, uint64_t sp,
-                                                           unwindstack::Maps* maps) {
+static std::optional<std::string> maybe_stack_overflow_cause(uint64_t fault_addr, uint64_t sp,
+                                                             unwindstack::Maps* maps) {
   // Under stack MTE the stack pointer and/or the fault address can be tagged.
   // In order to calculate deltas between them, strip off the tags off both
   // addresses.
@@ -319,7 +315,55 @@ static std::optional<std::string> maybe_stack_mte_cause(
   }
   return StringPrintf("stack tag-mismatch on thread %u", tid);
 }
+#endif
 
+#if defined(USE_SCUDO)
+static std::optional<std::string> maybe_buffer_corruption(unwindstack::Maps* maps,
+                                                          unwindstack::MapInfo* fault_map_info,
+                                                          const uint64_t fault_address) {
+  // Scudo map name
+  constexpr char kAllocatorMapName[] = "[anon:scudo:secondary]";
+
+  // Cause messages
+  constexpr char kOverflowMessage[] =
+      "possible buffer overflow accessing after secondary allocation";
+  constexpr char kUnderflowMessage[] =
+      "possible buffer underflow accessing before secondary allocation";
+
+  // Look at both the map after and the map before, but use the fault address
+  // to figure out which to check first.
+  uint64_t rel_fault_address = fault_address - fault_map_info->start();
+  uint64_t fault_map_size = fault_map_info->end() - fault_map_info->start();
+  if (rel_fault_address < fault_map_size / 2) {
+    // Try the map before the fault_address first.
+    if (fault_map_info->start() != 0) {
+      auto map_info = maps->Find(fault_map_info->start() - 1);
+      if (map_info != nullptr && map_info->name() == kAllocatorMapName) {
+        return kOverflowMessage;
+      }
+    }
+
+    auto map_info = maps->Find(fault_map_info->end() + 1);
+    if (map_info != nullptr && map_info->name() == kAllocatorMapName) {
+      return kUnderflowMessage;
+    }
+  } else {
+    // Try the map after the fault_address first.
+    auto map_info = maps->Find(fault_map_info->end() + 1);
+    if (map_info != nullptr && map_info->name() == kAllocatorMapName) {
+      return kUnderflowMessage;
+    }
+
+    if (fault_map_info->start() != 0) {
+      auto map_info = maps->Find(fault_map_info->start() - 1);
+      if (map_info != nullptr && map_info->name() == kAllocatorMapName) {
+        return kOverflowMessage;
+      }
+    }
+  }
+
+  return {};
+}
 #endif
 
 static void dump_probable_cause(Tombstone* tombstone, unwindstack::AndroidUnwinder* unwinder,
@@ -341,7 +385,7 @@ static void dump_probable_cause(Tombstone* tombstone, unwindstack::AndroidUnwind
   }
 
   const siginfo *si = target_thread.siginfo;
-  auto fault_addr = reinterpret_cast<uint64_t>(si->si_addr);
+  auto fault_addr = untag_address(reinterpret_cast<uint64_t>(si->si_addr));
   unwindstack::Maps* maps = unwinder->GetMaps();
 
   std::optional<std::string> cause;
@@ -358,18 +402,23 @@ static void dump_probable_cause(Tombstone* tombstone, unwindstack::AndroidUnwind
       cause = "call to kuser_memory_barrier";
     } else if (fault_addr == 0xffff0f60) {
       cause = "call to kuser_cmpxchg64";
-    } else {
-      cause = get_stack_overflow_cause(fault_addr, target_thread.registers->sp(), maps);
     }
   } else if (si->si_signo == SIGSEGV && si->si_code == SEGV_ACCERR) {
     auto map_info = maps->Find(fault_addr);
-    if (map_info != nullptr && map_info->flags() == PROT_EXEC) {
-      cause = "execute-only (no-read) memory access error; likely due to data in .text.";
-    } else if (fault_addr == target_thread.registers->pc() &&
-               map_info != nullptr && (map_info->flags() & PROT_EXEC) == 0) {
-      cause = "trying to execute non-executable memory.";
-    } else {
-      cause = get_stack_overflow_cause(fault_addr, target_thread.registers->sp(), maps);
+    if (map_info != nullptr) {
+      if (map_info->flags() == PROT_EXEC) {
+        cause = "execute-only (no-read) memory access error; likely due to data in .text.";
+      } else if (((map_info->flags() & PROT_EXEC) == 0) &&
+                 fault_addr == target_thread.registers->pc()) {
+        cause = "trying to execute non-executable memory.";
+      }
+#if defined(USE_SCUDO)
+      // This can only be detected on Scudo.
+      else if ((map_info->flags() & (PROT_EXEC | PROT_READ | PROT_WRITE)) == 0) {
+        // Potential fault in guard page, see if it's a buffer corruption.
+        cause = maybe_buffer_corruption(maps, map_info.get(), fault_addr);
+      }
+#endif
     }
   }
 #if defined(__aarch64__) && defined(SEGV_MTESERR)
@@ -382,6 +431,11 @@ static void dump_probable_cause(Tombstone* tombstone, unwindstack::AndroidUnwind
   else if (si->si_signo == SIGSYS && si->si_code == SYS_SECCOMP) {
     cause = StringPrintf("seccomp prevented call to disallowed %s system call %d", ABI_STRING,
                          si->si_syscall);
+  }
+
+  if (!cause && si->si_signo == SIGSEGV) {
+    // Check for a stack overflow cause in all seg fault cases.
+    cause = maybe_stack_overflow_cause(fault_addr, target_thread.registers->sp(), maps);
   }
 
   if (cause) {
@@ -495,6 +549,11 @@ static void dump_open_fds(Tombstone* tombstone, const OpenFilesList* open_files)
         f.set_tag(value);
       }
 
+      const std::optional<std::string>& details = entry.details;
+      if (details) {
+        f.set_details(*details);
+      }
+
       *tombstone->add_open_fds() = f;
     }
   }
@@ -506,14 +565,7 @@ void fill_in_backtrace_frame(BacktraceFrame* f, const unwindstack::FrameData& fr
   f->set_sp(frame.sp);
 
   if (!frame.function_name.empty()) {
-    // TODO: Should this happen here, or on the display side?
-    char* demangled_name = __cxa_demangle(frame.function_name.c_str(), nullptr, nullptr, nullptr);
-    if (demangled_name) {
-      f->set_function_name(demangled_name);
-      free(demangled_name);
-    } else {
-      f->set_function_name(frame.function_name);
-    }
+    f->set_function_name(frame.function_name);
   }
 
   f->set_function_offset(frame.function_offset);
@@ -586,27 +638,6 @@ static void dump_registers(unwindstack::AndroidUnwinder* unwinder,
       *thread.add_memory_dump() = std::move(dump);
     }
   });
-#if defined(__aarch64__)
-  Register esr;
-  esr.set_name("esr");
-  esr.set_u64(regs->GetExtraRegister(unwindstack::Arm64Reg::ARM64_EXTRA_REG_ESR));
-  *thread.add_registers() = esr;
-#elif defined(__arm__)
-  Register error_code;
-  error_code.set_name("error_code");
-  error_code.set_u64(regs->GetExtraRegister(unwindstack::ArmReg::ARM_EXTRA_REG_ERROR_CODE));
-  *thread.add_registers() = error_code;
-#elif defined(__i386__)
-  Register err;
-  err.set_name("err");
-  err.set_u64(regs->GetExtraRegister(unwindstack::X86Reg::X86_EXTRA_REG_ERR));
-  *thread.add_registers() = err;
-#elif defined(__x86_64__)
-  Register err;
-  err.set_name("err");
-  err.set_u64(regs->GetExtraRegister(unwindstack::X86_64Reg::X86_64_EXTRA_REG_ERR));
-  *thread.add_registers() = err;
-#endif
 }
 
 static void dump_thread_backtrace(std::vector<unwindstack::FrameData>& frames, Thread& thread) {
@@ -654,11 +685,12 @@ static void dump_thread(Tombstone* tombstone, unwindstack::AndroidUnwinder* unwi
   } else {
     unwind_ret = unwinder->Unwind(thread_info.tid, data);
   }
-  if (!unwind_ret) {
+  if (unwind_ret) {
+    data.DemangleFunctionNames();
+    dump_thread_backtrace(data.frames, thread);
+  } else {
     async_safe_format_log(ANDROID_LOG_ERROR, LOG_TAG, "Unwind failed for tid %d: Error %s",
                           thread_info.tid, data.GetErrorString().c_str());
-  } else {
-    dump_thread_backtrace(data.frames, thread);
   }
   dump_registers(unwinder, *data.saved_initial_regs, thread, memory_dump);
 
@@ -675,6 +707,7 @@ static void dump_thread(Tombstone* tombstone, unwindstack::AndroidUnwinder* unwi
     unwindstack::AndroidUnwinderData guest_data;
     guest_data.saved_initial_regs = std::make_optional<std::unique_ptr<unwindstack::Regs>>();
     if (guest_unwinder->Unwind(thread_info.guest_registers.get(), guest_data)) {
+      guest_data.DemangleFunctionNames();
       dump_thread_backtrace(guest_data.frames, guest_thread);
     } else {
       async_safe_format_log(ANDROID_LOG_ERROR, LOG_TAG,
@@ -688,6 +721,7 @@ static void dump_thread(Tombstone* tombstone, unwindstack::AndroidUnwinder* unwi
 }
 
 static void dump_mappings(Tombstone* tombstone, unwindstack::Maps* maps,
+                          const std::unordered_map<uint64_t, std::string>& vmflags,
                           std::shared_ptr<unwindstack::Memory>& process_memory) {
   for (const auto& map_info : *maps) {
     auto* map = tombstone->add_memory_mappings();
@@ -703,6 +737,10 @@ static void dump_mappings(Tombstone* tombstone, unwindstack::Maps* maps,
     }
     if (map_info->flags() & PROT_EXEC) {
       map->set_execute(true);
+    }
+    auto entry = vmflags.find(map_info->start());
+    if (entry != vmflags.end()) {
+      map->set_vmflags(entry->second);
     }
 
     map->set_mapping_name(map_info->name());
@@ -862,6 +900,7 @@ static void dump_tags_around_fault_addr(Signal* signal, const Tombstone& tombsto
 }
 
 void engrave_tombstone_proto(Tombstone* tombstone, unwindstack::AndroidUnwinder* unwinder,
+                             const std::unordered_map<uint64_t, std::string>& vmflags,
                              const std::map<pid_t, ThreadInfo>& threads, pid_t target_tid,
                              const ProcessInfo& process_info, const OpenFilesList* open_files,
                              const Architecture* guest_arch,
@@ -885,6 +924,7 @@ void engrave_tombstone_proto(Tombstone* tombstone, unwindstack::AndroidUnwinder*
 
   const ThreadInfo& target_thread = threads.at(target_tid);
   result.set_pid(target_thread.pid);
+  result.set_ppid(target_thread.ppid);
   result.set_tid(target_thread.tid);
   result.set_uid(target_thread.uid);
   result.set_selinux_label(target_thread.selinux_label);
@@ -950,7 +990,7 @@ void engrave_tombstone_proto(Tombstone* tombstone, unwindstack::AndroidUnwinder*
 
   dump_probable_cause(&result, unwinder, process_info, target_thread, threads);
 
-  dump_mappings(&result, unwinder->GetMaps(), unwinder->GetProcessMemory());
+  dump_mappings(&result, unwinder->GetMaps(), vmflags, unwinder->GetProcessMemory());
 
   // Only dump logs on debuggable devices.
   if (android::base::GetBoolProperty("ro.debuggable", false)) {

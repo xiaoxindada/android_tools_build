@@ -1,5 +1,4 @@
 package {
-    default_team: "trendy_team_native_tools_libraries",
     default_applicable_licenses: ["system_core_libcutils_license"],
 }
 
@@ -85,6 +84,7 @@ cc_library {
     export_include_dirs: ["include"],
 
     shared_libs: ["liblog"],
+    static_libs: ["libbase"],
     srcs: ["sockets.cpp"],
     target: {
         linux_bionic: {
@@ -97,6 +97,7 @@ cc_library {
                 "socket_local_client_unix.cpp",
                 "socket_local_server_unix.cpp",
                 "socket_network_client_unix.cpp",
+                "sockets_utils.cpp",
                 "sockets_unix.cpp",
             ],
         },
@@ -109,9 +110,9 @@ cc_library {
                 "socket_local_client_unix.cpp",
                 "socket_local_server_unix.cpp",
                 "socket_network_client_unix.cpp",
+                "sockets_utils.cpp",
                 "sockets_unix.cpp",
             ],
-            static_libs: ["libbase"],
         },
 
         windows: {
@@ -196,28 +197,6 @@ cc_library {
                 "trace-dev.cpp",
                 "uevent.cpp",
             ],
-        },
-
-        // qtaguid.cpp loads libnetd_client.so with dlopen().  Since
-        // the interface of libnetd_client.so may vary between AOSP
-        // releases, exclude qtaguid.cpp from the VNDK-SP variant.
-        vendor: {
-            exclude_srcs: [
-                "qtaguid.cpp",
-            ],
-            header_abi_checker: {
-                enabled: true,
-                ref_dump_dirs: ["abi-dumps"],
-            },
-        },
-        product: {
-            exclude_srcs: [
-                "qtaguid.cpp",
-            ],
-            header_abi_checker: {
-                enabled: true,
-                ref_dump_dirs: ["abi-dumps"],
-            },
         },
     },
 

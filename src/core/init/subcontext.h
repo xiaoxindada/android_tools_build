@@ -16,17 +16,6 @@
 
 #pragma once
 
-#include <signal.h>
-
-#include <string>
-#include <vector>
-
-#include <android-base/unique_fd.h>
-
-#include "builtins.h"
-#include "result.h"
-#include "system/core/init/subcontext.pb.h"
-
 namespace android {
 namespace init {
 
@@ -34,47 +23,11 @@ static constexpr const char kInitContext[] = "u:r:init:s0";
 static constexpr const char kVendorContext[] = "u:r:vendor_init:s0";
 static constexpr const char kTestContext[] = "test-test-test";
 
-class Subcontext {
-  public:
-    Subcontext(std::vector<std::string> path_prefixes, std::vector<std::string> partitions,
-               std::string_view context, bool host = false)
-        : path_prefixes_(std::move(path_prefixes)),
-          partitions_(std::move(partitions)),
-          context_(context.begin(), context.end()),
-          pid_(0) {
-        if (!host) {
-            Fork();
-        }
-    }
-
-    Result<void> Execute(const std::vector<std::string>& args);
-    Result<std::vector<std::string>> ExpandArgs(const std::vector<std::string>& args);
-    void Restart();
-    bool PathMatchesSubcontext(const std::string& path) const;
-    bool PartitionMatchesSubcontext(const std::string& partition) const;
-    void SetApexList(std::vector<std::string>&& apex_list);
-
-    const std::string& context() const { return context_; }
-    pid_t pid() const { return pid_; }
-
-  private:
-    void Fork();
-    Result<SubcontextReply> TransmitMessage(const SubcontextCommand& subcontext_command);
-
-    std::vector<std::string> path_prefixes_;
-    std::vector<std::string> partitions_;
-    std::vector<std::string> apex_list_;
-    std::string context_;
-    pid_t pid_;
-    android::base::unique_fd socket_;
-};
-
-int SubcontextMain(int argc, char** argv, const BuiltinFunctionMap* function_map);
-void InitializeSubcontext();
-void InitializeHostSubcontext(std::vector<std::string> vendor_prefixes);
-Subcontext* GetSubcontext();
-bool SubcontextChildReap(pid_t pid);
-void SubcontextTerminate();
-
 }  // namespace init
 }  // namespace android
+
+#ifndef MICRODROID
+#include "subcontext_android.h"
+#else
+#include "subcontext_microdroid.h"
+#endif

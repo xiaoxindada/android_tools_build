@@ -297,12 +297,13 @@ class AppProfiler(ProfilerBase):
     def prepare(self):
         super(AppProfiler, self).prepare()
         self.app_versioncode = self.get_app_versioncode()
+        self.check_app_is_not_debug_build()
         if self.args.compile_java_code:
             self.compile_java_code()
 
     def get_app_versioncode(self) -> Optional[str]:
         result, output = self.adb.run_and_return_output(
-            ['shell', 'pm', 'list', 'packages', '--show-versioncode'])
+            ['shell', 'pm', 'list', 'packages', '--show-versioncode', self.args.app])
         if not result:
             return None
         prefix = f'package:{self.args.app} '
@@ -312,6 +313,20 @@ class AppProfiler(ProfilerBase):
                 if pos != -1:
                     return line[pos + len('versionCode:'):].strip()
         return None
+
+    def check_app_is_not_debug_build(self):
+        if self.args.unrepresentative_profile_debug_app:
+            return
+        if self.android_version < 12:
+            # `simpleperf_app_runner --show-app-type` is supported on Android >=12.
+            return
+        result, output = self.adb.run_and_return_output(['shell', 'simpleperf_app_runner',
+                                                         self.args.app, '--show-app-type'])
+        if not result:
+            return None
+        if 'debuggable' in output:
+            log_exit(f"{self.args.app} is a debug build. Add --unrepresentative_profile_debug_app" +
+                     " to allow profiling a debug build.")
 
     def compile_java_code(self):
         self.kill_app_process()
@@ -369,7 +384,7 @@ class AppProfiler(ProfilerBase):
         if self.args.launch or self.args.activity or self.args.test:
             self.kill_app_process()
         args = ['--app', self.args.app]
-        if self.app_versioncode:
+        if self.app_versioncode and self.android_version >= 12:
             args += ['--add-meta-info', f'app_versioncode={self.app_versioncode}']
         self.start_profiling(args)
         if self.args.launch:
@@ -473,6 +488,10 @@ def main():
                                   On Android N and Android O, we need to compile Java code into
                                   native instructions to profile Java code. Android O also needs
                                   wrap.sh in the apk to use the native instructions.""")
+    app_target_group.add_argument('--unrepresentative_profile_debug_app', action='store_true',
+                                  help="""Allow profiling a debug build of an app. The profile may
+                                  be different from a release build. We suggest profiling a release
+                                  build with <profileable android:shell="true"/> flag instead.""")
 
     app_start_group = app_target_group.add_mutually_exclusive_group()
     app_start_group.add_argument('--launch', action='store_true', help="""Used with -p. Profile the

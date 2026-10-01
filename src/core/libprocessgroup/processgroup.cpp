@@ -31,6 +31,7 @@
 #include <unistd.h>
 
 #include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <map>
 #include <memory>
@@ -44,7 +45,6 @@
 #include <android-base/logging.h>
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
-#include <build_flags.h>
 #include <cutils/android_filesystem_config.h>
 #include <processgroup/processgroup.h>
 #include <task_profiles.h>
@@ -246,18 +246,21 @@ bool SetUserProfiles(uid_t uid, const std::vector<std::string>& profiles) {
 static int RemoveCgroup(const char* cgroup, uid_t uid, pid_t pid, bool v2_path) {
     auto path = ConvertUidPidToPath(cgroup, uid, pid, v2_path);
     int ret = TEMP_FAILURE_RETRY(rmdir(path.c_str()));
+    if (ret) {
+        PLOG(WARNING) << "Unable to remove cgroup " << path;
+        if (errno != ENOENT) return ret;
+        else ret = 0; // This function is idempotent
+    } else {
+        LOG(INFO) << "Removed cgroup " << path;
+    }
 
-    if (!ret && uid >= AID_ISOLATED_START && uid <= AID_ISOLATED_END) {
+    if (uid >= AID_ISOLATED_START && uid <= AID_ISOLATED_END) {
         // Isolated UIDs are unlikely to be reused soon after removal,
         // so free up the kernel resources for the UID level cgroup.
         path = ConvertUidToPath(cgroup, uid, v2_path);
         ret = TEMP_FAILURE_RETRY(rmdir(path.c_str()));
-    }
-
-    if (ret < 0 && errno == ENOENT) {
-        // This function is idempoetent, but still warn here.
-        LOG(WARNING) << "RemoveCgroup: " << path << " does not exist.";
-        ret = 0;
+        if (ret) PLOG(WARNING) << "Unable to remove cgroup " << path;
+        else LOG(INFO) << "Removed cgroup " << path;
     }
 
     return ret;
@@ -291,7 +294,7 @@ static bool RemoveEmptyUidCgroups(const std::string& uid_path) {
             }
 
             auto path = StringPrintf("%s/%s", uid_path.c_str(), dir->d_name);
-            LOG(VERBOSE) << "Removing " << path;
+            LOG(INFO) << "Removing " << path;
             if (rmdir(path.c_str()) == -1) {
                 if (errno != EBUSY) {
                     PLOG(WARNING) << "Failed to remove " << path << " " << errno;
@@ -314,13 +317,12 @@ void removeAllEmptyProcessGroups() {
     if (CgroupGetControllerPath(CGROUPV2_HIERARCHY_NAME, &path)) {
         cgroups.push_back(path);
     }
-    if (android::libprocessgroup_flags::cgroup_v2_sys_app_isolation()) {
-        for (const char* sub : {"apps", "system"}) {
-            std::string subpath = path + "/" + sub;
-            struct stat st;
-            if (stat(subpath.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
-                cgroups.push_back(subpath);
-            }
+
+    for (const char* sub : {"apps", "system"}) {
+        std::string subpath = path + "/" + sub;
+        struct stat st;
+        if (stat(subpath.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
+            cgroups.push_back(subpath);
         }
     }
 
@@ -348,7 +350,7 @@ void removeAllEmptyProcessGroups() {
                     LOG(VERBOSE) << "Skip removing " << path;
                     continue;
                 }
-                LOG(VERBOSE) << "Removing " << path;
+                LOG(INFO) << "Removing " << path;
                 if (rmdir(path.c_str()) == -1 && errno != EBUSY) {
                     PLOG(WARNING) << "Failed to remove " << path;
                 }
@@ -370,6 +372,8 @@ static bool MkdirAndChown(const std::string& path, mode_t mode, uid_t uid, gid_t
         }
         return false;
     }
+
+    LOG(INFO) << "Created cgroup " << path;
 
     auto dir = std::unique_ptr<DIR, decltype(&closedir)>(opendir(path.c_str()), closedir);
 
@@ -430,7 +434,7 @@ bool sendSignalToProcessGroup(uid_t uid, pid_t initialPid, int signal) {
                 return true;
             } else {
                 PLOG(ERROR) << "Failed to write 1 to " << killfilepath;
-                // Fallback to cgroup.procs below
+                return false;
             }
         }
 
@@ -560,16 +564,16 @@ static populated_status cgroupIsPopulated(int events_fd) {
 // The default timeout of 2200ms comes from the default number of retries in a previous
 // implementation of this function. The default retry value was 40 for killing and 400 for cgroup
 // removal with 5ms sleeps between each retry.
-static int KillProcessGroup(
-        uid_t uid, pid_t initialPid, int signal, bool once = false,
+int KillProcessGroup(
+        uid_t uid, pid_t initialPid, int signal, bool reclaimMemory = false, bool once = false,
         std::chrono::steady_clock::time_point until = std::chrono::steady_clock::now() + 2200ms) {
     if (uid < 0) {
         LOG(ERROR) << __func__ << ": invalid UID " << uid;
-        return -1;
+        return -EINVAL;
     }
     if (initialPid <= 0) {
         LOG(ERROR) << __func__ << ": invalid PID " << initialPid;
-        return -1;
+        return -EINVAL;
     }
 
     // Always attempt to send a kill signal to at least the initialPid, at least once, regardless of
@@ -649,11 +653,13 @@ static int KillProcessGroup(
                          << " after " << kill_duration.count() << " ms";
         }
 
+        if (reclaimMemory) {
+            LOG(INFO) << "Reclaiming from " << cgroup_v2_path;
+            CompactMemcgAction reclaim(CompactMemcgAction::FULL, hierarchy_root_path);
+            reclaim.ExecuteForProcess(uid, initialPid);
+        }
+
         ret = RemoveCgroup(hierarchy_root_path.c_str(), uid, initialPid, true);
-        if (ret)
-            PLOG(ERROR) << "Unable to remove cgroup " << cgroup_v2_path;
-        else
-            LOG(INFO) << "Removed cgroup " << cgroup_v2_path;
 
         if (isMemoryCgroupSupported() && UsePerAppMemcg()) {
             // This per-application memcg v1 case should eventually be removed after migration to
@@ -679,7 +685,7 @@ int killProcessGroup(uid_t uid, pid_t initialPid, int signal) {
 }
 
 int killProcessGroupOnce(uid_t uid, pid_t initialPid, int signal) {
-    return KillProcessGroup(uid, initialPid, signal, true);
+    return KillProcessGroup(uid, initialPid, signal, false, true);
 }
 
 static int createProcessGroupInternal(uid_t uid, pid_t initialPid, std::string cgroup,
@@ -731,11 +737,11 @@ static int createProcessGroupInternal(uid_t uid, pid_t initialPid, std::string c
 int createProcessGroup(uid_t uid, pid_t initialPid, bool memControl) {
     if (uid < 0) {
         LOG(ERROR) << __func__ << ": invalid UID " << uid;
-        return -1;
+        return -EINVAL;
     }
     if (initialPid <= 0) {
         LOG(ERROR) << __func__ << ": invalid PID " << initialPid;
-        return -1;
+        return -EINVAL;
     }
 
     if (memControl && !UsePerAppMemcg()) {
@@ -757,6 +763,59 @@ int createProcessGroup(uid_t uid, pid_t initialPid, bool memControl) {
     std::string cgroup;
     CgroupGetControllerPath(CGROUPV2_HIERARCHY_NAME, &cgroup);
     return createProcessGroupInternal(uid, initialPid, cgroup, true);
+}
+
+int createCGroupForCloneInto(uid_t uid, pid_t zygote_pid, uint64_t start_seq) {
+    if (uid < 0) {
+        LOG(ERROR) << __func__ << ": invalid UID " << uid;
+        return -EINVAL;
+    }
+    if (zygote_pid <= 0) {
+        LOG(ERROR) << __func__ << ": invalid PID " << zygote_pid;
+        return -EINVAL;
+    }
+
+    std::string cgroup;
+    CgroupGetControllerPath(CGROUPV2_HIERARCHY_NAME, &cgroup);
+
+    auto uid_path = ConvertUidToPath(cgroup.c_str(), uid, true);
+
+    struct stat cgroup_stat;
+    mode_t cgroup_mode = 0750;
+    uid_t cgroup_uid = AID_SYSTEM;
+    gid_t cgroup_gid = AID_SYSTEM;
+
+    if (stat(cgroup.c_str(), &cgroup_stat) < 0) {
+        int saved_errno = errno;
+        PLOG(ERROR) << "Failed to get stats for " << cgroup;
+        return -saved_errno;
+    } else {
+        cgroup_mode = cgroup_stat.st_mode;
+        cgroup_uid = cgroup_stat.st_uid;
+        cgroup_gid = cgroup_stat.st_gid;
+    }
+
+    if (!MkdirAndChown(uid_path, cgroup_mode, cgroup_uid, cgroup_gid)) {
+        int saved_errno = errno;
+        PLOG(ERROR) << "Failed to make and chown " << uid_path;
+        return -saved_errno;
+    }
+
+    if (!CgroupMap::GetInstance().ActivateControllers(uid_path)) {
+        int saved_errno = errno;
+        PLOG(ERROR) << "Failed to activate controllers in " << uid_path;
+        return -saved_errno;
+    }
+
+    std::string cgroup_path = JoinPathForCloneInto(uid_path.c_str(), zygote_pid, start_seq);
+
+    if (!MkdirAndChown(cgroup_path, cgroup_mode, cgroup_uid, cgroup_gid)) {
+        int saved_errno = errno;
+        PLOG(ERROR) << "Failed to make and chown " << cgroup_path;
+        return -saved_errno;
+    }
+
+    return 0;
 }
 
 static bool SetProcessGroupValue(pid_t tid, const std::string& attr_name, int64_t value) {

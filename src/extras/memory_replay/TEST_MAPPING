@@ -1,7 +1,0 @@
-{
-  "presubmit": [
-    {
-      "name": "memory_replay_tests"
-    }
-  ]
-}

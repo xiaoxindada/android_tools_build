@@ -25,27 +25,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_link_options("-flto" "-Wl,--gc-sections" "-s")
 endif()
 
-# check x86_64 aprotoc
-function(check_x86_64_aprotoc find_dir)
-find_program(have_prebuilt_aprotoc "aprotoc" "${find_dir}")
-if(NOT DEFINED MY_TARGET)
-    set(MY_TARGET " ")
-endif()
-if(NOT have_prebuilt_aprotoc)
-    if(NOT ${MY_TARGET} MATCHES "aprotoc")
-        message(FATAL_ERROR 
-        "Not found prebuilt/x86_64/aprotoc, please to build x86_64 aprotoc\n \
-        use command: cmake xxx -DMY_TARGET=\"aprotoc\" to build \n \
-        compiled copy to ${find_dir}
-        ")
-    endif()
-endif()
-message("MY_TARGET: ${MY_TARGET}")    
-endfunction()
-
-set(prebuilt_protoc "${CMAKE_SOURCE_DIR}/prebuilt/x86_64/aprotoc")
-check_x86_64_aprotoc("${CMAKE_SOURCE_DIR}/prebuilt/x86_64")
-
 # fix absl dll test link dir not defined 
 link_directories(${CMAKE_CURRENT_BINARY_DIR})
 
@@ -65,7 +44,6 @@ include("cmake/liblog.cmake")
 include("cmake/libbase.cmake")
 include("cmake/libcutils.cmake")
 include("cmake/libjsoncpp.cmake")
-include("cmake/libjsonpbparse.cmake")
 include("cmake/libsparse.cmake")
 include("cmake/libprocessgroup.cmake")
 include("cmake/boringssl.cmake")

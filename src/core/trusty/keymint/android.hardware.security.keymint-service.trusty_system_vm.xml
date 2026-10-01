@@ -9,10 +9,6 @@
         <fqname>ISecureClock/default</fqname>
     </hal>
     <hal format="aidl" updatable-via-system="true">
-        <name>android.hardware.security.sharedsecret</name>
-        <fqname>ISharedSecret/default</fqname>
-    </hal>
-    <hal format="aidl" updatable-via-system="true">
         <name>android.hardware.security.keymint</name>
         <version>3</version>
         <fqname>IRemotelyProvisionedComponent/default</fqname>

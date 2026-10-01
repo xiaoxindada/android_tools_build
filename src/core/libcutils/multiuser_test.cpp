@@ -31,6 +31,17 @@ TEST(MultiuserTest, TestMerge) {
     EXPECT_EQ(1050000U, multiuser_get_uid(10, 50000));
 }
 
+TEST(MultiuserTest, TestPccUid) {
+    EXPECT_EQ(30000U, multiuser_get_uid(0, 30000));
+    EXPECT_EQ(39999U, multiuser_get_uid(0, 39999));
+    EXPECT_EQ(1030000U, multiuser_get_uid(10, 30000));
+    EXPECT_EQ(1039999U, multiuser_get_uid(10, 39999));
+
+    // Verify it handles project IDs correctly as well
+    EXPECT_EQ(70000U, multiuser_get_uid(0, 70000));
+    EXPECT_EQ(1070000U, multiuser_get_uid(10, 70000));
+}
+
 TEST(MultiuserTest, TestSdkSandboxUid) {
     EXPECT_EQ(ERR_UID, multiuser_get_sdk_sandbox_uid(0, 0));
     EXPECT_EQ(ERR_UID, multiuser_get_sdk_sandbox_uid(0, 1000));
@@ -96,6 +107,13 @@ TEST(MultiuserTest, TestCache) {
     EXPECT_EQ(ERR_GID, multiuser_get_cache_gid(10, 1000));
     EXPECT_EQ(1020000U, multiuser_get_cache_gid(10, 10000));
     EXPECT_EQ(ERR_GID, multiuser_get_cache_gid(10, 50000));
+    // PCC UIDs
+    EXPECT_EQ(60000U, multiuser_get_cache_gid(0, 30000));
+    EXPECT_EQ(1060000U, multiuser_get_cache_gid(10, 30000));
+    EXPECT_EQ(69999U, multiuser_get_cache_gid(0, 39999));
+    EXPECT_EQ(1069999U, multiuser_get_cache_gid(10, 39999));
+    EXPECT_EQ(ERR_GID, multiuser_get_cache_gid(0, 40000));
+    EXPECT_EQ(ERR_GID, multiuser_get_cache_gid(10, 40000));
 }
 
 TEST(MultiuserTest, TestExt) {

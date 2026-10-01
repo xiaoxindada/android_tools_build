@@ -1,7 +1,7 @@
-diff --git a/core/libcutils/canned_fs_config.cpp b/core/libcutils/canned_fs_config.cpp
+diff --git a/libcutils/canned_fs_config.cpp b/libcutils/canned_fs_config.cpp
 index b677949a..0e0f8714 100644
---- a/core/libcutils/canned_fs_config.cpp
-+++ b/core/libcutils/canned_fs_config.cpp
+--- a/libcutils/canned_fs_config.cpp
++++ b/libcutils/canned_fs_config.cpp
 @@ -86,7 +86,7 @@ int load_canned_fs_config(const char* fn) {
              // Historical: there can be tokens like "selabel=..." here. They have been ignored.
              // It's not an error because selabels are applied separately in e2fsdroid using the

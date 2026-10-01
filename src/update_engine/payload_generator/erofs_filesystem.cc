@@ -91,7 +91,7 @@ static void FillExtentInfo(FilesystemInterface::File* p_file,
 
   auto& compressed_blocks = file.compressed_file_info.blocks;
   auto last_pa = block.m_pa;
-  auto last_plen = 0;
+  uint64_t last_plen = 0;
   while (block.m_la < inode->i_size) {
     auto error = ErofsMapBlocks(inode, &block, EROFS_GET_BLOCKS_FIEMAP);
     DEFER {

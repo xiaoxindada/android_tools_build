@@ -39,6 +39,7 @@
 
 #include "exthandler/exthandler.h"
 
+using android::base::GetProperty;
 using android::base::ReadFdToString;
 using android::base::Socketpair;
 using android::base::Split;
@@ -85,7 +86,7 @@ static bool IsBooting() {
     return access("/dev/.booting", F_OK) == 0;
 }
 
-static bool IsApexActivated() {
+static bool WaitForApexActivated() {
     static bool apex_activated = []() {
         // Wait for com.android.runtime.apex activation
         // Property name and value must be kept in sync with system/apexd/apex/apex_constants.h
@@ -106,7 +107,7 @@ static bool NeedsRerunExternalHandler() {
     // Rerun external handler only on the first try and when apex is activated
     if (first) {
         first = false;
-        return IsApexActivated();
+        return WaitForApexActivated();
     }
 
     return first;
@@ -256,6 +257,14 @@ void FirmwareHandler::ProcessFirmwareEvent(const std::string& path, const std::s
     write(loading_fd.get(), "-1", 2);
 }
 
+static bool ShouldLookInBootstrapApexes() {
+    auto status = GetProperty("apexd.status", "");
+    if (status == "activated" || status == "ready") {
+        return false;
+    }
+    return true;
+}
+
 bool FirmwareHandler::ForEachFirmwareDirectory(
         std::function<bool(const std::string&)> handler) const {
     for (const std::string& firmware_directory : firmware_directories_) {
@@ -264,8 +273,15 @@ bool FirmwareHandler::ForEachFirmwareDirectory(
         }
     }
 
+    std::string pattern = "/apex/*/etc/firmware/";
+    // Let's look in bootstrap APEXes when APEXes are not ready in the default
+    // mount namespace.
+    if (ShouldLookInBootstrapApexes()) {
+        pattern = "/bootstrap-apex/*/etc/firmware/";
+    }
+
     glob_t glob_result;
-    glob("/apex/*/etc/firmware/", GLOB_MARK, nullptr, &glob_result);
+    glob(pattern.c_str(), GLOB_MARK, nullptr, &glob_result);
     auto free_glob = android::base::make_scope_guard(std::bind(&globfree, &glob_result));
     for (size_t i = 0; i < glob_result.gl_pathc; i++) {
         char* apex_firmware_directory = glob_result.gl_pathv[i];

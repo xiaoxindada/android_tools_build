@@ -51,6 +51,10 @@ uid_t multiuser_convert_sdk_sandbox_to_app_uid(uid_t uid) {
 gid_t multiuser_get_cache_gid(userid_t user_id, appid_t app_id) {
     if (app_id >= AID_APP_START && app_id <= AID_APP_END) {
         return multiuser_get_uid(user_id, (app_id - AID_APP_START) + AID_CACHE_GID_START);
+    } else if (app_id >= AID_PCC_COMPONENT_PROCESS_START &&
+               app_id <= AID_PCC_COMPONENT_PROCESS_END) {
+        return multiuser_get_uid(
+                user_id, (app_id - AID_PCC_COMPONENT_PROCESS_START) + AID_PCC_CACHE_GID_START);
     } else {
         return -1;
     }

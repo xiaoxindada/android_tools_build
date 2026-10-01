@@ -322,6 +322,32 @@ public:
         //           outstanding ones.
 
         void                trackMe(bool enable, bool retain);
+
+        // RBSAN - "RefBase" SAN
+        // For use by framework internal components (each component should add
+        // an OBJECT_TAG_* flag below). Multiple tags may be set at the same
+        // time, since RefBase objects are often saved. If any tag is enabled,
+        // then the object will error if deleted.
+        //
+        // The correct order to enable tagging is:
+        //  get object -> incStrong -> tag -> use object -> untag -> decStrong
+
+        // This object shouldn't be deleted until the tag is released.
+        void tag(int32_t tag);
+        // No longer restrict deletion with this tag.
+        void untag(int32_t tag);
+
+        // DANGER: this method implies you don't know whether you have exclusive
+        // ownership of an object within a specific context. This is introduced
+        // to support cases where multiple objects try to own an object. The
+        // first object which owns the underlying RefBase is considered the
+        // canonical tag owner. The other objects do not tag or untag the object,
+        // since we only have one bit reserved for a tag. In the case of a bug,
+        // this makes it less likely that we can catch it. However, we will catch
+        // it some percentage of the time. These individual bits are preferred
+        // over an independent reference count since they are independent. A bug
+        // setting one tag bit cannot interfere with other taggers.
+        [[nodiscard]] bool tryTag(int32_t tag);
     };
 
             weakref_type*   createWeak(const void* id) const;
@@ -337,7 +363,24 @@ public:
         getWeakRefs()->trackMe(enable, retain); 
     }
 
-protected:
+    enum {
+        // for extendObjectLifetime
+        OBJECT_LIFETIME_STRONG = 0x0000,
+        OBJECT_LIFETIME_WEAK = 0x0001,
+        OBJECT_LIFETIME_MASK = 0x0001,
+
+        // A few free bits.
+
+        // for "RefBase" SAN - RBSAN. This is used as a bitfield, since
+        // RefBase objects (especially binder objects) are often shared
+        // among unrelated code in the same process, so code needs to be
+        // able to check tags independently.
+        OBJECT_TAG_JAVA_PROXY = 0x10000,
+        OBJECT_TAG_MASK = 0x10000,
+    };
+    static_assert((OBJECT_LIFETIME_MASK & OBJECT_TAG_MASK) == 0, "conflicting values");
+
+  protected:
     // When constructing these objects, prefer using sp::make<>. Using a RefBase
     // object on the stack or with other refcount mechanisms (e.g.
     // std::shared_ptr) is inherently wrong. RefBase types have an implicit
@@ -345,16 +388,9 @@ protected:
 
                             RefBase();
     virtual                 ~RefBase();
-    
-    //! Flags for extendObjectLifetime()
-    enum {
-        OBJECT_LIFETIME_STRONG  = 0x0000,
-        OBJECT_LIFETIME_WEAK    = 0x0001,
-        OBJECT_LIFETIME_MASK    = 0x0001
-    };
-    
-            void            extendObjectLifetime(int32_t mode);
-            
+
+    void extendObjectLifetime(int32_t mode);
+
     //! Flags for onIncStrongAttempted()
     enum {
         FIRST_INC_STRONG = 0x0001

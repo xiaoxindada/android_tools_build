@@ -19,9 +19,10 @@ import datetime
 import os
 import time
 
-from .base import ANDROID_SDK_VERSION_T, Command, CommandExecutor, ValidationError
-from .config import PREDEFINED_PERFETTO_CONFIGS
-from .config_builder import build_custom_config
+from .base import (ANDROID_SDK_VERSION_T, Command, CommandExecutor,
+                   ValidationError)
+from .config_builder import (build_custom_config, create_common_config_parser,
+                             PREDEFINED_PERFETTO_CONFIGS)
 from .device import SIMPLEPERF_TRACE_FILE, POLLING_INTERVAL_SECS
 from .handle_input import HandleInput
 from .open_ui_utils import open_trace, WEB_UI_ADDRESS
@@ -32,12 +33,16 @@ DEFAULT_DUR_MS = 10000
 DEFAULT_OUT_DIR = "."
 MAX_WAIT_FOR_INIT_USER_SWITCH_SECS = 180
 MIN_DURATION_MS = 3000
+MIN_STOP_DELAY_MS = 1000
 PERFETTO_DEVICE_FOLDER = "/data/misc/perfetto-traces"
 PERFETTO_TRACE_FILE = PERFETTO_DEVICE_FOLDER + "/trace.perfetto-trace"
 PERFETTO_BOOT_TRACE_FILE = PERFETTO_DEVICE_FOLDER + "/boottrace.perfetto-trace"
 SIMPLEPERF_DEVICE_TRACE_FOLDER = "/tmp/simpleperf-traces"
 SIMPLEPERF_STOP_TIMEOUT_SECS = 60
 TRACE_START_DELAY_SECS = 0.5
+DEFAULT_TRIGGER_DUR_MS = 604800000  # 7 days in millis
+DEFAULT_TRIGGER_STOP_DELAY_MS = [1000]
+DEFAULT_TRIGGER_MODE = "STOP_TRACING"
 
 
 def add_profiler_parser(subparsers):
@@ -45,7 +50,8 @@ def add_profiler_parser(subparsers):
       'profiler',
       help=('Profiler subcommand'
             ' used to trace and'
-            ' profile Android'))
+            ' profile Android'),
+      parents=[create_common_config_parser()])
   profiler_parser.add_argument(
       '-e',
       '--event',
@@ -63,12 +69,6 @@ def add_profiler_parser(subparsers):
       '--out-dir',
       default=DEFAULT_OUT_DIR,
       help='The path to the output directory.')
-  profiler_parser.add_argument(
-      '-d',
-      '--dur-ms',
-      type=int,
-      help=('The duration (ms) of the event. Determines when'
-            ' to stop collecting performance data.'))
   profiler_parser.add_argument(
       '-a', '--app', help='The package name of the app we want to start.')
   profiler_parser.add_argument(
@@ -101,16 +101,6 @@ def add_profiler_parser(subparsers):
       action=argparse.BooleanOptionalAction,
       help=('Specifies opening of UI visualization tool'
             ' after profiling is complete.'))
-  profiler_parser.add_argument(
-      '--excluded-ftrace-events',
-      action='append',
-      help=('Excludes specified ftrace event from the perfetto'
-            ' config events.'))
-  profiler_parser.add_argument(
-      '--included-ftrace-events',
-      action='append',
-      help=('Includes specified ftrace event in the perfetto'
-            ' config events.'))
   profiler_parser.add_argument(
       '--from-user',
       type=int,
@@ -294,6 +284,92 @@ def verify_profiler_args(args):
   else:
     args.scripts_path = None
 
+  return verify_trigger_args(args)
+
+
+def verify_trigger_args(args):
+  if args.trigger_names and args.profiler != "perfetto":
+    return None, ValidationError(
+        ("Command is invalid because --trigger-names cannot be passed"
+         " if --profiler is not set to perfetto."),
+        "Set -p perfetto to use trigger-names.")
+
+  if args.trigger_names and args.dur_ms is not None:
+    return None, ValidationError(
+        ("Command is invalid because --dur-ms cannot be passed"
+         " if a perfetto trigger is being set."),
+        "Run command with a --trigger-timeout-ms option instead of --dur-ms.")
+
+  if args.trigger_names and args.runs > 1:
+    return None, ValidationError(
+        "Command is invalid because the number of runs cannot be more than 1"
+        " when including trigger configs.",
+        "Run command without the -r option.")
+
+  if not args.trigger_names and args.trigger_stop_delay_ms:
+    return None, ValidationError(
+        "Command is invalid because --trigger-stop-delay-ms cannot be set"
+        " without --trigger-names.",
+        "Set --trigger-names or remove --trigger-stop-delay-ms.")
+
+  if args.trigger_names and not args.trigger_stop_delay_ms:
+    args.trigger_stop_delay_ms = DEFAULT_TRIGGER_STOP_DELAY_MS
+
+  if not args.trigger_names and args.trigger_timeout_ms:
+    return None, ValidationError(
+        "Command is invalid because --trigger-timeout-ms cannot be set without"
+        " --trigger-names.",
+        "Set --trigger-names or remove --trigger-timeout-ms.")
+
+  if args.trigger_names and not args.trigger_timeout_ms:
+    args.trigger_timeout_ms = DEFAULT_TRIGGER_DUR_MS
+
+  if not args.trigger_names and args.trigger_mode:
+    return None, ValidationError(
+        "Command is invalid because --trigger-mode cannot be set without"
+        " --trigger-names.", "Set --trigger-names or remove --trigger-mode.")
+
+  if args.trigger_names and not args.trigger_mode:
+    args.trigger_mode = DEFAULT_TRIGGER_MODE
+
+  if (len(args.trigger_stop_delay_ms) > 1 and
+      len(args.trigger_names) != len(args.trigger_stop_delay_ms)):
+    return None, ValidationError(
+        "Command is invalid because number of trigger names passed is not"
+        " equal to number of stop-delay-ms values passed.",
+        "Pass only one stop-delay-ms value to use for all triggers, pass none"
+        " to use the default value for all triggers, or pass an equal number"
+        " of trigger names and stop-delay-ms values.")
+
+  if (args.trigger_timeout_ms is not None and
+      args.trigger_timeout_ms < MIN_DURATION_MS):
+    return None, ValidationError(
+        ("Command is invalid because --trigger-timeout-ms cannot be set to a"
+         " value smaller than %d." % MIN_DURATION_MS),
+        ("Set --trigger-timeout-ms %d to timeout after %d seconds." %
+         (MIN_DURATION_MS, (MIN_DURATION_MS / 1000))))
+
+  if (args.trigger_stop_delay_ms is not None and
+      any(x < MIN_STOP_DELAY_MS for x in args.trigger_stop_delay_ms)):
+    return None, ValidationError(
+        ("Command is invalid because --trigger-stop-delay-ms cannot be set to a"
+         " value smaller than %d." % MIN_STOP_DELAY_MS),
+        ("Set --trigger-stop-delay-ms %d to keep tracing after a trigger for %d"
+         " seconds." % (MIN_STOP_DELAY_MS, (MIN_STOP_DELAY_MS / 1000))))
+
+  match args.trigger_mode:
+    case "stop":
+      args.trigger_mode = "STOP_TRACING"
+    case "start":
+      args.trigger_mode = "START_TRACING"
+    case "clone":
+      args.trigger_mode = "CLONE_SNAPSHOT"
+
+  # CLONE_SNAPSHOT will generate multiple traces, so don't automatically open
+  # traces in the Perfetto UI
+  if args.trigger_mode == "CLONE_SNAPSHOT":
+    args.ui = False
+
   return args, None
 
 
@@ -312,13 +388,13 @@ def get_executor(event):
 
 
 def execute_profiler_command(args, device):
-  command = ProfilerCommand("profiler", args.event, args.profiler, args.out_dir,
-                            args.dur_ms, args.app, args.runs,
-                            args.simpleperf_event, args.perfetto_config,
-                            args.between_dur_ms, args.ui,
-                            args.excluded_ftrace_events,
-                            args.included_ftrace_events, args.from_user,
-                            args.to_user, args.scripts_path, args.symbols)
+  command = ProfilerCommand(
+      "profiler", args.event, args.profiler, args.out_dir, args.dur_ms,
+      args.app, args.runs, args.simpleperf_event, args.perfetto_config,
+      args.between_dur_ms, args.ui, args.excluded_ftrace_events,
+      args.included_ftrace_events, args.from_user, args.to_user,
+      args.scripts_path, args.symbols, args.trigger_names,
+      args.trigger_timeout_ms, args.trigger_stop_delay_ms, args.trigger_mode)
 
   executor = get_executor(command.event)
 
@@ -333,7 +409,8 @@ class ProfilerCommand(Command):
   def __init__(self, type, event, profiler, out_dir, dur_ms, app, runs,
                simpleperf_event, perfetto_config, between_dur_ms, ui,
                excluded_ftrace_events, included_ftrace_events, from_user,
-               to_user, scripts_path, symbols):
+               to_user, scripts_path, symbols, trigger_names,
+               trigger_timeout_ms, trigger_stop_delay_ms, trigger_mode):
     super().__init__(type)
     self.event = event
     self.profiler = profiler
@@ -351,6 +428,10 @@ class ProfilerCommand(Command):
     self.to_user = to_user
     self.scripts_path = scripts_path
     self.symbols = symbols
+    self.trigger_names = trigger_names
+    self.trigger_timeout_ms = trigger_timeout_ms
+    self.trigger_stop_delay_ms = trigger_stop_delay_ms
+    self.trigger_mode = trigger_mode
 
     if self.event == "user-switch":
       self.original_user = None
@@ -505,7 +586,7 @@ class ProfilerCommandExecutor(CommandExecutor):
 
   def prepare_device_for_run(self, command, device):
     if command.profiler == "perfetto":
-      device.remove_file(PERFETTO_TRACE_FILE)
+      device.remove_file(f"{PERFETTO_TRACE_FILE}*")
     else:
       device.remove_file(SIMPLEPERF_TRACE_FILE)
 
@@ -547,7 +628,13 @@ class ProfilerCommandExecutor(CommandExecutor):
   def retrieve_perf_data(self, command, device, host_raw_trace_filename,
                          host_gecko_trace_filename):
     if command.profiler == "perfetto":
-      device.pull_file(PERFETTO_TRACE_FILE, host_raw_trace_filename)
+      if command.trigger_names and command.trigger_mode == "CLONE_SNAPSHOT":
+        i = 0
+        while device.pull_file(f"{PERFETTO_TRACE_FILE}.{i}",
+                               f"{host_raw_trace_filename}.{i}"):
+          i += 1
+      else:
+        device.pull_file(PERFETTO_TRACE_FILE, host_raw_trace_filename)
     else:
       device.pull_file(SIMPLEPERF_TRACE_FILE, host_raw_trace_filename)
       convert_simpleperf_to_gecko(command.scripts_path, host_raw_trace_filename,
@@ -612,7 +699,7 @@ class BootCommandExecutor(ProfilerCommandExecutor):
     device.write_to_file("/data/misc/perfetto-configs/boottrace.pbtxt", config)
 
   def prepare_device_for_run(self, command, device):
-    device.remove_file(PERFETTO_BOOT_TRACE_FILE)
+    device.remove_file(f'{PERFETTO_BOOT_TRACE_FILE}*')
     device.set_prop("persist.debug.perfetto.boottrace", "1")
 
   def execute_run(self, command, device, config, run):
@@ -637,7 +724,13 @@ class BootCommandExecutor(ProfilerCommandExecutor):
 
   def retrieve_perf_data(self, command, device, host_raw_trace_filename,
                          host_gecko_trace_filename):
-    device.pull_file(PERFETTO_BOOT_TRACE_FILE, host_raw_trace_filename)
+    if command.trigger_names and command.trigger_mode == "CLONE_SNAPSHOT":
+      i = 0
+      while device.pull_file(f'{PERFETTO_BOOT_TRACE_FILE}.{i}',
+                             f'{host_raw_trace_filename}.{i}'):
+        i += 1
+    else:
+      device.pull_file(PERFETTO_BOOT_TRACE_FILE, host_raw_trace_filename)
 
   def is_trace_cancelled(self, profiler, device, process):
     return not device.is_package_running(profiler) or self.trace_cancelled

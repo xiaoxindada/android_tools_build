@@ -43,9 +43,19 @@
 //
 // enum class MyError { A, B }; // assume that this is the error code you already have
 //
-// // To use the error code with Result, define a wrapper class that provides the following
-// operations and use the wrapper class as the second type parameter (E) when instantiating
-// Result<T, E>
+// // Result<T, E> natively supports enum types. If E is an enum type, the error code
+// // will automatically be converted to its string representation (e.g., "A" or "B")
+// // by parsing the compiler-generated string literal. For 8-bit enum types, all
+// // possible values are exhaustively checked. For larger enum types, values in the
+// // range [0, 256) are checked. If the value is outside the checked range or has
+// // no name, its numeric value will be printed instead.
+//
+// Result<T, MyError> val = Error<MyError>(MyError::A) << "some message";
+//
+// // If you need a custom printing format, or if you are using a non-enum custom
+// // error type, you can define a wrapper class that provides the following
+// // operations and use the wrapper class as the second type parameter (E) when
+// // instantiating Result<T, E>.
 //
 // 1. default constructor
 // 2. copy constructor / and move constructor if copying is expensive
@@ -61,15 +71,15 @@
 //   MyError value() const { return val_; }
 //   std::string print() const {
 //     switch(val_) {
-//       MyError::A: return "A";
-//       MyError::B: return "B";
+//       MyError::A: return "Custom A";
+//       MyError::B: return "Custom B";
 //     }
 //   }
 // };
 //
 // #define NewMyError(e) Error<MyErrorWrapper>(MyError::e)
 //
-// Result<T, MyError> val = NewMyError(A) << "some message";
+// Result<T, MyError> val_custom = NewMyError(A) << "some message";
 //
 // Formatting the error message using fmtlib:
 //
@@ -95,8 +105,12 @@
 #include <errno.h>
 #include <string.h>
 
+#include <cstdint>
+#include <limits>
+#include <optional>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <type_traits>
 
 #include "android-base/errors.h"
@@ -208,6 +222,91 @@ struct DoNothingStream {
 
   std::string str() const { return ""; }
 };
+
+// Check if a type has a print() method.
+template <typename T, typename = void>
+struct has_print : std::false_type {};
+
+template <typename T>
+struct has_print<T, std::void_t<decltype(std::declval<T>().print())>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool has_print_v = has_print<T>::value;
+
+// Extract enum name using __PRETTY_FUNCTION__
+template <typename E, E V>
+constexpr std::optional<std::string_view> GetEnumName() {
+  static_assert(std::is_enum_v<E>);
+  std::string_view view = __PRETTY_FUNCTION__;
+
+  // Example output for Clang:
+  // "std::optional<std::string_view> android::base::internal::GetEnumName() [E = CustomError, V =
+  // CustomError::A]"
+  size_t value_begin = view.rfind("V = ");
+  if (value_begin == std::string_view::npos) return std::nullopt;
+
+  view = view.substr(value_begin + 4);
+
+  // Remove trailing "]"
+  size_t end_bracket = view.rfind(']');
+  if (end_bracket != std::string_view::npos) {
+    view = view.substr(0, end_bracket);
+  }
+
+  // Find the last "::" to isolate the enumerator name
+  size_t name_begin = view.rfind("::");
+  if (name_begin != std::string_view::npos) {
+    view = view.substr(name_begin + 2);
+  }
+
+  // If the value contains a parenthesis (e.g., "(CustomError)42"), it's not a valid named
+  // enumerator.
+  if (view.find(')') != std::string_view::npos) {
+    return std::nullopt;
+  }
+
+  return view;
+}
+
+// Search for the enum name within a given index sequence and offset
+template <typename E, intmax_t MinValue, size_t... Is>
+constexpr std::optional<std::string_view> EnumNameFromRangeImpl(E v, std::index_sequence<Is...>) {
+  std::optional<std::string_view> result;
+  // Fold expression: iterate through the sequence and find a matching enumerator.
+  // We use comma operator to assign the result when a match is found.
+  (void)(((v == static_cast<E>(MinValue + static_cast<intmax_t>(Is)))
+              ? (result = GetEnumName<E, static_cast<E>(MinValue + static_cast<intmax_t>(Is))>(),
+                 true)
+              : false) ||
+         ...);
+  return result;
+}
+
+// Convert an enum value to its string representation (name or number)
+template <typename E>
+std::string EnumToString(E v) {
+  if constexpr (std::is_enum_v<E>) {
+    using U = std::underlying_type_t<E>;
+    std::optional<std::string_view> name;
+
+    if constexpr (sizeof(U) == 1) {
+      // 8-bit underlying type: exhaustive search (256 values)
+      constexpr intmax_t min_val = std::numeric_limits<U>::min();
+      name = EnumNameFromRangeImpl<E, min_val>(v, std::make_index_sequence<256>{});
+    } else {
+      // > 8-bit: practical fallback range [0, 256)
+      name = EnumNameFromRangeImpl<E, 0>(v, std::make_index_sequence<256>{});
+    }
+
+    if (name && !name->empty()) {
+      return std::string(*name);
+    }
+    // Fallback to number if name is not found
+    return std::to_string(static_cast<U>(v));
+  }
+  return "";
+}
+
 }  // namespace internal
 
 template <typename E = Errno, bool include_message = true,
@@ -251,10 +350,19 @@ class Error {
     static_assert(include_message, "str() not supported when include_message = false");
     std::string str = ss_.str();
     if (has_code_) {
-      if (str.empty()) {
-        return code_.print();
+      std::string code_str;
+      if constexpr (internal::has_print_v<E>) {
+        code_str = code_.print();
+      } else if constexpr (std::is_enum_v<E>) {
+        code_str = internal::EnumToString(code_);
+      } else {
+        code_str = fmt::format("{}", code_);
       }
-      return std::move(str) + ": " + code_.print();
+
+      if (str.empty()) {
+        return code_str;
+      }
+      return std::move(str) + ": " + code_str;
     }
     return str;
   }

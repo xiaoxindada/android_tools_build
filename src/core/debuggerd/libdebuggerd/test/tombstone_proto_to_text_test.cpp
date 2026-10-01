@@ -36,6 +36,7 @@ class TombstoneProtoToTextTest : public ::testing::Test {
     tombstone_->set_build_fingerprint("Test fingerprint");
     tombstone_->set_timestamp("1970-01-01 00:00:00");
     tombstone_->set_pid(100);
+    tombstone_->set_ppid(99);
     tombstone_->set_tid(100);
     tombstone_->set_uid(0);
     tombstone_->set_selinux_label("none");
@@ -59,7 +60,7 @@ class TombstoneProtoToTextTest : public ::testing::Test {
     main_thread_ = &threads[100];
   }
 
-  void ProtoToString() {
+  void ProtoToString(bool display_sp = false) {
     text_ = "";
     EXPECT_TRUE(tombstone_proto_to_text(
         *tombstone_,
@@ -71,7 +72,8 @@ class TombstoneProtoToTextTest : public ::testing::Test {
         },
         [&](const BacktraceFrame& frame) {
           text_ += "SYMBOLIZE " + frame.build_id() + " " + std::to_string(frame.pc()) + "\n";
-        }));
+        },
+        display_sp));
   }
 
   Thread* main_thread_;
@@ -179,4 +181,159 @@ TEST_F(TombstoneProtoToTextTest, symbolize) {
 TEST_F(TombstoneProtoToTextTest, uid) {
   ProtoToString();
   EXPECT_MATCH(text_, "\\nLOG uid: 0\\n");
+}
+
+TEST_F(TombstoneProtoToTextTest, Backtrace_NoDisplaySp) {
+  // Verifies that with display_sp = false, the stack pointer is not printed.
+  BacktraceFrame* frame = main_thread_->add_current_backtrace();
+  frame->set_rel_pc(0x1000);
+  frame->set_sp(0x2000);
+  frame->set_file_name("test.so");
+
+  ProtoToString(false);
+
+  EXPECT_MATCH(text_, "      #00 pc 0000000000001000  test.so");
+  EXPECT_EQ(std::string::npos, text_.find(" sp "));
+}
+
+TEST_F(TombstoneProtoToTextTest, Backtrace_DisplaySp) {
+  // Scenario 1: A single frame in the backtrace.
+  // It should print the 'sp' value without any additional map info,
+  // as there's no next frame to compare against.
+  BacktraceFrame* frame1 = main_thread_->add_current_backtrace();
+  frame1->set_rel_pc(0x1000);
+  frame1->set_sp(0x2000);
+  frame1->set_file_name("test.so");
+
+  ProtoToString(true);
+  EXPECT_MATCH(text_, "      #00 pc 0000000000001000 sp 0000000000002000  test.so");
+  main_thread_->clear_current_backtrace();
+
+  // Scenario 2: Two frames, but no memory maps defined.
+  // Should indicate that the map for the 'sp' is unknown.
+  frame1 = main_thread_->add_current_backtrace();
+  frame1->set_rel_pc(0x1000);
+  frame1->set_sp(0x2000);
+  frame1->set_file_name("test.so");
+  BacktraceFrame* frame2 = main_thread_->add_current_backtrace();
+  frame2->set_rel_pc(0x1010);
+  frame2->set_sp(0x2010);
+  frame2->set_file_name("test.so");
+
+  ProtoToString(true);
+  EXPECT_MATCH(text_,
+               "      #00 pc 0000000000001000 sp 0000000000002000\\(unknown map\\)  test.so");
+  main_thread_->clear_current_backtrace();
+
+  // Scenario 3: Two frames where 'sp' and the next 'sp' are in the same readable/writable map.
+  // Should print the stack frame size.
+  auto* map = tombstone_->add_memory_mappings();
+  map->set_begin_address(0x2000);
+  map->set_end_address(0x3000);
+  map->set_read(true);
+  map->set_write(true);
+
+  frame1 = main_thread_->add_current_backtrace();
+  frame1->set_rel_pc(0x1000);
+  frame1->set_sp(0x2000);
+  frame1->set_file_name("test.so");
+  frame2 = main_thread_->add_current_backtrace();
+  frame2->set_rel_pc(0x1010);
+  frame2->set_sp(0x2010);
+  frame2->set_file_name("test.so");
+
+  ProtoToString(true);
+  EXPECT_MATCH(text_, "      #00 pc 0000000000001000 sp 0000000000002000\\+16  test.so");
+
+  // Scenario 4: Same as above, but with sp > next_sp.
+  frame1->set_sp(0x2010);
+  frame2->set_sp(0x2000);
+  ProtoToString(true);
+  EXPECT_MATCH(text_, "      #00 pc 0000000000001000 sp 0000000000002010\\+16  test.so");
+  main_thread_->clear_current_backtrace();
+  tombstone_->clear_memory_mappings();
+
+  // Scenario 5: Two frames where 'sp' and next 'sp' are in different maps.
+  // Should indicate a new map.
+  auto* map1 = tombstone_->add_memory_mappings();
+  map1->set_begin_address(0x2000);
+  map1->set_end_address(0x3000);
+  map1->set_read(true);
+  map1->set_write(true);
+  auto* map2 = tombstone_->add_memory_mappings();
+  map2->set_begin_address(0x4000);
+  map2->set_end_address(0x5000);
+  map2->set_read(true);
+  map2->set_write(true);
+
+  frame1 = main_thread_->add_current_backtrace();
+  frame1->set_rel_pc(0x1000);
+  frame1->set_sp(0x2000);
+  frame1->set_file_name("test.so");
+  frame2 = main_thread_->add_current_backtrace();
+  frame2->set_rel_pc(0x1010);
+  frame2->set_sp(0x4000);
+  frame2->set_file_name("test.so");
+
+  ProtoToString(true);
+  EXPECT_MATCH(text_, "      #00 pc 0000000000001000 sp 0000000000002000\\(new map\\)  test.so");
+  main_thread_->clear_current_backtrace();
+  tombstone_->clear_memory_mappings();
+
+  // Scenario 6: Two frames, 'sp' is in a map that is not read-write.
+  map1 = tombstone_->add_memory_mappings();
+  map1->set_begin_address(0x2000);
+  map1->set_end_address(0x3000);
+  map1->set_read(true);
+  map1->set_write(false);
+
+  frame1 = main_thread_->add_current_backtrace();
+  frame1->set_rel_pc(0x1000);
+  frame1->set_sp(0x2000);
+  frame1->set_file_name("test.so");
+  frame2 = main_thread_->add_current_backtrace();
+  frame2->set_rel_pc(0x1010);
+  frame2->set_sp(0x2010);
+  frame2->set_file_name("test.so");
+
+  ProtoToString(true);
+  EXPECT_MATCH(
+      text_, "      #00 pc 0000000000001000 sp 0000000000002000\\+16\\(map is not rw\\)  test.so");
+  main_thread_->clear_current_backtrace();
+  tombstone_->clear_memory_mappings();
+
+  // Scenario 7: Two frames, 'sp' is in a non-read-write map, and next 'sp' is in a new map.
+  map1 = tombstone_->add_memory_mappings();
+  map1->set_begin_address(0x2000);
+  map1->set_end_address(0x3000);
+  map1->set_read(false);
+  map1->set_write(true);
+  map2 = tombstone_->add_memory_mappings();
+  map2->set_begin_address(0x4000);
+  map2->set_end_address(0x5000);
+
+  frame1 = main_thread_->add_current_backtrace();
+  frame1->set_rel_pc(0x1000);
+  frame1->set_sp(0x2000);
+  frame1->set_file_name("test.so");
+  frame2 = main_thread_->add_current_backtrace();
+  frame2->set_rel_pc(0x1010);
+  frame2->set_sp(0x4000);
+  frame2->set_file_name("test.so");
+
+  ProtoToString(true);
+  EXPECT_MATCH(
+      text_,
+      "      #00 pc 0000000000001000 sp 0000000000002000\\(new map is not rw\\)  test.so");
+}
+
+TEST_F(TombstoneProtoToTextTest, DisplaySpNote) {
+  // Verifies that the note to use pbtombstone is shown when display_sp is false.
+  ProtoToString(false);
+  EXPECT_MATCH(text_, "Note: To display stack pointer information, use the pbtombstone tool:");
+  EXPECT_MATCH(text_, "pbtombstone --display-sp tombstone_XX.pb");
+
+  // Verifies that the note is not shown when display_sp is true.
+  ProtoToString(true);
+  EXPECT_EQ(std::string::npos, text_.find("Note: To display stack pointer information"));
 }

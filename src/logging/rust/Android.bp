@@ -27,7 +27,37 @@ rust_library {
     apex_available: [
         "//apex_available:anyapex",
         "//apex_available:platform",
+    ],
+    recovery_available: true,
+    min_sdk_version: "29",
+    export_include_dirs: ["src/include"],
+}
+
+rust_library {
+    name: "liblogger_max_level_info",
+    host_supported: true,
+    crate_name: "logger",
+    srcs: ["src/lib.rs"],
+    rustlibs: [
+        "libenv_filter_max_level_info",
+        "libenv_logger_max_level_info",
+        "liblog_rust_max_level_info",
+    ],
+    vendor_available: true,
+    product_available: true,
+    target: {
+        android: {
+            rustlibs: [
+                "libandroid_logger_max_level_info",
+            ],
+        },
+        windows: {
+            enabled: true,
+        },
+    },
+    apex_available: [
         "//apex_available:anyapex",
+        "//apex_available:platform",
     ],
     min_sdk_version: "29",
 }

@@ -78,9 +78,15 @@ using unique_fd = android::base::unique_fd_impl<FdsanBypassCloser>;
 #define CRASH_DUMP_NAME "crash_dump32"
 #endif
 
+#if defined(RELEASE_DEPRECATE_RUNTIME_APEX)
+#define CRASH_DUMP_PATH "/system/bin/" CRASH_DUMP_NAME
+#else
 #define CRASH_DUMP_PATH "/apex/com.android.runtime/bin/" CRASH_DUMP_NAME
+#endif
 
-// Wrappers that directly invoke the respective syscalls, in case the cached values are invalid.
+// Use raw syscalls to get the pid and tid. The libc wrappers might return a
+// stale cached value in a signal handler (e.g. after a fork), so we avoid them.
+// We also poison the libc functions to prevent their accidental use.
 #pragma GCC poison getpid gettid
 static pid_t __getpid() {
   return syscall(__NR_getpid);
@@ -340,8 +346,7 @@ static bool have_siginfo(int signum) {
 
 static void raise_caps() {
   // Raise CapInh to match CapPrm, so that we can set the ambient bits.
-  __user_cap_header_struct capheader;
-  memset(&capheader, 0, sizeof(capheader));
+  __user_cap_header_struct capheader = {};
   capheader.version = _LINUX_CAPABILITY_VERSION_3;
   capheader.pid = 0;
 
@@ -545,6 +550,8 @@ static int debuggerd_dispatch_pseudothread(void* arg) {
     fatal("failed to write crash info, wrote %zd bytes, expected %zd", rc, expected);
   }
 
+  pid_t crash_dump_ppid = getppid();
+
   // Don't use fork(2) to avoid calling pthread_atfork handlers.
   pid_t crash_dump_pid = _Fork();
   if (crash_dump_pid == -1) {
@@ -563,14 +570,18 @@ static int debuggerd_dispatch_pseudothread(void* arg) {
     char main_tid[10];
     char pseudothread_tid[10];
     char debuggerd_dump_type[10];
+    char ppid_str[10];
+
     async_safe_format_buffer(main_tid, sizeof(main_tid), "%d", thread_info->crashing_tid);
     async_safe_format_buffer(pseudothread_tid, sizeof(pseudothread_tid), "%d",
                              thread_info->pseudothread_tid);
     async_safe_format_buffer(debuggerd_dump_type, sizeof(debuggerd_dump_type), "%d",
                              get_dump_type(thread_info));
+    async_safe_format_buffer(ppid_str, sizeof(ppid_str), "%d",
+                             crash_dump_ppid);
 
     execle(CRASH_DUMP_PATH, CRASH_DUMP_NAME, main_tid, pseudothread_tid, debuggerd_dump_type,
-           nullptr, nullptr);
+           ppid_str, nullptr, nullptr);
     async_safe_format_log(ANDROID_LOG_FATAL, "libc", "%s: failed to exec crash_dump helper: %s",
                           get_unwind_type(thread_info), strerror(errno));
     return 1;
@@ -664,7 +675,6 @@ static void debuggerd_signal_handler(int signal_number, siginfo_t* info, void* c
 
   struct siginfo dummy_info = {};
   if (!info) {
-    memset(&dummy_info, 0, sizeof(dummy_info));
     dummy_info.si_signo = signal_number;
     dummy_info.si_code = SI_USER;
     dummy_info.si_pid = __getpid();
@@ -902,11 +912,9 @@ void debuggerd_init(debuggerd_callbacks_t* callbacks) {
   stack -= 15;
   pseudothread_stack = stack;
 
-  struct sigaction action;
-  memset(&action, 0, sizeof(action));
+  struct sigaction action = {.sa_sigaction = debuggerd_signal_handler,
+                             .sa_flags = SA_RESTART | SA_SIGINFO};
   sigfillset(&action.sa_mask);
-  action.sa_sigaction = debuggerd_signal_handler;
-  action.sa_flags = SA_RESTART | SA_SIGINFO;
 
   // Use the alternate signal stack if available so we can catch stack overflows.
   action.sa_flags |= SA_ONSTACK;

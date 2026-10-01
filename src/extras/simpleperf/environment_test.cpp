@@ -153,6 +153,20 @@ TEST(environment, GetMemorySize) {
 }
 
 // @CddTest = 6.1/C-0-2
+TEST(environment, GetAppPackageNameForPid) {
+  TemporaryDir tmpdir;
+  std::string proc_dir = tmpdir.path;
+  ASSERT_EQ(mkdir((proc_dir + "/1").c_str(), 0755), 0);
+  ASSERT_TRUE(android::base::WriteStringToFile("com.android.chrome", proc_dir + "/1/cmdline"));
+  ASSERT_EQ(GetAppPackageNameForPid(1, proc_dir), "com.android.chrome");
+  ASSERT_EQ(mkdir((proc_dir + "/2").c_str(), 0755), 0);
+  ASSERT_TRUE(android::base::WriteStringToFile(
+      "com.android.chrome:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0",
+      proc_dir + "/2/cmdline"));
+  ASSERT_EQ(GetAppPackageNameForPid(2, proc_dir), "com.android.chrome");
+}
+
+// @CddTest = 6.1/C-0-2
 TEST(environment, GetCpuModels) {
 #if defined(__ANDROID__)
   auto models = GetCpuModels();

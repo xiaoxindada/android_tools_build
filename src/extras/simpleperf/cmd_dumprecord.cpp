@@ -229,6 +229,7 @@ class DumpRecordCommand : public Command {
   std::unique_ptr<RecordFileReader> record_file_reader_;
   std::unique_ptr<ETMDecoder> etm_decoder_;
   std::unique_ptr<ETMThreadTree> etm_thread_tree_;
+  bool is_spe_trace_ = false;
   ThreadTree thread_tree_;
 
   std::vector<EventInfo> events_;
@@ -368,12 +369,18 @@ bool DumpRecordCommand::ProcessRecord(Record* r) {
       ProcessCallChainRecord(*static_cast<CallChainRecord*>(r));
       break;
     case PERF_RECORD_AUXTRACE_INFO: {
-      etm_thread_tree_.reset(new ETMThreadTreeForDumpCmd(thread_tree_));
-      etm_decoder_ = ETMDecoder::Create(*static_cast<AuxTraceInfoRecord*>(r), *etm_thread_tree_);
-      if (etm_decoder_) {
-        etm_decoder_->EnableDump(etm_dump_option_);
+      const auto& auxtrace_info = static_cast<AuxTraceInfoRecord&>(*r);
+      if (auxtrace_info.data->aux_type == AuxTraceInfoRecord::AUX_TYPE_SPE) {
+        // Just flag that this is an SPE trace, not ETM.
+        is_spe_trace_ = true;
       } else {
-        res = false;
+        etm_thread_tree_.reset(new ETMThreadTreeForDumpCmd(thread_tree_));
+        etm_decoder_ = ETMDecoder::Create(auxtrace_info, *etm_thread_tree_);
+        if (etm_decoder_) {
+          etm_decoder_->EnableDump(etm_dump_option_);
+        } else {
+          res = false;
+        }
       }
       break;
     }
@@ -403,7 +410,7 @@ void DumpRecordCommand::ProcessSampleRecord(const SampleRecord& sr) {
       }
       SymbolInfo s =
           GetSymbolInfo(sr.tid_data.pid, sr.tid_data.tid, sr.callchain_data.ips[i], in_kernel);
-      PrintIndented(2, "%s (%s[+%" PRIx64 "])\n", s.symbol->DemangledName(), s.dso->Path().c_str(),
+      PrintIndented(2, "{} ({}[+{:x}])\n", s.symbol->DemangledName(), s.dso->Path(),
                     s.vaddr_in_file);
     }
   }
@@ -414,22 +421,22 @@ void DumpRecordCommand::ProcessSampleRecord(const SampleRecord& sr) {
       uint64_t to_ip = sr.branch_stack_data.stack[i].to;
       SymbolInfo from_symbol = GetSymbolInfo(sr.tid_data.pid, sr.tid_data.tid, from_ip);
       SymbolInfo to_symbol = GetSymbolInfo(sr.tid_data.pid, sr.tid_data.tid, to_ip);
-      PrintIndented(2, "%s (%s[+%" PRIx64 "]) -> %s (%s[+%" PRIx64 "])\n",
-                    from_symbol.symbol->DemangledName(), from_symbol.dso->Path().c_str(),
-                    from_symbol.vaddr_in_file, to_symbol.symbol->DemangledName(),
-                    to_symbol.dso->Path().c_str(), to_symbol.vaddr_in_file);
+      PrintIndented(2, "{} ({}[+{:x}]) -> {} ({}[+{:x}])\n", from_symbol.symbol->DemangledName(),
+                    from_symbol.dso->Path(), from_symbol.vaddr_in_file,
+                    to_symbol.symbol->DemangledName(), to_symbol.dso->Path(),
+                    to_symbol.vaddr_in_file);
     }
   }
   // Dump tracepoint fields.
   if (!events_.empty()) {
     size_t attr_index = record_file_reader_->GetAttrIndexOfRecord(&sr);
-    auto& event = events_[attr_index];
+    const auto& event = events_[attr_index];
     if (event.tp_data_size > 0 && sr.raw_data.size >= event.tp_data_size) {
       PrintIndented(1, "tracepoint fields:\n");
       for (size_t i = 0; i < event.tp_fields.size(); i++) {
-        auto& field = event.tp_fields[i];
+        const auto& field = event.tp_fields[i];
         std::string s = event.extract_field_functions[i](field, sr.raw_data);
-        PrintIndented(2, "%s: %s\n", field.name.c_str(), s.c_str());
+        PrintIndented(2, "{}: {}\n", field.name, s);
       }
     }
   }
@@ -439,8 +446,7 @@ void DumpRecordCommand::ProcessCallChainRecord(const CallChainRecord& cr) {
   PrintIndented(1, "callchain:\n");
   for (size_t i = 0; i < cr.ip_nr; ++i) {
     SymbolInfo s = GetSymbolInfo(cr.pid, cr.tid, cr.ips[i], false);
-    PrintIndented(2, "%s (%s[+%" PRIx64 "])\n", s.symbol->DemangledName(), s.dso->Path().c_str(),
-                  s.vaddr_in_file);
+    PrintIndented(2, "{} ({}[+{:x}])\n", s.symbol->DemangledName(), s.dso->Path(), s.vaddr_in_file);
   }
 }
 
@@ -459,6 +465,12 @@ SymbolInfo DumpRecordCommand::GetSymbolInfo(uint32_t pid, uint32_t tid, uint64_t
 }
 
 bool DumpRecordCommand::DumpAuxData(const AuxRecord& aux) {
+  if (is_spe_trace_) {
+    // AUX buffers are not dumped for SPE, it is done in report command.
+    // We still need to differentiate between SPE and ETM cases, otherwise code would branch
+    // into ETM codepath for SPE traces as well, and would crash there.
+    return true;
+  }
   if (aux.data->aux_size > SIZE_MAX) {
     LOG(ERROR) << "invalid aux size";
     return false;
@@ -519,8 +531,8 @@ bool DumpRecordCommand::DumpFeatureSection() {
         std::count(dump_features_.begin(), dump_features_.end(), feature_name) == 0) {
       continue;
     }
-    printf("feature section for %s: offset %" PRId64 ", size %" PRId64 "\n", feature_name.c_str(),
-           section.offset, section.size);
+    PrintIndented(0, "feature section for {}: offset {}, size {}\n", feature_name, section.offset,
+                  section.size);
     if (feature == FEAT_BUILD_ID) {
       std::vector<BuildIdRecord> records = record_file_reader_->ReadBuildIdFeature();
       for (auto& r : records) {
@@ -528,32 +540,32 @@ bool DumpRecordCommand::DumpFeatureSection() {
       }
     } else if (feature == FEAT_OSRELEASE) {
       std::string s = record_file_reader_->ReadFeatureString(feature);
-      PrintIndented(1, "osrelease: %s\n", s.c_str());
+      PrintIndented(1, "osrelease: {}\n", s);
     } else if (feature == FEAT_ARCH) {
       std::string s = record_file_reader_->ReadFeatureString(feature);
-      PrintIndented(1, "arch: %s\n", s.c_str());
+      PrintIndented(1, "arch: {}\n", s);
     } else if (feature == FEAT_CMDLINE) {
       std::vector<std::string> cmdline = record_file_reader_->ReadCmdlineFeature();
-      PrintIndented(1, "cmdline: %s\n", android::base::Join(cmdline, ' ').c_str());
+      PrintIndented(1, "cmdline: {}\n", android::base::Join(cmdline, ' '));
     } else if (feature == FEAT_FILE || feature == FEAT_FILE2) {
       FileFeature file;
       uint64_t read_pos = 0;
       bool error = false;
       PrintIndented(1, "file:\n");
       while (record_file_reader_->ReadFileFeature(read_pos, file, error)) {
-        PrintIndented(2, "file_path %s\n", file.path.c_str());
-        PrintIndented(2, "file_type %s\n", DsoTypeToString(file.type));
-        PrintIndented(2, "min_vaddr 0x%" PRIx64 "\n", file.min_vaddr);
-        PrintIndented(2, "file_offset_of_min_vaddr 0x%" PRIx64 "\n", file.file_offset_of_min_vaddr);
+        PrintIndented(2, "file_path {}\n", file.path);
+        PrintIndented(2, "file_type {}\n", DsoTypeToString(file.type));
+        PrintIndented(2, "min_vaddr 0x{:x}\n", file.min_vaddr);
+        PrintIndented(2, "file_offset_of_min_vaddr 0x{:x}\n", file.file_offset_of_min_vaddr);
         PrintIndented(2, "symbols:\n");
         for (const auto& symbol : file.symbols) {
-          PrintIndented(3, "%s [0x%" PRIx64 "-0x%" PRIx64 "]\n", symbol.DemangledName(),
-                        symbol.addr, symbol.addr + symbol.len);
+          PrintIndented(3, "{} [0x{:x}-0x{:x}]\n", symbol.DemangledName(), symbol.addr,
+                        symbol.addr + symbol.len);
         }
         if (file.type == DSO_DEX_FILE) {
           PrintIndented(2, "dex_file_offsets:\n");
           for (uint64_t offset : file.dex_file_offsets) {
-            PrintIndented(3, "0x%" PRIx64 "\n", offset);
+            PrintIndented(3, "0x{:x}\n", offset);
           }
         }
       }
@@ -562,20 +574,20 @@ bool DumpRecordCommand::DumpFeatureSection() {
       }
     } else if (feature == FEAT_META_INFO) {
       PrintIndented(1, "meta_info:\n");
-      for (auto& pair : record_file_reader_->GetMetaInfoFeature()) {
-        PrintIndented(2, "%s = %s\n", pair.first.c_str(), pair.second.c_str());
+      for (auto& [key, value] : record_file_reader_->GetMetaInfoFeature()) {
+        PrintIndented(2, "{} = {}\n", key, value);
       }
     } else if (feature == FEAT_AUXTRACE) {
       PrintIndented(1, "file_offsets_of_auxtrace_records:\n");
       for (auto offset : record_file_reader_->ReadAuxTraceFeature()) {
-        PrintIndented(2, "%" PRIu64 "\n", offset);
+        PrintIndented(2, "{}\n", offset);
       }
     } else if (feature == FEAT_DEBUG_UNWIND) {
       PrintIndented(1, "debug_unwind:\n");
       if (auto opt_debug_unwind = record_file_reader_->ReadDebugUnwindFeature(); opt_debug_unwind) {
         for (const DebugUnwindFile& file : opt_debug_unwind.value()) {
-          PrintIndented(2, "path: %s\n", file.path.c_str());
-          PrintIndented(2, "size: %" PRIu64 "\n", file.size);
+          PrintIndented(2, "path: {}\n", file.path);
+          PrintIndented(2, "size: {}\n", file.size);
         }
       }
     } else if (feature == FEAT_ETM_BRANCH_LIST) {
@@ -589,21 +601,17 @@ bool DumpRecordCommand::DumpFeatureSection() {
       }
       PrintIndented(1, "etm_branch_list:\n");
       for (const auto& [key, binary] : binary_map) {
-        PrintIndented(2, "path: %s\n", key.path.c_str());
-        PrintIndented(2, "build_id: %s\n", key.build_id.ToString().c_str());
-        PrintIndented(2, "binary_type: %s\n", DsoTypeToString(binary.dso_type));
+        PrintIndented(2, "path: {}\n", key.path);
+        PrintIndented(2, "build_id: {}\n", key.build_id.ToString());
+        PrintIndented(2, "binary_type: {}\n", DsoTypeToString(binary.dso_type));
         if (binary.dso_type == DSO_KERNEL) {
-          PrintIndented(2, "kernel_start_addr: 0x%" PRIx64 "\n", key.kernel_start_addr);
+          PrintIndented(2, "kernel_start_addr: 0x{:x}\n", key.kernel_start_addr);
         }
         for (const auto& [addr, branches] : binary.GetOrderedBranchMap()) {
-          PrintIndented(3, "addr: 0x%" PRIx64 "\n", addr);
+          PrintIndented(3, "addr: 0x{:x}\n", addr);
           for (const auto& [branch, count] : branches) {
-            std::string s = "0b";
-            for (auto it = branch.rbegin(); it != branch.rend(); ++it) {
-              s.push_back(*it ? '1' : '0');
-            }
-            PrintIndented(3, "branch: %s\n", s.c_str());
-            PrintIndented(3, "count: %" PRIu64 "\n", count);
+            PrintIndented(3, "branch: {}\n", BitsToString(branch));
+            PrintIndented(3, "count: {}\n", count);
           }
         }
       }

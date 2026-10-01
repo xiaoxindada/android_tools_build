@@ -17,9 +17,6 @@
 #ifndef _INIT_SECURITY_H
 #define _INIT_SECURITY_H
 
-#include <string>
-#include <vector>
-
 #include "builtin_arguments.h"
 #include "result.h"
 
@@ -27,7 +24,6 @@ namespace android {
 namespace init {
 
 Result<void> SetMmapRndBitsAction(const BuiltinArguments&);
-Result<void> TestPerfEventSelinuxAction(const BuiltinArguments&);
 
 }  // namespace init
 }  // namespace android

@@ -23,6 +23,8 @@
 #include <base/logging.h>
 #include <base/strings/string_number_conversions.h>
 #include <android-base/stringprintf.h>
+#include <android-base/unique_fd.h>
+#include <sys/stat.h>
 
 #include "update_engine/common/utils.h"
 #include "update_engine/update_metadata.pb.h"
@@ -144,8 +146,38 @@ string InstallPlan::ToString() const {
   return android::base::Join(result_str, "\n");
 }
 
+bool CheckTargetPartitionSize(const InstallPlan::Partition& partition) {
+  android::base::unique_fd fd(
+      open(partition.target_path.c_str(), O_RDONLY | O_CLOEXEC));
+  if (fd < 0) {
+    PLOG(ERROR) << "Error opening " << partition.target_path;
+    return false;
+  }
+  struct stat stbuf{};
+  if (fstat(fd.get(), &stbuf) < 0) {
+    PLOG(ERROR) << "Error stating " << partition.target_path;
+    return false;
+  }
+  if (!S_ISBLK(stbuf.st_mode)) {
+    LOG(INFO) << "Target partition " << partition.target_path
+              << " is not a block device. Skip partition size check";
+    return true;
+  }
+  const auto size = utils::BlockDevSize(fd);
+  if (size < 0) {
+    PLOG(WARNING) << "Unable to get size of target partition "
+                  << partition.target_path;
+    return false;
+  }
+  if (static_cast<uint64_t>(size) < partition.target_size) {
+    LOG(ERROR) << "Target partition " << partition.target_path << " size "
+               << size << " is smaller than expected " << partition.target_size;
+    return false;
+  }
+  return true;
+}
+
 bool InstallPlan::LoadPartitionsFromSlots(BootControlInterface* boot_control) {
-  bool result = true;
   for (Partition& partition : partitions) {
     if (source_slot != BootControlInterface::kInvalidSlot &&
         partition.source_size > 0) {
@@ -161,12 +193,17 @@ bool InstallPlan::LoadPartitionsFromSlots(BootControlInterface* boot_control) {
           partition.name, target_slot, source_slot);
       TEST_AND_RETURN_FALSE(device.has_value());
       partition.target_path = device->rw_device_path;
+      if (!partition.target_path.empty()) {
+        if (!CheckTargetPartitionSize(partition)) {
+          return false;
+        }
+      }
       partition.readonly_target_path = device->readonly_device_path;
     } else {
       partition.target_path.clear();
     }
   }
-  return result;
+  return true;
 }
 
 bool InstallPlan::Partition::operator==(

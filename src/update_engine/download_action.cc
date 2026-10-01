@@ -195,6 +195,10 @@ void DownloadAction::ResumeAction() {
 
 void DownloadAction::TerminateProcessing() {
   if (delta_performer_) {
+    // `TerminateProcessing` is called when user cancels the update.
+    // Save progress so that subsequent attempts can resume from exactly where
+    // update_engine left last time.
+    delta_performer_->CheckpointUpdateProgress(true);
     delta_performer_->Close();
     delta_performer_.reset();
   }

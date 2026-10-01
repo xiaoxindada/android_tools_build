@@ -286,3 +286,6 @@ class TaskProfiles {
 
 std::string ConvertUidToPath(const char* root_cgroup_path, uid_t uid, bool v2_path);
 std::string ConvertUidPidToPath(const char* root_cgroup_path, uid_t uid, pid_t pid, bool v2_path);
+std::string GetPathForCloneInto(const char* root_cgroup_path, uid_t uid, pid_t zygote_pid,
+                                uint64_t start_seq);
+std::string JoinPathForCloneInto(const char* uid_path, pid_t zygote_pid, uint64_t start_seq);

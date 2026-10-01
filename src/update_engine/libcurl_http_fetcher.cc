@@ -106,8 +106,7 @@ LibcurlHttpFetcher::~LibcurlHttpFetcher() {
   CleanUp();
 }
 
-bool LibcurlHttpFetcher::GetProxyType(const string& proxy_str,
-                                      curl_proxytype* out_type) {
+bool LibcurlHttpFetcher::GetProxyType(const string& proxy_str, long* out_type) {
   auto proxy = ToLower(proxy_str);
   if (android::base::StartsWith(proxy, "socks5://") ||
       android::base::StartsWith(proxy, "socks://")) {
@@ -159,7 +158,7 @@ void LibcurlHttpFetcher::ResumeTransfer(const string& url) {
                  curl_handle_, CURLOPT_PROXY, GetCurrentProxy().c_str()),
              CURLE_OK);
     // Curl seems to require us to set the protocol
-    curl_proxytype type{};
+    long type{};
     if (GetProxyType(GetCurrentProxy(), &type)) {
       CHECK_EQ(curl_easy_setopt(curl_handle_, CURLOPT_PROXYTYPE, type),
                CURLE_OK);

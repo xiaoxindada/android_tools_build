@@ -58363,7 +58363,7 @@
         "pthread_once (in /system/lib64/libc.so)",
         "close (in /system/lib64/libc.so)",
         "___close (in /system/lib64/libc.so)",
-        "_ZN3glm3dotIfLNS_9precisionE0ENS_6detail5tvec3EEET_RKT1_IS4_XT0_EES8_ (in /data/app/com.google.sample.tunnel-6H14CVHbcEdrOtriZzxjyA==/lib/arm64/libgame.so)",
+        "float glm::dot<float, (glm::precision)0, glm::detail::tvec3>(glm::detail::tvec3<float, (glm::precision)0> const&, glm::detail::tvec3<float, (glm::precision)0> const&) (in /data/app/com.google.sample.tunnel-6H14CVHbcEdrOtriZzxjyA==/lib/arm64/libgame.so)",
         "[kernel.kallsyms][+ffffffc0001c4932] (in [kernel.kallsyms])",
         "[kernel.kallsyms][+ffffffc0002040f6] (in [kernel.kallsyms])",
         "[kernel.kallsyms][+ffffffc000209e80] (in [kernel.kallsyms])",

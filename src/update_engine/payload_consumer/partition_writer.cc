@@ -21,7 +21,6 @@
 
 #include <inttypes.h>
 
-#include <algorithm>
 #include <initializer_list>
 #include <memory>
 #include <string>
@@ -95,7 +94,8 @@ FileDescriptorPtr OpenFile(const char* path,
   FileDescriptorPtr fd(new EintrSafeFileDescriptor());
   if (cache_writes && !read_only) {
     fd = FileDescriptorPtr(new CachedFileDescriptor(fd, kCacheSize));
-    LOG(INFO) << "Caching writes.";
+    LOG(INFO) << "Caching writes on " << path << " with " << (kCacheSize / 1024)
+              << " KiB cache";
   }
   if (!fd->Open(path, mode, 000)) {
     *err = errno;
@@ -192,6 +192,16 @@ bool PartitionWriter::PerformReplaceOperation(const InstallOperation& operation,
       operation, std::move(writer), data);
 }
 
+bool PartitionWriter::PerformReplaceOperation(const InstallOperation& operation,
+                                              int fd,
+                                              off_t offset,
+                                              size_t count) {
+  // Setup the ExtentWriter stack based on the operation type.
+  std::unique_ptr<ExtentWriter> writer = CreateBaseExtentWriter();
+  return install_op_executor_.ExecuteReplaceOperation(
+      operation, std::move(writer), fd, offset, count);
+}
+
 bool PartitionWriter::PerformZeroOrDiscardOperation(
     const InstallOperation& operation) {
 #ifdef BLKZEROOUT
@@ -261,6 +271,19 @@ bool PartitionWriter::PerformDiffOperation(const InstallOperation& operation,
       operation, std::move(writer), source_fd, data, count);
 }
 
+bool PartitionWriter::PerformDiffOperation(const InstallOperation& operation,
+                                           ErrorCode* error,
+                                           int fd,
+                                           off_t offset,
+                                           size_t count) {
+  FileDescriptorPtr source_fd = ChooseSourceFD(operation, error);
+  TEST_AND_RETURN_FALSE(source_fd != nullptr);
+
+  auto writer = CreateBaseExtentWriter();
+  return install_op_executor_.ExecuteDiffOperation(
+      operation, std::move(writer), source_fd, fd, offset, count);
+}
+
 FileDescriptorPtr PartitionWriter::ChooseSourceFD(
     const InstallOperation& operation, ErrorCode* error) {
   return verified_source_fd_.ChooseSourceFD(operation, error);
@@ -269,17 +292,13 @@ FileDescriptorPtr PartitionWriter::ChooseSourceFD(
 int PartitionWriter::Close() {
   int err = 0;
 
-  source_path_.clear();
-
   if (target_fd_ && !target_fd_->Close()) {
     err = errno;
-    PLOG(ERROR) << "Error closing target partition";
+    PLOG(ERROR) << "Error closing target partition " << target_path_;
     if (!err)
       err = 1;
   }
   target_fd_.reset();
-  target_path_.clear();
-
   return -err;
 }
 

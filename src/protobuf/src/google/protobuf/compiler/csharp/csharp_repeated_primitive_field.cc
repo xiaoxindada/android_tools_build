@@ -28,9 +28,7 @@ RepeatedPrimitiveFieldGenerator::RepeatedPrimitiveFieldGenerator(
     : FieldGeneratorBase(descriptor, presenceIndex, options) {
 }
 
-RepeatedPrimitiveFieldGenerator::~RepeatedPrimitiveFieldGenerator() {
-
-}
+RepeatedPrimitiveFieldGenerator::~RepeatedPrimitiveFieldGenerator() = default;
 
 void RepeatedPrimitiveFieldGenerator::GenerateMembers(io::Printer* printer) {
   printer->Print(
@@ -39,7 +37,7 @@ void RepeatedPrimitiveFieldGenerator::GenerateMembers(io::Printer* printer) {
     "    = pb::FieldCodec.For$capitalized_type_name$($tag$);\n");
   printer->Print(variables_,
     "private readonly pbc::RepeatedField<$type_name$> $name$_ = new pbc::RepeatedField<$type_name$>();\n");
-  WritePropertyDocComment(printer, descriptor_);
+  WritePropertyDocComment(printer, options(), descriptor_);
   AddPublicMemberAttributes(printer);
   printer->Print(
     variables_,
@@ -108,7 +106,7 @@ void RepeatedPrimitiveFieldGenerator::GenerateFreezingCode(io::Printer* printer)
 }
 
 void RepeatedPrimitiveFieldGenerator::GenerateExtensionCode(io::Printer* printer) {
-  WritePropertyDocComment(printer, descriptor_);
+  WritePropertyDocComment(printer, options(), descriptor_);
   AddDeprecatedFlag(printer);
   printer->Print(
     variables_,

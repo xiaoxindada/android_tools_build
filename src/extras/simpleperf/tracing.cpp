@@ -254,21 +254,21 @@ void TracingFile::Dump(size_t indent) const {
     printf("%c", magic[i]);
   }
   printf("\n");
-  PrintIndented(indent + 1, "version: %s\n", version.c_str());
-  PrintIndented(indent + 1, "endian: %d\n", endian);
-  PrintIndented(indent + 1, "header_page:\n%s\n\n", header_page_file.c_str());
-  PrintIndented(indent + 1, "header_event:\n%s\n\n", header_event_file.c_str());
+  PrintIndented(indent + 1, "version: {}\n", version);
+  PrintIndented(indent + 1, "endian: {}\n", endian);
+  PrintIndented(indent + 1, "header_page:\n{}\n\n", header_page_file);
+  PrintIndented(indent + 1, "header_event:\n{}\n\n", header_event_file);
   for (size_t i = 0; i < ftrace_format_files.size(); ++i) {
-    PrintIndented(indent + 1, "ftrace format file %zu/%zu:\n%s\n\n", i + 1,
-                  ftrace_format_files.size(), ftrace_format_files[i].c_str());
+    PrintIndented(indent + 1, "ftrace format file {}/{}:\n{}\n\n", i + 1,
+                  ftrace_format_files.size(), ftrace_format_files[i]);
   }
   for (size_t i = 0; i < event_format_files.size(); ++i) {
-    PrintIndented(indent + 1, "event format file %zu/%zu %s:\n%s\n\n", i + 1,
-                  event_format_files.size(), event_format_files[i].first.c_str(),
-                  event_format_files[i].second.c_str());
+    PrintIndented(indent + 1, "event format file {}/{} {}:\n{}\n\n", i + 1,
+                  event_format_files.size(), event_format_files[i].first,
+                  event_format_files[i].second);
   }
-  PrintIndented(indent + 1, "kallsyms:\n%s\n\n", kallsyms_file.c_str());
-  PrintIndented(indent + 1, "printk_formats:\n%s\n\n", printk_formats_file.c_str());
+  PrintIndented(indent + 1, "kallsyms:\n{}\n\n", kallsyms_file);
+  PrintIndented(indent + 1, "printk_formats:\n{}\n\n", printk_formats_file);
 }
 
 enum class FormatParsingState {

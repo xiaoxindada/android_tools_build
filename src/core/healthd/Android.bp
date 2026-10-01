@@ -79,7 +79,7 @@ cc_library_static {
     defaults: ["libbatterymonitor_defaults"],
     srcs: ["BatteryMonitor.cpp"],
     static_libs: [
-        "android.hardware.health-V4-ndk",
+        "android.hardware.health-V5-ndk",
     ],
     whole_static_libs: [
         // Need to translate HIDL to AIDL to support legacy APIs in
@@ -168,12 +168,12 @@ cc_library_static {
     defaults: ["libhealthd_charger_ui_defaults"],
 
     static_libs: [
-        "android.hardware.health-V4-ndk",
+        "android.hardware.health-V5-ndk",
         "android.hardware.health-translate-ndk",
     ],
 
     export_static_lib_headers: [
-        "android.hardware.health-V4-ndk",
+        "android.hardware.health-V5-ndk",
     ],
 }
 
@@ -245,7 +245,7 @@ cc_defaults {
     static_libs: [
         // common
         "android.hardware.health@1.0-convert",
-        "android.hardware.health-V4-ndk",
+        "android.hardware.health-V5-ndk",
         "libbatterymonitor",
         "libcharger_sysprop",
         "libhealthd_charger_nops",
@@ -301,10 +301,11 @@ cc_test {
         "-Werror",
     ],
     shared_libs: [
+        "libbase",
         "libutils",
     ],
     static_libs: [
-        "android.hardware.health-V4-ndk",
+        "android.hardware.health-V5-ndk",
         "libbatterymonitor",
     ],
     srcs: ["battery_monitor_test.cpp"],
@@ -385,6 +386,15 @@ prebuilt_etc {
     filename: "battery_fail.png",
 }
 
+// /vendor/etc/res/images/default/charger/battery_overheat.png
+prebuilt_etc {
+    name: "system_core_charger_res_images_battery_overheat.png_default_vendor",
+    src: "images/battery_overheat.png",
+    relative_install_path: "res/images/default/charger",
+    vendor: true,
+    filename: "battery_overheat.png",
+}
+
 // /vendor/etc/res/images/default/charger/battery_scale.png
 prebuilt_etc {
     name: "system_core_charger_res_images_battery_scale.png_default_vendor",
@@ -398,6 +408,7 @@ phony {
     name: "charger_res_images_vendor",
     required: [
         "system_core_charger_res_images_battery_fail.png_default_vendor",
+        "system_core_charger_res_images_battery_overheat.png_default_vendor",
         "system_core_charger_res_images_battery_scale.png_default_vendor",
     ],
 }

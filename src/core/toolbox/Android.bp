@@ -54,6 +54,12 @@ cc_defaults {
         "libmodprobe",
         "libpropertyinfoparser",
     ],
+    cppflags: select(release_flag("RELEASE_NATIVE_FRAMEWORK_PROTOTYPE"), {
+        true: [
+            "-DANDROID_NATIVE_FRAMEWORK_PROTOTYPE",
+        ],
+        default: [],
+    }),
 
     symlinks: [
         "getevent",

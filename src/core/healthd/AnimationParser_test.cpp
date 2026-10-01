@@ -56,9 +56,9 @@ TEST(AnimationParserTest, Test_parse_text_field) {
     static const int TEST_A = 8;
 
     static const char TEST_XCENT_YCENT[] = "c c 1 2 4 8  font_file ";
-    static const char TEST_XCENT_YVAL[]  = "c 6 1 2 4 8  font_file ";
-    static const char TEST_XVAL_YCENT[]  = "3 c 1 2 4 8  font_file ";
-    static const char TEST_XVAL_YVAL[]   = "3 6 1 2 4 8  font_file ";
+    static const char TEST_XCENT_YVAL[] = "c 6 1 2 4 8  font_file ";
+    static const char TEST_XVAL_YCENT[] = "3 c 1 2 4 8  font_file ";
+    static const char TEST_XVAL_YVAL[] = "3 6 1 2 4 8  font_file ";
     static const char TEST_BAD_MISSING[] = "c c 1 2 4 font_file";
     static const char TEST_BAD_NO_FILE[] = "c c 1 2 4 8";
 

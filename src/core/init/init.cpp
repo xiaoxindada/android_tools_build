@@ -31,6 +31,7 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 
+#include <condition_variable>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -67,6 +68,7 @@
 #include "action_manager.h"
 #include "action_parser.h"
 #include "apex_init_util.h"
+#include "com_android_init_flags.h"
 #include "epoll.h"
 #include "first_stage_init.h"
 #include "first_stage_mount.h"
@@ -75,6 +77,7 @@
 #include "lmkd_service.h"
 #include "mount_handler.h"
 #include "mount_namespace.h"
+#include "ota_utils.h"
 #include "property_service.h"
 #include "proto_utils.h"
 #include "reboot.h"
@@ -132,6 +135,11 @@ struct PendingControlMessage {
 };
 [[clang::no_destroy]] static std::mutex pending_control_messages_lock;
 [[clang::no_destroy]] static std::queue<PendingControlMessage> pending_control_messages;
+
+[[clang::no_destroy]] static std::condition_variable udc_detection_cv;
+[[clang::no_destroy]] static std::mutex udc_controller_lock;
+static auto udc_controller_set = false;
+[[clang::no_destroy]] static std::atomic<bool> udc_timeout = false;
 
 // Init epolls various FDs to wait for various inputs.  It previously waited on property changes
 // with a blocking socket that contained the information related to the change, however, it was easy
@@ -224,11 +232,11 @@ static class PropWaiterState {
     }
 
     std::mutex lock_;
-    GUARDED_BY(lock_) std::unique_ptr<Timer> waiting_for_prop_{nullptr};
+    GUARDED_BY(lock_) std::unique_ptr<Timer> waiting_for_prop_ { nullptr };
     GUARDED_BY(lock_) std::string wait_prop_name_;
     GUARDED_BY(lock_) std::string wait_prop_value_;
 
-} prop_waiter_state;
+} prop_waiter_state [[clang::no_destroy]];
 
 bool start_waiting_for_property(const char* name, const char* value) {
     return prop_waiter_state.StartWaiting(name, value);
@@ -481,7 +489,11 @@ static Result<void> UpdateApexLinkerConfig(const std::string& apex_name) {
     if (access(bin_path.c_str(), R_OK) != 0) {
         return {};
     }
+#if defined(RELEASE_DEPRECATE_RUNTIME_APEX)
+    const char* linkerconfig_binary = "/system/bin/linkerconfig";
+#else
     const char* linkerconfig_binary = "/apex/com.android.runtime/bin/linkerconfig";
+#endif
     const char* linkerconfig_target = "/linkerconfig";
     const char* arguments[] = {linkerconfig_binary, "--target", linkerconfig_target, "--apex",
                                apex_name.c_str(),   "--strict"};
@@ -678,23 +690,50 @@ static Result<void> queue_property_triggers_action(const BuiltinArguments& args)
     return {};
 }
 
+// Needs to be called after PropertyInit() is called
+static BootMode GetBootMode() {
+    auto bootmode = GetProperty("ro.bootmode", GetProperty("ro.boot.mode", ""));
+    if (bootmode == "charger") {
+        return BootMode::CHARGER_MODE;
+    } else if (IsRecoveryMode() && GetIntProperty("ro.boot.force_normal_boot", 0) == 0) {
+        return BootMode::RECOVERY_MODE;
+    }
+
+    return BootMode::NORMAL_MODE;
+}
+
 // Set the UDC controller for the ConfigFS USB Gadgets.
 // Read the UDC controller in use from "/sys/class/udc".
 // In case of multiple UDC controllers select the first one.
-static void SetUsbController() {
-    static auto controller_set = false;
-    if (controller_set) return;
-    std::unique_ptr<DIR, decltype(&closedir)> dir(opendir("/sys/class/udc"), closedir);
-    if (!dir) return;
+static void SetUsbController(bool run_loop) {
+    if (udc_controller_set) return;
 
-    dirent* dp;
-    while ((dp = readdir(dir.get())) != nullptr) {
-        if (dp->d_name[0] == '.') continue;
+    do {
+        std::unique_ptr<DIR, decltype(&closedir)> dir(opendir("/sys/class/udc"), closedir);
+        if (!dir) return;
 
-        SetProperty("sys.usb.controller", dp->d_name);
-        controller_set = true;
-        break;
-    }
+        dirent* dp;
+        while ((dp = readdir(dir.get())) != nullptr) {
+            if (dp->d_name[0] == '.') continue;
+
+            SetProperty("sys.usb.controller", dp->d_name);
+            std::lock_guard<std::mutex> lock(udc_controller_lock);
+            udc_controller_set = true;
+
+            // Recovery and Charger mode always uses configfs=1.
+            if (GetBootMode() != BootMode::NORMAL_MODE) {
+                SetProperty("sys.usb.configfs", "1");
+            }
+            run_loop = false;
+            break;
+        }
+
+        if (run_loop && !udc_timeout) {
+            std::this_thread::sleep_for(100ms);
+        }
+    } while (!udc_timeout && run_loop);
+
+    udc_detection_cv.notify_one();
 }
 
 /// Set ro.kernel.version property to contain the major.minor pair as returned
@@ -743,9 +782,7 @@ static void HandleSignalFd(int signal) {
 }
 
 static void UnblockSignals() {
-    const struct sigaction act {
-        .sa_handler = SIG_DFL
-    };
+    const struct sigaction act{.sa_handler = SIG_DFL};
     sigaction(SIGCHLD, &act, nullptr);
 
     sigset_t mask;
@@ -782,9 +819,7 @@ static Result<int> CreateAndRegisterSignalFd(Epoll* epoll, int signal) {
 static void InstallSignalFdHandler(Epoll* epoll) {
     // Applying SA_NOCLDSTOP to a defaulted SIGCHLD handler prevents the signalfd from receiving
     // SIGCHLD when a child process stops or continues (b/77867680#comment9).
-    const struct sigaction act {
-        .sa_flags = SA_NOCLDSTOP, .sa_handler = SIG_DFL
-    };
+    const struct sigaction act{.sa_flags = SA_NOCLDSTOP, .sa_handler = SIG_DFL};
     sigaction(SIGCHLD, &act, nullptr);
 
     // Register a handler to unblock signals in the child processes.
@@ -866,22 +901,6 @@ static void MountExtraFilesystems() {
 #undef CHECKCALL
 }
 
-static void InitExtraDevices() {
-    if constexpr (com::android::apex::flags::mount_before_data()) {
-        // Pre-create a bunch of loop devices to accelerate apexd later. This effectively overrides
-        // CONFIG_BLK_DEV_LOOP_MIN_COUNT. 128 loop devices should be enough for now because most
-        // devices have < 100 apexes.
-        constexpr int kMaxLoopDevices = 128;
-        // Fire off a thread to pre-create the loop devices to avoid blocking the init.
-        std::thread([]() {
-            dm::LoopControl loop_control;
-            for (int i = 0; i < kMaxLoopDevices; i++) {
-                (void)loop_control.Add(i);
-            }
-        }).detach();
-    }
-}
-
 static void RecordStageBoottimes(const boot_clock::time_point& second_stage_start_time) {
     int64_t first_stage_start_time_ns = -1;
     if (auto first_stage_start_time_str = getenv(kEnvFirstStageStartedAt);
@@ -922,12 +941,6 @@ void SendLoadPersistentPropertiesMessage() {
 static Result<void> ConnectEarlyStageSnapuserdAction(const BuiltinArguments& args) {
     auto pid = GetSnapuserdFirstStagePid();
     if (!pid) {
-        return {};
-    }
-
-    auto info = GetSnapuserdFirstStageInfo();
-    if (auto iter = std::find(info.begin(), info.end(), "socket"s); iter == info.end()) {
-        // snapuserd does not support socket handoff, so exit early.
         return {};
     }
 
@@ -1025,6 +1038,11 @@ static void SecondStageBootMonitor(int timeout_sec) {
     int extra_sec = timeout_sec <= cur_sec ? 0 : timeout_sec - cur_sec;
     auto boot_timeout = std::chrono::seconds(extra_sec);
 
+    // since boot_completed isn't updated in the recovery boot, let's skip the monitor
+    if (IsRecoveryMode()) {
+        return;
+    }
+
     LOG(INFO) << "Started BootMonitorThread, expiring in " << timeout_sec
               << " seconds from boot-up";
 
@@ -1046,7 +1064,7 @@ static void StartSecondStageBootMonitor(int timeout_sec) {
 }
 
 int SecondStageMain(int argc, char** argv) {
-    if (REBOOT_BOOTLOADER_ON_PANIC) {
+    if (REBOOT_BOOTLOADER_ON_PANIC && !AttemptingToBootNewSlot()) {
         InstallRebootSignalHandlers();
     }
 
@@ -1136,11 +1154,6 @@ int SecondStageMain(int argc, char** argv) {
     InstallInitNotifier(&epoll);
     StartPropertyService(&property_fd);
 
-    // Initialize extra devices required during second stage init.
-    // This may spawn threads for background work. Hence, this should be after
-    // InstallSignalFdHandler() which needs to be called before spawning any threads.
-    InitExtraDevices();
-
     // If boot_timeout property has been set in a debug build, start the boot monitor
     if (GetBoolProperty("ro.debuggable", false)) {
         int timeout = GetIntProperty("ro.boot.boot_timeout", 0);
@@ -1158,10 +1171,25 @@ int SecondStageMain(int argc, char** argv) {
     }
     unsetenv("INIT_AVB_VERSION");
 
-    fs_mgr_vendor_overlay_mount_all();
+    if constexpr (!IsMicrodroid()) {
+        fs_mgr_vendor_overlay_mount_all();
+    }
     export_oem_lock_status();
     MountHandler mount_handler(&epoll);
-    SetUsbController();
+
+    BootMode bootmode = GetBootMode();
+
+    // Set the default value of sys.usb.configfs
+    SetProperty("sys.usb.configfs", "0");
+
+    std::unique_ptr<std::thread> usb_controller_thread;
+    bool wait_for_udc =
+            bootmode != BootMode::NORMAL_MODE && GetBoolProperty("ro.boot.wait_for_udc", false);
+    if (!wait_for_udc) {
+        SetUsbController(false);
+    } else {
+        usb_controller_thread = std::make_unique<std::thread>(&SetUsbController, true);
+    }
     SetKernelVersion();
 
     const BuiltinFunctionMap& function_map = GetBuiltinFunctionMap();
@@ -1174,6 +1202,7 @@ int SecondStageMain(int argc, char** argv) {
     InitializeSubcontext();
 
     ActionManager& am = ActionManager::GetInstance();
+    am.EnableInitEventTimestamp(com::android::init::flags::enable_init_event_timestamp());
     ServiceList& sm = ServiceList::GetInstance();
 
     LoadBootScripts(am, sm);
@@ -1192,6 +1221,10 @@ int SecondStageMain(int argc, char** argv) {
         if (android::gsi::GetActiveDsu(&dsu_slot)) {
             SetProperty(gsi::kDsuSlotProp, dsu_slot);
         }
+        // Disable mount-apex-before-data for DSU/GSI device to avoid using /metadata/apex
+        // which is for the original Android.
+        // TODO(b/487508309)
+        SetProperty(kApexdUseFiemapProp, "false");
     }
 
     // This needs to happen before kptr_restrict is raised, as we are trying to
@@ -1203,7 +1236,6 @@ int SecondStageMain(int argc, char** argv) {
     Service::OpenAndSaveStaticKallsymsFd();
 
     am.QueueBuiltinAction(SetupCgroupsAction, "SetupCgroups");
-    am.QueueBuiltinAction(TestPerfEventSelinuxAction, "TestPerfEventSelinux");
     am.QueueEventTrigger("early-init");
     am.QueueBuiltinAction(ConnectEarlyStageSnapuserdAction, "ConnectEarlyStageSnapuserd");
 
@@ -1230,9 +1262,21 @@ int SecondStageMain(int argc, char** argv) {
 
     // Copy logs captures from pstore. Flush the logs when boot completes
     am.QueueBuiltinAction(SetCopyRollbackLogsAction, "CopyRollbackLogs");
+
+    if (wait_for_udc) {
+        std::unique_lock<std::mutex> udc_lock(udc_controller_lock);
+        bool ret = udc_detection_cv.wait_for(udc_lock, std::chrono::seconds(10),
+                                             [] { return udc_controller_set; });
+        if (!ret) {
+            // Notify the SetUsbController thread to exit
+            udc_timeout = true;
+        }
+        udc_lock.unlock();
+        usb_controller_thread->join();
+    }
+
     // Don't mount filesystems or start core system services in charger mode.
-    std::string bootmode = GetProperty("ro.bootmode", "");
-    if (bootmode == "charger") {
+    if (bootmode == BootMode::CHARGER_MODE) {
         am.QueueEventTrigger("charger");
     } else {
         am.QueueEventTrigger("late-init");
@@ -1291,7 +1335,7 @@ int SecondStageMain(int argc, char** argv) {
         }
         if (!IsShuttingDown()) {
             HandleControlMessages();
-            SetUsbController();
+            SetUsbController(false);
         }
     }
 

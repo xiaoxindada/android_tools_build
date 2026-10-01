@@ -7,47 +7,50 @@
 
 #include "upb/util/def_to_proto.h"
 
+#include <cstddef>
 #include <memory>
 #include <string>
 
 #include "google/protobuf/descriptor.pb.h"
+#include "google/protobuf/descriptor.upb.h"
 #include "google/protobuf/descriptor.upbdefs.h"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include "google/protobuf/dynamic_message.h"
 #include "google/protobuf/util/message_differencer.h"
+#include "upb/base/string_view.h"
 #include "upb/mem/arena.hpp"
 #include "upb/reflection/def.hpp"
 #include "upb/test/parse_text_proto.h"
+#include "upb/util/def_to_proto_editions_test.upbdefs.h"
 #include "upb/util/def_to_proto_test.h"
 #include "upb/util/def_to_proto_test.upbdefs.h"
 
 namespace upb_test {
 
 // Loads and retrieves a descriptor for `msgdef` into the given `pool`.
-const google::protobuf::Descriptor* AddMessageDescriptor(
-    upb::MessageDefPtr msgdef, google::protobuf::DescriptorPool* pool) {
+const google::protobuf::Descriptor* AddMessageDescriptor(upb::MessageDefPtr msgdef,
+                                               google::protobuf::DescriptorPool* pool) {
   upb::Arena tmp_arena;
   upb::FileDefPtr file = msgdef.file();
   google_protobuf_FileDescriptorProto* upb_proto =
       upb_FileDef_ToProto(file.ptr(), tmp_arena.ptr());
   size_t size;
-  const char* buf = google_protobuf_FileDescriptorProto_serialize(
-      upb_proto, tmp_arena.ptr(), &size);
+  const char* buf =
+      google_protobuf_FileDescriptorProto_serialize(upb_proto, tmp_arena.ptr(), &size);
   google::protobuf::FileDescriptorProto google_proto;
   google_proto.ParseFromArray(buf, size);
-  const google::protobuf::FileDescriptor* file_desc =
-      pool->BuildFile(google_proto);
+  const google::protobuf::FileDescriptor* file_desc = pool->BuildFile(google_proto);
   EXPECT_TRUE(file_desc != nullptr);
   return pool->FindMessageTypeByName(msgdef.full_name());
 }
 
 // Converts a upb `msg` (with type `msgdef`) into a protobuf Message object from
 // the given factory and descriptor.
-std::unique_ptr<google::protobuf::Message> ToProto(
-    const upb_Message* msg, const upb_MessageDef* msgdef,
-    const google::protobuf::Descriptor* desc,
-    google::protobuf::MessageFactory* factory) {
+std::unique_ptr<google::protobuf::Message> ToProto(const upb_Message* msg,
+                                         const upb_MessageDef* msgdef,
+                                         const google::protobuf::Descriptor* desc,
+                                         google::protobuf::MessageFactory* factory) {
   upb::Arena arena;
   EXPECT_TRUE(desc != nullptr);
   std::unique_ptr<google::protobuf::Message> google_msg(
@@ -71,13 +74,12 @@ MATCHER_P2(EqualsUpbProto, proto, msgdef_func,
   google::protobuf::DynamicMessageFactory factory;
   upb::MessageDefPtr msgdef(msgdef_func(defpool.ptr()));
   EXPECT_TRUE(msgdef.ptr() != nullptr);
-  const google::protobuf::Descriptor* desc =
-      AddMessageDescriptor(msgdef, &pool);
+  const google::protobuf::Descriptor* desc = AddMessageDescriptor(msgdef, &pool);
   EXPECT_TRUE(desc != nullptr);
   std::unique_ptr<google::protobuf::Message> m1(
-      ToProto(proto, msgdef.ptr(), desc, &factory));
+      ToProto(UPB_UPCAST(proto), msgdef.ptr(), desc, &factory));
   std::unique_ptr<google::protobuf::Message> m2(
-      ToProto(arg, msgdef.ptr(), desc, &factory));
+      ToProto((upb_Message*)arg, msgdef.ptr(), desc, &factory));
   std::string differences;
   google::protobuf::util::MessageDifferencer differencer;
   differencer.ReportDifferencesToString(&differences);
@@ -95,9 +97,8 @@ void CheckFile(const upb::FileDefPtr file,
   upb::Arena arena;
   google_protobuf_FileDescriptorProto* proto2 =
       upb_FileDef_ToProto(file.ptr(), arena.ptr());
-  ASSERT_THAT(
-      proto,
-      EqualsUpbProto(proto2, google_protobuf_FileDescriptorProto_getmsgdef));
+  ASSERT_THAT(proto,
+              EqualsUpbProto(proto2, google_protobuf_FileDescriptorProto_getmsgdef));
 }
 
 // Verifies that upb/util/def_to_proto_test.proto can round-trip:
@@ -113,6 +114,29 @@ TEST(DefToProto, Test) {
   upb::MessageDefPtr msgdef(pkg_Message_getmsgdef(defpool.ptr()));
   upb::FileDefPtr file = msgdef.file();
   CheckFile(file, file_desc);
+}
+
+// Verifies that editions don't leak out legacy feature APIs (e.g. TYPE_GROUP
+// and LABEL_REQUIRED):
+//   serialized descriptor -> upb def -> serialized descriptor
+TEST(DefToProto, TestEditionsLegacyFeatures) {
+  upb::Arena arena;
+  upb::DefPool defpool;
+  upb_StringView test_file_desc =
+      upb_util_def_to_proto_editions_test_proto_upbdefinit
+          .descriptor;
+  const auto* file = google_protobuf_FileDescriptorProto_parse(
+      test_file_desc.data, test_file_desc.size, arena.ptr());
+
+  size_t size;
+  const auto* messages = google_protobuf_FileDescriptorProto_message_type(file, &size);
+  ASSERT_EQ(size, 1);
+  const auto* fields = google_protobuf_DescriptorProto_field(messages[0], &size);
+  ASSERT_EQ(size, 2);
+  EXPECT_EQ(google_protobuf_FieldDescriptorProto_label(fields[0]),
+            google_protobuf_FieldDescriptorProto_LABEL_OPTIONAL);
+  EXPECT_EQ(google_protobuf_FieldDescriptorProto_type(fields[1]),
+            google_protobuf_FieldDescriptorProto_TYPE_MESSAGE);
 }
 
 // Like the previous test, but uses a message layout built at runtime.
@@ -249,28 +273,6 @@ TEST(FuzzTest, DefaultWithValidHexEscapePrintable) {
            })pb"));
 }
 
-// begin:google_only
-// TEST(FuzzTest, DependencyWithEmbeddedNull) {
-//   RoundTripDescriptor(ParseTextProtoOrDie(R"pb(file {
-//                                                  name: "a"
-//                                                  dependency: "a\000"
-//                                                  options { cc_api_version: 0 }
-//                                                  weak_dependency: 0
-//                                                })pb"));
-// }
-//
-// TEST(FuzzTest, NanInOptions) {
-//   RoundTripDescriptor(
-//       ParseTextProtoOrDie(R"pb(file {
-//                                  name: ""
-//                                  service {
-//                                    name: "A"
-//                                    options { failure_detection_delay: nan }
-//                                  }
-//                                })pb"));
-// }
-// end:google_only
-
 TEST(FuzzTest, PackageStartsWithNumber) {
   RoundTripDescriptor(
       ParseTextProtoOrDie(R"pb(file { name: "" package: "0" })pb"));
@@ -304,6 +306,32 @@ TEST(FuzzTest, RoundTripDescriptorRegressionOneofSameName) {
                oneof_decl { name: "k" }
              }
            })pb"));
+}
+
+TEST(FuzzTest, NegativeOneofIndex) {
+  RoundTripDescriptor(ParseTextProtoOrDie(
+      R"pb(file {
+             message_type {
+               name: "A"
+               field { name: "A" number: 0 type_name: "" oneof_index: -1 }
+             }
+           }
+      )pb"));
+}
+
+TEST(FuzzTest, EnumVisibility) {
+  RoundTripDescriptor(ParseTextProtoOrDie(
+      R"pb(file {
+             name: "n"
+             package: "p"
+             enum_type {
+               name: "E"
+               value { name: "MM" number: 0 }
+               visibility: VISIBILITY_EXPORT
+             }
+             message_type { name: "M" visibility: VISIBILITY_EXPORT }
+           }
+      )pb"));
 }
 
 }  // namespace upb_test

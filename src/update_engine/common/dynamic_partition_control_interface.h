@@ -44,10 +44,9 @@ struct PartitionDevice {
 };
 
 struct FeatureFlag {
-  enum class Value { NONE = 0, RETROFIT, LAUNCH };
+  enum class Value { NONE = 0, LAUNCH };
   constexpr explicit FeatureFlag(Value value) : value_(value) {}
   constexpr bool IsEnabled() const { return value_ != Value::NONE; }
-  constexpr bool IsRetrofit() const { return value_ == Value::RETROFIT; }
   constexpr bool IsLaunch() const { return value_ == Value::LAUNCH; }
 
  private:
@@ -61,8 +60,7 @@ class DynamicPartitionControlInterface {
   virtual ~DynamicPartitionControlInterface() = default;
 
   // Return the feature flags of dynamic partitions on this device.
-  // Return RETROFIT iff dynamic partitions is retrofitted on this device,
-  //        LAUNCH iff this device is launched with dynamic partitions,
+  // Return LAUNCH iff this device is launched with dynamic partitions,
   //        NONE iff dynamic partitions is disabled on this device.
   virtual FeatureFlag GetDynamicPartitionsFeatureFlag() = 0;
 
@@ -75,9 +73,6 @@ class DynamicPartitionControlInterface {
   virtual FeatureFlag GetVirtualAbCompressionFeatureFlag() = 0;
   // Return the feature flag for Virtual AB Compression XOR
   virtual FeatureFlag GetVirtualAbCompressionXorFeatureFlag() = 0;
-  // Returns whether userspace snapshots are enabled on the device, but not
-  // whether they're enabled for the update.
-  virtual FeatureFlag GetVirtualAbUserspaceSnapshotsFeatureFlag() = 0;
 
   // Attempt to optimize |operation|.
   // If successful, |optimized| contains an operation with extents that

@@ -172,7 +172,8 @@ struct PartitionInfo {
 
 static uint64_t CalculateBlockDeviceSize(uint32_t alignment, uint32_t metadata_size,
                                          uint32_t metadata_slots,
-                                         const std::vector<PartitionInfo>& partitions) {
+                                         const std::vector<PartitionInfo>& partitions,
+                                         uint32_t block_size) {
     uint64_t ret = LP_PARTITION_RESERVED_BYTES;
     ret += LP_METADATA_GEOMETRY_SIZE * 2;
 
@@ -188,11 +189,11 @@ static uint64_t CalculateBlockDeviceSize(uint32_t alignment, uint32_t metadata_s
         ret += to_add;
     }
 
-    ret += partitions.size() * alignment;
+    ret += __builtin_align_up(partitions.size() * alignment, block_size);
     for (const auto& partition_info : partitions) {
-        ret += partition_info.size;
+        ret += __builtin_align_up(partition_info.size, block_size);
     }
-    return ret;
+    return __builtin_align_up(ret, block_size);
 }
 
 static bool GetFileSize(const std::string& path, uint64_t* size) {
@@ -383,8 +384,8 @@ int main(int argc, char* argv[]) {
     }
 
     if (auto_blockdevice_size) {
-        blockdevice_size =
-                CalculateBlockDeviceSize(alignment, metadata_size, metadata_slots, partitions);
+        blockdevice_size = CalculateBlockDeviceSize(alignment, metadata_size, metadata_slots,
+                                                    partitions, block_size);
         if (!blockdevice_size) {
             fprintf(stderr, "Invalid block device parameters.\n");
             return EX_USAGE;

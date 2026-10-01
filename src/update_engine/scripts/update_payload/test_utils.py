@@ -295,7 +295,7 @@ class EnhancedPayloadGenerator(PayloadGenerator):
 
     Args:
       part_name: The name of the partition (e.g. kernel or root).
-      op_type: one of REPLACE, REPLACE_BZ, REPLACE_XZ.
+      op_type: one of REPLACE, REPLACE_BZ, REPLACE_XZ, REPLACE_ZSTD.
       src_extents: list of (start, length) pairs indicating src block ranges
       src_length: size of the src data in bytes (needed for diff operations)
       dst_extents: list of (start, length) pairs indicating dst block ranges

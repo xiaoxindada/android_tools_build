@@ -61,6 +61,7 @@ struct animation {
 
     std::string animation_file;
     std::string fail_file;
+    std::string overheat_file;
 
     text_field text_clock;
     text_field text_percent;
@@ -75,12 +76,13 @@ struct animation {
     int cur_cycle;
     int num_cycles;  // Number of cycles to complete before blanking the screen
 
-    int cur_level;  // current battery level being animated (0-100)
+    int cur_level;   // current battery level being animated (0-100)
     int cur_status;  // current battery status - see BatteryService.h for BATTERY_STATUS_*
+    int cur_temp;    // current battery temperature
 
     ~animation() { delete frames; }
 };
 
-}
+}  // namespace android
 
-#endif // HEALTHD_ANIMATION_H
+#endif  // HEALTHD_ANIMATION_H

@@ -11,6 +11,8 @@
 
 #include "google/protobuf/compiler/importer.h"
 
+#include <string>
+
 #ifdef _MSC_VER
 #include <direct.h>
 #else
@@ -21,23 +23,27 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include <algorithm>
 #include <memory>
 #include <vector>
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
 #include "google/protobuf/compiler/parser.h"
-#include "google/protobuf/io/io_win32.h"
+#include "google/protobuf/descriptor.pb.h"
 #include "google/protobuf/io/tokenizer.h"
 #include "google/protobuf/io/zero_copy_stream_impl.h"
+#include "google/protobuf/text_format.h"
 
 #ifdef _WIN32
-#include <ctype.h>
+#include "absl/strings/str_replace.h"
+#include "google/protobuf/io/io_win32.h"
+#endif
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+#include "absl/strings/ascii.h"
 #endif
 
 namespace google {
@@ -56,14 +62,14 @@ using google::protobuf::io::win32::open;
 // copy in command_line_interface.cc?
 static bool IsWindowsAbsolutePath(absl::string_view text) {
 #if defined(_WIN32) || defined(__CYGWIN__)
-  return text.size() >= 3 && text[1] == ':' && isalpha(text[0]) &&
+  return text.size() >= 3 && text[1] == ':' && absl::ascii_isalpha(text[0]) &&
          (text[2] == '/' || text[2] == '\\') && text.find_last_of(':') == 1;
 #else
   return false;
 #endif
 }
 
-MultiFileErrorCollector::~MultiFileErrorCollector() {}
+MultiFileErrorCollector::~MultiFileErrorCollector() = default;
 
 // This class serves two purposes:
 // - It implements the ErrorCollector interface (used by Tokenizer and Parser)
@@ -72,12 +78,12 @@ MultiFileErrorCollector::~MultiFileErrorCollector() {}
 class SourceTreeDescriptorDatabase::SingleFileErrorCollector
     : public io::ErrorCollector {
  public:
-  SingleFileErrorCollector(const std::string& filename,
+  SingleFileErrorCollector(StringViewArg filename,
                            MultiFileErrorCollector* multi_file_error_collector)
       : filename_(filename),
         multi_file_error_collector_(multi_file_error_collector),
         had_errors_(false) {}
-  ~SingleFileErrorCollector() override {}
+  ~SingleFileErrorCollector() override = default;
 
   bool had_errors() { return had_errors_; }
 
@@ -88,6 +94,13 @@ class SourceTreeDescriptorDatabase::SingleFileErrorCollector
                                                message);
     }
     had_errors_ = true;
+  }
+
+  void RecordWarning(int line, int column, absl::string_view message) override {
+    if (multi_file_error_collector_ != nullptr) {
+      multi_file_error_collector_->RecordWarning(filename_, line, column,
+                                                 message);
+    }
   }
 
  private:
@@ -114,9 +127,9 @@ SourceTreeDescriptorDatabase::SourceTreeDescriptorDatabase(
       using_validation_error_collector_(false),
       validation_error_collector_(this) {}
 
-SourceTreeDescriptorDatabase::~SourceTreeDescriptorDatabase() {}
+SourceTreeDescriptorDatabase::~SourceTreeDescriptorDatabase() = default;
 
-bool SourceTreeDescriptorDatabase::FindFileByName(const std::string& filename,
+bool SourceTreeDescriptorDatabase::FindFileByName(StringViewArg filename,
                                                   FileDescriptorProto* output) {
   std::unique_ptr<io::ZeroCopyInputStream> input(source_tree_->Open(filename));
   if (input == nullptr) {
@@ -145,18 +158,102 @@ bool SourceTreeDescriptorDatabase::FindFileByName(const std::string& filename,
 
   // Parse it.
   output->set_name(filename);
-  return parser.Parse(&tokenizer, output) && !file_error_collector.had_errors();
+  return parser.Parse(&tokenizer, output) &&
+         !file_error_collector.had_errors() &&
+         ReadExtensionDeclarations(filename, output);
 }
 
 bool SourceTreeDescriptorDatabase::FindFileContainingSymbol(
-    const std::string& symbol_name, FileDescriptorProto* output) {
+    StringViewArg symbol_name, FileDescriptorProto* output) {
   return false;
 }
 
 bool SourceTreeDescriptorDatabase::FindFileContainingExtension(
-    const std::string& containing_type, int field_number,
+    StringViewArg containing_type, int field_number,
     FileDescriptorProto* output) {
   return false;
+}
+
+namespace {
+
+// Returns a pointer to the message of the given name in the
+// FileDescriptorProto, or else nullptr if it is not found.
+DescriptorProto* FindMessage(absl::string_view name,
+                             FileDescriptorProto& file_proto) {
+  for (DescriptorProto& descriptor : *file_proto.mutable_message_type()) {
+    if (descriptor.name() == name) {
+      return &descriptor;
+    }
+  }
+  return nullptr;
+}
+
+// Returns a pointer to the extension range associated with the given field
+// number, or nullptr if no such range exists.
+DescriptorProto::ExtensionRange* FindExtensionRange(int field_number,
+                                                    DescriptorProto& message) {
+  for (auto& range : *message.mutable_extension_range()) {
+    if (range.start() <= field_number && field_number < range.end()) {
+      return &range;
+    }
+  }
+  return nullptr;
+}
+
+}  // namespace
+
+bool SourceTreeDescriptorDatabase::ReadExtensionDeclarations(
+    absl::string_view filename, FileDescriptorProto* output) const {
+  auto it = declarations_files_.find(filename);
+  if (it == declarations_files_.end()) {
+    return true;
+  }
+
+  for (const auto& [message_name, declarations_file_name] : it->second) {
+    std::unique_ptr<io::ZeroCopyInputStream> declarations(
+        source_tree_->Open(declarations_file_name));
+    if (declarations == nullptr) {
+      continue;
+    }
+    TextFormat::Parser text_parser;
+    SingleFileErrorCollector error_collector(declarations_file_name,
+                                             error_collector_);
+    text_parser.RecordErrorsTo(&error_collector);
+    ExtensionRangeOptions options;
+    if (!text_parser.Parse(declarations.get(), &options)) {
+      return false;
+    }
+
+    DescriptorProto* message = FindMessage(message_name, *output);
+    if (message == nullptr) {
+      error_collector.RecordError(
+          1, 1,
+          absl::StrCat("Message ", message_name, " not found in ", filename,
+                       "."));
+      return false;
+    }
+
+    if (!options.declaration().empty()) {
+      // We find the matching extension range by looking at the number of the
+      // first declaration. If the declarations are spread across multiple
+      // ranges, that is an error which will be caught later by the
+      // DescriptorPool.
+      int number = options.declaration(0).number();
+      DescriptorProto::ExtensionRange* range =
+          FindExtensionRange(number, *message);
+      if (range == nullptr) {
+        error_collector.RecordError(
+            1, 1,
+            absl::StrCat("No extension range found for number ", number,
+                         " in message ", message_name, "."));
+        return false;
+      }
+      range->mutable_options()->mutable_declaration()->MergeFrom(
+          options.declaration());
+    }
+  }
+
+  return true;
 }
 
 // -------------------------------------------------------------------
@@ -166,7 +263,7 @@ SourceTreeDescriptorDatabase::ValidationErrorCollector::
     : owner_(owner) {}
 
 SourceTreeDescriptorDatabase::ValidationErrorCollector::
-    ~ValidationErrorCollector() {}
+    ~ValidationErrorCollector() = default;
 
 void SourceTreeDescriptorDatabase::ValidationErrorCollector::RecordError(
     absl::string_view filename, absl::string_view element_name,
@@ -210,31 +307,28 @@ Importer::Importer(SourceTree* source_tree,
   database_.RecordErrorsTo(error_collector);
 }
 
-Importer::~Importer() {}
+Importer::~Importer() = default;
 
 const FileDescriptor* Importer::Import(const std::string& filename) {
   return pool_.FindFileByName(filename);
 }
 
-void Importer::AddUnusedImportTrackFile(const std::string& file_name,
-                                        bool is_error) {
-  pool_.AddUnusedImportTrackFile(file_name, is_error);
+void Importer::AddDirectInputFile(absl::string_view file_name, bool is_error) {
+  pool_.AddDirectInputFile(file_name, is_error);
 }
 
-void Importer::ClearUnusedImportTrackFiles() {
-  pool_.ClearUnusedImportTrackFiles();
-}
+void Importer::ClearDirectInputFiles() { pool_.ClearDirectInputFiles(); }
 
 
 // ===================================================================
 
-SourceTree::~SourceTree() {}
+SourceTree::~SourceTree() = default;
 
 std::string SourceTree::GetLastErrorMessage() { return "File not found."; }
 
-DiskSourceTree::DiskSourceTree() {}
+DiskSourceTree::DiskSourceTree() = default;
 
-DiskSourceTree::~DiskSourceTree() {}
+DiskSourceTree::~DiskSourceTree() = default;
 
 // Given a path, returns an equivalent path with these changes:
 // - On Windows, any backslashes are replaced with forward slashes.

@@ -71,7 +71,6 @@ cc_test_host {
         "liblog",
         "libjsoncpp",
         "libjsonpbverify",
-        "libjsonpbparse",
         "libprocessgroup_proto",
     ],
     shared_libs: [
@@ -96,7 +95,6 @@ cc_test {
         "liblog",
         "libjsoncpp",
         "libjsonpbverify",
-        "libjsonpbparse",
         "libprocessgroup_proto",
     ],
     shared_libs: [

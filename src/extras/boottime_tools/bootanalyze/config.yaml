@@ -66,6 +66,7 @@ events:
   CarWatchdogBootupProfilingComplete: Switching to PERIODIC_COLLECTION and PERIODIC_MONITOR
   LoginStart: .*keyguardDonePending.*10
   LoginEnd: .*LauncherReady\. User.*
+  LauncherShown: LAUNCHER_SHOWN\b
 
 shutdown_events:
   ShutdownStart: ShutdownThread:\sNotifying thread to start shutdown

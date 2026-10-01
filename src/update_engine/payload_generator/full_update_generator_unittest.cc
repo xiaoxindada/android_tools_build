@@ -133,4 +133,57 @@ TEST_F(FullUpdateGeneratorTest, ImageSizeTooSmall) {
             utils::BlocksInExtents(aops[0].op.dst_extents()));
 }
 
+// Test that with compressible data, we get compressed operations by default.
+TEST_F(FullUpdateGeneratorTest, DefaultReplaceCompressionTest) {
+  config_.disable_replace_compression = false;
+  config_.hard_chunk_size = 128 * 1024;
+  config_.soft_chunk_size = config_.hard_chunk_size;
+
+  // Create a partition with easily compressible data (all zeros).
+  brillo::Blob new_part(2 * config_.hard_chunk_size, 0);
+  new_part_conf.size = new_part.size();
+
+  ASSERT_TRUE(test_utils::WriteFileVector(new_part_conf.path, new_part));
+
+  ASSERT_TRUE(generator_.GenerateOperations(config_,
+                                            new_part_conf,  // this is ignored
+                                            new_part_conf,
+                                            blob_file_writer_.get(),
+                                            &aops));
+
+  // We expect two chunks.
+  ASSERT_EQ(2U, aops.size());
+  // With all zeros, the data should be compressible, so we expect a
+  // compressed operation type, not a plain REPLACE.
+  EXPECT_NE(InstallOperation::REPLACE, aops[0].op.type());
+  EXPECT_NE(InstallOperation::REPLACE, aops[1].op.type());
+}
+
+// Test that with the disable_replace_compression flag, we get uncompressed
+// REPLACE operations even for compressible data.
+TEST_F(FullUpdateGeneratorTest, DisableReplaceCompressionTest) {
+  config_.disable_replace_compression = true;
+  config_.hard_chunk_size = 128 * 1024;
+  config_.soft_chunk_size = config_.hard_chunk_size;
+
+  // Create a partition with easily compressible data (all zeros).
+  brillo::Blob new_part(2 * config_.hard_chunk_size, 0);
+  new_part_conf.size = new_part.size();
+
+  ASSERT_TRUE(test_utils::WriteFileVector(new_part_conf.path, new_part));
+
+  ASSERT_TRUE(generator_.GenerateOperations(config_,
+                                            new_part_conf,  // this is ignored
+                                            new_part_conf,
+                                            blob_file_writer_.get(),
+                                            &aops));
+
+  // We expect two chunks.
+  ASSERT_EQ(2U, aops.size());
+  // With the disable flag, we should get REPLACE operations regardless of
+  // compressibility.
+  EXPECT_EQ(InstallOperation::REPLACE, aops[0].op.type());
+  EXPECT_EQ(InstallOperation::REPLACE, aops[1].op.type());
+}
+
 }  // namespace chromeos_update_engine

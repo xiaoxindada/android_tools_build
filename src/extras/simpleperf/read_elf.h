@@ -18,6 +18,7 @@
 #define SIMPLE_PERF_READ_ELF_H_
 
 #include <functional>
+#include <memory>
 #include <ostream>
 #include <string>
 #include "build_id.h"

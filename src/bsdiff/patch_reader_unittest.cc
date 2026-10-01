@@ -15,7 +15,6 @@
 
 #include "bsdiff/brotli_compressor.h"
 #include "bsdiff/bz2_compressor.h"
-#include "bsdiff/utils.h"
 
 namespace {
 
@@ -39,24 +38,24 @@ class PatchReaderTest : public testing::Test {
       EncodeInt64(diff_data_[i].size(), buf);
       EncodeInt64(extra_data_[i].size(), buf + 8);
       EncodeInt64(offset_increment_[i], buf + 16);
-      EXPECT_TRUE(ctrl_stream_->Write(buf, sizeof(buf)));
-      EXPECT_TRUE(diff_stream_->Write(
+      ASSERT_TRUE(ctrl_stream_->Write(buf, sizeof(buf)));
+      ASSERT_TRUE(diff_stream_->Write(
           reinterpret_cast<const uint8_t*>(diff_data_[i].data()),
           diff_data_[i].size()));
-      EXPECT_TRUE(extra_stream_->Write(
+      ASSERT_TRUE(extra_stream_->Write(
           reinterpret_cast<const uint8_t*>(extra_data_[i].data()),
           extra_data_[i].size()));
     }
-    EXPECT_TRUE(ctrl_stream_->Finish());
-    EXPECT_TRUE(diff_stream_->Finish());
-    EXPECT_TRUE(extra_stream_->Finish());
+    ASSERT_TRUE(ctrl_stream_->Finish());
+    ASSERT_TRUE(diff_stream_->Finish());
+    ASSERT_TRUE(extra_stream_->Finish());
   }
 
   void ConstructPatchHeader(int64_t ctrl_size,
                             int64_t diff_size,
                             int64_t new_size,
                             std::vector<uint8_t>* patch_data) {
-    EXPECT_EQ(static_cast<size_t>(8), patch_data->size());
+    ASSERT_EQ(static_cast<size_t>(8), patch_data->size());
     // Encode the header.
     uint8_t buf[24];
     EncodeInt64(ctrl_size, buf);
@@ -84,24 +83,24 @@ class PatchReaderTest : public testing::Test {
 
   void VerifyPatch(const std::vector<uint8_t>& patch_data) {
     BsdiffPatchReader patch_reader;
-    EXPECT_TRUE(patch_reader.Init(patch_data.data(), patch_data.size()));
-    EXPECT_EQ(new_file_size_, patch_reader.new_file_size());
+    ASSERT_TRUE(patch_reader.Init(patch_data.data(), patch_data.size()));
+    ASSERT_EQ(new_file_size_, patch_reader.new_file_size());
     // Check that the decompressed data matches what we wrote.
     for (size_t i = 0; i < diff_data_.size(); i++) {
       ControlEntry control_entry(0, 0, 0);
-      EXPECT_TRUE(patch_reader.ParseControlEntry(&control_entry));
-      EXPECT_EQ(diff_data_[i].size(), control_entry.diff_size);
-      EXPECT_EQ(extra_data_[i].size(), control_entry.extra_size);
-      EXPECT_EQ(offset_increment_[i], control_entry.offset_increment);
+      ASSERT_TRUE(patch_reader.ParseControlEntry(&control_entry));
+      ASSERT_EQ(diff_data_[i].size(), control_entry.diff_size);
+      ASSERT_EQ(extra_data_[i].size(), control_entry.extra_size);
+      ASSERT_EQ(offset_increment_[i], control_entry.offset_increment);
 
       uint8_t buffer[128] = {};
-      EXPECT_TRUE(patch_reader.ReadDiffStream(buffer, diff_data_[i].size()));
-      EXPECT_EQ(0, memcmp(buffer, diff_data_[i].data(), diff_data_[i].size()));
-      EXPECT_TRUE(patch_reader.ReadExtraStream(buffer, extra_data_[i].size()));
-      EXPECT_EQ(0,
+      ASSERT_TRUE(patch_reader.ReadDiffStream(buffer, diff_data_[i].size()));
+      ASSERT_EQ(0, memcmp(buffer, diff_data_[i].data(), diff_data_[i].size()));
+      ASSERT_TRUE(patch_reader.ReadExtraStream(buffer, extra_data_[i].size()));
+      ASSERT_EQ(0,
                 memcmp(buffer, extra_data_[i].data(), extra_data_[i].size()));
     }
-    EXPECT_TRUE(patch_reader.Finish());
+    ASSERT_TRUE(patch_reader.Finish());
   }
 
   // Helper function to check that invalid headers are detected. This method
@@ -122,7 +121,7 @@ class PatchReaderTest : public testing::Test {
     patch_data.resize(patch_data.size() + compressed_size);
 
     BsdiffPatchReader patch_reader;
-    EXPECT_FALSE(patch_reader.Init(patch_data.data(), patch_data.size()))
+    ASSERT_FALSE(patch_reader.Init(patch_data.data(), patch_data.size()))
         << "Where ctrl_size=" << ctrl_size << " diff_size=" << diff_size
         << " new_size=" << new_size << " compressed_size=" << compressed_size;
   }
@@ -208,7 +207,7 @@ TEST_F(PatchReaderTest, InvalidCompressionHeaderTest) {
   patch_data.resize(patch_data.size() + 30);
 
   BsdiffPatchReader patch_reader;
-  EXPECT_FALSE(patch_reader.Init(patch_data.data(), patch_data.size()));
+  ASSERT_FALSE(patch_reader.Init(patch_data.data(), patch_data.size()));
 }
 
 TEST_F(PatchReaderTest, InvalidControlEntryTest) {
@@ -236,9 +235,9 @@ TEST_F(PatchReaderTest, InvalidControlEntryTest) {
   ConstructPatchData(&patch_data);
 
   BsdiffPatchReader patch_reader;
-  EXPECT_TRUE(patch_reader.Init(patch_data.data(), patch_data.size()));
+  ASSERT_TRUE(patch_reader.Init(patch_data.data(), patch_data.size()));
   ControlEntry control_entry(0, 0, 0);
-  EXPECT_FALSE(patch_reader.ParseControlEntry(&control_entry));
+  ASSERT_FALSE(patch_reader.ParseControlEntry(&control_entry));
 }
 
 }  // namespace bsdiff

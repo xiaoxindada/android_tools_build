@@ -34,6 +34,11 @@ class InstallOperationExecutor {
   bool ExecuteReplaceOperation(const InstallOperation& operation,
                                std::unique_ptr<ExtentWriter> writer,
                                const void* data);
+  bool ExecuteReplaceOperation(const InstallOperation& operation,
+                               std::unique_ptr<ExtentWriter> writer,
+                               int data_fd,
+                               off_t data_offset,
+                               size_t data_size);
   bool ExecuteZeroOrDiscardOperation(const InstallOperation& operation,
                                      std::unique_ptr<ExtentWriter> writer);
   bool ExecuteSourceCopyOperation(const InstallOperation& operation,
@@ -46,6 +51,13 @@ class InstallOperationExecutor {
                             const void* data,
                             size_t count);
 
+  bool ExecuteDiffOperation(const InstallOperation& operation,
+                            std::unique_ptr<ExtentWriter> writer,
+                            FileDescriptorPtr source_fd,
+                            int patch_fd,
+                            off_t patch_offset,
+                            size_t patch_size);
+
  private:
   bool ExecuteSourceBsdiffOperation(const InstallOperation& operation,
                                     std::unique_ptr<ExtentWriter> writer,
@@ -57,6 +69,12 @@ class InstallOperationExecutor {
                                 FileDescriptorPtr source_fd,
                                 const void* data,
                                 size_t count);
+  bool ExecutePuffDiffOperation(const InstallOperation& operation,
+                                std::unique_ptr<ExtentWriter> writer,
+                                FileDescriptorPtr source_fd,
+                                int patch_fd,
+                                off_t patch_offset,
+                                size_t patch_size);
   bool ExecuteZucchiniOperation(const InstallOperation& operation,
                                 std::unique_ptr<ExtentWriter> writer,
                                 FileDescriptorPtr source_fd,
@@ -67,6 +85,12 @@ class InstallOperationExecutor {
                                FileDescriptorPtr source_fd,
                                const void* data,
                                size_t count);
+  bool ExecuteSourceBsdiffOperation(const InstallOperation& operation,
+                                    std::unique_ptr<ExtentWriter> writer,
+                                    FileDescriptorPtr source_fd,
+                                    int patch_fd,
+                                    off_t patch_offset,
+                                    size_t patch_size);
 
   size_t block_size_;
 };

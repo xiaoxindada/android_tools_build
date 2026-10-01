@@ -16,16 +16,23 @@
 
 #include "util.h"
 
+#include <dirent.h>
+#include <stdio.h>
+#include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <functional>
 #include <string>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include <android-base/file.h>
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+
 #include "protocol.h"
 
 constexpr const char kUnknown[] = "<unknown>";
@@ -108,4 +115,49 @@ bool iterate_tids(pid_t pid, std::function<void(pid_t)> callback) {
 
 bool is_microdroid() {
   return android::base::GetProperty("ro.hardware", "") == "microdroid";
+}
+
+void get_vmflags(pid_t pid, std::unordered_map<uint64_t, std::string>& vmflags) {
+  // See if any maps have other flags enabled. The only way to get this
+  // information is to read the smaps file and check the VmFlags field.
+  std::string smaps_str(android::base::StringPrintf("/proc/%d/smaps", pid));
+  FILE* smaps_file = fopen(smaps_str.c_str(), "re");
+  if (smaps_file == nullptr) {
+    return;
+  }
+  // Choose a size that should be big enough for all lines and avoid ever
+  // doing a realloc.
+  constexpr size_t kLineSize = 200;
+  char* buffer = reinterpret_cast<char*>(malloc(kLineSize));
+  size_t allocated_length = kLineSize;
+  uint64_t map_start = 0;
+  while (true) {
+    ssize_t buffer_len = getline(&buffer, &allocated_length, smaps_file);
+    if (buffer_len <= 0) {
+      break;
+    }
+    char* end = nullptr;
+    uint64_t tmp_start = strtoul(buffer, &end, 16);
+    if (end != nullptr && *end == '-') {
+      map_start = tmp_start;
+      continue;
+    }
+    constexpr char kVmFlagsStr[] = "VmFlags:";
+    constexpr size_t kVmFlagsStrLen = std::char_traits<char>::length(kVmFlagsStr);
+    if (strncmp(buffer, kVmFlagsStr, kVmFlagsStrLen) == 0) {
+      // Skip spaces in front of string.
+      size_t flag_start = kVmFlagsStrLen + 1;
+      while (isspace(buffer[flag_start])) {
+        ++flag_start;
+      }
+      // Remove spaces at end of string.
+      while (isspace(buffer[--buffer_len])) {
+        buffer[buffer_len] = '\0';
+      }
+      vmflags[map_start] = std::string(&buffer[flag_start]);
+      map_start = 0;
+    }
+  }
+  free(buffer);
+  fclose(smaps_file);
 }

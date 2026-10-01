@@ -37,7 +37,10 @@
 
 #include <map>
 #include <string>
-#include <google/protobuf/compiler/javamicro/javamicro_field.h>
+
+#include "google/protobuf/compiler/javamicro/javamicro_field.h"
+#include "google/protobuf/descriptor.h"
+#include "google/protobuf/io/printer.h"
 
 namespace google {
 namespace protobuf {
@@ -52,13 +55,13 @@ class PrimitiveFieldGenerator : public FieldGenerator {
   ~PrimitiveFieldGenerator();
 
   // implements FieldGenerator ---------------------------------------
-  void GenerateMembers(io::Printer* printer) const;
-  void GenerateMergingCode(io::Printer* printer) const;
-  void GenerateParsingCode(io::Printer* printer) const;
-  void GenerateSerializationCode(io::Printer* printer) const;
-  void GenerateSerializedSizeCode(io::Printer* printer) const;
+  void GenerateMembers(io::Printer* printer) const override;
+  void GenerateMergingCode(io::Printer* printer) const override;
+  void GenerateParsingCode(io::Printer* printer) const override;
+  void GenerateSerializationCode(io::Printer* printer) const override;
+  void GenerateSerializedSizeCode(io::Printer* printer) const override;
 
-  std::string GetBoxedType() const;
+  std::string GetBoxedType() const override;
 
  private:
   const FieldDescriptor* descriptor_;
@@ -73,13 +76,13 @@ class RepeatedPrimitiveFieldGenerator : public FieldGenerator {
   ~RepeatedPrimitiveFieldGenerator();
 
   // implements FieldGenerator ---------------------------------------
-  void GenerateMembers(io::Printer* printer) const;
-  void GenerateMergingCode(io::Printer* printer) const;
-  void GenerateParsingCode(io::Printer* printer) const;
-  void GenerateSerializationCode(io::Printer* printer) const;
-  void GenerateSerializedSizeCode(io::Printer* printer) const;
+  void GenerateMembers(io::Printer* printer) const override;
+  void GenerateMergingCode(io::Printer* printer) const override;
+  void GenerateParsingCode(io::Printer* printer) const override;
+  void GenerateSerializationCode(io::Printer* printer) const override;
+  void GenerateSerializedSizeCode(io::Printer* printer) const override;
 
-  std::string GetBoxedType() const;
+  std::string GetBoxedType() const override;
 
  private:
   const FieldDescriptor* descriptor_;

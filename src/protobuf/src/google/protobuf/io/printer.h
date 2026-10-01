@@ -1,5 +1,5 @@
 // Protocol Buffers - Google's data interchange format
-// Copyright 2008 Google Inc.  All rights reserved.
+// Copyright 2024 Google LLC.  All rights reserved.
 //
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file or at
@@ -17,22 +17,25 @@
 #include <cstddef>
 #include <functional>
 #include <initializer_list>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "absl/cleanup/cleanup.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/functional/any_invocable.h"
 #include "absl/functional/function_ref.h"
 #include "absl/log/absl_check.h"
 #include "absl/meta/type_traits.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_format.h"
 #include "absl/strings/string_view.h"
-#include "absl/types/optional.h"
-#include "absl/types/variant.h"
+#include "absl/types/span.h"
 #include "google/protobuf/io/zero_copy_sink.h"
+#include "google/protobuf/io/zero_copy_stream.h"
 
 
 // Must be included last.
@@ -69,7 +72,7 @@ class PROTOBUF_EXPORT AnnotationCollector {
   virtual void AddAnnotation(size_t begin_offset, size_t end_offset,
                              const std::string& file_path,
                              const std::vector<int>& path,
-                             absl::optional<Semantic> semantic) {
+                             std::optional<Semantic> semantic) {
     AddAnnotation(begin_offset, end_offset, file_path, path);
   }
 
@@ -116,15 +119,15 @@ class AnnotationProtoCollector : public AnnotationCollector {
   void AddAnnotation(size_t begin_offset, size_t end_offset,
                      const std::string& file_path,
                      const std::vector<int>& path) override {
-    AddAnnotation(begin_offset, end_offset, file_path, path, absl::nullopt);
+    AddAnnotation(begin_offset, end_offset, file_path, path, std::nullopt);
   }
 
   void AddAnnotation(size_t begin_offset, size_t end_offset,
                      const std::string& file_path, const std::vector<int>& path,
-                     absl::optional<Semantic> semantic) override {
+                     std::optional<Semantic> semantic) override {
     auto* annotation = annotation_proto_->add_annotation();
-    for (int i = 0; i < path.size(); ++i) {
-      annotation->add_path(path[i]);
+    for (const int segment : path) {
+      annotation->add_path(segment);
     }
     annotation->set_source_file(file_path);
     annotation->set_begin(begin_offset);
@@ -148,12 +151,12 @@ class AnnotationProtoCollector : public AnnotationCollector {
 
 // A source code printer for assisting in code generation.
 //
-// This type implements a simple templating language for substiting variables
+// This type implements a simple templating language for substituting variables
 // into static, user-provided strings, and also tracks indentation
 // automatically.
 //
 // The main entry-point for this type is the Emit function, which can be used
-// thus:
+// as thus:
 //
 //   Printer p(output);
 //   p.Emit({{"class", my_class_name}}, R"cc(
@@ -181,7 +184,7 @@ class AnnotationProtoCollector : public AnnotationCollector {
 // emits the string " bar ". If the substituted-in variable is the empty string,
 // then the surrounding spaces are *not* printed:
 //
-//   p.Emit({{"xzy", xyz}}, "$xyz $Thing");
+//   p.Emit({{"xyz", xyz}}, "$xyz $Thing");
 //
 // If xyz is "Foo", this will become "Foo Thing", but if it is "", this becomes
 // "Thing", rather than " Thing". This helps minimize awkward whitespace in the
@@ -191,9 +194,15 @@ class AnnotationProtoCollector : public AnnotationCollector {
 //
 //   p.Emit({{"num", 5}}, "x = $num$;");
 //
-// If a variable is referenced in the format string that is missing, the program
+// If a variable that is referenced in the format string is missing, the program
 // will crash. Callers must statically know that every variable reference is
 // valid, and MUST NOT pass user-provided strings directly into Emit().
+//
+// In practice, this means the first member of io::Printer::Sub here:
+//
+//   p.Emit({{"num", 5}}, "x = $num$;");
+//            ^
+// must always be a string literal.
 //
 // Substitutions can be configured to "chomp" a single character after them, to
 // help make indentation work out. This can be configured by passing a
@@ -210,9 +219,15 @@ class AnnotationProtoCollector : public AnnotationCollector {
 // empty lines that follow, if it was on an empty line; this promotes cleaner
 // formatting of the output.
 //
-// Any number of different characters can be potentially skipped, but only one
-// will actually be skipped. For example, callback substitutions (see below) use
-// ";," by default as their "chomping set".
+// You can configure a large set of skippable characters, but when chomping,
+// only one character will actually be skipped at a time. For example, callback
+// substitutions (see below) use ";," by default as their "chomping set".
+//
+//   p.Emit({io::Printer::Sub("var", 123).WithSuffix(";,")}, R"cc(
+//       $var$,;
+//   )cc");
+//
+// will produce "123,".
 //
 // # Callback Substitution
 //
@@ -449,8 +464,8 @@ class PROTOBUF_EXPORT Printer {
   // released.
   struct SourceLocation {
     static SourceLocation current() { return {}; }
-    absl::string_view file_name() { return "<unknown>"; }
-    int line() { return 0; }
+    absl::string_view file_name() const { return "<unknown>"; }
+    int line() const { return 0; }
   };
 
   static constexpr char kDefaultVariableDelimiter = '$';
@@ -490,7 +505,7 @@ class PROTOBUF_EXPORT Printer {
     //
     // If disengaged, defaults to whether or not the environment variable
     // `PROTOC_CODEGEN_TRACE` is set.
-    absl::optional<bool> enable_codegen_trace = absl::nullopt;
+    std::optional<bool> enable_codegen_trace = std::nullopt;
   };
 
   // Constructs a new Printer with the default options to output to
@@ -519,12 +534,13 @@ class PROTOBUF_EXPORT Printer {
   // Pushes a new variable lookup frame that stores `vars` by value.
   //
   // Returns an RAII object that pops the lookup frame.
-  template <typename Map = absl::flat_hash_map<std::string, std::string>,
-            typename = std::enable_if_t<!std::is_pointer<Map>::value>,
-            // Prefer the more specific span impl if this could be turned into
-            // a span.
-            typename = std::enable_if_t<
-                !std::is_convertible<Map, absl::Span<const Sub>>::value>>
+  template <
+      typename Map = absl::flat_hash_map<absl::string_view, absl::string_view>,
+      typename = std::enable_if_t<!std::is_pointer<Map>::value>,
+      // Prefer the more specific span impl if this could be turned into
+      // a span.
+      typename = std::enable_if_t<
+          !std::is_convertible<Map, absl::Span<const Sub>>::value>>
   auto WithVars(Map&& vars);
 
   // Pushes a new variable lookup frame that stores `vars` by value.
@@ -558,7 +574,7 @@ class PROTOBUF_EXPORT Printer {
   // indentation by the configured default spaces_per_indent.
   //
   // Returns an RAII object that removes this indentation.
-  auto WithIndent(absl::optional<size_t> indent = absl::nullopt) {
+  auto WithIndent(std::optional<size_t> indent = std::nullopt) {
     size_t delta = indent.value_or(options_.spaces_per_indent);
     indent_ += delta;
     return absl::MakeCleanup([this, delta] { indent_ -= delta; });
@@ -595,7 +611,8 @@ class PROTOBUF_EXPORT Printer {
   // -- Old-style API below; to be deprecated and removed. --
   // TODO: Deprecate these APIs.
 
-  template <typename Map = absl::flat_hash_map<std::string, std::string>>
+  template <
+      typename Map = absl::flat_hash_map<absl::string_view, absl::string_view>>
   void Print(const Map& vars, absl::string_view text);
 
   template <typename... Args>
@@ -606,7 +623,7 @@ class PROTOBUF_EXPORT Printer {
   template <typename SomeDescriptor>
   void Annotate(
       absl::string_view varname, const SomeDescriptor* descriptor,
-      absl::optional<AnnotationCollector::Semantic> semantic = absl::nullopt) {
+      std::optional<AnnotationCollector::Semantic> semantic = std::nullopt) {
     Annotate(varname, varname, descriptor, semantic);
   }
 
@@ -618,13 +635,13 @@ class PROTOBUF_EXPORT Printer {
   void Annotate(
       absl::string_view begin_varname, absl::string_view end_varname,
       const Desc* descriptor,
-      absl::optional<AnnotationCollector::Semantic> semantic = absl::nullopt);
+      std::optional<AnnotationCollector::Semantic> semantic = std::nullopt);
 
   // Link a substitution variable emitted by the last call to Print to the file
   // with path file_name.
   void Annotate(
       absl::string_view varname, absl::string_view file_name,
-      absl::optional<AnnotationCollector::Semantic> semantic = absl::nullopt) {
+      std::optional<AnnotationCollector::Semantic> semantic = std::nullopt) {
     Annotate(varname, varname, file_name, semantic);
   }
 
@@ -635,7 +652,7 @@ class PROTOBUF_EXPORT Printer {
   void Annotate(
       absl::string_view begin_varname, absl::string_view end_varname,
       absl::string_view file_name,
-      absl::optional<AnnotationCollector::Semantic> semantic = absl::nullopt) {
+      std::optional<AnnotationCollector::Semantic> semantic = std::nullopt) {
     if (options_.annotation_collector == nullptr) {
       return;
     }
@@ -647,13 +664,25 @@ class PROTOBUF_EXPORT Printer {
   void Indent() { indent_ += options_.spaces_per_indent; }
 
   // Undoes a call to Indent().
-  void Outdent();
+  void Outdent(SourceLocation loc = SourceLocation::current());
 
   // FormatInternal is a helper function not meant to use directly, use
   // compiler::cpp::Formatter instead.
   template <typename Map = absl::flat_hash_map<std::string, std::string>>
   void FormatInternal(absl::Span<const std::string> args, const Map& vars,
                       absl::string_view format);
+
+  // Injects a substitution listener for the lifetime of the RAII object
+  // returned.
+  // While the listener is active it will receive a callback on each
+  // substitution label found.
+  // This can be used to add basic verification on top of emit routines.
+  auto WithSubstitutionListener(
+      absl::AnyInvocable<void(absl::string_view, SourceLocation)> listener) {
+    ABSL_CHECK(substitution_listener_ == nullptr);
+    substitution_listener_ = std::move(listener);
+    return absl::MakeCleanup([this] { substitution_listener_ = nullptr; });
+  }
 
  private:
   struct PrintOptions;
@@ -702,7 +731,7 @@ class PROTOBUF_EXPORT Printer {
   // `begin_varname` and `end_varname may` refer to the same variable.
   void Annotate(absl::string_view begin_varname, absl::string_view end_varname,
                 absl::string_view file_path, const std::vector<int>& path,
-                absl::optional<AnnotationCollector::Semantic> semantic);
+                std::optional<AnnotationCollector::Semantic> semantic);
 
   // The core printing implementation. There are three public entry points,
   // which enable different slices of functionality that are controlled by the
@@ -725,7 +754,7 @@ class PROTOBUF_EXPORT Printer {
   void IndentIfAtStart();
 
   // Prints a codegen trace, for the given location in the compiler's source.
-  void PrintCodegenTrace(absl::optional<SourceLocation> loc);
+  void PrintCodegenTrace(std::optional<SourceLocation> loc);
 
   // The core implementation for "fully-elaborated" variable definitions.
   auto WithDefs(absl::Span<const Sub> vars, bool allow_callbacks);
@@ -734,7 +763,7 @@ class PROTOBUF_EXPORT Printer {
   // the variable `varname` in the last call to PrintImpl() (with
   // `use_substitution_map` set), if such a variable was substituted exactly
   // once.
-  absl::optional<std::pair<size_t, size_t>> GetSubstitutionRange(
+  std::optional<std::pair<size_t, size_t>> GetSubstitutionRange(
       absl::string_view varname, PrintOptions opts);
 
   google::protobuf::io::zc_sink_internal::ZeroCopyStreamByteSink sink_;
@@ -746,12 +775,16 @@ class PROTOBUF_EXPORT Printer {
   size_t paren_depth_ = 0;
   std::vector<size_t> paren_depth_to_omit_;
 
-  std::vector<std::function<absl::optional<ValueView>(absl::string_view)>>
+  std::vector<std::function<std::optional<ValueView>(absl::string_view)>>
       var_lookups_;
 
-  std::vector<
-      std::function<absl::optional<AnnotationRecord>(absl::string_view)>>
+  std::vector<std::function<std::optional<AnnotationRecord>(absl::string_view)>>
       annotation_lookups_;
+
+  // If set, we invoke this when we do a label substitution. This can be used to
+  // verify consistency of the generated code while we generate it.
+  absl::AnyInvocable<void(absl::string_view, SourceLocation)>
+      substitution_listener_;
 
   // A map from variable name to [start, end) offsets in the output buffer.
   //
@@ -766,7 +799,7 @@ class PROTOBUF_EXPORT Printer {
 // Options for PrintImpl().
 struct Printer::PrintOptions {
   // The callsite of the public entry-point. Only Emit() sets this.
-  absl::optional<SourceLocation> loc;
+  std::optional<SourceLocation> loc;
   // If set, Validate() calls will not crash the program.
   bool checks_are_debug_only = false;
   // If set, the `substitutions_` map will be populated as variables are
@@ -810,7 +843,7 @@ struct Printer::ValueImpl {
   using StringType = std::conditional_t<owned, std::string, absl::string_view>;
   // These callbacks return false if this is a recursive call.
   using Callback = std::function<bool()>;
-  using StringOrCallback = absl::variant<StringType, Callback>;
+  using StringOrCallback = std::variant<StringType, Callback>;
 
   ValueImpl() = default;
 
@@ -820,7 +853,7 @@ struct Printer::ValueImpl {
                 !IsSubImpl<absl::remove_cvref_t<Value>>::value>>
   ValueImpl(Value&& value)  // NOLINT
       : value(ToStringOrCallback(std::forward<Value>(value), Rank2{})) {
-    if (absl::holds_alternative<Callback>(this->value)) {
+    if (std::holds_alternative<Callback>(this->value)) {
       consume_after = ";,";
     }
   }
@@ -834,11 +867,9 @@ struct Printer::ValueImpl {
   template <bool that_owned>
   ValueImpl& operator=(const ValueImpl<that_owned>& that);
 
-  const StringType* AsString() const {
-    return absl::get_if<StringType>(&value);
-  }
+  const StringType* AsString() const { return std::get_if<StringType>(&value); }
 
-  const Callback* AsCallback() const { return absl::get_if<Callback>(&value); }
+  const Callback* AsCallback() const { return std::get_if<Callback>(&value); }
 
   StringOrCallback value;
   std::string consume_after;
@@ -880,10 +911,10 @@ Printer::ValueImpl<owned>& Printer::ValueImpl<owned>::operator=(
 
   using ThatStringType = typename ValueImpl<that_owned>::StringType;
 
-  if (auto* str = absl::get_if<ThatStringType>(&that.value)) {
+  if (auto* str = std::get_if<ThatStringType>(&that.value)) {
     value = StringType(*str);
   } else {
-    value = absl::get<Callback>(that.value);
+    value = std::get<Callback>(that.value);
   }
 
   consume_after = that.consume_after;
@@ -911,7 +942,7 @@ auto Printer::ValueImpl<owned>::ToStringOrCallback(Cb&& cb, Rank2)
 struct Printer::AnnotationRecord {
   std::vector<int> path;
   std::string file_path;
-  absl::optional<AnnotationCollector::Semantic> semantic;
+  std::optional<AnnotationCollector::Semantic> semantic;
 
   // AnnotationRecord's constructors are *not* marked as explicit,
   // specifically so that it is possible to construct a
@@ -925,7 +956,7 @@ struct Printer::AnnotationRecord {
                        int> = 0>
   AnnotationRecord(  // NOLINT(google-explicit-constructor)
       const String& file_path,
-      absl::optional<AnnotationCollector::Semantic> semantic = absl::nullopt)
+      std::optional<AnnotationCollector::Semantic> semantic = std::nullopt)
       : file_path(file_path), semantic(semantic) {}
 
   template <typename Desc,
@@ -934,7 +965,7 @@ struct Printer::AnnotationRecord {
             std::enable_if_t<std::is_class<Desc>::value, int> = 0>
   AnnotationRecord(  // NOLINT(google-explicit-constructor)
       const Desc* desc,
-      absl::optional<AnnotationCollector::Semantic> semantic = absl::nullopt)
+      std::optional<AnnotationCollector::Semantic> semantic = std::nullopt)
       : file_path(desc->file()->name()), semantic(semantic) {
     desc->GetLocationPath(&path);
   }
@@ -946,7 +977,7 @@ class Printer::Sub {
   Sub(std::string key, Value&& value)
       : key_(std::move(key)),
         value_(std::forward<Value>(value)),
-        annotation_(absl::nullopt) {}
+        annotation_(std::nullopt) {}
 
   Sub AnnotatedAs(AnnotationRecord annotation) && {
     annotation_ = std::move(annotation);
@@ -977,16 +1008,16 @@ class Printer::Sub {
 
   std::string key_;
   Value value_;
-  absl::optional<AnnotationRecord> annotation_;
+  std::optional<AnnotationRecord> annotation_;
 };
 
 template <typename Map>
 auto Printer::WithVars(const Map* vars) {
   var_lookups_.emplace_back(
-      [vars](absl::string_view var) -> absl::optional<ValueView> {
+      [vars](absl::string_view var) -> std::optional<ValueView> {
         auto it = vars->find(ToStringKey<Map>(var));
         if (it == vars->end()) {
-          return absl::nullopt;
+          return std::nullopt;
         }
         return ValueView(it->second);
       });
@@ -997,10 +1028,10 @@ template <typename Map, typename, typename /*Sfinae*/>
 auto Printer::WithVars(Map&& vars) {
   var_lookups_.emplace_back(
       [vars = std::forward<Map>(vars)](
-          absl::string_view var) -> absl::optional<ValueView> {
+          absl::string_view var) -> std::optional<ValueView> {
         auto it = vars.find(ToStringKey<Map>(var));
         if (it == vars.end()) {
-          return absl::nullopt;
+          return std::nullopt;
         }
         return ValueView(it->second);
       });
@@ -1010,10 +1041,10 @@ auto Printer::WithVars(Map&& vars) {
 template <typename Map>
 auto Printer::WithAnnotations(const Map* vars) {
   annotation_lookups_.emplace_back(
-      [vars](absl::string_view var) -> absl::optional<AnnotationRecord> {
+      [vars](absl::string_view var) -> std::optional<AnnotationRecord> {
         auto it = vars->find(ToStringKey<Map>(var));
         if (it == vars->end()) {
-          return absl::nullopt;
+          return std::nullopt;
         }
         return AnnotationRecord(it->second);
       });
@@ -1024,10 +1055,10 @@ template <typename Map>
 auto Printer::WithAnnotations(Map&& vars) {
   annotation_lookups_.emplace_back(
       [vars = std::forward<Map>(vars)](
-          absl::string_view var) -> absl::optional<AnnotationRecord> {
+          absl::string_view var) -> std::optional<AnnotationRecord> {
         auto it = vars.find(ToStringKey<Map>(var));
         if (it == vars.end()) {
-          return absl::nullopt;
+          return std::nullopt;
         }
         return AnnotationRecord(it->second);
       });
@@ -1068,7 +1099,7 @@ void Printer::Print(absl::string_view text, const Args&... args) {
 template <typename Desc>
 void Printer::Annotate(absl::string_view begin_varname,
                        absl::string_view end_varname, const Desc* descriptor,
-                       absl::optional<AnnotationCollector::Semantic> semantic) {
+                       std::optional<AnnotationCollector::Semantic> semantic) {
   if (options_.annotation_collector == nullptr) {
     return;
   }
@@ -1110,10 +1141,10 @@ inline auto Printer::WithDefs(absl::Span<const Sub> vars,
   }
 
   var_lookups_.emplace_back([map = std::move(var_map)](absl::string_view var)
-                                -> absl::optional<ValueView> {
+                                -> std::optional<ValueView> {
     auto it = map.find(var);
     if (it == map.end()) {
-      return absl::nullopt;
+      return std::nullopt;
     }
     return ValueView(it->second);
   });
@@ -1122,10 +1153,10 @@ inline auto Printer::WithDefs(absl::Span<const Sub> vars,
   if (has_annotations) {
     annotation_lookups_.emplace_back(
         [map = std::move(annotation_map)](
-            absl::string_view var) -> absl::optional<AnnotationRecord> {
+            absl::string_view var) -> std::optional<AnnotationRecord> {
           auto it = map.find(var);
           if (it == map.end()) {
-            return absl::nullopt;
+            return std::nullopt;
           }
           return it->second;
         });

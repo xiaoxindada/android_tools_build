@@ -32,10 +32,10 @@ abstract class DsuTestBase extends BaseHostJUnit4Test {
     @Option(
             name = "dsu-userdata-size-in-gb",
             description = "Userdata partition size of the DSU installation")
-    private long mDsuUserdataSizeInGb;
+    private long mDsuUserdataSizeInGb = 4;
 
-    protected long getDsuUserdataSize(long defaultValue) {
-        return mDsuUserdataSizeInGb > 0 ? mDsuUserdataSizeInGb << 30 : defaultValue;
+    protected long getDsuUserdataSize() {
+        return Math.max(1, mDsuUserdataSizeInGb) << 30;
     }
 
     public CommandResult assertShellCommand(String command) throws DeviceNotAvailableException {

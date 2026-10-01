@@ -27,6 +27,13 @@
 #include <android/fdsan.h>
 #endif
 
+#if !defined(_WIN32)
+#include <fcntl.h>
+#else
+#include <io.h>
+#include <windows.h>
+#endif
+
 namespace {
 
 #if !defined(__BIONIC__)
@@ -121,12 +128,28 @@ void native_handle_unset_fdsan_tag(const native_handle_t* handle) {
     swap_fdsan_tags(handle, get_fdsan_tag(handle), 0);
 }
 
+static int dup_with_cloexec(int fd) {
+#if !defined(_WIN32)
+    return fcntl(fd, F_DUPFD_CLOEXEC, 0);
+#else
+    int newfd = _dup(fd);
+    if (newfd == -1) return -1;
+
+    HANDLE h = (HANDLE)_get_osfhandle(newfd);
+    if (h == INVALID_HANDLE_VALUE || SetHandleInformation(h, HANDLE_FLAG_INHERIT, 0) == 0) {
+        _close(newfd);
+        return -1;
+    }
+    return newfd;
+#endif
+}
+
 native_handle_t* native_handle_clone(const native_handle_t* handle) {
     native_handle_t* clone = native_handle_create(handle->numFds, handle->numInts);
     if (clone == NULL) return NULL;
 
     for (int i = 0; i < handle->numFds; i++) {
-        clone->data[i] = dup(handle->data[i]);
+        clone->data[i] = dup_with_cloexec(handle->data[i]);
         if (clone->data[i] == -1) {
             clone->numFds = i;
             native_handle_close(clone);

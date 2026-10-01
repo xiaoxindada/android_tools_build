@@ -40,6 +40,12 @@ enum mount_mode {
     MOUNT_MODE_LATE = 2,
 };
 
+enum class BootMode {
+    NORMAL_MODE,
+    RECOVERY_MODE,
+    CHARGER_MODE,
+};
+
 static const char kColdBootDoneProp[] = "ro.cold_boot_done";
 
 extern void (*trigger_shutdown)(const std::string& command);
@@ -120,7 +126,7 @@ std::vector<std::string> FilterVersionedConfigs(const std::vector<std::string>& 
 
 // Forks, executes the provided program in the child, and waits for the completion in the parent.
 // Child's stderr is captured and logged using LOG(ERROR).
-bool ForkExecveAndWaitForCompletion(const char* filename, char* const argv[]);
+int ForkExecveAndWaitForCompletion(const char* filename, char* const argv[]);
 
 // Convert SIGTERM into "SIGTERM". For invalid signal numbers, return "invalid signal (n)"
 std::string SignalName(int signum);

@@ -199,13 +199,17 @@ bool Prefs::FileStorage::CreateTemporaryPrefs() {
     LOG(ERROR) << "prefs directory does not exist: " << source_directory;
     return false;
   }
-  // Copy the directory.
   std::error_code e;
-  std::filesystem::copy(source_directory, destination_directory, e);
+  std::filesystem::copy(source_directory,
+                        destination_directory,
+                        std::filesystem::copy_options::recursive,
+                        e);
   if (e) {
     LOG(ERROR) << "failed to copy prefs to prefs_tmp: " << e.message();
+    DeleteTemporaryPrefs();
     return false;
   }
+  utils::FsyncDirectoryContents(destination_directory.c_str());
 
   return true;
 }

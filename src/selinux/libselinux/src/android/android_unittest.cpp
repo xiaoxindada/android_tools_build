@@ -4,6 +4,7 @@
 #include <android-base/macros.h>
 #include <android-base/stringprintf.h>
 
+#include <private/android_filesystem_config.h>
 #include "android_internal.h"
 #include "label_internal.h"
 
@@ -133,6 +134,28 @@ TEST_F(AndroidSELinuxTest, LoadAndLookupSeAppContext)
 	ret = seapp_context_lookup_internal(SEAPP_TYPE, 10001, false, "platform", "com.android.test1", ctx);
 	EXPECT_EQ(ret, 0);
 	EXPECT_STREQ(context_str(ctx), "u:r:app_data_file:s0:c512,c768");
+	context_free(ctx);
+}
+
+TEST_F(AndroidSELinuxTest, LoadAndLookupSeAppContextPccComponent)
+{
+	int ret = LoadSeAppContexts(
+		"user=_pcc_component domain=pcc_component type=pcc_data_file levelFrom=all\n"
+	);
+
+	EXPECT_EQ(ret, 0);
+
+	context_t ctx = context_new("u:r:unknown");
+
+	ret = seapp_context_lookup_internal(SEAPP_DOMAIN, AID_PCC_COMPONENT_PROCESS_START, false, "platform", "com.android.test1", ctx);
+	EXPECT_EQ(ret, 0);
+	EXPECT_STREQ(context_str(ctx), "u:r:pcc_component:s0:c48,c373,c512,c768");
+	context_free(ctx);
+
+	ctx = context_new("u:r:unknown_data_file");
+	ret = seapp_context_lookup_internal(SEAPP_TYPE, AID_PCC_COMPONENT_PROCESS_START, false, "platform", "com.android.test1", ctx);
+	EXPECT_EQ(ret, 0);
+	EXPECT_STREQ(context_str(ctx), "u:r:pcc_data_file:s0:c48,c373,c512,c768");
 	context_free(ctx);
 }
 

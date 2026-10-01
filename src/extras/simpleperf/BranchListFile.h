@@ -16,12 +16,24 @@
 
 #pragma once
 
+#include <unordered_set>
+#include <vector>
+
 #include "ETMDecoder.h"
 #include "RegEx.h"
+#include "dso.h"
 #include "thread_tree.h"
 #include "utils.h"
 
 namespace simpleperf {
+
+struct KernelModuleInfo {
+  uint64_t memory_start = 0;
+  uint64_t memory_end = 0;
+  std::string memory_symbol_name;
+  uint64_t memory_symbol_addr = 0;
+  uint64_t memory_symbol_len = 0;
+};
 
 // When processing binary info in an input file, the binaries are identified by their path.
 // But this isn't sufficient when merging binary info from multiple input files. Because
@@ -33,24 +45,40 @@ struct BinaryKey {
   std::string path;
   BuildId build_id;
   uint64_t kernel_start_addr = 0;
+  KernelModuleInfo kernel_module_info;
 
   BinaryKey() {}
 
   BinaryKey(const std::string& path, BuildId build_id) : path(path), build_id(build_id) {}
 
-  BinaryKey(const Dso* dso, uint64_t kernel_start_addr) : path(dso->Path()) {
+  BinaryKey(Dso* dso, uint64_t kernel_start_addr) : path(dso->Path()) {
     build_id = Dso::FindExpectedBuildIdForPath(dso->Path());
     if (build_id.IsEmpty()) {
       GetBuildId(*dso, build_id);
     }
     if (dso->type() == DSO_KERNEL) {
       this->kernel_start_addr = kernel_start_addr;
+    } else if (dso->type() == DSO_KERNEL_MODULE) {
+      KernelModuleDso* module_dso = static_cast<KernelModuleDso*>(dso);
+      kernel_module_info.memory_start = module_dso->GetMemoryStart();
+      kernel_module_info.memory_end = module_dso->GetMemoryEnd();
+      const Symbol* symbol = module_dso->FindFirstSymbolInMemory();
+      if (symbol != nullptr) {
+        kernel_module_info.memory_symbol_name = symbol->Name();
+        kernel_module_info.memory_symbol_addr = symbol->addr;
+        kernel_module_info.memory_symbol_len = symbol->len;
+      }
     }
   }
 
   bool operator==(const BinaryKey& other) const {
     return path == other.path && build_id == other.build_id &&
-           kernel_start_addr == other.kernel_start_addr;
+           kernel_start_addr == other.kernel_start_addr &&
+           kernel_module_info.memory_start == other.kernel_module_info.memory_start &&
+           kernel_module_info.memory_end == other.kernel_module_info.memory_end &&
+           kernel_module_info.memory_symbol_name == other.kernel_module_info.memory_symbol_name &&
+           kernel_module_info.memory_symbol_addr == other.kernel_module_info.memory_symbol_addr &&
+           kernel_module_info.memory_symbol_len == other.kernel_module_info.memory_symbol_len;
   }
 };
 
@@ -61,6 +89,9 @@ struct BinaryKeyHash {
     HashCombine(seed, key.build_id);
     if (key.kernel_start_addr != 0) {
       HashCombine(seed, key.kernel_start_addr);
+    } else if (key.kernel_module_info.memory_start != 0) {
+      HashCombine(seed, key.kernel_module_info.memory_start);
+      HashCombine(seed, key.kernel_module_info.memory_end);
     }
     return seed;
   }
@@ -94,28 +125,34 @@ class BinaryFilter {
   std::unordered_map<const Dso*, bool> dso_filter_cache_;
 };
 
-using UnorderedETMBranchMap =
-    std::unordered_map<uint64_t, std::unordered_map<std::vector<bool>, uint64_t>>;
+using ETMBranch = std::vector<bool>;
+
+struct ETMBranchHash {
+  size_t operator()(const ETMBranch* b) const { return std::hash<ETMBranch>{}(*b); }
+};
+
+struct ETMBranchEqual {
+  bool operator()(const ETMBranch* a, const ETMBranch* b) const { return *a == *b; }
+};
+
+using UnorderedETMBranchMap = std::unordered_map<
+    uint64_t, std::unordered_map<const ETMBranch*, uint64_t, ETMBranchHash, ETMBranchEqual>>;
 
 struct ETMBinary {
   DsoType dso_type;
   UnorderedETMBranchMap branch_map;
+  std::unordered_set<ETMBranch> branch_pool;
+
+  const ETMBranch* GetBranch(const ETMBranch& branch) {
+    return &(*branch_pool.insert(branch).first);
+  }
 
   void Merge(const ETMBinary& other) {
-    for (auto& other_p : other.branch_map) {
-      auto it = branch_map.find(other_p.first);
-      if (it == branch_map.end()) {
-        branch_map[other_p.first] = std::move(other_p.second);
-      } else {
-        auto& map2 = it->second;
-        for (auto& other_p2 : other_p.second) {
-          auto it2 = map2.find(other_p2.first);
-          if (it2 == map2.end()) {
-            map2[other_p2.first] = other_p2.second;
-          } else {
-            OverflowSafeAdd(it2->second, other_p2.second);
-          }
-        }
+    for (const auto& [addr, other_b_map] : other.branch_map) {
+      auto& my_b_map = branch_map[addr];
+      for (const auto& [branch_ptr, count] : other_b_map) {
+        const ETMBranch* my_branch_ptr = GetBranch(*branch_ptr);
+        OverflowSafeAdd(my_b_map[my_branch_ptr], count);
       }
     }
   }
@@ -125,7 +162,11 @@ struct ETMBinary {
     for (const auto& p : branch_map) {
       uint64_t addr = p.first;
       const auto& b_map = p.second;
-      result[addr] = std::map<std::vector<bool>, uint64_t>(b_map.begin(), b_map.end());
+      std::map<std::vector<bool>, uint64_t> ordered_map;
+      for (const auto& [branch_ptr, count] : b_map) {
+        ordered_map[*branch_ptr] = count;
+      }
+      result[addr] = std::move(ordered_map);
     }
     return result;
   }

@@ -18,6 +18,14 @@
 
 package {
     default_applicable_licenses: ["external_libbrillo_license"],
+    default_visibility: [
+        ":__subpackages__",
+        "//system/update_engine:__subpackages__",
+        "//build/make/tools/otatools_package",
+        "//external/puffin",
+        "//test/sts/tests/hostside/securityPatch/CVE-2018-9556",
+        "//system/acpi/bert_collector",
+    ]
 }
 
 // Added automatically by a large-scale-change that took the approach of

@@ -28,6 +28,7 @@
 #include <gtest/gtest.h>
 #include <selinux/selinux.h>
 #include <sys/resource.h>
+#include <chrono>
 
 #include "action.h"
 #include "action_manager.h"
@@ -173,6 +174,173 @@ execute_third
     ServiceList service_list;
     TestInitText(init_script, test_function_map, commands, &action_manager, &service_list);
     EXPECT_EQ(3, num_executed);
+}
+
+TEST(init, EventTimeStampIsNotRecordedIfDisabled) {
+    std::string init_script =
+            R"init(
+on event_boottime
+    do_nothing
+)init";
+
+    ActionManager action_manager(/*property_prefix_for_testing=*/"init.test.");
+    // Test that `ro.boottime.event.*` props are hidden behind a flag
+    action_manager.EnableInitEventTimestamp(false);
+    BuiltinFunctionMap test_function_map = {
+            {"do_nothing", {0, 0, {false, [](const BuiltinArguments& args) -> Result<void> {
+                                       return Result<void>{};
+                                   }}}}};
+
+    ActionManagerCommand trigger = [](ActionManager& am) {
+        am.QueueEventTrigger("event_boottime");
+    };
+    std::vector<ActionManagerCommand> commands{trigger};
+    ServiceList service_list;
+
+    const std::string kBootTimeProp = "init.test.ro.boottime.event.event_boottime";
+    SetProperty(kBootTimeProp, "");
+
+    TestInitText(init_script, test_function_map, commands, &action_manager, &service_list);
+
+    EXPECT_TRUE(GetProperty(kBootTimeProp, "").empty());
+}
+
+TEST(init, EventTimeStampIsRecorded) {
+    std::string init_script =
+            R"init(
+on event_boottime
+    do_nothing
+)init";
+
+    ActionManager action_manager(/*property_prefix_for_testing=*/"init.test.");
+    action_manager.EnableInitEventTimestamp(true);
+    BuiltinFunctionMap test_function_map = {
+            {"do_nothing", {0, 0, {false, [](const BuiltinArguments& args) -> Result<void> {
+                                       return Result<void>{};
+                                   }}}}};
+
+    ActionManagerCommand trigger = [](ActionManager& am) {
+        am.QueueEventTrigger("event_boottime");
+    };
+    std::vector<ActionManagerCommand> commands{trigger};
+    ServiceList service_list;
+
+    const std::string kBootTimeProp = "init.test.ro.boottime.event.event_boottime";
+    SetProperty(kBootTimeProp, "");
+
+    TestInitText(init_script, test_function_map, commands, &action_manager, &service_list);
+
+    EXPECT_FALSE(GetProperty(kBootTimeProp, "").empty());
+}
+
+TEST(init, EventTimeStampIsRecordedOnExecution) {
+    std::string init_script =
+            R"init(
+on event1
+    trigger event2
+    trigger event3
+    record_timestamp "trigger done"
+on event2
+    record_timestamp "event2 done"
+on event3
+    record_timestamp "event3 done"
+)init";
+
+    std::map<std::string, long long> test_timestamps;
+
+    ActionManager action_manager(/*property_prefix_for_testing=*/"init.test.");
+    action_manager.EnableInitEventTimestamp(true);
+    BuiltinFunctionMap test_function_map = {
+            {"record_timestamp",
+             {1,
+              1,
+              {false,
+               [&test_timestamps](const BuiltinArguments& args) -> Result<void> {
+                   EXPECT_EQ(2U, args.size());
+                   test_timestamps[args[1]] =
+                           android::base::boot_clock::now().time_since_epoch().count();
+                   return Result<void>{};
+               }}}},
+            {"trigger",
+             {1,
+              1,
+              {false,
+               [&action_manager](const BuiltinArguments& args) -> Result<void> {
+                   EXPECT_EQ(2U, args.size());
+                   action_manager.QueueEventTrigger(args[1]);
+                   return Result<void>{};
+               }}}},
+    };
+    ActionManagerCommand trigger = [](ActionManager& am) { am.QueueEventTrigger("event1"); };
+    std::vector<ActionManagerCommand> commands{trigger};
+    ServiceList service_list;
+
+    const std::string kEvent1Prop = "init.test.ro.boottime.event.event1";
+    const std::string kEvent2Prop = "init.test.ro.boottime.event.event2";
+    const std::string kEvent3Prop = "init.test.ro.boottime.event.event3";
+
+    SetProperty(kEvent1Prop, "");
+    SetProperty(kEvent2Prop, "");
+    SetProperty(kEvent3Prop, "");
+
+    TestInitText(init_script, test_function_map, commands, &action_manager, &service_list);
+
+    auto boottime_event1_prop = atoll(GetProperty(kEvent1Prop, "").c_str());
+    // The boottime prop for event1 is recorded
+    EXPECT_LT(0, boottime_event1_prop);
+    // The timestamp for event2 is not the queue time, but the execution time.
+    auto boottime_event2_prop = atoll(GetProperty(kEvent2Prop, "").c_str());
+    EXPECT_LT(0, boottime_event2_prop);
+    EXPECT_LT(test_timestamps["trigger done"], boottime_event2_prop);
+    EXPECT_LT(boottime_event2_prop, test_timestamps["event2 done"]);
+    // The timestamp for event3 is not the queue time, but the execution time
+    // which happens after the event2 completes
+    auto boottime_event3_prop = atoll(GetProperty(kEvent3Prop, "").c_str());
+    EXPECT_LT(0, boottime_event3_prop);
+    EXPECT_LT(test_timestamps["event2 done"], boottime_event3_prop);
+    EXPECT_LT(boottime_event3_prop, test_timestamps["event3 done"]);
+}
+
+TEST(init, EventTimeStampIsRecordedForFirstExecution) {
+    std::string init_script =
+            R"init(
+on dup-event
+    record_timestamp "first dup-event"
+on dup-event
+    record_timestamp "second dup-event"
+)init";
+
+    std::map<std::string, long long> test_timestamps;
+
+    ActionManager action_manager(/*property_prefix_for_testing=*/"init.test.");
+    action_manager.EnableInitEventTimestamp(true);
+    BuiltinFunctionMap test_function_map = {
+            {"record_timestamp",
+             {1,
+              1,
+              {false,
+               [&test_timestamps](const BuiltinArguments& args) -> Result<void> {
+                   EXPECT_EQ(2U, args.size());
+                   test_timestamps[args[1]] =
+                           android::base::boot_clock::now().time_since_epoch().count();
+                   return Result<void>{};
+               }}}},
+    };
+    ActionManagerCommand trigger = [](ActionManager& am) { am.QueueEventTrigger("dup-event"); };
+    std::vector<ActionManagerCommand> commands{trigger};
+    ServiceList service_list;
+
+    const std::string kDupEventBootTimeProp = "init.test.ro.boottime.event.dup-event";
+
+    SetProperty(kDupEventBootTimeProp, "");
+    TestInitText(init_script, test_function_map, commands, &action_manager, &service_list);
+
+    auto boottime_prop = atoll(GetProperty(kDupEventBootTimeProp, "").c_str());
+    // The timestamp for the dup-event is recorded
+    EXPECT_LT(0, boottime_prop);
+    // The timestamp for the dup-event is recorded for the first execution
+    EXPECT_LT(boottime_prop, test_timestamps["first dup-event"]);
+    EXPECT_LT(test_timestamps["first dup-event"], test_timestamps["second dup-event"]);
 }
 
 TEST(init, IgnoreDuplicateService) {

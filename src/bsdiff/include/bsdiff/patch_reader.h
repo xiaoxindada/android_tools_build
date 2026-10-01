@@ -7,12 +7,12 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <functional>
 
 #include <memory>
 
 #include "bsdiff/control_entry.h"
 #include "bsdiff/decompressor_interface.h"
-#include "bsdiff/file_interface.h"
 
 namespace bsdiff {
 
@@ -29,6 +29,10 @@ class BsdiffPatchReader {
   // Initialize the control stream, diff stream and extra stream from the
   // corresponding offset of |patch_data|.
   bool Init(const uint8_t* patch_data, size_t patch_size);
+
+  // Initialize the control stream, diff stream and extra stream from the
+  // corresponding offset of the file descriptor |fd|.
+  bool Init(int fd, off_t offset, size_t size);
 
   // Read the control stream and parse the metadata of |diff_size_|,
   // |extra_size_| and |offset_incremental_|.
@@ -49,6 +53,14 @@ class BsdiffPatchReader {
   bool Finish();
 
  private:
+  // Parse the header of the patch and initialize the control, diff and extra
+  // streams.
+  bool ParseHeader(const uint8_t* header,
+                   size_t patch_size,
+                   std::function<std::unique_ptr<
+                       DecompressorInterface>(CompressorType, size_t, size_t)>
+                       create_decompressor);
+
   // The compressed stream that contains the control data; i.e. length of each
   // diff/extra block and the corresponding offset to read in the source file.
   std::unique_ptr<DecompressorInterface> ctrl_stream_{nullptr};

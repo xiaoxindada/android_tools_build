@@ -19,7 +19,7 @@ use anyhow::{anyhow, Result};
 use std::fs::{read_dir, remove_file};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
-use trace_provider::TraceProvider;
+use trace_provider::{prune_memory, TraceProvider};
 
 use crate::trace_provider;
 
@@ -110,7 +110,7 @@ impl TraceProvider for SimpleperfLbrTraceProvider {
                 .is_some()
         };
 
-        let process_trace_file = |trace_file: PathBuf| {
+        let process_trace_file = |trace_file: PathBuf| -> Result<()> {
             let mut profile_file = PathBuf::from(profile_dir);
             profile_file.push(
                 trace_file
@@ -139,7 +139,10 @@ impl TraceProvider for SimpleperfLbrTraceProvider {
             .map(|e| e.path())
             .filter(|e| e.is_file())
             .filter(is_lbr_extension)
-            .try_for_each(process_trace_file)
+            .try_for_each(process_trace_file)?;
+
+        prune_memory();
+        Ok(())
     }
 
     fn set_log_file(&self, filename: &Path) {

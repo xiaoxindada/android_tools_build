@@ -24,8 +24,8 @@ from typing import List
 
 def gen_event_type_entry_str(event_type_name, event_type, event_config, description='',
                              limited_arch=''):
-    return '{"%s", %s, %s, "%s", "%s"},\n' % (
-        event_type_name, event_type, event_config, description, limited_arch)
+    return '{"%s", %s, %s, %s, %s, "%s", "%s"},\n' % (
+        event_type_name, event_type, event_config, '0', '0', description, limited_arch)
 
 
 def gen_hardware_events():
@@ -292,11 +292,13 @@ def gen_events(event_table_file: str):
           std::string_view name;
           uint32_t type;
           uint64_t config;
+          uint64_t config1;
+          uint64_t config2;
           std::string_view description;
           std::string_view limited_arch;
 
           explicit operator EventType() const {
-            return {std::string(name), type, config, std::string(description), std::string(limited_arch)};
+            return {std::string(name), type, config, config1, config2, std::string(description), std::string(limited_arch)};
           }
         };
 

@@ -13,6 +13,10 @@ import /system/etc/init/hw/init.${ro.zygote}.rc
 
 # Cgroups are mounted right before early-init using list from /etc/cgroups.json
 on early-init
+    # Allow bootchart to capture from the beginning of second-stage init.
+    mkdir /dev/bootchart 0755 root root
+    bootchart start
+
     # Disable sysrq from keyboard
     write /proc/sys/kernel/sysrq 0
 
@@ -42,8 +46,8 @@ on early-init
     # set RLIMIT_NICE to allow priorities from 19 to -20
     setrlimit nice 40 40
 
-    # Allow up to 32K FDs per process
-    setrlimit nofile 32768 32768
+    # Allow up to 32Ki FDs per process by default, expandable to 512Ki.
+    setrlimit nofile 32768 524288
 
     # set RLIMIT_MEMLOCK to 64KB
     setrlimit memlock 65536 65536
@@ -78,6 +82,9 @@ on early-init
     # Run the init_dev_config service to configure the device.
     exec_start init_dev_config
 
+    # Fix permissions before apexd reads /metadata
+    restorecon /metadata
+
     # Run apexd-bootstrap so that APEXes that provide critical libraries
     # become available. Note that this is executed as exec_start to ensure that
     # the libraries are available to the processes started after this statement.
@@ -102,6 +109,9 @@ on early-init
     restorecon /tmp
     chown shell shell /tmp
     chmod 0771 /tmp
+
+on early-init && property:ro.boot.bootchart.enabled=""
+    rmdir /dev/bootchart
 
 on init
     sysclktz 0
@@ -528,7 +538,6 @@ on late-init
 
     # Should be before netd, but after apex, properties and logging is available.
     trigger load-bpf-programs
-    trigger bpf-progs-loaded
 
     # Now we can start zygote.
     trigger zygote-start
@@ -906,6 +915,7 @@ on post-fs-data
     mkdir /data/ss 0700 system system encryption=Require
 
     mkdir /data/system 0775 system system encryption=Require
+    mkdir /data/system/aiseal 0700 system system
     mkdir /data/system/environ 0700 system system
     # b/183861600 attempt to fix selinux label before running derive_classpath service
     restorecon /data/system/environ
@@ -947,7 +957,9 @@ on post-fs-data
     # Set the casefold flag on /data/media.  For upgrades, a restorecon can be
     # needed first to relabel the directory from media_rw_data_file.
     restorecon /data/media
-    exec - media_rw media_rw -- /system/bin/chattr +F /data/media
+    start casefolding_remover
+    wait_for_prop ro.casefolding.adjusted 1
+
 
     # A tmpfs directory, which will contain all apps and sdk sandbox CE and DE
     # data directory that bind mount from the original source.
@@ -1008,7 +1020,10 @@ on post-fs-data
     mkdir /data/misc/stats-service/ 0770 statsd system
     mkdir /data/misc/train-info/ 0770 statsd system
 
-    # TODO(b/400439023): Remove once attest modules flagging is removed.
+    # System server uses securityfs to manage the safesetid policy (b/414893665).
+    mount securityfs securityfs /sys/kernel/security rw
+    chown system /sys/kernel/security/safesetid/uid_allowlist_policy
+
     wait_for_prop apexd.status activated
     # Wait for KeyMints to receive APEX module info before starting code from updateable APEXes.
     # This is to prevent APEX modules from interfering in module measurement.
@@ -1071,31 +1086,6 @@ on post-fs-data
 on property:vold.checkpoint_committed=1
     trigger post-fs-data-checkpointed
 
-# It is important that we start bpfloader after:
-#   - /sys/fs/bpf is already mounted,
-#   - apex (incl. rollback) is initialized (so that we can load bpf
-#     programs shipped as part of apex mainline modules)
-#   - logd is ready for us to log stuff
-#
-# At the same time we want to be as early as possible to reduce races and thus
-# failures (before memory is fragmented, and cpu is busy running tons of other
-# stuff) and we absolutely want to be before netd and the system boot slot is
-# considered to have booted successfully.
-on load-bpf-programs
-    # Temporarily relax access to kallsyms so that bpfloader can resolve kernel symbols
-    # at load time.
-    #
-    # NOTE: Still requires CAP_SYSLOG and sepolicy allow rules to read /proc/kallsyms
-    write /proc/sys/kernel/kptr_restrict 1
-
-    exec_start bpfloader
-
-    # Restore kallsyms protection after bpf programs have been loaded.
-    write /proc/sys/kernel/kptr_restrict 2
-
-on bpf-progs-loaded
-    start netd
-
 # It is recommended to put unnecessary data/ initialization from post-fs-data
 # to start-zygote in device's init.rc to unblock zygote start.
 on zygote-start
@@ -1147,8 +1137,8 @@ on boot
     # dev.mnt.dev.data=dm-N, dev.mnt.blk.data=sdaN/mmcblk0pN, dev.mnt.rootdisk.data=sda/mmcblk0, or
     # dev.mnt.dev.data=sdaN/mmcblk0pN, dev.mnt.blk.data=sdaN/mmcblk0pN, dev.mnt.rootdisk.data=sda/mmcblk0
     mkdir /dev/sys/block/by-name 0755 system system
-    symlink /sys/class/block/${dev.mnt.dev.data} /dev/sys/block/by-name/userdata
-    symlink /sys/class/block/${dev.mnt.rootdisk.data} /dev/sys/block/by-name/rootdisk
+    symlink /sys/block/${dev.mnt.dev.data} /dev/sys/block/by-name/userdata
+    symlink /sys/block/${dev.mnt.rootdisk.data} /dev/sys/block/by-name/rootdisk
 
     # F2FS tuning. Set cp_interval larger than dirty_expire_centisecs, 30 secs,
     # to avoid power consumption when system becomes mostly idle. Be careful
@@ -1156,8 +1146,6 @@ on boot
     # are not aware of using fsync()/sync() to prepare sudden power-cut.
     write /dev/sys/fs/by-name/userdata/cp_interval 30
     write /dev/sys/fs/by-name/userdata/gc_urgent_sleep_time 50
-    write /dev/sys/fs/by-name/userdata/iostat_period_ms 1000
-    write /dev/sys/fs/by-name/userdata/iostat_enable 1
 
     # set readahead multiplier for POSIX_FADV_SEQUENTIAL files
     write /dev/sys/fs/by-name/userdata/seq_file_ra_mul 128
@@ -1232,6 +1220,10 @@ on boot
 
     class_start core
 
+on boot && property:ro.debuggable=1
+    write /dev/sys/fs/by-name/userdata/iostat_period_ms 1000
+    write /dev/sys/fs/by-name/userdata/iostat_enable 1
+
 on nonencrypted
     class_start main
     class_start late_start
@@ -1246,7 +1238,7 @@ on property:sys.boot_completed=1
     bootchart stop
     # Setup per_boot directory so other .rc could start to use it on boot_completed
     exec - system system -- /bin/rm -rf /data/per_boot
-    mkdir /data/per_boot 0700 system system encryption=Require key=per_boot_ref
+    mkdir /data/per_boot 0710 system system encryption=Require key=per_boot_ref
 
 # system server cannot write to /proc/sys files,
 # and chown/chmod does not work for /proc/sys/ entries.
@@ -1313,18 +1305,6 @@ on property:ro.debuggable=1
 
 on init && property:ro.debuggable=1
     start console
-
-# Multi-Gen LRU Experiment
-on property:persist.device_config.mglru_native.lru_gen_config=none
-  write /sys/kernel/mm/lru_gen/enabled 0
-on property:persist.device_config.mglru_native.lru_gen_config=core
-  write /sys/kernel/mm/lru_gen/enabled 1
-on property:persist.device_config.mglru_native.lru_gen_config=core_and_mm_walk
-  write /sys/kernel/mm/lru_gen/enabled 3
-on property:persist.device_config.mglru_native.lru_gen_config=core_and_nonleaf_young
-  write /sys/kernel/mm/lru_gen/enabled 5
-on property:persist.device_config.mglru_native.lru_gen_config=all
-  write /sys/kernel/mm/lru_gen/enabled 7
 
 # Allow other processes to run `snapshotctl` through `init`. This requires
 # `set_prop` permission on `snapshotctl_prop`.

@@ -44,6 +44,13 @@ int bspatch(const std::unique_ptr<FileInterface>& old_file,
             const uint8_t* patch_data,
             size_t patch_size);
 
+BSDIFF_EXPORT
+int bspatch(const std::unique_ptr<FileInterface>& old_file,
+            const std::unique_ptr<FileInterface>& new_file,
+            int patch_fd,
+            off_t patch_offset,
+            size_t patch_size);
+
 bool WriteAll(const std::unique_ptr<FileInterface>& file,
               const uint8_t* data,
               size_t size);

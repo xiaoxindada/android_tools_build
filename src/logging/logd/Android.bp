@@ -23,7 +23,6 @@
 // so make sure we do not regret hard-coding it as follows:
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
-    default_team: "trendy_team_native_tools_libraries",
 }
 
 event_flag = [
@@ -127,7 +126,9 @@ cc_binary {
         libs: [
             "ILogcatManagerService_aidl",
         ]
-    }
+    },
+
+    afdo: true,
 }
 
 cc_library_static {
@@ -179,6 +180,7 @@ cc_defaults {
         "-Wextra",
         "-Werror",
         "-fno-builtin",
+        "-DANDROID_DEBUGGABLE=0",
     ] + event_flag,
 
     srcs: [
@@ -204,6 +206,14 @@ cc_defaults {
         "libbinder",
         "libutils",
     ],
+    product_variables: {
+        debuggable: {
+            cflags: [
+                "-UANDROID_DEBUGGABLE",
+                "-DANDROID_DEBUGGABLE=1",
+            ],
+        },
+    },
 }
 
 // Build tests for the logger. Run with:

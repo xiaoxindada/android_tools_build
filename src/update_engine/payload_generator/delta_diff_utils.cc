@@ -67,6 +67,7 @@
 #include "update_engine/payload_generator/extent_ranges.h"
 #include "update_engine/payload_generator/extent_utils.h"
 #include "update_engine/payload_generator/xz.h"
+#include "update_engine/payload_generator/zstd_android.h"
 
 using std::list;
 using std::map;
@@ -923,7 +924,9 @@ bool DeltaReadFile(std::vector<AnnotatedOperation>* aops,
 bool GenerateBestFullOperation(const brillo::Blob& new_data,
                                const PayloadVersion& version,
                                brillo::Blob* out_blob,
-                               InstallOperation::Type* out_type) {
+                               InstallOperation::Type* out_type,
+                               bool enable_replace_zstd,
+                               bool disable_replace_compression) {
   if (new_data.empty())
     return false;
 
@@ -938,32 +941,53 @@ bool GenerateBestFullOperation(const brillo::Blob& new_data,
   }
 
   bool out_blob_set = false;
-
-  // Try compressing |new_data| with xz first.
-  if (version.OperationAllowed(InstallOperation::REPLACE_XZ)) {
-    brillo::Blob new_data_xz;
-    if (XzCompress(new_data, &new_data_xz) && !new_data_xz.empty()) {
-      *out_type = InstallOperation::REPLACE_XZ;
-      *out_blob = std::move(new_data_xz);
-      out_blob_set = true;
+  size_t xz_size = 0, zstd_size = 0, bz_size = 0;
+  // Try compression schemes only if not explicitly disabled
+  if (!disable_replace_compression) {
+    if (enable_replace_zstd) {
+      // Try compressing it with zstd.
+      if (version.OperationAllowed(InstallOperation::REPLACE_ZSTD)) {
+        brillo::Blob new_data_zstd;
+        if (ZstdCompress(new_data, &new_data_zstd) && !new_data_zstd.empty()) {
+          zstd_size = new_data_zstd.size();
+          if (!out_blob_set || out_blob->size() > zstd_size) {
+            *out_type = InstallOperation::REPLACE_ZSTD;
+            *out_blob = std::move(new_data_zstd);
+            out_blob_set = true;
+          }
+        }
+      }
+    } else {
+      // Try compressing |new_data| with xz first.
+      if (version.OperationAllowed(InstallOperation::REPLACE_XZ)) {
+        brillo::Blob new_data_xz;
+        if (XzCompress(new_data, &new_data_xz) && !new_data_xz.empty()) {
+          xz_size = new_data_xz.size();
+          *out_type = InstallOperation::REPLACE_XZ;
+          *out_blob = std::move(new_data_xz);
+          out_blob_set = true;
+        }
+      }
+      // Try compressing it with bzip2.
+      if (version.OperationAllowed(InstallOperation::REPLACE_BZ)) {
+        brillo::Blob new_data_bz;
+        // TODO(deymo): Implement some heuristic to determine if it is worth
+        // trying to compress the blob with bzip2 if we already have a good
+        // REPLACE_XZ.
+        if (BzipCompress(new_data, &new_data_bz) && !new_data_bz.empty()) {
+          bz_size = new_data_bz.size();
+          if (!out_blob_set || out_blob->size() > bz_size) {
+            // A REPLACE_BZ is better or nothing else was set.
+            *out_type = InstallOperation::REPLACE_BZ;
+            *out_blob = std::move(new_data_bz);
+            out_blob_set = true;
+          }
+        }
+      }
     }
   }
-
-  // Try compressing it with bzip2.
-  if (version.OperationAllowed(InstallOperation::REPLACE_BZ)) {
-    brillo::Blob new_data_bz;
-    // TODO(deymo): Implement some heuristic to determine if it is worth trying
-    // to compress the blob with bzip2 if we already have a good REPLACE_XZ.
-    if (BzipCompress(new_data, &new_data_bz) && !new_data_bz.empty() &&
-        (!out_blob_set || out_blob->size() > new_data_bz.size())) {
-      // A REPLACE_BZ is better or nothing else was set.
-      *out_type = InstallOperation::REPLACE_BZ;
-      *out_blob = std::move(new_data_bz);
-      out_blob_set = true;
-    }
-  }
-
-  // If nothing else worked or it was badly compressed we try a REPLACE.
+  // If nothing else worked or it was badly compressed (or compression was
+  // disabled) we try a REPLACE.
   if (!out_blob_set || out_blob->size() >= new_data.size()) {
     *out_type = InstallOperation::REPLACE;
     // This needs to make a copy of the data in the case bzip or xz didn't
@@ -971,6 +995,16 @@ bool GenerateBestFullOperation(const brillo::Blob& new_data,
     // low.
     *out_blob = new_data;
   }
+
+  LOG(INFO) << android::base::StringPrintf(
+      "Compression results: Original size: %zu, XZ size: %zu, ZSTD size: %zu, "
+      "BZ2 size: %zu, Chosen type: %s, Final size: %zu",
+      new_data.size(),
+      xz_size,
+      zstd_size,
+      bz_size,
+      InstallOperationTypeName(*out_type),
+      out_blob->size());
   return true;
 }
 
@@ -1076,7 +1110,12 @@ bool ReadExtentsToDiff(const string& old_part,
   // old_data.
   InstallOperation::Type op_type{};
   TEST_AND_RETURN_FALSE(
-      GenerateBestFullOperation(new_data, version, &data_blob, &op_type));
+      GenerateBestFullOperation(new_data,
+                                version,
+                                &data_blob,
+                                &op_type,
+                                config.enable_replace_zstd,
+                                config.disable_replace_compression));
   operation.set_type(op_type);
 
   if (blocks_to_read > 0) {
@@ -1140,7 +1179,8 @@ bool ReadExtentsToDiff(const string& old_part,
 bool IsAReplaceOperation(InstallOperation::Type op_type) {
   return (op_type == InstallOperation::REPLACE ||
           op_type == InstallOperation::REPLACE_BZ ||
-          op_type == InstallOperation::REPLACE_XZ);
+          op_type == InstallOperation::REPLACE_XZ ||
+          op_type == InstallOperation::REPLACE_ZSTD);
 }
 
 bool IsNoSourceOperation(InstallOperation::Type op_type) {

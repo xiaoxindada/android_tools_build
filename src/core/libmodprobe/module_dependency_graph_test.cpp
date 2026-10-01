@@ -231,29 +231,35 @@ TEST(ModuleDependencyGraphTest, AliasInPreSoftdep) {
     EXPECT_THAT(m3, UnorderedElementsAre(std::string(dir.path) + "/test1.ko"));
 }
 
-TEST(ModuleDependencyGraphTest, FailsOnLoopHarddep) {
+TEST(ModuleDependencyGraphTest, HandlesLoopHarddep) {
     const std::string deps =
             "test0.ko: test1.ko\n"
             "test1.ko: test2.ko\n"
             "test2.ko: test0.ko\n";
     TemporaryDir dir;
     WriteModuleConfigs(dir, "", deps, "", "", "", "");
-    // A graph with a loop is invalid and should crash.
-    EXPECT_DEATH(ModuleDependencyGraph graph(ModuleConfig::Parse({dir.path})), "");
+
+    ModuleDependencyGraph graph(ModuleConfig::Parse({dir.path}));
+    graph.AddModule("test0");
+    // No modules should be ready due to dependency loop.
+    EXPECT_TRUE(graph.PopReadyModules().empty());
 }
 
-TEST(ModuleDependencyGraphTest, FailsOnLoopSoftAndHarddep) {
+TEST(ModuleDependencyGraphTest, HandlesLoopSoftAndHarddep) {
     const std::string deps =
             "test0.ko:\n"
             "test1.ko: test0.ko\n";
     const std::string softdep = "softdep test0 pre: test1\n";
     TemporaryDir dir;
     WriteModuleConfigs(dir, "", deps, softdep, "", "", "");
-    // A graph with a loop is invalid and should crash.
-    EXPECT_DEATH(ModuleDependencyGraph graph(ModuleConfig::Parse({dir.path})), "");
+
+    ModuleDependencyGraph graph(ModuleConfig::Parse({dir.path}));
+    graph.AddModule("test0");
+    // No modules should be ready due to dependency loop.
+    EXPECT_TRUE(graph.PopReadyModules().empty());
 }
 
-TEST(ModuleDependencyGraphTest, FailsOnLoopAliasedSoftAndHarddep) {
+TEST(ModuleDependencyGraphTest, HandlesLoopAliasedSoftAndHarddep) {
     const std::string deps =
             "test0.ko:\n"
             "test1.ko: test0.ko\n";
@@ -262,8 +268,10 @@ TEST(ModuleDependencyGraphTest, FailsOnLoopAliasedSoftAndHarddep) {
     TemporaryDir dir;
     WriteModuleConfigs(dir, aliases, deps, softdep, "", "", "");
 
-    // A graph with a loop is invalid and should crash.
-    EXPECT_DEATH(ModuleDependencyGraph graph(ModuleConfig::Parse({dir.path})), "");
+    ModuleDependencyGraph graph(ModuleConfig::Parse({dir.path}));
+    graph.AddModule("test0");
+    // No modules should be ready due to dependency loop.
+    EXPECT_TRUE(graph.PopReadyModules().empty());
 }
 
 TEST(ModuleDependencyGraphTest, BlocklistHarddep) {

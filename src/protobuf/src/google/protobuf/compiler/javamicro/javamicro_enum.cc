@@ -32,12 +32,10 @@
 //  Based on original Protocol Buffers design by
 //  Sanjay Ghemawat, Jeff Dean, and others.
 
-#include <absl/strings/str_cat.h>
-#include <google/protobuf/compiler/javamicro/javamicro_params.h>
-#include <google/protobuf/compiler/javamicro/javamicro_enum.h>
-#include <google/protobuf/compiler/javamicro/javamicro_helpers.h>
-#include <google/protobuf/io/printer.h>
-#include <google/protobuf/descriptor.pb.h>
+#include "absl/strings/str_cat.h"
+#include "google/protobuf/compiler/javamicro/javamicro_params.h"
+#include "google/protobuf/compiler/javamicro/javamicro_enum.h"
+#include "google/protobuf/io/printer.h"
 
 namespace google {
 namespace protobuf {

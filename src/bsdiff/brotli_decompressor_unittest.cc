@@ -24,11 +24,11 @@ namespace bsdiff {
 class BrotliDecompressorTest : public testing::Test {
  protected:
   void SetUp() {
-    decompressor_.reset(new BrotliDecompressor());
+    decompressor_.reset(new BrotliMemoryDecompressor());
     EXPECT_NE(nullptr, decompressor_.get());
   }
 
-  std::unique_ptr<BrotliDecompressor> decompressor_;
+  std::unique_ptr<BrotliMemoryDecompressor> decompressor_;
 };
 
 TEST_F(BrotliDecompressorTest, SmokeTest) {

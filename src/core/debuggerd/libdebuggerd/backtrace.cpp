@@ -44,7 +44,7 @@
 #include "libdebuggerd/utility.h"
 #include "util.h"
 
-static void dump_process_header(log_t* log, pid_t pid,
+static void dump_process_header(log_t* log, pid_t pid, pid_t ppid,
                                 const std::vector<std::string>& command_line) {
   _LOG(log, logtype::BACKTRACE, "\n\n----- pid %d at %s -----\n", pid, get_timestamp().c_str());
 
@@ -52,6 +52,9 @@ static void dump_process_header(log_t* log, pid_t pid,
     _LOG(log, logtype::BACKTRACE, "Cmd line: %s\n", android::base::Join(command_line, " ").c_str());
   }
   _LOG(log, logtype::BACKTRACE, "ABI: '%s'\n", ABI_STRING);
+  if (ppid != 0) {
+    _LOG(log, logtype::BACKTRACE, "Ppid: %d\n", ppid);
+  }
 }
 
 static void dump_process_footer(log_t* log, pid_t pid) {
@@ -73,6 +76,7 @@ void dump_backtrace_thread(int output_fd, unwindstack::AndroidUnwinder* unwinder
     return;
   }
 
+  data.DemangleFunctionNames();
   log_backtrace(&log, unwinder, data, "  ");
 }
 
@@ -88,7 +92,7 @@ void dump_backtrace(android::base::unique_fd output_fd, unwindstack::AndroidUnwi
     return;
   }
 
-  dump_process_header(&log, target->second.pid, target->second.command_line);
+  dump_process_header(&log, target->second.pid, target->second.ppid, target->second.command_line);
 
   dump_backtrace_thread(output_fd.get(), unwinder, target->second);
   for (const auto& [tid, info] : thread_info) {
@@ -106,7 +110,8 @@ void dump_backtrace_header(int output_fd) {
   log.amfd_data = nullptr;
 
   pid_t pid = getpid();
-  dump_process_header(&log, pid, get_command_line(pid));
+  pid_t ppid = getppid();
+  dump_process_header(&log, pid, ppid, get_command_line(pid));
 }
 
 void dump_backtrace_footer(int output_fd) {

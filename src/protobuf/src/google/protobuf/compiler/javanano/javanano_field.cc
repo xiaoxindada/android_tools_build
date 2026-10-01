@@ -32,15 +32,15 @@
 //  Based on original Protocol Buffers design by
 //  Sanjay Ghemawat, Jeff Dean, and others.
 
-#include <absl/log/absl_check.h>
-#include <absl/log/absl_log.h>
-#include <google/protobuf/compiler/javanano/javanano_field.h>
-#include <google/protobuf/compiler/javanano/javanano_helpers.h>
-#include <google/protobuf/compiler/javanano/javanano_primitive_field.h>
-#include <google/protobuf/compiler/javanano/javanano_enum_field.h>
-#include <google/protobuf/compiler/javanano/javanano_map_field.h>
-#include <google/protobuf/compiler/javanano/javanano_message_field.h>
-#include <google/protobuf/stubs/common.h>
+#include "absl/log/absl_check.h"
+#include "absl/log/absl_log.h"
+#include "google/protobuf/compiler/javanano/javanano_field.h"
+#include "google/protobuf/compiler/javanano/javanano_helpers.h"
+#include "google/protobuf/compiler/javanano/javanano_primitive_field.h"
+#include "google/protobuf/compiler/javanano/javanano_enum_field.h"
+#include "google/protobuf/compiler/javanano/javanano_map_field.h"
+#include "google/protobuf/compiler/javanano/javanano_message_field.h"
+#include "google/protobuf/io/printer.h"
 
 namespace google {
 namespace protobuf {

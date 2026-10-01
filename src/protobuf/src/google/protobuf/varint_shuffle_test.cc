@@ -27,6 +27,13 @@ namespace protobuf {
 namespace internal {
 namespace {
 
+// Android local modification: we want to run with unsigned integer overflow
+// sanitizer enabled to support vendor use cases, but the functions below rely
+// on unsigned overflow. Disable the sanitizer for these functions.
+#if defined(__clang__)
+#pragma clang attribute push(__attribute__((no_sanitize("unsigned-integer-overflow"))), apply_to=function)
+#endif
+
 uint64_t ToInt64(char c) { return static_cast<uint8_t>(c); }
 uint32_t ToInt32(char c) { return static_cast<uint8_t>(c); }
 
@@ -69,6 +76,10 @@ int NaiveSerialize(char* p, uint64_t value) {
   p[n++] = static_cast<char>(value);
   return n;
 }
+
+#if defined(__clang__)
+#pragma clang attribute pop
+#endif
 
 class ShiftMixParseVarint32Test : public TestWithParam<int> {
  public:
@@ -301,8 +312,9 @@ TEST(ShiftMixParseVarint64Test, DroppingOverlongBits) {
   ASSERT_THAT(result, Eq(expected));
 }
 
-
 }  // namespace
 }  // namespace internal
 }  // namespace protobuf
 }  // namespace google
+
+#include "google/protobuf/port_undef.inc"

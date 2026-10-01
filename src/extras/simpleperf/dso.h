@@ -128,11 +128,7 @@ class Dso {
   // be searched recursively to build a build_id_map.
   static bool AddSymbolDir(const std::string& symbol_dir);
   static void SetVmlinux(const std::string& vmlinux);
-  static void SetKallsyms(std::string kallsyms) {
-    if (!kallsyms.empty()) {
-      kallsyms_ = std::move(kallsyms);
-    }
-  }
+  static void SetKallsyms(std::string kallsyms);
   static void AllowMismatchedBuildId();
   static void SetBuildIds(const std::vector<std::pair<std::string, BuildId>>& build_ids);
   static BuildId FindExpectedBuildIdForPath(const std::string& path);
@@ -200,14 +196,6 @@ class Dso {
   bool IsForJavaMethod() const;
 
  protected:
-  static bool demangle_;
-  static std::string vmlinux_;
-  static std::string kallsyms_;
-  static std::unordered_map<std::string, BuildId> build_id_map_;
-  static size_t dso_count_;
-  static uint32_t g_dump_id_;
-  static simpleperf_dso_impl::DebugElfFileFinder debug_elf_file_finder_;
-
   Dso(DsoType type, const std::string& path);
   BuildId GetExpectedBuildId() const;
 
@@ -231,6 +219,43 @@ class Dso {
   // Used to assign dump_id for symbols in current dso.
   uint32_t symbol_dump_id_;
   android::base::LogSeverity symbol_warning_loglevel_;
+};
+
+class KernelModuleDso : public Dso {
+ public:
+  KernelModuleDso(const std::string& path, uint64_t memory_start, uint64_t memory_end,
+                  Dso* kernel_dso)
+      : Dso(DSO_KERNEL_MODULE, path),
+        memory_start_(memory_start),
+        memory_end_(memory_end),
+        kernel_dso_(kernel_dso) {}
+
+  uint64_t GetMemoryStart() const { return memory_start_; }
+  uint64_t GetMemoryEnd() const { return memory_end_; }
+  void SetMinExecutableVaddr(uint64_t min_vaddr, uint64_t memory_offset) override;
+  void GetMinExecutableVaddr(uint64_t* min_vaddr, uint64_t* memory_offset) override;
+  uint64_t IpToVaddrInFile(uint64_t ip, uint64_t map_start, uint64_t) override;
+  std::optional<uint64_t> IpToFileOffset(uint64_t ip, uint64_t map_start,
+                                         uint64_t map_pgoff) override;
+
+  void FindDebugFilePath(BuildId& build_id);
+  void SetFirstSymbolInMemory(const Symbol& symbol);
+  const Symbol* FindFirstSymbolInMemory();
+
+ protected:
+  std::string FindDebugFilePath() const override;
+  std::vector<Symbol> LoadSymbolsImpl() override;
+
+ private:
+  void CalculateMinVaddr();
+
+  uint64_t memory_start_;
+  uint64_t memory_end_;
+  Dso* kernel_dso_ = nullptr;
+  std::optional<uint64_t> min_vaddr_;
+  std::optional<uint64_t> memory_offset_of_min_vaddr_;
+  std::optional<ElfSection> text_section_;
+  std::optional<Symbol> first_symbol_in_memory;
 };
 
 const char* DsoTypeToString(DsoType dso_type);

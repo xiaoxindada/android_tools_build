@@ -1,7 +1,7 @@
 service trusty-coverage-controller /vendor/bin/trusty-coverage-controller -o /data/vendor/trusty/coverage
     class main
     user root
-    group root
+    group drmrpc root
     disabled
 
 on property:persist.trusty.coverage.enabled=1

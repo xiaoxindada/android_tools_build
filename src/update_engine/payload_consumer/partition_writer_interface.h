@@ -17,9 +17,6 @@
 #ifndef UPDATE_ENGINE_PARTITION_WRITER_INTERFACE_H_
 #define UPDATE_ENGINE_PARTITION_WRITER_INTERFACE_H_
 
-#include <cstdint>
-#include <string>
-
 #include <brillo/secure_blob.h>
 #include <gtest/gtest_prod.h>
 
@@ -54,6 +51,11 @@ class PartitionWriterInterface {
   // set even if it fails.
   [[nodiscard]] virtual bool PerformReplaceOperation(
       const InstallOperation& operation, const void* data, size_t count) = 0;
+  [[nodiscard]] virtual bool PerformReplaceOperation(
+      const InstallOperation& operation,
+      int fd,
+      off_t offset,
+      size_t count) = 0;
   [[nodiscard]] virtual bool PerformZeroOrDiscardOperation(
       const InstallOperation& operation) = 0;
 
@@ -63,6 +65,12 @@ class PartitionWriterInterface {
       const InstallOperation& operation,
       ErrorCode* error,
       const void* data,
+      size_t count) = 0;
+  [[nodiscard]] virtual bool PerformDiffOperation(
+      const InstallOperation& operation,
+      ErrorCode* error,
+      int fd,
+      off_t offset,
       size_t count) = 0;
 
   // |DeltaPerformer| calls this when all Install Ops are sent to partition

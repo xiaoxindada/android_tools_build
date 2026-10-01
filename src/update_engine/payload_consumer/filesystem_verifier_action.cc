@@ -263,16 +263,12 @@ void FilesystemVerifierAction::WriteVerityAndHashPartition(
     WriteVerityData(fd, buffer, buffer_size);
     return;
   }
-  const auto cur_offset = fd->Seek(start_offset, SEEK_SET);
-  if (cur_offset != start_offset) {
-    PLOG(ERROR) << "Failed to seek to offset: " << start_offset;
-    Cleanup(ErrorCode::kVerityCalculationError);
-    return;
-  }
   const auto read_size =
       std::min<uint64_t>(buffer_size, end_offset - start_offset);
-  const auto bytes_read = fd->Read(buffer, read_size);
-  if (bytes_read < 0 || static_cast<size_t>(bytes_read) != read_size) {
+  ssize_t bytes_read = 0;
+  if (!utils::ReadAll(
+          fd, buffer, read_size, start_offset, &bytes_read) ||
+      bytes_read != static_cast<ssize_t>(read_size)) {
     PLOG(ERROR) << "Failed to read offset " << start_offset << " expected "
                 << read_size << " bytes, actual: " << bytes_read;
     Cleanup(ErrorCode::kVerityCalculationError);
@@ -309,16 +305,12 @@ void FilesystemVerifierAction::HashPartition(const off64_t start_offset,
     FinishPartitionHashing();
     return;
   }
-  const auto cur_offset = fd->Seek(start_offset, SEEK_SET);
-  if (cur_offset != start_offset) {
-    PLOG(ERROR) << "Failed to seek to offset: " << start_offset;
-    Cleanup(ErrorCode::kFilesystemVerifierError);
-    return;
-  }
   const auto read_size =
       std::min<uint64_t>(buffer_size, end_offset - start_offset);
-  const auto bytes_read = fd->Read(buffer, read_size);
-  if (bytes_read < 0 || static_cast<size_t>(bytes_read) != read_size) {
+  ssize_t bytes_read = 0;
+  if (!utils::ReadAll(
+          fd, buffer, read_size, start_offset, &bytes_read) ||
+      bytes_read != static_cast<ssize_t>(read_size)) {
     PLOG(ERROR) << "Failed to read offset " << start_offset << " expected "
                 << read_size << " bytes, actual: " << bytes_read;
     Cleanup(ErrorCode::kFilesystemVerifierError);

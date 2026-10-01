@@ -72,7 +72,7 @@ def get_dropped_logs(test_case, buffer):
         # Total    883973/6792        883973/6792
         # Now      883973/6792        883973/6792
         for indication in ["Total", "Now"]:
-            reLineCount = re.compile(f"^{indication}.*\s+[0-9]+/([0-9]+)")
+            reLineCount = re.compile(rf"^{indication}.*\s+[0-9]+/([0-9]+)")
             while True:
                 line = next(lines)
                 match = reLineCount.match(line)

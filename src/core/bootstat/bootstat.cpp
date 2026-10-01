@@ -70,6 +70,39 @@ const std::unordered_map<std::string_view, AtomInfo> kBootEventToAtomInfo = {
     {"ro.boottime.init",
      {android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME_REPORTED,
       android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME__EVENT__ANDROID_INIT_STAGE_1}},
+    {"ro.boottime.event.early-init",
+     {android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME_REPORTED,
+      android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME__EVENT__ANDROID_INIT_ON_EARLY_INIT}},
+    {"ro.boottime.event.init",
+     {android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME_REPORTED,
+      android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME__EVENT__ANDROID_INIT_ON_INIT}},
+    {"ro.boottime.event.late-init",
+     {android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME_REPORTED,
+      android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME__EVENT__ANDROID_INIT_ON_LATE_INIT}},
+    {"ro.boottime.event.early-fs",
+     {android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME_REPORTED,
+      android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME__EVENT__ANDROID_INIT_ON_EARLY_FS}},
+    {"ro.boottime.event.fs",
+     {android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME_REPORTED,
+      android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME__EVENT__ANDROID_INIT_ON_FS}},
+    {"ro.boottime.event.post-fs",
+     {android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME_REPORTED,
+      android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME__EVENT__ANDROID_INIT_ON_POST_FS}},
+    {"ro.boottime.event.late-fs",
+     {android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME_REPORTED,
+      android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME__EVENT__ANDROID_INIT_ON_LATE_FS}},
+    {"ro.boottime.event.post-fs-data",
+     {android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME_REPORTED,
+      android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME__EVENT__ANDROID_INIT_ON_POST_FS_DATA}},
+    {"ro.boottime.event.zygote-start",
+     {android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME_REPORTED,
+      android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME__EVENT__ANDROID_INIT_ON_ZYGOTE_START}},
+    {"ro.boottime.event.early-boot",
+     {android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME_REPORTED,
+      android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME__EVENT__ANDROID_INIT_ON_EARLY_BOOT}},
+    {"ro.boottime.event.boot",
+     {android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME_REPORTED,
+      android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME__EVENT__ANDROID_INIT_ON_BOOT}},
     {"boot_complete",
      {android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME_REPORTED,
       android::util::bootstats::BOOT_TIME_EVENT_ELAPSED_TIME__EVENT__BOOT_COMPLETE}},
@@ -112,6 +145,9 @@ const std::unordered_map<std::string_view, AtomInfo> kBootEventToAtomInfo = {
     {"boottime.bootloader.SW",
      {android::util::bootstats::BOOT_TIME_EVENT_DURATION_REPORTED,
       android::util::bootstats::BOOT_TIME_EVENT_DURATION__EVENT__BOOTLOADER_UI_WAIT}},
+    {"boottime.bootloader.splash",
+     {android::util::bootstats::BOOT_TIME_EVENT_DURATION_REPORTED,
+      android::util::bootstats::BOOT_TIME_EVENT_DURATION__EVENT__BOOTLOADER_SPLASH}},
     {"boottime.bootloader.total",
      {android::util::bootstats::BOOT_TIME_EVENT_DURATION_REPORTED,
       android::util::bootstats::BOOT_TIME_EVENT_DURATION__EVENT__BOOTLOADER_TOTAL}},
@@ -159,14 +195,9 @@ void LogBootEvents() {
                                               static_cast<int32_t>(info->second.event),
                                               static_cast<int32_t>(event.second));
       } else {
-        int64_t value = static_cast<int64_t>(event.second);
-        // ro.boottime.init is recorded in ns, but we want to report it to
-        // statsd in ms.
-        if (name == "ro.boottime.init") {
-          value /= 1000000;
-        }
         android::util::bootstats::stats_write(static_cast<int32_t>(info->second.atom),
-                                              static_cast<int32_t>(info->second.event), value);
+                                              static_cast<int32_t>(info->second.event),
+                                              static_cast<int64_t>(event.second));
       }
     } else {
       notSupportedEvents.push_back(name);
@@ -484,6 +515,8 @@ const std::map<std::string, int32_t> kBootReasonMap = {
     {"reboot,ocp,.*", 239},
     {"reboot,ntc,pmic,sub", 240},
     {"reboot,telemtemp,pmic,main", 241},
+    {"reboot,longkey,powerkey,warmboot", 242},
+    {"reboot,longkey,powerkey,false_alarm", 243},
 };
 
 // Converts a string value representing the reason the system booted to an
@@ -1188,13 +1221,23 @@ std::string_view CalculateBootCompletePrefix() {
 }
 
 // Records the value of a given ro.boottime.init property in milliseconds.
-void RecordInitBootTimeProp(BootEventRecordStore* boot_event_store, const char* property) {
+void RecordInitBootTimeProp(BootEventRecordStore* boot_event_store, const std::string& property) {
   auto value = android::base::GetProperty(property, "");
 
-  int32_t time_in_ms;
-  if (android::base::ParseInt(value, &time_in_ms)) {
-    boot_event_store->AddBootEventWithValue(property, time_in_ms);
+  int64_t time;
+  if (!android::base::ParseInt(value, &time)) {
+    return;
   }
+
+  int64_t time_in_ms;
+  if (property == "ro.boottime.init" || android::base::StartsWith(property, "ro.boottime.event.")) {
+    std::chrono::nanoseconds time_in_ns(time);
+    time_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(time_in_ns).count();
+  } else {
+    time_in_ms = time;
+  }
+
+  boot_event_store->AddBootEventWithValue(property, static_cast<int32_t>(time_in_ms));
 }
 
 // A map from bootloader timing stage to the time that stage took during boot.
@@ -1368,6 +1411,17 @@ void RecordBootComplete() {
   RecordInitBootTimeProp(&boot_event_store, "ro.boottime.init.first_stage");
   RecordInitBootTimeProp(&boot_event_store, "ro.boottime.init.selinux");
   RecordInitBootTimeProp(&boot_event_store, "ro.boottime.init.cold_boot_wait");
+  RecordInitBootTimeProp(&boot_event_store, "ro.boottime.event.early-init");
+  RecordInitBootTimeProp(&boot_event_store, "ro.boottime.event.init");
+  RecordInitBootTimeProp(&boot_event_store, "ro.boottime.event.late-init");
+  RecordInitBootTimeProp(&boot_event_store, "ro.boottime.event.early-fs");
+  RecordInitBootTimeProp(&boot_event_store, "ro.boottime.event.fs");
+  RecordInitBootTimeProp(&boot_event_store, "ro.boottime.event.post-fs");
+  RecordInitBootTimeProp(&boot_event_store, "ro.boottime.event.late-fs");
+  RecordInitBootTimeProp(&boot_event_store, "ro.boottime.event.post-fs-data");
+  RecordInitBootTimeProp(&boot_event_store, "ro.boottime.event.zygote-start");
+  RecordInitBootTimeProp(&boot_event_store, "ro.boottime.event.early-boot");
+  RecordInitBootTimeProp(&boot_event_store, "ro.boottime.event.boot");
 
   const BootloaderTimingMap bootloader_timings = GetBootLoaderTimings();
   const int32_t bootloader_boot_duration = GetBootloaderTime(bootloader_timings, {FIRMWARE_SPLASH});

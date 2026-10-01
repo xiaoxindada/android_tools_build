@@ -30,11 +30,18 @@
 
 class Modprobe {
   public:
+    enum LoadParallelMode {
+      NONE = 0,
+      NORMAL,
+      PERFORMANCE,
+      CONSERVATIVE,
+    };
+
     Modprobe(const std::vector<std::string>&, const std::string load_file = "modules.load",
              bool use_blocklist = true);
     Modprobe(ModuleConfig config, bool use_blocklist = true);
 
-    bool LoadModulesParallel(int num_threads) EXCLUDES(module_loaded_lock_);
+    bool LoadModulesParallel(int num_threads, int mode, bool test) EXCLUDES(module_loaded_lock_);
     bool LoadListedModules(bool strict = true);
     bool LoadWithAliases(const std::string& module_name, bool strict,
                          const std::string& parameters = "") EXCLUDES(module_loaded_lock_);
@@ -47,6 +54,8 @@ class Modprobe {
     bool IsBlocklisted(const std::string& module_name);
 
   private:
+    bool IsLoadSequential(const std::string& module);
+    std::string MakeCanonical(const std::string& module_path);
     bool InsmodWithDeps(const std::string& module_name, const std::string& parameters);
     bool Insmod(const std::string& path_name, const std::string& parameters)
             EXCLUDES(module_loaded_lock_);

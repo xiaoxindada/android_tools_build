@@ -18,8 +18,9 @@
 
 #include <fcntl.h>
 #include <poll.h>
-#include <sys/time.h>
+#include <signal.h>
 #include <sys/resource.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #include <android-base/file.h>

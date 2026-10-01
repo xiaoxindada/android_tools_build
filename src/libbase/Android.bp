@@ -15,7 +15,6 @@
 //
 
 package {
-    default_team: "trendy_team_native_tools_libraries",
     default_applicable_licenses: ["system_libbase_license"],
 }
 
@@ -33,11 +32,7 @@ license {
 
 cc_defaults {
     name: "libbase_cflags_defaults",
-    cflags: [
-        "-Wall",
-        "-Werror",
-        "-Wextra",
-    ],
+    cpp_std: "gnu++23",
     sanitize: {
         misc_undefined: ["integer"],
     },
@@ -81,7 +76,7 @@ cc_library_headers {
         "//apex_available:anyapex",
         "//apex_available:platform",
     ],
-    min_sdk_version: "29",
+    min_sdk_version: "30",
     sdk_version: "current",
 }
 
@@ -134,7 +129,7 @@ cc_defaults {
             enabled: true,
         },
     },
-    min_sdk_version: "29",
+    min_sdk_version: "30",
 }
 
 cc_library {

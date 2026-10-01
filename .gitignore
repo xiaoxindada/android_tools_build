@@ -6,7 +6,10 @@
 *.tar.xz
 *.zip
 
-# dynamic gen srcs
+# local backups / project scratch (not for version control)
+/backup/
+*.tar.gz
+
 /src/dtc/dtc-lexer.c
 /src/dtc/dtc-parser.c
 /src/dtc/dtc-parser.h
@@ -22,5 +25,5 @@
 /src/update_engine/lz4diff/lz4diff.pb.h
 /src/update_engine/update_engine/update_metadata.pb.cc
 /src/update_engine/update_engine/update_metadata.pb.h
-/src/core/fs_mgr/libsnapshot/android/snapshot/snapshot.pb.cc
-/src/core/fs_mgr/libsnapshot/android/snapshot/snapshot.pb.h
+/src/fs_mgr/libsnapshot/android/snapshot/snapshot.pb.cc
+/src/fs_mgr/libsnapshot/android/snapshot/snapshot.pb.h

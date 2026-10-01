@@ -20,6 +20,7 @@
 #include <android-base/properties.h>
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
+#include <cmd.h>
 
 #include <wakelock/wakelock.h>
 #include <include/simpleperf_profcollect.hpp>
@@ -148,4 +149,32 @@ void SetLogFile(const char* filename) {
 void ResetLogFile() {
   log_fd.reset();
   SetLogger(std::move(saved_log_func));
+}
+
+const char* RunDeviceConfigCmd(const char** args, int arg_count) {
+  std::vector<std::string> cmd_args = ConvertArgs(args, arg_count);
+  std::vector<std::string_view> argv;
+  for (auto& arg : cmd_args) {
+    argv.push_back(arg);
+  }
+  // Use static allocation to keep string content.
+  static std::string cmd_output;
+  int stdin_pipe[2];
+  int stdout_pipe[2];
+  if (pipe2(stdin_pipe, O_CLOEXEC) != 0 || pipe2(stdout_pipe, O_CLOEXEC) != 0) {
+    PLOG(ERROR) << "pipe2() failed";
+    return "";
+  }
+  close(stdin_pipe[0]);
+  int ret = cmdMain(argv, android::aout, android::aerr, stdin_pipe[1], stdout_pipe[1],
+                    stdout_pipe[1], RunMode::kLibrary);
+  close(stdin_pipe[1]);
+  close(stdout_pipe[1]);
+  if (ret != 0) {
+    LOG(ERROR) << "RunDeviceConfigCmd failed";
+  } else if (!android::base::ReadFdToString(stdout_pipe[0], &cmd_output)) {
+    LOG(ERROR) << "Failed to read device_config output";
+  }
+  close(stdout_pipe[0]);
+  return cmd_output.c_str();
 }

@@ -693,7 +693,7 @@ TEST_F(ReportCommandTest, filter_file_option) {
   ASSERT_EQ(GetSampleCount(), 1);
 
   // PERF_DATA uses clock perf, which doesn't match the default clock in filter data.
-  CapturedStderr capture;
+  android::base::CapturedStderr capture;
   ASSERT_FALSE(ReportCmd()->Run({"-i", GetTestData(PERF_DATA), "--filter-file", tmpfile.path}));
   capture.Stop();
   ASSERT_NE(capture.str().find("doesn't match clock used in time filter"), std::string::npos);
