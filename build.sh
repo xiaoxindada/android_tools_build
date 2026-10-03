@@ -11,8 +11,8 @@ function install_deps() {
 }
 
 function set_toolchains() {
-	local ndk_version="r29"
-	local ondk_version="r29.4"
+	local ndk_version="r30-beta2"
+	local ondk_version="r30.1"
 
 	if grep -qo "debian" /etc/os-release; then
 		if [[ ! -e "ndk" ]] && [[ ! -e "ondk-$ondk_version-linux.tar.xz" ]] && [[ ! -e "android-ndk-$ndk_version-linux.zip" ]]; then

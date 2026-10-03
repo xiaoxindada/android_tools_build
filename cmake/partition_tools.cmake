@@ -91,8 +91,6 @@ target_link_libraries(lpunpack PRIVATE
 )
 
 add_executable(lpdump ${lpdump_srcs})
-# lpdump 直接编译 dynamic_partitions_device_info.pb.cc，必须先于本目标编译
-add_dependencies(lpdump gen_dynamic_partitions_device_info_srcs)
 target_compile_options(lpdump PRIVATE ${cflags})
 target_include_directories(lpdump PRIVATE
     ${libbase_headers}
