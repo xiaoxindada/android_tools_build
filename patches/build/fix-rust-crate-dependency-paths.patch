@@ -1,0 +1,201 @@
+diff --git a/tools/aconfig/aconfig/Cargo.toml b/tools/aconfig/aconfig/Cargo.toml
+index 65df7f00..67da2190 100644
+--- a/tools/aconfig/aconfig/Cargo.toml
++++ b/tools/aconfig/aconfig/Cargo.toml
+@@ -10,8 +10,8 @@ default_exported_reads_to_disabled = []
+ generate_checks_sdk_annotation = []
+ 
+ [dependencies]
+-anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
+-clap = { path = "../../../../../external/rust/android-crates-io/crates/clap", features = ["derive", "string"] }
++anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
++clap = { path = "../../../../external/rust/android-crates-io/crates/clap", features = ["derive", "string"] }
+ itertools = "0.10.5"
+ protobuf = "3.2.0"
+ serde = { version = "1.0.152", features = ["derive"] }
+@@ -24,7 +24,7 @@ convert_finalized_flags = { path = "../convert_finalized_flags" }
+ walkdir = "2.5.0"
+ 
+ [build-dependencies]
+-anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
++anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
+ itertools = "0.10.5"
+ serde = { version = "1.0.152", features = ["derive"] }
+ serde_json = "1.0.93"
+diff --git a/tools/aconfig/aconfig_device_paths/Cargo.toml b/tools/aconfig/aconfig_device_paths/Cargo.toml
+index b8e8820c..1b2c770c 100644
+--- a/tools/aconfig/aconfig_device_paths/Cargo.toml
++++ b/tools/aconfig/aconfig_device_paths/Cargo.toml
+@@ -6,4 +6,4 @@ edition = "2021"
+ # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+ 
+ [dependencies]
+-anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
++anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
+diff --git a/tools/aconfig/aconfig_protos/Cargo.toml b/tools/aconfig/aconfig_protos/Cargo.toml
+index d46d2a0f..93649b50 100644
+--- a/tools/aconfig/aconfig_protos/Cargo.toml
++++ b/tools/aconfig/aconfig_protos/Cargo.toml
+@@ -9,7 +9,7 @@ default = ["cargo"]
+ cargo = []
+ 
+ [dependencies]
+-anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
++anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
+ paste = "1.0.11"
+ protobuf = "3.2.0"
+ 
+diff --git a/tools/aconfig/aconfig_storage_file/Cargo.toml b/tools/aconfig/aconfig_storage_file/Cargo.toml
+index b90de92c..e92c9d5c 100644
+--- a/tools/aconfig/aconfig_storage_file/Cargo.toml
++++ b/tools/aconfig/aconfig_storage_file/Cargo.toml
+@@ -9,11 +9,11 @@ cargo = []
+ test_utils = []
+ 
+ [dependencies]
+-anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
++anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
+ protobuf = "3.2.0"
+ tempfile = "3.9.0"
+ thiserror = "1.0.56"
+-clap = { path = "../../../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
++clap = { path = "../../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
+ cxx = "1.0"
+ serde = { version = "1.0.152", features = ["derive"] }
+ serde_json = "1.0.93"
+diff --git a/tools/aconfig/aconfig_storage_read_api/Cargo.toml b/tools/aconfig/aconfig_storage_read_api/Cargo.toml
+index ebaf9440..5d7af2f7 100644
+--- a/tools/aconfig/aconfig_storage_read_api/Cargo.toml
++++ b/tools/aconfig/aconfig_storage_read_api/Cargo.toml
+@@ -9,7 +9,7 @@ cargo = []
+ 
+ [dependencies]
+ rand = "0.8.5"
+-anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
++anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
+ memmap2 = "0.8.0"
+ cxx = "1.0"
+ thiserror = "1.0.56"
+diff --git a/tools/aconfig/aconfig_storage_write_api/Cargo.toml b/tools/aconfig/aconfig_storage_write_api/Cargo.toml
+index 85559991..b4dd8ea8 100644
+--- a/tools/aconfig/aconfig_storage_write_api/Cargo.toml
++++ b/tools/aconfig/aconfig_storage_write_api/Cargo.toml
+@@ -8,7 +8,7 @@ default = ["cargo"]
+ cargo = []
+ 
+ [dependencies]
+-anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
++anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
+ memmap2 = "0.8.0"
+ tempfile = "3.9.0"
+ thiserror = "1.0.56"
+diff --git a/tools/aconfig/aflags/Cargo.toml b/tools/aconfig/aflags/Cargo.toml
+index b56485b5..0c631a0a 100644
+--- a/tools/aconfig/aflags/Cargo.toml
++++ b/tools/aconfig/aflags/Cargo.toml
+@@ -4,6 +4,6 @@ version = "0.1.0"
+ edition = "2021"
+ 
+ [dependencies]
+-anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
++anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
+ paste = "1.0.11"
+ nix = { version = "0.28.0", features = ["user"] }
+\ No newline at end of file
+diff --git a/tools/aconfig/convert_finalized_flags/Cargo.toml b/tools/aconfig/convert_finalized_flags/Cargo.toml
+index 7ef8cf1e..31658d65 100644
+--- a/tools/aconfig/convert_finalized_flags/Cargo.toml
++++ b/tools/aconfig/convert_finalized_flags/Cargo.toml
+@@ -9,8 +9,8 @@ cargo = []
+ support_minor_sdk = []
+ 
+ [dependencies]
+-anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
+-clap = { path = "../../../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
++anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
++clap = { path = "../../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
+ serde = { version = "1.0.152", features = ["derive"] }
+ serde_json = "1.0.93"
+ tempfile = "3.13.0"
+diff --git a/tools/aconfig/exported_flag_check/Cargo.toml b/tools/aconfig/exported_flag_check/Cargo.toml
+index 49b10507..59e3a193 100644
+--- a/tools/aconfig/exported_flag_check/Cargo.toml
++++ b/tools/aconfig/exported_flag_check/Cargo.toml
+@@ -9,7 +9,7 @@ cargo = []
+ 
+ [dependencies]
+ aconfig_protos = { path = "../aconfig_protos" }
+-anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
+-clap = { path = "../../../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
++anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
++clap = { path = "../../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
+ protobuf = "3.2.0"
+ regex = "1.11.1"
+diff --git a/tools/aconfig/finalize_non_api_flags/Cargo.toml b/tools/aconfig/finalize_non_api_flags/Cargo.toml
+index caf3ce51..13689d39 100644
+--- a/tools/aconfig/finalize_non_api_flags/Cargo.toml
++++ b/tools/aconfig/finalize_non_api_flags/Cargo.toml
+@@ -10,5 +10,5 @@ edition = "2021"
+ 
+ [dependencies]
+ aconfig_protos = { path = "../aconfig_protos" }
+-anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
+-clap = { path = "../../../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
+\ No newline at end of file
++anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
++clap = { path = "../../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
+\ No newline at end of file
+diff --git a/tools/finalization/unpack-module-sdks/Cargo.toml b/tools/finalization/unpack-module-sdks/Cargo.toml
+index 4e543fc5..307579ec 100644
+--- a/tools/finalization/unpack-module-sdks/Cargo.toml
++++ b/tools/finalization/unpack-module-sdks/Cargo.toml
+@@ -4,10 +4,10 @@ version = "0.1.0"
+ edition = "2024"
+ 
+ [dependencies]
+-anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
+-clap = { path = "../../../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
+-glob = { path = "../../../../../external/rust/android-crates-io/crates/glob" }
+-regex = { path = "../../../../../external/rust/android-crates-io/crates/regex" }
+-serde = { path = "../../../../../external/rust/android-crates-io/crates/serde", features = ["derive"] }
+-serde_json = { path = "../../../../../external/rust/android-crates-io/crates/serde_json" }
+-zip = { path = "../../../../../external/rust/android-crates-io/crates/zip" }
++anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
++clap = { path = "../../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
++glob = { path = "../../../../external/rust/android-crates-io/crates/glob" }
++regex = { path = "../../../../external/rust/android-crates-io/crates/regex" }
++serde = { path = "../../../../external/rust/android-crates-io/crates/serde", features = ["derive"] }
++serde_json = { path = "../../../../external/rust/android-crates-io/crates/serde_json" }
++zip = { path = "../../../../external/rust/android-crates-io/crates/zip" }
+diff --git a/tools/finalization/unpack-platform-sdk/Cargo.toml b/tools/finalization/unpack-platform-sdk/Cargo.toml
+index 2f78736c..448b42e7 100644
+--- a/tools/finalization/unpack-platform-sdk/Cargo.toml
++++ b/tools/finalization/unpack-platform-sdk/Cargo.toml
+@@ -4,8 +4,8 @@ version = "0.1.0"
+ edition = "2024"
+ 
+ [dependencies]
+-anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
+-clap = { path = "../../../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
+-regex = { path = "../../../../../external/rust/android-crates-io/crates/regex" }
+-walkdir = { path = "../../../../../external/rust/android-crates-io/crates/walkdir" }
+-zip = { path = "../../../../../external/rust/android-crates-io/crates/zip" }
++anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
++clap = { path = "../../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
++regex = { path = "../../../../external/rust/android-crates-io/crates/regex" }
++walkdir = { path = "../../../../external/rust/android-crates-io/crates/walkdir" }
++zip = { path = "../../../../external/rust/android-crates-io/crates/zip" }
+diff --git a/tools/record-finalized-flags/Cargo.toml b/tools/record-finalized-flags/Cargo.toml
+index 598754f8..1493e864 100644
+--- a/tools/record-finalized-flags/Cargo.toml
++++ b/tools/record-finalized-flags/Cargo.toml
+@@ -9,6 +9,6 @@ version = "0.1.0"
+ edition = "2021"
+ 
+ [dependencies]
+-anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
+-clap = { path = "../../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
+-regex = { path = "../../../../external/rust/android-crates-io/crates/regex" }
++anyhow = { path = "../../../external/rust/android-crates-io/crates/anyhow" }
++clap = { path = "../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
++regex = { path = "../../../external/rust/android-crates-io/crates/regex" }
