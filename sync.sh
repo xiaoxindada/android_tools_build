@@ -66,19 +66,26 @@ echo "Git clone args: ${GIT_CLONE_ARGS[@]}"
 # disable detached HEAD warning
 git config --global advice.detachedHead false
 
+# clone into src/ following the AOSP tree layout:
+#   platform/external/zlib          -> src/external/zlib
+#   platform/system/core            -> src/system/core
+#   platform/system/tools/mkbootimg -> src/system/tools/mkbootimg
+#   platform/system/fs/fs_mgr       -> src/system/fs/fs_mgr
 function clone() {
 	local repo=$1
-	local clone_dir=$2
-	local repo_name="${repo##*/}"
+	local dest_root=$2
+	local repo_path="${repo#platform/}"
+	local dest="${dest_root}/${repo_path}"
 
-	echo "Clone repo: ${repo} to ${clone_dir}/${repo_name} ..."
-	if [ -d "${clone_dir}/${repo_name}" ]; then
-		echo "Directory ${clone_dir}/${repo_name} already exists, skipping clone."
+	echo "Clone repo: ${repo} to ${dest} ..."
+	if [ -d "${dest}" ]; then
+		echo "Directory ${dest} already exists, skipping clone."
 		return
 	fi
-	if git clone "${FETCH_FROM}/${repo}" -b "${TAG}" "${GIT_CLONE_ARGS[@]}" "${clone_dir}/${repo_name}"; then
-		find "${clone_dir}/${repo_name}" -name ".git" | xargs rm -rf {}
-		find "${clone_dir}/${repo_name}" -name ".gitignore" | xargs rm -rf {}
+	mkdir -p "$(dirname "${dest}")"
+	if git clone "${FETCH_FROM}/${repo}" -b "${TAG}" "${GIT_CLONE_ARGS[@]}" "${dest}"; then
+		find "${dest}" -name ".git" | xargs rm -rf {}
+		find "${dest}" -name ".gitignore" | xargs rm -rf {}
 		echo "Clone repo: ${repo} success."
 	else
 		echo "Clone repo: ${repo} failed."
@@ -89,20 +96,22 @@ function clone() {
 function clone_version() {
 	local repo=$1
 	local version=$2
-	local clone_dir=$3
-	local repo_name="${repo##*/}"
+	local dest_root=$3
+	local repo_path="${repo#platform/}"
+	local dest="${dest_root}/${repo_path}"
 
-	echo "Clone repo: ${repo} to ${clone_dir}/${repo_name} ..."
-	if [ -d "${clone_dir}/${repo_name}" ]; then
-		echo "Directory ${clone_dir}/${repo_name} already exists, skipping clone."
+	echo "Clone repo: ${repo} to ${dest} ..."
+	if [ -d "${dest}" ]; then
+		echo "Directory ${dest} already exists, skipping clone."
 		return
 	fi
-	if git clone "${FETCH_FROM}/${repo}" -b "${TAG}" "${GIT_CLONE_ARGS[@]}" "${clone_dir}/${repo_name}"; then
-		cd ${clone_dir}/${repo_name}
+	mkdir -p "$(dirname "${dest}")"
+	if git clone "${FETCH_FROM}/${repo}" -b "${TAG}" "${GIT_CLONE_ARGS[@]}" "${dest}"; then
+		cd "${dest}"
 		git fetch --unshallow
 		if git reset --hard ${version}; then
-			find "${clone_dir}/${repo_name}" -name ".git" | xargs rm -rf {}
-			find "${clone_dir}/${repo_name}" -name ".gitignore" | xargs rm -rf {}
+			find "${dest}" -name ".git" | xargs rm -rf {}
+			find "${dest}" -name ".gitignore" | xargs rm -rf {}
 			echo "Clone version repo: ${repo} ver: ${version} success."
 		else
 			echo "Clone version repo: ${repo} ver: ${version} failed."

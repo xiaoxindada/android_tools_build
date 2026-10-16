@@ -1,5 +1,5 @@
 set(target_name "verity_tree")
-set(libverity_tree_dir "${CMAKE_SOURCE_DIR}/src/extras/verity")
+set(libverity_tree_dir "${CMAKE_SOURCE_DIR}/src/system/extras/verity")
 
 set(cflags
         "-D_FILE_OFFSET_BITS=64"

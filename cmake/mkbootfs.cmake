@@ -1,4 +1,4 @@
-set(mkbootfs_dir "${CMAKE_SOURCE_DIR}/src/core/mkbootfs")
+set(mkbootfs_dir "${CMAKE_SOURCE_DIR}/src/system/core/mkbootfs")
 
 set(cflags
     "-Wall"

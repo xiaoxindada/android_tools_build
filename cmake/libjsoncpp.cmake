@@ -1,6 +1,6 @@
 set(target_name "jsoncpp")
 
-set(jsoncpp_dir "${CMAKE_SOURCE_DIR}/src/jsoncpp")
+set(jsoncpp_dir "${CMAKE_SOURCE_DIR}/src/external/jsoncpp")
 
 set(cppflags
         "-DJSON_USE_EXCEPTION=0"

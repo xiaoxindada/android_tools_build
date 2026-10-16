@@ -1,4 +1,4 @@
-set(libsparse_dir "${CMAKE_SOURCE_DIR}/src/core/libsparse")
+set(libsparse_dir "${CMAKE_SOURCE_DIR}/src/system/core/libsparse")
 
 set(simg2img_srcs
     "${libsparse_dir}/simg2img.cpp"

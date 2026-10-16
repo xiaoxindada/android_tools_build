@@ -1,6 +1,6 @@
 set(target_name "zstd")
 
-set(libzstd_dir "${CMAKE_SOURCE_DIR}/src/zstd/lib")
+set(libzstd_dir "${CMAKE_SOURCE_DIR}/src/external/zstd/lib")
 
 set(cflags
     "-DZSTD_HAVE_WEAK_SYMBOLS=0"

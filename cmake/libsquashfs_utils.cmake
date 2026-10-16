@@ -1,6 +1,6 @@
 set(target_name "squashfs_utils")
 
-set(libsquashfs_utils_dir "${CMAKE_SOURCE_DIR}/src/extras/squashfs_utils")
+set(libsquashfs_utils_dir "${CMAKE_SOURCE_DIR}/src/system/extras/squashfs_utils")
 
 set(cflags
     "-Wall"

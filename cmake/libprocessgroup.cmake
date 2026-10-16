@@ -1,5 +1,5 @@
-set(libprocessgroup_dir "${CMAKE_SOURCE_DIR}/src/core/libprocessgroup")
-set(libprocessgroup_util_dir "${CMAKE_SOURCE_DIR}/src/core/libprocessgroup/util")
+set(libprocessgroup_dir "${CMAKE_SOURCE_DIR}/src/system/core/libprocessgroup")
+set(libprocessgroup_util_dir "${CMAKE_SOURCE_DIR}/src/system/core/libprocessgroup/util")
 
 
 set(cppflags

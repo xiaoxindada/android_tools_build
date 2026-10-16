@@ -1,6 +1,6 @@
 set(target_name "event")
 
-set(libevent_dir "${CMAKE_SOURCE_DIR}/src/libevent")
+set(libevent_dir "${CMAKE_SOURCE_DIR}/src/external/libevent")
 
 set(cflags
         "-D_DEFAULT_SOURCE"

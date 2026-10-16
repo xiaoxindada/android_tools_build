@@ -1,6 +1,6 @@
 set(target_name "selinux")
 
-set(target_dir "${CMAKE_SOURCE_DIR}/src/selinux/libselinux")
+set(target_dir "${CMAKE_SOURCE_DIR}/src/external/selinux/libselinux")
 
 set(cflags
     "-DNO_PERSISTENTLY_STORED_PATTERNS"

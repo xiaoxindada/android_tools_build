@@ -1,5 +1,5 @@
-set(e2fsextarct_srcs_dir "${CMAKE_SOURCE_DIR}/src/e2fsextract")
-set(mman_win32_srcs_dir "${CMAKE_SOURCE_DIR}/src/mman-win32")
+set(e2fsextarct_srcs_dir "${CMAKE_SOURCE_DIR}/src/external/e2fsextract")
+set(mman_win32_srcs_dir "${CMAKE_SOURCE_DIR}/src/external/mman-win32")
 
 if(WIN32) # mmap support for windows
 set(mman_win32_srcs

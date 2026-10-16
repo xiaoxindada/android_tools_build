@@ -1,6 +1,6 @@
 set(target_name "gflags")
 
-set(libgflags_dir "${CMAKE_SOURCE_DIR}/src/gflags")
+set(libgflags_dir "${CMAKE_SOURCE_DIR}/src/external/gflags")
 
 set(cflags
    "-D__STDC_FORMAT_MACROS"

@@ -1,6 +1,6 @@
 set(target_name "avb")
 
-set(libavb_dir "${CMAKE_SOURCE_DIR}/src/avb/libavb")
+set(libavb_dir "${CMAKE_SOURCE_DIR}/src/external/avb/libavb")
 
 set(cflags
     "-D_FILE_OFFSET_BITS=64"

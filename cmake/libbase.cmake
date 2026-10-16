@@ -1,6 +1,6 @@
 set(target_name "base")
 
-set(libbase_dir "${CMAKE_SOURCE_DIR}/src/libbase")
+set(libbase_dir "${CMAKE_SOURCE_DIR}/src/system/libbase")
 
 set(libbase_srcs
         "${libbase_dir}/chrono_utils.cpp"

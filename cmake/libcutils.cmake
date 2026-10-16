@@ -1,4 +1,4 @@
-set(libcutils_dir "${CMAKE_SOURCE_DIR}/src/core/libcutils")
+set(libcutils_dir "${CMAKE_SOURCE_DIR}/src/system/core/libcutils")
 
 set(cppflags
     "-Wno-exit-time-destructors"

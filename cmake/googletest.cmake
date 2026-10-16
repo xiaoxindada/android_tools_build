@@ -1,6 +1,6 @@
 
-set(libgtest_srcs_dir "${CMAKE_SOURCE_DIR}/src/googletest/googletest")
-set(libgmock_srcs_dir "${CMAKE_SOURCE_DIR}/src/googletest/googlemock")
+set(libgtest_srcs_dir "${CMAKE_SOURCE_DIR}/src/external/googletest/googletest")
+set(libgmock_srcs_dir "${CMAKE_SOURCE_DIR}/src/external/googletest/googlemock")
 
 set(libgtest_srcs
         "${libgtest_srcs_dir}/src/gtest-all.cc"

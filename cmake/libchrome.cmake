@@ -1,5 +1,5 @@
 set(target_name "chrome")
-set(libchrome_srcs_dir "${CMAKE_SOURCE_DIR}/src/libchrome")
+set(libchrome_srcs_dir "${CMAKE_SOURCE_DIR}/src/external/libchrome")
 
 set(libchromeCommonSrc
     "${libchrome_srcs_dir}/base/at_exit.cc"

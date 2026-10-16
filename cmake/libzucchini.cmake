@@ -1,5 +1,5 @@
 set(target_name "zucchini")
-set(zucchini_dir "${CMAKE_SOURCE_DIR}/src/zucchini")
+set(zucchini_dir "${CMAKE_SOURCE_DIR}/src/external/zucchini")
 
 set(cflags
         "-DUSE_BRILLO=1"

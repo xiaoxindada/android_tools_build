@@ -1,6 +1,6 @@
 set(target_name "log")
 
-set(liblog_src_dir "${CMAKE_SOURCE_DIR}/src/logging/liblog")
+set(liblog_src_dir "${CMAKE_SOURCE_DIR}/src/system/logging/liblog")
 
 set(liblog_src
     "${liblog_src_dir}/log_event_list.cpp"
@@ -12,7 +12,7 @@ set(liblog_src
     "${liblog_src_dir}/properties.cpp"
 )
 
-set(liblogwrap_src_dir "${CMAKE_SOURCE_DIR}/src/logging/logwrapper")
+set(liblogwrap_src_dir "${CMAKE_SOURCE_DIR}/src/system/logging/logwrapper")
 set(liblogwrap_sources
     "${liblogwrap_src_dir}/logwrap.cpp"
 )

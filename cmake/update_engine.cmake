@@ -1,7 +1,7 @@
-set(partition_tools_dir "${CMAKE_SOURCE_DIR}/src/extras/partition_tools")
-set(fs_mgr_dir "${CMAKE_SOURCE_DIR}/src/fs_mgr")
+set(partition_tools_dir "${CMAKE_SOURCE_DIR}/src/system/extras/partition_tools")
+set(fs_mgr_dir "${CMAKE_SOURCE_DIR}/src/system/fs/fs_mgr")
 set(libsnapshot_srcs_dir "${fs_mgr_dir}/libsnapshot")
-set(update_engine_dir "${CMAKE_SOURCE_DIR}/src/update_engine")
+set(update_engine_dir "${CMAKE_SOURCE_DIR}/src/system/update_engine")
 
 set(cflags
         "-DBASE_VER=576279"

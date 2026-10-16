@@ -1,4 +1,4 @@
-set(libbrillo_dir "${CMAKE_SOURCE_DIR}/src/libbrillo")
+set(libbrillo_dir "${CMAKE_SOURCE_DIR}/src/external/libbrillo")
 
 set(libbrillo_core_sources
     "${libbrillo_dir}/brillo/backoff_entry.cc"

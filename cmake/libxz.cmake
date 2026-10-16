@@ -1,5 +1,5 @@
 set(target "xz")
-set(xz_embedded_dir "${CMAKE_SOURCE_DIR}/src/xz-embedded")
+set(xz_embedded_dir "${CMAKE_SOURCE_DIR}/src/external/xz-embedded")
 
 set(libxz_srcs
     "${xz_embedded_dir}/linux/lib/xz/xz_crc32.c"

@@ -1,6 +1,6 @@
 set(target_name "bsdiff")
 
-set(libbsdiff_dir "${CMAKE_SOURCE_DIR}/src/bsdiff")
+set(libbsdiff_dir "${CMAKE_SOURCE_DIR}/src/external/bsdiff")
 
 set(cflags
         "-D_FILE_OFFSET_BITS=64"

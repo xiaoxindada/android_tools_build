@@ -1,6 +1,6 @@
 set(target_name "crypto_utils")
 
-set(libcrypto_utils_dir "${CMAKE_SOURCE_DIR}/src/core/libcrypto_utils")
+set(libcrypto_utils_dir "${CMAKE_SOURCE_DIR}/src/system/core/libcrypto_utils")
 
 set(cflags
     "-Wall"

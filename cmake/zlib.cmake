@@ -1,6 +1,6 @@
 set(target_name "zlib")
 
-set(libz_srcs_dir "${CMAKE_SOURCE_DIR}/src/zlib")
+set(libz_srcs_dir "${CMAKE_SOURCE_DIR}/src/external/zlib")
 
 set(libz_srcs
         "${libz_srcs_dir}/adler32.c"

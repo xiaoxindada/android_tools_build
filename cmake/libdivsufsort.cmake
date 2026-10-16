@@ -1,6 +1,6 @@
 set(target_name "divsufsort")
 
-set(libdivsufsort_dir "${CMAKE_SOURCE_DIR}/src/libdivsufsort")
+set(libdivsufsort_dir "${CMAKE_SOURCE_DIR}/src/external/libdivsufsort")
 
 set(cflags
         "-Wall"

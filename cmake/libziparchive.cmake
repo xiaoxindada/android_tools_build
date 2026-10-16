@@ -1,6 +1,6 @@
 set(target_name "ziparchive")
 
-set(libziparchive_dir "${CMAKE_SOURCE_DIR}/src/libziparchive")
+set(libziparchive_dir "${CMAKE_SOURCE_DIR}/src/system/libziparchive")
 
 set(cflags
     # ZLIB_CONST turns on const for input buffers which is pretty standard.

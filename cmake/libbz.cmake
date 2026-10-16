@@ -1,6 +1,6 @@
 set(target_name "bz")
 
-set(bzip2_dir "${CMAKE_SOURCE_DIR}/src/bzip2")
+set(bzip2_dir "${CMAKE_SOURCE_DIR}/src/external/bzip2")
 
 set(cflags
     "-DUSE_MMAP"

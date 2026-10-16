@@ -1,6 +1,6 @@
 set(target_name "ext4_utils")
 
-set(libext4_utils_dir "${CMAKE_SOURCE_DIR}/src/extras/ext4_utils")
+set(libext4_utils_dir "${CMAKE_SOURCE_DIR}/src/system/extras/ext4_utils")
 
 set(cflags
     "-fno-strict-aliasing"

@@ -1,6 +1,6 @@
 set(target_name "brotli")
 
-set(brotli_dir "${CMAKE_SOURCE_DIR}/src/brotli")
+set(brotli_dir "${CMAKE_SOURCE_DIR}/src/external/brotli")
 
 file(GLOB common_srcs "${brotli_dir}/c/common/*.c")
 file(GLOB dec_srcs "${brotli_dir}/c/dec/*.c")

@@ -1,6 +1,6 @@
 set(target_name "lz4")
 
-set(liblz4_srcs_dir "${CMAKE_SOURCE_DIR}/src/lz4/lib")
+set(liblz4_srcs_dir "${CMAKE_SOURCE_DIR}/src/external/lz4/lib")
 
 set(liblz4_srcs
         "${liblz4_srcs_dir}/lz4.c"

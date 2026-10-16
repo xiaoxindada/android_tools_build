@@ -1,5 +1,5 @@
 
-set(boringssl_dir "${CMAKE_SOURCE_DIR}/src/boringssl")
+set(boringssl_dir "${CMAKE_SOURCE_DIR}/src/external/boringssl")
 set(BORINGSSL_ROOT "${boringssl_dir}/")
 include("${boringssl_dir}/android-sources.cmake")
 

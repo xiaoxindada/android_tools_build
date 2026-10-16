@@ -1,4 +1,4 @@
-set(protobuf_dir "${CMAKE_SOURCE_DIR}/src/protobuf")
+set(protobuf_dir "${CMAKE_SOURCE_DIR}/src/external/protobuf")
 
 set(protobuf_cflags
         "-Wall"

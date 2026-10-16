@@ -6,7 +6,7 @@ set(cflags
     "-DPCRE2_CODE_UNIT_WIDTH=8"
 )
 
-set(pcre_dir "${CMAKE_SOURCE_DIR}/src/pcre")
+set(pcre_dir "${CMAKE_SOURCE_DIR}/src/external/pcre")
 
 set(target_srcs 
         "${pcre_dir}/src/pcre2_auto_possess.c"

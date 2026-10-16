@@ -3,9 +3,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Android")
   message("This is Android")
 endif()
 
-set(dtc_srcs_dir "${CMAKE_SOURCE_DIR}/src/dtc")
+set(dtc_srcs_dir "${CMAKE_SOURCE_DIR}/src/external/dtc")
 set(libfdt_srcs_dir "${dtc_srcs_dir}/libfdt")
-set(libufdt_srcs_dir "${CMAKE_SOURCE_DIR}/src/libufdt")
+set(libufdt_srcs_dir "${CMAKE_SOURCE_DIR}/src/system/libufdt")
 set(mkdtimg_srcs_dir "${libufdt_srcs_dir}/utils/src")
 
 set(dtc_enc_srcs

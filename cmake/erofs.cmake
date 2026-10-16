@@ -1,4 +1,4 @@
-set(erofs_utils_dir "${CMAKE_SOURCE_DIR}/src/erofs-utils")
+set(erofs_utils_dir "${CMAKE_SOURCE_DIR}/src/external/erofs-utils")
 
 set(erofs_cflags
         "-Wall"

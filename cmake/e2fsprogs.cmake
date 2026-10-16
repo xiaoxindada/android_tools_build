@@ -1,4 +1,4 @@
-set(e2fsprogs_dir "${CMAKE_SOURCE_DIR}/src/e2fsprogs")
+set(e2fsprogs_dir "${CMAKE_SOURCE_DIR}/src/external/e2fsprogs")
 set(contrib_dir "${e2fsprogs_dir}/contrib")
 
 set(e2fsprogs_cflags

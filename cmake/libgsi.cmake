@@ -1,6 +1,6 @@
 set(target_name "gsi")
 
-set(libgsi_dir "${CMAKE_SOURCE_DIR}/src/gsid")
+set(libgsi_dir "${CMAKE_SOURCE_DIR}/src/system/gsid")
 
 
 set(libgsi_srcs

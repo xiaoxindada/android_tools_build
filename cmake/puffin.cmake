@@ -1,5 +1,5 @@
 
-set(puffin_dir "${CMAKE_SOURCE_DIR}/src/puffin")
+set(puffin_dir "${CMAKE_SOURCE_DIR}/src/external/puffin")
 
 set(common_headers
     ${libchrome_dir}

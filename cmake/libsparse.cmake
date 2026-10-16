@@ -1,5 +1,5 @@
 set(target_name "sparse")
-set(libsparse_dir "${CMAKE_SOURCE_DIR}/src/core/libsparse")
+set(libsparse_dir "${CMAKE_SOURCE_DIR}/src/system/core/libsparse")
 
 set(cflags
     "-Wall"

@@ -9,7 +9,7 @@ function apply() {
 	cd $LOCALDIR
 }
 
-apply $LOCALDIR/patches/logging $LOCALDIR/src/logging
-apply $LOCALDIR/patches/core $LOCALDIR/src/core
-apply $LOCALDIR/patches/fs_mgr $LOCALDIR/src/fs_mgr
+apply $LOCALDIR/patches/logging $LOCALDIR/src/system/logging
+apply $LOCALDIR/patches/core $LOCALDIR/src/system/core
+apply $LOCALDIR/patches/fs_mgr $LOCALDIR/src/system/fs/fs_mgr
 echo "apply patch done!"

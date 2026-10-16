@@ -1,12 +1,12 @@
-set(fs_mgr_dir "${CMAKE_SOURCE_DIR}/src/fs_mgr")
-set(libfiemap_srcs_dir "${CMAKE_SOURCE_DIR}/src/fs_mgr/libfiemap")
+set(fs_mgr_dir "${CMAKE_SOURCE_DIR}/src/system/fs/fs_mgr")
+set(libfiemap_srcs_dir "${CMAKE_SOURCE_DIR}/src/system/fs/fs_mgr/libfiemap")
 set(libsnapshot_srcs_dir "${fs_mgr_dir}/libsnapshot")
 set(libsnapshot_cow_srcs_dir "${fs_mgr_dir}/libsnapshot/libsnapshot_cow")
 set(libdm_srcs_dir "${fs_mgr_dir}/libdm")
 set(liblp_srcs_dir "${fs_mgr_dir}/liblp")
 set(libfstab_srcs_dir "${fs_mgr_dir}/libfstab")
 set(libfs_avb_srcs_dir "${fs_mgr_dir}/libfs_avb")
-set(update_engine_dir "${CMAKE_SOURCE_DIR}/src/update_engine")
+set(update_engine_dir "${CMAKE_SOURCE_DIR}/src/system/update_engine")
 
 set(cflags
         "-D_FILE_OFFSET_BITS=64"

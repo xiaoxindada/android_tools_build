@@ -1,6 +1,6 @@
 set(target_name "fec_rs")
 
-set(libfec_rs_dir "${CMAKE_SOURCE_DIR}/src/fec")
+set(libfec_rs_dir "${CMAKE_SOURCE_DIR}/src/external/fec")
 
 set(cflags
     "-Wall"

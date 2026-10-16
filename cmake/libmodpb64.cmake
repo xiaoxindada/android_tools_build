@@ -1,6 +1,6 @@
 set(target_name "modpb64")
 
-set(libmodpb64_srcs_dir "${CMAKE_SOURCE_DIR}/src/modp_b64")
+set(libmodpb64_srcs_dir "${CMAKE_SOURCE_DIR}/src/external/modp_b64")
 
 set(libmodpb64_srcs 
     "${libmodpb64_srcs_dir}/modp_b64.cc"

@@ -1,6 +1,6 @@
 set(target_name "fmtlib")
 
-set(fmtlib_dir "${CMAKE_SOURCE_DIR}/src/fmtlib")
+set(fmtlib_dir "${CMAKE_SOURCE_DIR}/src/external/fmtlib")
 
 set(fmtlib_srcs
     "${fmtlib_dir}/src/format.cc"

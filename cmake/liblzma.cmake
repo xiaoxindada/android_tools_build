@@ -1,6 +1,6 @@
 set(target_name "lzma")
 
-set(lzma_dir "${CMAKE_SOURCE_DIR}/src/lzma")
+set(lzma_dir "${CMAKE_SOURCE_DIR}/src/external/lzma")
 
 set(liblzma_srcs
  "${lzma_dir}/C/7zAlloc.c"
