@@ -16,7 +16,7 @@
 /src/external/dtc/version_gen.h
 /src/external/zlib/zconf.h
 /src/external/erofs-utils/erofs-utils-version.h
-/src/external/e2fsextract/version.h
+/src/custom/e2fsextract/version.h
 /src/system/extras/partition_tools/dynamic_partitions_device_info.pb.cc
 /src/system/extras/partition_tools/dynamic_partitions_device_info.pb.h
 /src/external/puffin/src/puffin.pb.cc

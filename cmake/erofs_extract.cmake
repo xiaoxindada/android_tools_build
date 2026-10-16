@@ -1,5 +1,5 @@
 set(target_name "extract.erofs")
-set(erofs_extract_srcs_dir "${CMAKE_SOURCE_DIR}/src/external/erofs_extract")
+set(erofs_extract_srcs_dir "${CMAKE_SOURCE_DIR}/src/custom/erofs_extract")
 
 file(GLOB erofs_extract_srcs "${erofs_extract_srcs_dir}/*.cpp")
 
