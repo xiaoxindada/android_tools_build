@@ -9,6 +9,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
-clap = { path = "../../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
-regex = { path = "../../../../external/rust/android-crates-io/crates/regex" }
+anyhow = { path = "../../../external/rust/android-crates-io/crates/anyhow" }
+clap = { path = "../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
+regex = { path = "../../../external/rust/android-crates-io/crates/regex" }

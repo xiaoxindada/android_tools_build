@@ -80,11 +80,13 @@ fn main() {
     let out_dir = env::var_os("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("finalized_flags_record.json");
 
-    let finalized_flags_map: Result<FinalizedFlagMap> = read_files_to_map_using_env();
-    if finalized_flags_map.is_err() {
-        return;
-    }
-    let json_str = serde_json::to_string(&finalized_flags_map.unwrap()).unwrap();
+    // This project builds aconfig standalone instead of inside an AOSP tree, so
+    // there is no prebuilts/sdk directory to read finalized flags from.  Fall
+    // back to an empty map so the generated file always exists for the
+    // include_str!() in src/main.rs.
+    let finalized_flags_map =
+        read_files_to_map_using_env().unwrap_or_else(|_| FinalizedFlagMap::new());
+    let json_str = serde_json::to_string(&finalized_flags_map).unwrap();
 
     let mut f = File::create(&dest_path).unwrap();
     f.write_all(json_str.as_bytes()).unwrap();

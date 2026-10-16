@@ -8,7 +8,7 @@ default = ["cargo"]
 cargo = []
 
 [dependencies]
-anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
+anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
 memmap2 = "0.8.0"
 tempfile = "3.9.0"
 thiserror = "1.0.56"

@@ -9,7 +9,7 @@ cargo = []
 
 [dependencies]
 rand = "0.8.5"
-anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
+anyhow = { path = "../../../../external/rust/android-crates-io/crates/anyhow" }
 memmap2 = "0.8.0"
 cxx = "1.0"
 thiserror = "1.0.56"
