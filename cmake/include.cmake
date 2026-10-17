@@ -108,7 +108,6 @@ set(libavb_headers
 set(gsid_headers "${CMAKE_SOURCE_DIR}/src/system/gsid/include" CACHE STRING "" FORCE)
 set(puffin_headers "${CMAKE_SOURCE_DIR}/src/external/puffin/src/include" CACHE STRING "" FORCE)
 set(update_engine_headers "${CMAKE_SOURCE_DIR}/src/system/update_engine" CACHE STRING "" FORCE)
-set(fs_mgr_aconfig_headers "${CMAKE_SOURCE_DIR}/aconfig/fs_mgr"  CACHE STRING "" FORCE)
 set(fs_mgr_headers
     "${CMAKE_SOURCE_DIR}/src/system/fs/fs_mgr"
     "${CMAKE_SOURCE_DIR}/src/system/fs/fs_mgr/libstorage_literals"
@@ -122,6 +121,8 @@ set(fs_mgr_headers
     "${CMAKE_SOURCE_DIR}/src/system/fs/fs_mgr/libfs_avb/include"
     "${CMAKE_SOURCE_DIR}/src/system/fs/fs_mgr/libdm/include"
     "${CMAKE_SOURCE_DIR}/src/system/fs/fs_mgr/libfiemap/include"
+    "${CMAKE_SOURCE_DIR}/src/system/fs/fs_mgr/libdm/flags/include"
+    "${CMAKE_SOURCE_DIR}/src/system/fs/fs_mgr/libsnapshot/flags/include"
     CACHE STRING "" FORCE)
 set(libziparchive_headers 
     "${CMAKE_SOURCE_DIR}/src/system/libziparchive/include"

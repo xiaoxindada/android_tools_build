@@ -8,6 +8,68 @@ set(libfstab_srcs_dir "${fs_mgr_dir}/libfstab")
 set(libfs_avb_srcs_dir "${fs_mgr_dir}/libfs_avb")
 set(update_engine_dir "${CMAKE_SOURCE_DIR}/src/system/update_engine")
 
+if(NOT EXISTS "${aconfig_tool}")
+    message(FATAL_ERROR
+        "Not found prebuilt/x86_64/aconfig, please build x86_64 aconfig")
+endif()
+
+set(libdm_flags_dir "${libdm_srcs_dir}/flags")
+set(libsnapshot_flags_dir "${libsnapshot_srcs_dir}/flags")
+
+set(aconfig_cache_dir "${CMAKE_BINARY_DIR}/aconfig_cache")
+file(MAKE_DIRECTORY "${aconfig_cache_dir}")
+
+set(libdm_flags_srcs 
+        "${libdm_flags_dir}/include/com_android_libdm.h"
+        "${libdm_flags_dir}/com_android_libdm.cc"
+)
+
+set(libsnapshot_flags_srcs 
+        "${libsnapshot_flags_dir}/include/com_android_libsnapshot.h"
+        "${libsnapshot_flags_dir}/com_android_libsnapshot.cc"
+)
+
+# aconfig generates the flag library in two steps: create-cache parses the
+# .aconfig declarations, create-cpp-lib turns the cache into the sources.
+add_custom_command(
+    OUTPUT
+        ${libdm_flags_srcs}
+    COMMAND
+        "${aconfig_tool}" create-cache --package com.android.libdm --container system
+            --declarations "${libdm_flags_dir}/libdm_flags.aconfig"
+            --cache "${aconfig_cache_dir}/com.android.libdm.cache"
+    COMMAND
+        "${aconfig_tool}" create-cpp-lib
+            --cache "${aconfig_cache_dir}/com.android.libdm.cache"
+            --out "${libdm_flags_dir}"
+    DEPENDS
+        "${libdm_flags_dir}/libdm_flags.aconfig"
+        "${aconfig_tool}"
+    COMMENT "Generating com.android.libdm flags"
+    VERBATIM
+)
+
+add_custom_command(
+    OUTPUT
+        ${libsnapshot_flags_srcs}
+    COMMAND
+        "${aconfig_tool}" create-cache --package com.android.libsnapshot --container system
+            --declarations "${libsnapshot_flags_dir}/libsnapshot_flags.aconfig"
+            --cache "${aconfig_cache_dir}/com.android.libsnapshot.cache"
+    COMMAND
+        "${aconfig_tool}" create-cpp-lib
+            --cache "${aconfig_cache_dir}/com.android.libsnapshot.cache"
+            --out "${libsnapshot_flags_dir}"
+    DEPENDS
+        "${libsnapshot_flags_dir}/libsnapshot_flags.aconfig"
+        "${aconfig_tool}"
+    COMMENT "Generating com.android.libsnapshot flags"
+    VERBATIM
+)
+
+add_custom_target(gen_libdm_flags_srcs ALL DEPENDS ${libdm_flags_srcs})
+add_custom_target(gen_libsnapshot_flags_srcs ALL DEPENDS ${libsnapshot_flags_srcs})
+
 set(cflags
         "-D_FILE_OFFSET_BITS=64"
         "-Wall"
@@ -81,7 +143,7 @@ set(libsnapshot_capabilities_sources
  )
 
 set(libsnapshot_srcs
-        # ${libsnapshot_capabilities_sources}
+        ${libsnapshot_capabilities_sources}
         ${snapshot_protos_srcs}
         "${libsnapshot_srcs_dir}/device_info.cpp"
         "${libsnapshot_srcs_dir}/snapshot.cpp"
@@ -89,7 +151,7 @@ set(libsnapshot_srcs
         "${libsnapshot_srcs_dir}/snapshot_metadata_updater.cpp"
         "${libsnapshot_srcs_dir}/partition_cow_creator.cpp"
         "${libsnapshot_srcs_dir}/return.cpp"
-        # "${libsnapshot_srcs_dir}/utility.cpp"
+        "${libsnapshot_srcs_dir}/utility.cpp"
         "${libsnapshot_srcs_dir}/scratch_super.cpp"
 )
 
@@ -106,19 +168,20 @@ set(libsnapshot_cow_srcs
         "${libsnapshot_cow_srcs_dir}/writer_v3.cpp"
 )
 
-add_library(dm STATIC ${libdm_srcs})
+add_library(dm STATIC ${libdm_srcs} ${libdm_flags_srcs})
+add_dependencies(dm gen_libdm_flags_srcs)
 target_compile_options(dm PRIVATE ${cflags})
 target_include_directories(dm PUBLIC
         ${fs_mgr_headers}
         ${libbase_headers}
         ${liblog_headers}
         ${e2fsprogs_lib_headers}
-        ${fs_mgr_aconfig_headers}
 )
 target_link_libraries(dm PUBLIC
         base
         log
         ext2_uuid
+        aconfig_storage_read
 )
 
 add_library(fstab STATIC ${libfstab_srcs})
@@ -141,7 +204,6 @@ target_include_directories(fs_avb PUBLIC
         ${libbase_headers}
         ${libgsi_headers}
         ${boringssl_headers}
-        ${fs_mgr_aconfig_headers}
 )
 target_link_libraries(fs_avb PUBLIC
         avb
@@ -175,9 +237,8 @@ target_link_libraries(lp PUBLIC
         zlib
 )
 
-add_library(snapshot STATIC ${libsnapshot_srcs})
-# snapshot.pb.cc/.h 由 gen_snapshot_protos_srcs 生成，必须先于本库编译
-add_dependencies(snapshot gen_snapshot_protos_srcs)
+add_library(snapshot STATIC ${libsnapshot_srcs} ${libsnapshot_flags_srcs})
+add_dependencies(snapshot gen_snapshot_protos_srcs gen_libsnapshot_flags_srcs)
 target_compile_options(snapshot PRIVATE ${cflags})
 target_include_directories(snapshot PUBLIC
         ${fs_mgr_headers}
@@ -188,7 +249,6 @@ target_include_directories(snapshot PUBLIC
         ${update_engine_dir}
         ${libext4_utils_headers}
         ${libselinux_headers}
-        ${fs_mgr_aconfig_headers}
 )
 target_link_libraries(snapshot PUBLIC
         base
@@ -200,9 +260,11 @@ target_link_libraries(snapshot PUBLIC
         update_metadata-protos
         # fs_mgr_binder
         selinux
+        aconfig_storage_read
 )
 
-add_library(snapshot_cow STATIC ${libsnapshot_cow_srcs})
+add_library(snapshot_cow STATIC ${libsnapshot_cow_srcs} ${libsnapshot_flags_srcs})
+add_dependencies(snapshot_cow gen_libsnapshot_flags_srcs gen_snapshot_protos_srcs)
 target_compile_options(snapshot_cow PRIVATE 
         ${cflags}
         # "-DLIBSNAPSHOT_USE_HAL"
@@ -216,7 +278,6 @@ target_include_directories(snapshot_cow PUBLIC
         ${libzstd_headers}
         ${update_engine_headers}
         ${libselinux_headers}
-        ${fs_mgr_aconfig_headers}
 )
 target_link_libraries(snapshot_cow PUBLIC
         base
@@ -225,4 +286,5 @@ target_link_libraries(snapshot_cow PUBLIC
         zlib
         lz4
         zstd
+        aconfig_storage_read
 )

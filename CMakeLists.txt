@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.25)
 
 project(android_tools_build LANGUAGES C CXX)
 
@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 23)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Android")
     message("This is Android cross compile")
+else()
+    message("CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
@@ -72,8 +74,11 @@ include("cmake/libdivsufsort.cmake")
 include("cmake/libbsdiff.cmake")
 include("cmake/libzucchini.cmake")
 include("cmake/puffin.cmake")
-include("cmake/fs_mgr.cmake")
 include("cmake/libverity_tree.cmake")
+
+# fs_mgr
+include("cmake/aconfig_storage.cmake")
+include("cmake/fs_mgr.cmake")
 
 # sparse_img_tools
 include("cmake/sparse_img_tools.cmake")

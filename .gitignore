@@ -27,3 +27,8 @@
 /src/system/update_engine/update_engine/update_metadata.pb.h
 /src/system/fs/fs_mgr/libsnapshot/android/snapshot/snapshot.pb.cc
 /src/system/fs/fs_mgr/libsnapshot/android/snapshot/snapshot.pb.h
+/src/system/fs/fs_mgr/libdm/flags/include/com_android_libdm.h
+/src/system/fs/fs_mgr/libdm/flags/com_android_libdm.cc
+/src/system/fs/fs_mgr/libsnapshot/flags/include/com_android_libsnapshot.h
+/src/system/fs/fs_mgr/libsnapshot/flags/com_android_libsnapshot.cc
+/src/build/tools/aconfig/target/
