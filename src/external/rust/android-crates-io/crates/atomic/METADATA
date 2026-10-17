@@ -1,0 +1,17 @@
+name: "atomic"
+description: "Generic Atomic<T> wrapper type"
+third_party {
+  version: "0.6.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 6
+    day: 24
+  }
+  homepage: "https://crates.io/crates/atomic"
+  identifier {
+    type: "crates.io"
+    value: "atomic"
+    version: "0.6.1"
+  }
+}

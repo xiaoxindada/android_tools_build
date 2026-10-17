@@ -1,0 +1,12 @@
+{
+  "run_cargo": true,
+  "min_sdk_version": "29",
+  "variants": [
+    {},
+    {
+      "generate_rulesmk": true,
+      "generate_androidbp": false,
+      "tests": false
+    }
+  ]
+}

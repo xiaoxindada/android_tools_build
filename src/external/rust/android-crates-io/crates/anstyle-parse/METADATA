@@ -1,0 +1,17 @@
+name: "anstyle-parse"
+description: "Parse ANSI Style Escapes"
+third_party {
+  version: "1.0.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 29
+  }
+  homepage: "https://crates.io/crates/anstyle-parse"
+  identifier {
+    type: "crates.io"
+    value: "anstyle-parse"
+    version: "1.0.0"
+  }
+}

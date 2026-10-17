@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: Copyright The arm-ffa Contributors.
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+[package]
+name = "arm-ffa"
+version = "0.5.0"
+authors = [
+    "Balint Dobszay <balint.dobszay@arm.com>",
+    "Imre Kis <imre.kis@arm.com>",
+]
+description = "Arm Firmware Framework for Arm A-profile support library"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://git.trustedfirmware.org/arm-firmware-crates/arm-ffa.git"
+keywords = ["arm", "aarch64", "spmc", "ff-a", "firmware"]
+categories = ["embedded", "no-std", "data-structures", "api-bindings"]
+readme = "README.md"
+rust-version = "1.90"
+
+[dependencies]
+num_enum = { version = "0.7.6", default-features = false }
+thiserror = { version = "2.0.18", default-features = false }
+uuid = { version = "1.23.0", default-features = false }
+zerocopy = { version = "0.8.48", features = ["derive"] }

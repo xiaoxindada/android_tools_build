@@ -1,0 +1,9 @@
+{
+  "min_sdk_version": "29",
+  "package": {
+    "dc_bundle": {
+      "add_toplevel_block": "cargo_embargo_toplevel.bp.fragment",
+      "copy_out": true
+    }
+  }
+}

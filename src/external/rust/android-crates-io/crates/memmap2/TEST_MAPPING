@@ -1,0 +1,15 @@
+{
+  "imports": [
+    {
+      "path": "packages/modules/ConfigInfrastructure/aconfigd"
+    },
+    {
+      "path": "system/server_configurable_flags/aconfigd"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "memmap2_test_src_lib"
+    }
+  ]
+}

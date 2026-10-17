@@ -1,0 +1,17 @@
+name: "nu-ansi-term"
+description: "Library for ANSI terminal colors and styles (bold, underline)"
+third_party {
+  version: "0.50.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 20
+  }
+  homepage: "https://crates.io/crates/nu-ansi-term"
+  identifier {
+    type: "crates.io"
+    value: "nu-ansi-term"
+    version: "0.50.3"
+  }
+}

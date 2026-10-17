@@ -1,0 +1,34 @@
+{
+  "imports": [
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/zipfuse"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apexutil"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apkverify"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apkzip"
+    },
+    {
+      "path": "system/desktop/security/gscutil"
+    },
+    {
+      "path": "system/desktop/security/libs/host_abstraction"
+    },
+    {
+      "path": "system/extras/profcollectd/libprofcollectd"
+    },
+    {
+      "path": "tools/netsim"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+name: "figment"
+description: "A configuration library so con-free, it\'s unreal."
+third_party {
+  version: "0.10.19"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 6
+  }
+  homepage: "https://crates.io/crates/figment"
+  identifier {
+    type: "crates.io"
+    value: "figment"
+    version: "0.10.19"
+  }
+}

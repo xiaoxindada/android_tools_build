@@ -1,0 +1,9 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "9",
+  "package": {
+    "safer_cffi": {
+      "target_windows": true
+    }
+  }
+}

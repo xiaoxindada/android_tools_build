@@ -1,0 +1,17 @@
+name: "toml"
+description: "A native Rust encoder and decoder of TOML-formatted files and streams. Provides implementations of the standard Serialize/Deserialize traits for TOML data to facilitate deserializing and serializing Rust structures."
+third_party {
+  version: "1.1.6+spec-1.1.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 15
+  }
+  homepage: "https://crates.io/crates/toml"
+  identifier {
+    type: "crates.io"
+    value: "toml"
+    version: "1.1.6+spec-1.1.0"
+  }
+}

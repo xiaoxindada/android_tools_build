@@ -1,0 +1,31 @@
+rust_library {
+    name: "libjni_platform",
+    host_supported: false,
+    crate_name: "jni",
+    cargo_env_compat: true,
+    cargo_pkg_version: "0.22.4",
+    crate_root: "src/lib.rs",
+    edition: "2024",
+    features: ["invocation"],
+    cfgs: ["use_tls_attach_guard"],
+    rustlibs: [
+        "libcfg_if",
+        "libcombine",
+        "libjni_sys",
+        "liblog_rust",
+        "libsimd_cesu8",
+        "libthiserror",
+    ],
+    proc_macros: ["libjni_macros"],
+    apex_available: [
+        "//apex_available:platform",
+    ],
+    min_sdk_version: "29",
+    target: {
+        android: {
+            static_libs: [
+                "libnativehelper_lazy",
+            ],
+        },
+    },
+}

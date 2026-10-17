@@ -1,0 +1,17 @@
+name: "bincode"
+description: "A binary serialization / deserialization strategy for transforming structs into bytes and vice versa!"
+third_party {
+  version: "2.0.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 1
+    day: 21
+  }
+  homepage: "https://crates.io/crates/bincode"
+  identifier {
+    type: "crates.io"
+    value: "bincode"
+    version: "2.0.1"
+  }
+}

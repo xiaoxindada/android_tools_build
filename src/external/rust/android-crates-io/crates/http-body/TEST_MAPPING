@@ -1,0 +1,27 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/axum"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/axum-core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/http-body"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/hyper"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tonic"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "http-body_test_src_lib"
+    },
+    {
+      "name": "http-body_test_tests_is_end_stream"
+    }
+  ]
+}

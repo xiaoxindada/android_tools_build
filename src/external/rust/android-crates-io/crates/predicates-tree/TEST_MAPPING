@@ -1,0 +1,10 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/mockall"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/predicates"
+    }
+  ]
+}

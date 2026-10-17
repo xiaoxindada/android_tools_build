@@ -1,0 +1,20 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/jni"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/jni"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "cesu8_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "cesu8_test_src_lib"
+    }
+  ]
+}

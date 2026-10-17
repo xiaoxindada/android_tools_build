@@ -1,0 +1,10 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "package": {
+    "proc-macro-error2": {
+      "device_supported": false,
+      "host_first_multilib": true
+    }
+  }
+}

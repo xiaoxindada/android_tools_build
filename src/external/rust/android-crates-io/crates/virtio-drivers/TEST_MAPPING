@@ -1,0 +1,21 @@
+{
+  "imports": [
+    {
+      "path": "packages/modules/Virtualization/guest/pvmfw"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/service_vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/vmbase_example"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvmbase"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "virtio-drivers_test_src_lib"
+    }
+  ]
+}

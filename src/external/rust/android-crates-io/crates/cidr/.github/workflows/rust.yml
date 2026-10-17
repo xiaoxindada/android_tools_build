@@ -1,0 +1,101 @@
+on: [push, pull_request]
+
+name: Rust CI
+
+jobs:
+  # if this fails we don't try anything else on stable
+  #
+  # (if initial build fails nothing else is checked)
+  #
+  # TODO: unclear how to setup cache with dtolnay/rust-toolchain
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build default features
+        run: cargo build
+      - name: Build with all features
+        run: cargo build --all-features
+
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Check
+        run: cargo check --all-features
+
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Test
+        run: cargo test --all-features
+      - name: Test no std
+        run: cargo test --no-default-features --features serde,bitstring
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Clippy
+        run: cargo clippy -- -D warnings
+
+  doc:
+    name: Rustdoc
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Rustdoc
+        run: cargo doc --all-features
+
+  # no cache for nightly, run all steps in same job - if one fails, the others won't be tried
+  build-nightly:
+    name: Build [nightly]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+      # nightly fmt
+      - name: Rustfmt [nightly]
+        run: cargo fmt --all -- --check
+      # nightly build
+      - name: Build [nightly]
+        run: cargo build
+      # nightly build all features
+      - name: Build with all features [nightly]
+        run: cargo build --all-features
+      # check
+      - name: Check [nightly]
+        run: cargo check --all-features
+      # doc_cfg not stable yet
+      # https://doc.rust-lang.org/unstable-book/language-features/doc-cfg.html
+      # https://github.com/rust-lang/rust/issues/43781
+      - name: Rustdoc [nightly]
+        env:
+          # this should need nightly
+          RUSTDOCFLAGS: "--cfg docsrs"
+        run: cargo doc --all-features
+      # deploy docs from nightly for doc_cfg feature
+      # (for stable we'd create a new job and use the cache)
+      - name: Deploy docs
+        uses: stbuehler/action-rs-deploy-doc@v1
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+        with:
+          target: git@github.com:stbuehler/rustdocs
+          target-folder: cidr
+          ssh-private-key: ${{ secrets.RUSTDOCS_SSH_ED25519 }}

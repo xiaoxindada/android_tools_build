@@ -1,0 +1,91 @@
+name: Update gungraun baselines
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  # Keep in sync with BENCH_TOOLCHAIN in bench.yml.
+  BENCH_TOOLCHAIN: 1.98.0
+
+jobs:
+  save:
+    name: save (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup update --no-self-update ${{ env.BENCH_TOOLCHAIN }}
+      - run: rustup default ${{ env.BENCH_TOOLCHAIN }}
+      - name: Install valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
+      - name: Remove committed baselines
+        run: |
+          find benches/gungraun-baselines -type f -name '*.base@*' -delete
+          find benches/gungraun-baselines -type d -empty -delete
+      - run: cargo run --release -p ci -- bench --save
+      - name: Keep only baseline files
+        run: |
+          find benches/gungraun-baselines -type f ! -name '*.base@*' ! -name 'Cargo.lock' -delete
+          find benches/gungraun-baselines -type d -empty -delete
+      - uses: actions/upload-artifact@v7
+        with:
+          name: baselines-${{ matrix.os }}
+          path: benches/gungraun-baselines
+          if-no-files-found: error
+
+  pr:
+    name: Open PR
+    needs: save
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Remove committed baselines
+        run: |
+          find benches/gungraun-baselines -type f -name '*.base@*' -delete
+          find benches/gungraun-baselines -type d -empty -delete
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: baselines-*
+          path: benches/gungraun-baselines
+          merge-multiple: true
+      - name: Commit baselines
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Unique branch per run so we never collide with a previously
+          # merged PR that still points at a reused branch name.
+          branch="chore/gungraun-baselines-${{ github.run_id }}"
+          git checkout -B "$branch"
+          git add benches/gungraun-baselines
+          if git diff --cached --quiet; then
+            echo "no baseline changes"
+            exit 0
+          fi
+          git commit -m "chore: update gungraun baselines"
+          git push -f origin "$branch"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+      - name: Open pull request
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # A fresh per-run branch has no existing PR, so no guard needed.
+          gh pr create \
+            --base "${{ github.ref_name }}" \
+            --head "${{ steps.commit.outputs.branch }}" \
+            --title "chore: update gungraun baselines" \
+            --body "Regenerated gungraun baselines (sse2, scalar-math, neon) with toolchain ${{ env.BENCH_TOOLCHAIN }}."

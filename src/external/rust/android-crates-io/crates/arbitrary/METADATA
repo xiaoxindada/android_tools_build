@@ -1,0 +1,17 @@
+name: "arbitrary"
+description: "The trait for generating structured data from unstructured data"
+third_party {
+  version: "1.4.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 8
+    day: 18
+  }
+  homepage: "https://crates.io/crates/arbitrary"
+  identifier {
+    type: "crates.io"
+    value: "arbitrary"
+    version: "1.4.2"
+  }
+}

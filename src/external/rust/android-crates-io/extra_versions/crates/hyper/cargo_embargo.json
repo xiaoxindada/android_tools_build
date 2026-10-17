@@ -1,0 +1,21 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "module_name_overrides": {
+    "libhyper": "libhyper-0.14",
+    "external_rust_crates_hyper_license": "external_rust_crates_hyper-0.14_license",
+    "libhttp": "libhttp-0.2.12",
+    "libhttp_body": "libhttp_body-0.4"
+  },
+  "features": [
+    "backports",
+    "client",
+    "default",
+    "http1",
+    "runtime",
+    "server",
+    "socket2",
+    "stream",
+    "tcp"
+  ]
+}

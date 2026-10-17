@@ -1,0 +1,17 @@
+name: "adler2"
+description: "A simple clean-room implementation of the Adler-32 checksum"
+third_party {
+  version: "2.0.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 6
+    day: 10
+  }
+  homepage: "https://crates.io/crates/adler2"
+  identifier {
+    type: "crates.io"
+    value: "adler2"
+    version: "2.0.1"
+  }
+}

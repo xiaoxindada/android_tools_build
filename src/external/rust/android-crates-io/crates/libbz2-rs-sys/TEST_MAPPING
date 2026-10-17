@@ -1,0 +1,7 @@
+{
+  "postsubmit": [
+    {
+      "name": "libbz2-rs-sys_test_src_lib"
+    }
+  ]
+}

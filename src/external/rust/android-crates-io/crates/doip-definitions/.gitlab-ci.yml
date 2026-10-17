@@ -1,0 +1,84 @@
+stages:
+  - test
+  - build
+  - docs
+
+variables:
+  UV_VERSION: 0.6.3
+  PYTHON_VERSION: 3.11
+  BASE_LAYER: bookworm-slim
+  # GitLab CI creates a separate mountpoint for the build directory,
+  # so we need to copy instead of using hard links.
+  UV_LINK_MODE: copy
+  VENV_DIR: "venv"
+
+# Cache dependencies to speed up subsequent runs
+cache:
+  key: "$CI_COMMIT_REF_NAME"
+  paths:
+    - target
+    - .cargo
+
+lint-code:
+  stage: test
+  image: rust:latest
+  script:
+    - rustup component add clippy
+    - cargo clippy -- -D warnings
+
+# Run tests for the Rust project
+test:
+  stage: test
+  image: rust:latest
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: cobertura.xml
+  coverage: '/\d+\.\d+% coverage, /'
+  before_script:
+    - cargo install cargo-tarpaulin
+  script:
+    - cargo test
+    - cargo tarpaulin --force-clean --ignore-tests --verbose --engine llvm --fail-under=100 --out xml
+
+# Build the Rust project
+build:rust:
+  stage: build
+  image: rust:latest
+  script:
+    - cargo build --release --no-default-features
+  artifacts:
+    paths:
+      - target/release
+
+# Build the Python extension using maturin
+build:python:
+  image: rust:latest # Use the official Rust image
+  stage: build
+  script:
+    - apt-get update && apt-get install -y python3 python3-pip python3-venv
+    - python3 -m venv $VENV_DIR # Create a virtual environment
+    - source $VENV_DIR/bin/activate # Activate the virtual environment
+    - pip install maturin
+    - maturin develop # Build the Python bindings for the Rust code
+  artifacts:
+    paths:
+      - target/wheels/ # Store the generated wheel files
+
+# Generate documentation
+pages:
+  stage: docs
+  image: rust:latest
+  script:
+    - cargo doc --no-deps
+    - mv target/doc public
+    - echo '<meta http-equiv=refresh content="0; url=doip_definitions/index.html">' > public/index.html
+  artifacts:
+    paths:
+      # The folder that contains the files to be exposed at the Page URL
+      - public
+  rules:
+    # This ensures that only pushes to the default branch will trigger
+    # a pages deploy
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH

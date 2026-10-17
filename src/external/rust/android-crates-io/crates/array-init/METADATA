@@ -1,0 +1,17 @@
+name: "array-init"
+description: "Safe wrapper for initializing fixed-size arrays"
+third_party {
+  version: "2.1.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 6
+  }
+  homepage: "https://crates.io/crates/array-init"
+  identifier {
+    type: "crates.io"
+    value: "array-init"
+    version: "2.1.0"
+  }
+}

@@ -1,0 +1,91 @@
+This patch was originally introduced for crate version 1.16.0 in aosp/2345213 as it.rs.patch.
+
+This is an updated version for 1.19.0
+
+---
+ tests/it/sync_lazy.rs        | 1 +
+ tests/it/sync_once_cell.rs   | 3 +++
+ tests/it/unsync_lazy.rs      | 1 +
+ tests/it/unsync_once_cell.rs | 2 ++
+ 4 files changed, 7 insertions(+)
+
+diff --git a/tests/it/sync_lazy.rs b/tests/it/sync_lazy.rs
+index 44d70fa..89f83b4 100644
+--- a/tests/it/sync_lazy.rs
++++ b/tests/it/sync_lazy.rs
+@@ -150,6 +150,7 @@ fn lazy_into_value() {
+ }
+ 
+ #[test]
++#[cfg(not(target_os = "android"))]
+ fn lazy_poisoning() {
+     let x: Lazy<String> = Lazy::new(|| panic!("kaboom"));
+     for _ in 0..2 {
+diff --git a/tests/it/sync_once_cell.rs b/tests/it/sync_once_cell.rs
+index 252adea..ca806d4 100644
+--- a/tests/it/sync_once_cell.rs
++++ b/tests/it/sync_once_cell.rs
+@@ -88,6 +88,7 @@ fn clone() {
+ }
+ 
+ #[test]
++#[cfg(not(target_os = "android"))]
+ fn get_or_try_init() {
+     let cell: OnceCell<String> = OnceCell::new();
+     assert!(cell.get().is_none());
+@@ -114,6 +115,7 @@ fn wait() {
+ }
+ 
+ #[cfg(feature = "std")]
++#[cfg(not(target_os = "android"))]
+ #[test]
+ fn wait_panic() {
+     let cell: OnceCell<String> = OnceCell::new();
+@@ -178,6 +180,7 @@ fn debug_impl() {
+ #[test]
+ #[cfg_attr(miri, ignore)] // miri doesn't support processes
+ #[cfg(feature = "std")]
++#[ignore = "Android: ignore for now. Need to compile these binaries separately."]
+ fn reentrant_init() {
+     let examples_dir = {
+         let mut exe = std::env::current_exe().unwrap();
+@@ -208,6 +210,7 @@ fn reentrant_init() {
+ #[cfg(not(feature = "std"))]
+ #[test]
+ #[should_panic(expected = "reentrant init")]
++#[ignore = "Android: ignore for now. Need to compile these binaries separately."]
+ fn reentrant_init() {
+     let x: OnceCell<Box<i32>> = OnceCell::new();
+     let dangling_ref: Cell<Option<&i32>> = Cell::new(None);
+diff --git a/tests/it/unsync_lazy.rs b/tests/it/unsync_lazy.rs
+index 0c308ca..524ec6d 100644
+--- a/tests/it/unsync_lazy.rs
++++ b/tests/it/unsync_lazy.rs
+@@ -114,6 +114,7 @@ fn lazy_into_value() {
+ 
+ #[test]
+ #[cfg(feature = "std")]
++#[cfg(not(target_os = "android"))]
+ fn lazy_poisoning() {
+     let x: Lazy<String> = Lazy::new(|| panic!("kaboom"));
+     for _ in 0..2 {
+diff --git a/tests/it/unsync_once_cell.rs b/tests/it/unsync_once_cell.rs
+index 124cc3e..4cd7e87 100644
+--- a/tests/it/unsync_once_cell.rs
++++ b/tests/it/unsync_once_cell.rs
+@@ -67,6 +67,7 @@ fn clone() {
+ }
+ 
+ #[test]
++#[cfg(not(target_os = "android"))]
+ fn get_or_try_init() {
+     let cell: OnceCell<String> = OnceCell::new();
+     assert!(cell.get().is_none());
+@@ -123,6 +124,7 @@ fn debug_impl() {
+ 
+ #[test]
+ #[should_panic(expected = "reentrant init")]
++#[ignore = "Android: ignore for now. Need to compile these binaries separately."]
+ fn reentrant_init() {
+     let x: OnceCell<Box<i32>> = OnceCell::new();
+     let dangling_ref: Cell<Option<&i32>> = Cell::new(None);

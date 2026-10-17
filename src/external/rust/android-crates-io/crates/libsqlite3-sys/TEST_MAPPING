@@ -1,0 +1,29 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/rusqlite"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtualizationservice"
+    },
+    {
+      "path": "system/security/keystore2"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "libsqlite3-sys_test_src_lib"
+    },
+    {
+      "name": "libsqlite3_bindgen_test"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "libsqlite3-sys_test_src_lib"
+    },
+    {
+      "name": "libsqlite3_bindgen_test"
+    }
+  ]
+}

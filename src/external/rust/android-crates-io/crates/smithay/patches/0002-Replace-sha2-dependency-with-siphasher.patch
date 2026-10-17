@@ -1,0 +1,100 @@
+commit 2aa6329553c3435ec48e7c93ceef3ba6b782b35d
+Author: jaewan-github <59152909+jaewan-github@users.noreply.github.com>
+Date:   Wed Sep 16 08:03:10 2026 +0900
+
+    input/keyboard: Replace sha2 dependency with siphasher
+
+    Replace sha2 dependency with siphasher to reduce compliation time
+    and dependency footprint.
+
+    Although siphasher doesn't provide cryptographically secure nor
+    256-bit output, it's sufficient for checking keymap collision.
+
+    Tested:
+    - cargo test --lib --no-default-features --features wayland_frontend
+    - verified that siphasher-128 doesn't cause hash collision with keymaps
+      provided by XKB.
+
+diff --git a/Cargo.toml b/Cargo.toml
+index dd360d643..42eabbcf3 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -151,6 +151,7 @@ wayland_frontend = [
+     "wayland-protocols-wlr",
+     "wayland-protocols-misc",
+     "tempfile",
++    "siphasher",
+ ]
+ x11rb_event_source = ["x11rb"]
+ xwayland = [
+@@ -321,8 +322,9 @@ features = [
+ version = "1.1.0"
+ optional = true
+ 
+-[dependencies.sha2]
+-version = "0.10.9"
++[dependencies.siphasher]
++version = "1.0.3"
++optional = true
+ 
+ [dependencies.smallvec]
+ version = "1.11"
+diff --git a/src/input/keyboard/keymap_file.rs b/src/input/keyboard/keymap_file.rs
+index d59146fa7..1378611f6 100644
+--- a/src/input/keyboard/keymap_file.rs
++++ b/src/input/keyboard/keymap_file.rs
+@@ -1,7 +1,7 @@
+ use std::ffi::CString;
+ use std::os::unix::io::{AsFd, BorrowedFd};
+ 
+-use sha2::{Digest, Sha256};
++use siphasher::sip128::SipHasher;
+ use tracing::error;
+ use xkbcommon::xkb::{self, Keymap, KEYMAP_FORMAT_TEXT_V1};
+ 
+@@ -9,13 +9,13 @@ use crate::utils::SealedFile;
+ 
+ /// Unique ID for a keymap
+ #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+-pub struct KeymapFileId([u8; 32]);
++pub struct KeymapFileId([u8; 16]);
+ 
+ impl KeymapFileId {
+     fn for_keymap(keymap: &str) -> Self {
+         // Use a hash, so `keymap` events aren't sent when keymap hasn't changed, particularly
+         // with `virtual-keyboard-unstable-v1`.
+-        Self(Sha256::digest(keymap).as_slice().try_into().unwrap())
++        Self(SipHasher::new().hash(keymap.as_bytes()).as_bytes())
+     }
+ }
+ 
+@@ -102,3 +102,29 @@ impl KeymapFile {
+         self.id
+     }
+ }
++
++#[cfg(test)]
++ mod tests {
++    use super::*;
++    use xkbcommon::xkb;
++
++    #[test]
++    fn test_keymap_file_id() {
++        let id1 = KeymapFileId::for_keymap("keymap data 1");
++        let id2 = KeymapFileId::for_keymap("keymap data 2");
++        let id3 = KeymapFileId::for_keymap("keymap data 1");
++
++        assert_ne!(id1, id2);
++        assert_eq!(id1, id3);
++    }
++
++    #[test]
++    fn test_keymap_file_creation() {
++        let context = xkb::Context::new(xkb::CONTEXT_NO_FLAGS);
++        let xkb_config = crate::input::keyboard::XkbConfig::default();
++        let keymap = xkb_config.compile_keymap(&context).unwrap();
++        let keymap_file = KeymapFile::new(&keymap);
++
++        assert_ne!(keymap_file.id().0, [0_u8; 16]);
++    }
++}

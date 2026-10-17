@@ -1,0 +1,8 @@
+filegroup {
+    name: "android_logger_srcs",
+    srcs: [
+        "src/*.rs",
+        "src/**/*.rs",
+    ],
+}
+

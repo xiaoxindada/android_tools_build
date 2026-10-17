@@ -1,0 +1,120 @@
+diff --git a/src/lib.rs b/src/lib.rs
+index d1c1dbbc7..7d16bf238 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -505,6 +505,11 @@ const MAX_CRYPTO_STREAM_OFFSET: u64 = 1 << 16;
+ // The send capacity factor.
+ const TX_CAP_FACTOR: f64 = 1.0;
+ 
++// The upper cap on the exponent when using exponential backoff for probes. With a
++// value of 5, the maximum possible value is 2^5 = 32 times the minimum PTO. This
++// prevents arithmetic overflow.
++const MAX_PTO_EXPONENT: u32 = 5;
++
+ /// Ancillary information about incoming packets.
+ #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+ pub struct RecvInfo {
+diff --git a/src/recovery/congestion/recovery.rs b/src/recovery/congestion/recovery.rs
+index 18d1e514e..8e4cd3ebd 100644
+--- a/src/recovery/congestion/recovery.rs
++++ b/src/recovery/congestion/recovery.rs
+@@ -426,7 +426,8 @@ impl LegacyRecovery {
+     fn pto_time_and_space(
+         &self, handshake_status: HandshakeStatus, now: Instant,
+     ) -> (Option<Instant>, Epoch) {
+-        let mut duration = self.pto() * 2_u32.pow(self.pto_count);
++        let mut duration =
++            self.pto() * 2_u32.pow(self.pto_count.min(crate::MAX_PTO_EXPONENT));
+ 
+         // Arm PTO from now when there are no inflight packets.
+         if self.bytes_in_flight.is_zero() {
+@@ -454,8 +455,8 @@ impl LegacyRecovery {
+                 }
+ 
+                 // Include max_ack_delay and backoff for Application Data.
+-                duration +=
+-                    self.rtt_stats.max_ack_delay * 2_u32.pow(self.pto_count);
++                duration += self.rtt_stats.max_ack_delay *
++                    2_u32.pow(self.pto_count.min(crate::MAX_PTO_EXPONENT));
+             }
+ 
+             let new_time = epoch
+@@ -1091,3 +1092,29 @@ pub struct Acked {
+ 
+     pub is_app_limited: bool,
+ }
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use crate::recovery::HandshakeStatus;
++    use crate::recovery::RecoveryConfig;
++    use std::time::Instant;
++
++    #[test]
++    fn test_high_pto_count_no_panic() {
++        let config = crate::Config::new(crate::PROTOCOL_VERSION).unwrap();
++        let recovery_config = RecoveryConfig::from_config(&config);
++        let mut r = LegacyRecovery::new_with_config(&recovery_config);
++
++        r.pto_count = 99999;
++
++        let handshake_status = HandshakeStatus {
++            completed: true,
++            has_handshake_keys: true,
++            peer_verified_address: true,
++        };
++        let now = Instant::now();
++
++        let _ = r.pto_time_and_space(handshake_status, now);
++    }
++}
+diff --git a/src/recovery/gcongestion/recovery.rs b/src/recovery/gcongestion/recovery.rs
+index 8d15d4b50..396459d2c 100644
+--- a/src/recovery/gcongestion/recovery.rs
++++ b/src/recovery/gcongestion/recovery.rs
+@@ -571,7 +571,8 @@ impl GRecovery {
+     fn pto_time_and_space(
+         &self, handshake_status: HandshakeStatus, now: Instant,
+     ) -> (Option<Instant>, packet::Epoch) {
+-        let mut duration = self.pto() * (1 << self.pto_count);
++        let mut duration =
++            self.pto() * 2_u32.pow(self.pto_count.min(crate::MAX_PTO_EXPONENT));
+ 
+         // Arm PTO from now when there are no inflight packets.
+         if self.bytes_in_flight.is_zero() {
+@@ -600,8 +601,8 @@ impl GRecovery {
+                 }
+ 
+                 // Include max_ack_delay and backoff for Application Data.
+-                duration +=
+-                    self.rtt_stats.max_ack_delay * 2_u32.pow(self.pto_count);
++                duration += self.rtt_stats.max_ack_delay *
++                    2_u32.pow(self.pto_count.min(crate::MAX_PTO_EXPONENT));
+             }
+ 
+             let new_time = self.epochs[e]
+@@ -1291,4 +1292,23 @@ mod tests {
+         assert_eq!(loss_thresh.pkt_thresh(), None);
+         assert_eq!(loss_thresh.time_thresh(), MAX_TIME_THRESHOLD);
+     }
++
++    #[test]
++    fn test_high_pto_count_no_panic() {
++        let mut config = Config::new(crate::PROTOCOL_VERSION).unwrap();
++        config.set_cc_algorithm(CongestionControlAlgorithm::Bbr2Gcongestion);
++        let recovery_config = RecoveryConfig::from_config(&config);
++        let mut r = GRecovery::new(&recovery_config).unwrap();
++
++        r.pto_count = 99999;
++
++        let handshake_status = HandshakeStatus {
++            completed: true,
++            has_handshake_keys: true,
++            peer_verified_address: true,
++        };
++        let now = Instant::now();
++
++        let _ = r.pto_time_and_space(handshake_status, now);
++    }
+ }

@@ -1,0 +1,17 @@
+name: "p9"
+description: "Server implementation of the 9p file system protocol"
+third_party {
+  version: "0.3.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 18
+  }
+  homepage: "https://crates.io/crates/p9"
+  identifier {
+    type: "crates.io"
+    value: "p9"
+    version: "0.3.2"
+  }
+}

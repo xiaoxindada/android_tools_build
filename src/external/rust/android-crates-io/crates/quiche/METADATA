@@ -1,0 +1,17 @@
+name: "quiche"
+description: "\360\237\245\247 Savoury implementation of the QUIC transport protocol and HTTP/3"
+third_party {
+  version: "0.24.9"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 13
+  }
+  homepage: "https://crates.io/crates/quiche"
+  identifier {
+    type: "crates.io"
+    value: "quiche"
+    version: "0.24.9"
+  }
+}

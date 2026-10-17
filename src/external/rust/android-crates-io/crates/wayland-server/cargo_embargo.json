@@ -1,0 +1,15 @@
+{
+  "module_name_overrides": {
+    "libwayland_server": "libwayland_server_rs"
+  },
+  "package": {
+    "wayland-server": {
+      "srcs": [
+        "src/*.rs",
+        "wayland.xml"
+      ]
+    }
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

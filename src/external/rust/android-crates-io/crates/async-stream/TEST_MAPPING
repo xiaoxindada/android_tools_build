@@ -1,0 +1,40 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/async-stream"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio-test"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tonic"
+    },
+    {
+      "path": "system/libueventd-rs"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "async-stream_test_tests_for_await"
+    },
+    {
+      "name": "async-stream_test_tests_try_stream"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "async-stream_test_tests_for_await"
+    },
+    {
+      "name": "async-stream_test_tests_try_stream"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "async-stream_test_tests_spans_preserved"
+    }
+  ]
+}

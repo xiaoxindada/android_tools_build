@@ -1,0 +1,13 @@
+diff --git a/src/tools/fetch.rs b/src/tools/fetch.rs
+index 3b0b0b0..2b0b0b0 100644
+--- a/src/tools/fetch.rs
++++ b/src/tools/fetch.rs
+@@ -63,7 +63,7 @@ pub struct Args {
+     #[arg(short, long)]
+     pub version_id: Option<String>,
+     /// Figma API key to use for Figma requests
+-    #[arg(short, long, env("FIGMA_API_KEY"))]
++    #[arg(short, long)]
+     pub api_key: Option<String>,
+     /// HTTP proxy server - <host>:<port>
+     #[arg(long)]

@@ -1,0 +1,206 @@
+diff --git a/src/command_buffer/allocator.rs b/src/command_buffer/allocator.rs
+index 11d3e16fe..4f1a3a681 100644
+--- a/src/command_buffer/allocator.rs
++++ b/src/command_buffer/allocator.rs
+@@ -104,6 +104,9 @@ pub unsafe trait CommandBufferAlloc: DeviceOwned + Send + Sync + 'static {
+ 
+     /// Returns the index of the queue family that the pool targets.
+     fn queue_family_index(&self) -> u32;
++
++    /// Returns true if the buffer was allocated with the protected bit set.
++    fn is_protected(&self) -> bool;
+ }
+ 
+ // It's fine to share `Pool` between threads because we never access the Vulkan command pool
+@@ -617,6 +620,11 @@ unsafe impl CommandBufferAlloc for StandardCommandBufferAlloc {
+     fn queue_family_index(&self) -> u32 {
+         self.pool.inner.inner.queue_family_index()
+     }
++
++    #[inline]
++    fn is_protected(&self) -> bool {
++        self.pool.inner.inner.is_protected()
++    }
+ }
+ 
+ unsafe impl DeviceOwned for StandardCommandBufferAlloc {
+diff --git a/src/command_buffer/auto.rs b/src/command_buffer/auto.rs
+index b143b35ab..86b474b4b 100644
+--- a/src/command_buffer/auto.rs
++++ b/src/command_buffer/auto.rs
+@@ -758,6 +758,10 @@ where
+     fn resources_usage(&self) -> &CommandBufferResourcesUsage {
+         self.inner.resources_usage()
+     }
++
++    fn is_protected(&self) -> bool {
++        self._alloc.is_protected()
++    }
+ }
+ 
+ pub struct SecondaryAutoCommandBuffer<A = StandardCommandBufferAlloc> {
+@@ -792,6 +796,10 @@ where
+         self.usage
+     }
+ 
++    fn is_protected(&self) -> bool {
++        self._alloc.is_protected()
++    }
++
+     fn inheritance_info(&self) -> &CommandBufferInheritanceInfo {
+         &self.inheritance_info
+     }
+diff --git a/src/command_buffer/traits.rs b/src/command_buffer/traits.rs
+index 80469d8b9..30647f22d 100644
+--- a/src/command_buffer/traits.rs
++++ b/src/command_buffer/traits.rs
+@@ -43,6 +43,9 @@ pub unsafe trait PrimaryCommandBufferAbstract:
+     /// Returns the usage of this command buffer.
+     fn usage(&self) -> CommandBufferUsage;
+ 
++    /// Returns true if this command buffer was created on a protected pool.
++    fn is_protected(&self) -> bool;
++
+     /// Executes this command buffer on a queue.
+     ///
+     /// This function returns an object that implements the [`GpuFuture`] trait. See the
+@@ -149,6 +152,10 @@ where
+         (**self).usage()
+     }
+ 
++    fn is_protected(&self) -> bool {
++        (**self).is_protected()
++    }
++
+     fn state(&self) -> MutexGuard<'_, CommandBufferState> {
+         (**self).state()
+     }
+@@ -164,6 +171,9 @@ pub unsafe trait SecondaryCommandBufferAbstract:
+     /// Returns the usage of this command buffer.
+     fn usage(&self) -> CommandBufferUsage;
+ 
++    /// Returns true if this command buffer was created on a protected pool.
++    fn is_protected(&self) -> bool;
++
+     /// Returns a `CommandBufferInheritance` value describing the properties that the command
+     /// buffer inherits from its parent primary command buffer.
+     fn inheritance_info(&self) -> &CommandBufferInheritanceInfo;
+@@ -194,6 +204,10 @@ where
+         (**self).usage()
+     }
+ 
++    fn is_protected(&self) -> bool {
++        (**self).is_protected()
++    }
++
+     fn inheritance_info(&self) -> &CommandBufferInheritanceInfo {
+         (**self).inheritance_info()
+     }
+diff --git a/src/device/queue.rs b/src/device/queue.rs
+index 11fc703cb..bb5d96882 100644
+--- a/src/device/queue.rs
++++ b/src/device/queue.rs
+@@ -792,6 +792,7 @@ impl<'a> QueueGuard<'a> {
+                 wait_semaphore_infos_vk: SmallVec<[ash::vk::SemaphoreSubmitInfo; 4]>,
+                 command_buffer_infos_vk: SmallVec<[ash::vk::CommandBufferSubmitInfo; 4]>,
+                 signal_semaphore_infos_vk: SmallVec<[ash::vk::SemaphoreSubmitInfo; 4]>,
++                protected_submit_info_vk: Option<ash::vk::ProtectedSubmitInfo>,
+             }
+ 
+             let (mut submit_info_vk, per_submit_vk): (SmallVec<[_; 4]>, SmallVec<[_; 4]>) =
+@@ -833,6 +834,18 @@ impl<'a> QueueGuard<'a> {
+                             })
+                             .collect();
+ 
++                        let is_protected = command_buffers.iter().any(|cb| cb.is_protected());
++
++                        let protected_submit_info_vk = if is_protected {
++                            Some(ash::vk::ProtectedSubmitInfo {
++                                s_type: ash::vk::StructureType::PROTECTED_SUBMIT_INFO,
++                                p_next: ptr::null(),
++                                protected_submit: ash::vk::TRUE,
++                            })
++                        } else {
++                            None
++                        };
++
+                         let signal_semaphore_infos_vk = signal_semaphores
+                             .iter()
+                             .map(|semaphore_submit_info| {
+@@ -867,6 +880,7 @@ impl<'a> QueueGuard<'a> {
+                                 wait_semaphore_infos_vk,
+                                 command_buffer_infos_vk,
+                                 signal_semaphore_infos_vk,
++                                protected_submit_info_vk,
+                             },
+                         )
+                     })
+@@ -878,10 +892,16 @@ impl<'a> QueueGuard<'a> {
+                     wait_semaphore_infos_vk,
+                     command_buffer_infos_vk,
+                     signal_semaphore_infos_vk,
++                    protected_submit_info_vk,
+                 },
+             ) in (submit_info_vk.iter_mut()).zip(per_submit_vk.iter())
+             {
++                let p_next = protected_submit_info_vk
++                    .as_ref()
++                    .map_or(ptr::null(), |p| p as *const _ as *const _);
++
+                 *submit_info_vk = ash::vk::SubmitInfo2 {
++                    p_next,
+                     wait_semaphore_info_count: wait_semaphore_infos_vk.len() as u32,
+                     p_wait_semaphore_infos: wait_semaphore_infos_vk.as_ptr(),
+                     command_buffer_info_count: command_buffer_infos_vk.len() as u32,
+@@ -922,6 +942,7 @@ impl<'a> QueueGuard<'a> {
+                 wait_dst_stage_mask_vk: SmallVec<[ash::vk::PipelineStageFlags; 4]>,
+                 command_buffers_vk: SmallVec<[ash::vk::CommandBuffer; 4]>,
+                 signal_semaphores_vk: SmallVec<[ash::vk::Semaphore; 4]>,
++                protected_submit_info_vk: Option<ash::vk::ProtectedSubmitInfo>,
+             }
+ 
+             let (mut submit_info_vk, per_submit_vk): (SmallVec<[_; 4]>, SmallVec<[_; 4]>) =
+@@ -951,6 +972,18 @@ impl<'a> QueueGuard<'a> {
+                         let command_buffers_vk =
+                             command_buffers.iter().map(|cb| cb.handle()).collect();
+ 
++                        let is_protected = command_buffers.iter().any(|cb| cb.is_protected());
++
++                        let protected_submit_info_vk = if is_protected {
++                            Some(ash::vk::ProtectedSubmitInfo {
++                                s_type: ash::vk::StructureType::PROTECTED_SUBMIT_INFO,
++                                p_next: ptr::null(),
++                                protected_submit: ash::vk::TRUE,
++                            })
++                        } else {
++                            None
++                        };
++
+                         let signal_semaphores_vk = signal_semaphores
+                             .iter()
+                             .map(|semaphore_submit_info| {
+@@ -980,6 +1013,7 @@ impl<'a> QueueGuard<'a> {
+                                 wait_dst_stage_mask_vk,
+                                 command_buffers_vk,
+                                 signal_semaphores_vk,
++                                protected_submit_info_vk,
+                             },
+                         )
+                     })
+@@ -992,10 +1026,16 @@ impl<'a> QueueGuard<'a> {
+                     wait_dst_stage_mask_vk,
+                     command_buffers_vk,
+                     signal_semaphores_vk,
++                    protected_submit_info_vk,
+                 },
+             ) in (submit_info_vk.iter_mut()).zip(per_submit_vk.iter())
+             {
++                let p_next = protected_submit_info_vk
++                    .as_ref()
++                    .map_or(ptr::null(), |p| p as *const _ as *const _);
++
+                 *submit_info_vk = ash::vk::SubmitInfo {
++                    p_next,
+                     wait_semaphore_count: wait_semaphores_vk.len() as u32,
+                     p_wait_semaphores: wait_semaphores_vk.as_ptr(),
+                     p_wait_dst_stage_mask: wait_dst_stage_mask_vk.as_ptr(),

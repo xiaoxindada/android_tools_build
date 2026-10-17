@@ -1,0 +1,20 @@
+diff --git a/src/lib.rs b/src/lib.rs
+index c8cebcac5..0d4dfb12e 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -38,7 +38,6 @@ mod codec;
+ mod cq;
+ mod env;
+ mod error;
+-mod log_util;
+ mod metadata;
+ mod quota;
+ mod security;
+@@ -70,7 +69,6 @@ pub use crate::codec::pr_codec::{de as pr_de, ser as pr_ser};
+ pub use crate::codec::{Marshaller, MAX_MESSAGE_SIZE};
+ pub use crate::env::{EnvBuilder, Environment};
+ pub use crate::error::{Error, Result};
+-pub use crate::log_util::redirect_log;
+ pub use crate::metadata::{Metadata, MetadataBuilder, MetadataIter};
+ pub use crate::quota::ResourceQuota;
+ pub use crate::security::*;

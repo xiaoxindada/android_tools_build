@@ -1,0 +1,17 @@
+name: "rand"
+description: "Random number generators and other randomness functionality."
+third_party {
+  version: "0.8.5"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 5
+    day: 27
+  }
+  homepage: "https://crates.io/crates/rand"
+  identifier {
+    type: "crates.io"
+    value: "rand"
+    version: "0.8.5"
+  }
+}

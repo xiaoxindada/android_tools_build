@@ -1,0 +1,27 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/clap_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/enum-as-inner"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/handlebars"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pdl-compiler"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/strum_macros"
+    },
+    {
+      "path": "system/zygote/zygote-proc-macros"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "heck_test_src_lib"
+    }
+  ]
+}

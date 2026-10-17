@@ -1,0 +1,10 @@
+{
+  "package": {
+    "arc-swap": {
+      "device_supported": true
+    }
+  },
+  "run_cargo": false,
+  "generate_rulesmk": true,
+  "min_sdk_version": "29"
+}

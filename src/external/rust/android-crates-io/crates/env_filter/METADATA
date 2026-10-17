@@ -1,0 +1,17 @@
+name: "env_filter"
+description: "Filter log events using environment variables"
+third_party {
+  version: "2.0.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 13
+  }
+  homepage: "https://crates.io/crates/env_filter"
+  identifier {
+    type: "crates.io"
+    value: "env_filter"
+    version: "2.0.0"
+  }
+}

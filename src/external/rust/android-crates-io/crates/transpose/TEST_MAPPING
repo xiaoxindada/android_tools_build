@@ -1,0 +1,10 @@
+{
+  "postsubmit": [
+    {
+      "name": "transpose_test_src_lib"
+    },
+    {
+      "name": "transpose_test_tests_test_transpose"
+    }
+  ]
+}

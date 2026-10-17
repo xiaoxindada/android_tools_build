@@ -1,0 +1,16 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/axum"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/form_urlencoded"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tonic"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/url"
+    }
+  ]
+}

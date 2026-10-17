@@ -1,0 +1,17 @@
+name: "ctrlc"
+description: "Easy Ctrl-C handler for Rust projects"
+third_party {
+  version: "3.5.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 11
+  }
+  homepage: "https://crates.io/crates/ctrlc"
+  identifier {
+    type: "crates.io"
+    value: "ctrlc"
+    version: "3.5.2"
+  }
+}

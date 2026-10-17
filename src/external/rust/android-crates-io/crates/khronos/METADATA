@@ -1,0 +1,17 @@
+name: "khronos"
+description: "Rust types for Khronos API"
+third_party {
+  version: "0.1.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 2
+    day: 24
+  }
+  homepage: "https://crates.io/crates/khronos"
+  identifier {
+    type: "crates.io"
+    value: "khronos"
+    version: "0.1.2"
+  }
+}

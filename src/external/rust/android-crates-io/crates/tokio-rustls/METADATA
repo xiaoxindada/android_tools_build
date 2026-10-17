@@ -1,0 +1,17 @@
+name: "tokio-rustls"
+description: "Asynchronous TLS/SSL streams for Tokio using Rustls."
+third_party {
+  version: "0.26.5"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 11
+  }
+  homepage: "https://crates.io/crates/tokio-rustls"
+  identifier {
+    type: "crates.io"
+    value: "tokio-rustls"
+    version: "0.26.5"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "postsubmit": [
+    {
+      "name": "ipp_test_src_lib"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/handlebars"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pdl-compiler"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pest_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pest_generator"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pest_meta"
+    }
+  ]
+}

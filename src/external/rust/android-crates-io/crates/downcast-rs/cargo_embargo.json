@@ -1,0 +1,36 @@
+{
+  "recovery_available": true,
+  "min_sdk_version": "29",
+  "run_cargo": false,
+  "tests": true,
+  "variants": [
+    {
+      "features": [
+        "std",
+        "sync"
+      ]
+    },
+    {
+      "generate_androidbp": false,
+      "generate_rulesmk": true,
+      "tests": false
+    },
+    {
+      "features": [
+        "sync"
+      ],
+      "tests": false,
+      "module_name_overrides": {
+        "libdowncast_rs": "libdowncast_rs_nostd"
+      },
+      "package": {
+        "downcast-rs": {
+          "host_supported": false,
+          "no_std": true,
+          "alloc": true,
+          "force_rlib": true
+        }
+      }
+    }
+  ]
+}

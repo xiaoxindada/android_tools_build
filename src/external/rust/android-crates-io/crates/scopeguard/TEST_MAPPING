@@ -1,0 +1,59 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/lock_api"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serialport"
+    },
+    {
+      "path": "packages/modules/Bluetooth/system/rust"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/apkdmverity"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/compsvc"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/zipfuse"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apkmanifest"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/capabilities"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/devicemapper"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/old_images_avf_test"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vts"
+    },
+    {
+      "path": "system/memory/mmd"
+    },
+    {
+      "path": "system/secretkeeper/dice_policy/tests"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "scopeguard_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "scopeguard_test_src_lib"
+    }
+  ]
+}

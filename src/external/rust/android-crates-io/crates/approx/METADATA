@@ -1,0 +1,17 @@
+name: "approx"
+description: "Approximate floating point equality comparisons and assertions."
+third_party {
+  version: "0.5.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 25
+  }
+  homepage: "https://crates.io/crates/approx"
+  identifier {
+    type: "crates.io"
+    value: "approx"
+    version: "0.5.1"
+  }
+}

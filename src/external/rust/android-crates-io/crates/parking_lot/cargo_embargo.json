@@ -1,0 +1,12 @@
+{
+  "module_name_overrides": {
+    "librand": "librand-0.8"
+  },
+  "min_sdk_version": "29",
+  "run_cargo": false,
+  "tests": true,
+  "features": [
+    "arc_lock",
+    "default"
+  ]
+}

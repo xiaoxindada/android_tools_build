@@ -1,0 +1,17 @@
+name: "font-types"
+description: "Scalar types used in fonts."
+third_party {
+  version: "0.12.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 12
+  }
+  homepage: "https://crates.io/crates/font-types"
+  identifier {
+    type: "crates.io"
+    value: "font-types"
+    version: "0.12.3"
+  }
+}

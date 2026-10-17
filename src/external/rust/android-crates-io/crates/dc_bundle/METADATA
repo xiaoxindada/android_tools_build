@@ -1,0 +1,17 @@
+name: "dc_bundle"
+description: "Provides the DesignCompose Bundle and Definition"
+third_party {
+  version: "0.39.6"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 29
+  }
+  homepage: "https://crates.io/crates/dc_bundle"
+  identifier {
+    type: "crates.io"
+    value: "dc_bundle"
+    version: "0.39.6"
+  }
+}

@@ -1,0 +1,17 @@
+name: "lru-cache"
+description: "A cache that holds a limited number of key-value pairs"
+third_party {
+  version: "0.1.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2020
+    month: 6
+    day: 11
+  }
+  homepage: "https://crates.io/crates/lru-cache"
+  identifier {
+    type: "crates.io"
+    value: "lru-cache"
+    version: "0.1.2"
+  }
+}

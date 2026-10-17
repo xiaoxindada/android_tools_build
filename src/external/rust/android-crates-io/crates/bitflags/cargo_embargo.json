@@ -1,0 +1,28 @@
+{
+  "min_sdk_version": "29",
+  "package": {
+    "bitflags": {
+      "dep_blocklist": [
+        "libtrybuild"
+      ],
+      "rulesmk_patch": "patches/rules.mk.diff",
+      "target_windows": true
+    }
+  },
+  "variants": [
+    {},
+    {
+      "package": {
+        "bitflags": {
+          "no_std": true
+        }
+      },
+      "generate_rulesmk": false
+    }
+  ],
+  "run_cargo": false,
+  "generate_rulesmk": true,
+  "recovery_available": true,
+  "native_bridge_supported": true,
+  "ota_recovery_ramdisk_available": true
+}

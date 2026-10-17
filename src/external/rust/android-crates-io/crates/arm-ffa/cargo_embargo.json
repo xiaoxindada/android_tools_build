@@ -1,0 +1,11 @@
+{
+  "package": {
+      "arm-psci": {
+          "no_std": true,
+          "host_supported": false
+      }
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "tests": false
+}

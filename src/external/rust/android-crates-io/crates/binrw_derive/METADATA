@@ -1,0 +1,17 @@
+name: "binrw_derive"
+description: "Derive macro for binrw"
+third_party {
+  version: "0.15.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 24
+  }
+  homepage: "https://crates.io/crates/binrw_derive"
+  identifier {
+    type: "crates.io"
+    value: "binrw_derive"
+    version: "0.15.2"
+  }
+}

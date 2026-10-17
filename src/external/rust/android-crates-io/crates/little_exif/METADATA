@@ -1,0 +1,17 @@
+name: "little_exif"
+description: "The only pure Rust crate with true read *and* write support for EXIF data,  available for PNG, JP(E)G, HEIF/HEIC/HIF/AVIF, JXL, TIFF, WebP - and soon even more!"
+third_party {
+  version: "0.6.23"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 4
+  }
+  homepage: "https://crates.io/crates/little_exif"
+  identifier {
+    type: "crates.io"
+    value: "little_exif"
+    version: "0.6.23"
+  }
+}

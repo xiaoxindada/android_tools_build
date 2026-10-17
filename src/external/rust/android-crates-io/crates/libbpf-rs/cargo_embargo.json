@@ -1,0 +1,23 @@
+{
+  "run_cargo": false,
+  "package": {
+    "libbpf-rs": {
+      "host_supported": false,
+      "add_module_block": "cargo2android_target.bp.fragment",
+      "add_toplevel_block": "android/uprobestats.bp.fragment"
+    }
+  },
+  "module_visibility": {
+    "liblibbpf_rs": [
+      "//frameworks/native/libs/cpucycleperuid",
+      "//frameworks/native/services/cpustats",
+      "//frameworks/native/services/cpustatsd",
+      "//packages/modules/UprobeStats:__subpackages__",
+      "//system/bpf/loader",
+      "//system/security/security_telemetry"
+    ]
+  },
+  "product_available": false,
+  "vendor_available": false,
+  "min_sdk_version": "29"
+}

@@ -1,0 +1,17 @@
+name: "derive_arbitrary"
+description: "Derives arbitrary traits"
+third_party {
+  version: "1.4.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 8
+    day: 19
+  }
+  homepage: "https://crates.io/crates/derive_arbitrary"
+  identifier {
+    type: "crates.io"
+    value: "derive_arbitrary"
+    version: "1.4.2"
+  }
+}

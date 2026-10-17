@@ -1,0 +1,17 @@
+name: "windows-targets"
+description: "Import libs for Windows"
+third_party {
+  version: "0.53.5"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 13
+  }
+  homepage: "https://crates.io/crates/windows-targets"
+  identifier {
+    type: "crates.io"
+    value: "windows-targets"
+    version: "0.53.5"
+  }
+}

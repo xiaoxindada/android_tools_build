@@ -1,0 +1,14 @@
+{
+  "apex_available": [
+    "//apex_available:anyapex",
+    "//apex_available:platform"
+  ],
+  "min_sdk_version": "29",
+  "tests": true,
+  "package": {
+    "clap_lex": {
+      "target_windows": true
+    }
+  },
+  "recovery_available": true
+}

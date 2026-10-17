@@ -1,0 +1,12 @@
+{
+  "features": [
+    "fs",
+    "io-util",
+    "net",
+    "rt",
+    "sync",
+    "time"
+  ],
+  "min_sdk_version": "29",
+  "run_cargo": false
+}

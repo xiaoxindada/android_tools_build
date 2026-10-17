@@ -1,0 +1,10 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "package": {
+    "simple-dns": {
+      "device_supported": false,
+      "target_windows": true
+    }
+  }
+}

@@ -1,0 +1,17 @@
+name: "uguid"
+description: "GUID (Globally Unique Identifier) no_std library"
+third_party {
+  version: "2.2.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 4
+  }
+  homepage: "https://crates.io/crates/uguid"
+  identifier {
+    type: "crates.io"
+    value: "uguid"
+    version: "2.2.1"
+  }
+}

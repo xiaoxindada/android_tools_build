@@ -1,0 +1,17 @@
+name: "android_logger"
+description: "A logging implementation for `log` which hooks to android log output."
+third_party {
+  version: "0.15.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 8
+    day: 17
+  }
+  homepage: "https://crates.io/crates/android_logger"
+  identifier {
+    type: "crates.io"
+    value: "android_logger"
+    version: "0.15.1"
+  }
+}

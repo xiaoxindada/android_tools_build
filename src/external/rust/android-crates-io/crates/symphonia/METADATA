@@ -1,0 +1,17 @@
+name: "symphonia"
+description: "Pure Rust media container and audio decoding library."
+third_party {
+  version: "0.5.5"
+  license_type: RECIPROCAL
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 16
+  }
+  homepage: "https://crates.io/crates/symphonia"
+  identifier {
+    type: "crates.io"
+    value: "symphonia"
+    version: "0.5.5"
+  }
+}

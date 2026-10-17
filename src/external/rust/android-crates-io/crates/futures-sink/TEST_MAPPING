@@ -1,0 +1,22 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/futures"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures-channel"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures-test"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures-util"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/h2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio-util"
+    }
+  ]
+}

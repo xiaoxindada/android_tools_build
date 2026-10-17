@@ -1,0 +1,17 @@
+name: "getopts"
+description: "getopts-like option parsing"
+third_party {
+  version: "0.2.24"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 11
+  }
+  homepage: "https://crates.io/crates/getopts"
+  identifier {
+    type: "crates.io"
+    value: "getopts"
+    version: "0.2.24"
+  }
+}

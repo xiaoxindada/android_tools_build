@@ -1,0 +1,17 @@
+name: "serde_repr"
+description: "Derive Serialize and Deserialize that delegates to the underlying repr of a C-like enum."
+third_party {
+  version: "0.1.21"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 4
+  }
+  homepage: "https://crates.io/crates/serde_repr"
+  identifier {
+    type: "crates.io"
+    value: "serde_repr"
+    version: "0.1.21"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "features": [
+    "dcf_info",
+    "fetch",
+    "fetch_layout"
+  ],
+  "module_name_overrides": {
+    "dcf_info": "dc_dcf_info",
+    "fetch": "dc_fetch",
+    "fetch_layout": "dc_fetch_layout"
+  }
+}

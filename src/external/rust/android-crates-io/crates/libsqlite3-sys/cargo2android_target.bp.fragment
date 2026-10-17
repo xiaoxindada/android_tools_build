@@ -1,0 +1,2 @@
+srcs: [":libsqlite3_bindgen"],
+shared_libs: ["libsqlite"]

@@ -1,0 +1,6 @@
+{
+  "extra_cfg": [
+    "fuser_mount_impl=\"pure-rust\""
+  ],
+  "min_sdk_version": "29"
+}

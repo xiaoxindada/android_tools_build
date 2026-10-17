@@ -1,0 +1,32 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/futures-util"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/h2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/quiche"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/slab"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio-util"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tower"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "slab_test_tests_slab"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "slab_test_tests_slab"
+    }
+  ]
+}

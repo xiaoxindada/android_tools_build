@@ -1,0 +1,17 @@
+name: "termcolor"
+description: "A simple cross platform library for writing colored text to a terminal."
+third_party {
+  version: "1.4.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 2
+    day: 7
+  }
+  homepage: "https://crates.io/crates/termcolor"
+  identifier {
+    type: "crates.io"
+    value: "termcolor"
+    version: "1.4.1"
+  }
+}

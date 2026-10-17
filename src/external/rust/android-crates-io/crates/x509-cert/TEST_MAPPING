@@ -1,0 +1,22 @@
+{
+  "imports": [
+    {
+      "path": "packages/modules/Virtualization/guest/service_vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/service_vm/requests"
+    },
+    {
+      "path": "system/keymint/ta"
+    },
+    {
+      "path": "system/keymint/tests"
+    },
+    {
+      "path": "system/security/keystore2/test_utils/attestation"
+    },
+    {
+      "path": "system/security/keystore2/tests"
+    }
+  ]
+}

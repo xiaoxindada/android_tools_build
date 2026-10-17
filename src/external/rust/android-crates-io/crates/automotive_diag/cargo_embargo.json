@@ -1,0 +1,12 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "features": [
+    "std",
+    "iter",
+    "display",
+    "doip",
+    "uds",
+    "serde"
+  ]
+}

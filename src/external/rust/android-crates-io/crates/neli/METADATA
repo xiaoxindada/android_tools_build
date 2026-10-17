@@ -1,0 +1,17 @@
+name: "neli"
+description: "Type safe netlink library written in Rust"
+third_party {
+  version: "0.5.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 3
+    day: 19
+  }
+  homepage: "https://crates.io/crates/neli"
+  identifier {
+    type: "crates.io"
+    value: "neli"
+    version: "0.5.3"
+  }
+}

@@ -1,0 +1,17 @@
+name: "tracing-attributes"
+description: "Procedural macro attributes for automatically instrumenting functions."
+third_party {
+  version: "0.1.31"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 12
+    day: 1
+  }
+  homepage: "https://crates.io/crates/tracing-attributes"
+  identifier {
+    type: "crates.io"
+    value: "tracing-attributes"
+    version: "0.1.31"
+  }
+}

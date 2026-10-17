@@ -1,0 +1,23 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/ring"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/untrusted"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/webpki"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "untrusted_test_tests_tests"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "untrusted_test_tests_tests"
+    }
+  ]
+}

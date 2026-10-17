@@ -1,0 +1,15 @@
+{
+  "run_cargo": false,
+  "package": {
+    "vsprintf": {
+      "add_toplevel_block": "wrapper.bp.fragment",
+      "add_module_block": "cargo2android_target.bp.fragment"
+    }
+  },
+  "module_visibility": {
+    "libvsprintf": [
+      "//external/rust/android-crates-io/crates/libbpf-rs"
+    ]
+  },
+  "min_sdk_version": "29"
+}

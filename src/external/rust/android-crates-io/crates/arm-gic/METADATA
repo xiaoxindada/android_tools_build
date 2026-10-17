@@ -1,0 +1,17 @@
+name: "arm-gic"
+description: "A driver for the Arm Generic Interrupt Controller version 2, 3 or 4."
+third_party {
+  version: "0.9.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 11
+  }
+  homepage: "https://crates.io/crates/arm-gic"
+  identifier {
+    type: "crates.io"
+    value: "arm-gic"
+    version: "0.9.1"
+  }
+}

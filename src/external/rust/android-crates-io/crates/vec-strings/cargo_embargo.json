@@ -1,0 +1,6 @@
+{
+  "run_cargo": false,
+  "features": ["serde"],
+  "tests": true,
+  "min_sdk_version": "29"
+}

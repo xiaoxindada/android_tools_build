@@ -1,0 +1,8 @@
+{
+  "package": {
+    "const_fn": {
+      "copy_out": true
+    }
+  },
+  "min_sdk_version": "29"
+}

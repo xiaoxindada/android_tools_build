@@ -1,0 +1,19 @@
+{
+  "features": [
+    "default",
+    "vhost-user",
+    "vhost-user-backend"
+  ],
+  "module_name_overrides": {
+    "libvhost": "libvhost_android",
+    "libvm_memory": "libvm_memory_android"
+  },
+  "package": {
+    "vhost": {
+      "device_supported": true,
+      "host_first_multilib": true
+    }
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

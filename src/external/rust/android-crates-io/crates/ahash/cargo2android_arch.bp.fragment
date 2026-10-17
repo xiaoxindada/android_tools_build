@@ -1,0 +1,8 @@
+arch: {
+    arm64: {
+        features: ["folded_multiply"],
+    },
+    x86_64: {
+        features: ["folded_multiply"],
+    },
+}

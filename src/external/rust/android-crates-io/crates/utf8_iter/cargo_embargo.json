@@ -1,0 +1,26 @@
+{
+  "apex_available": [
+    "//apex_available:anyapex",
+    "//apex_available:platform"
+  ],
+  "min_sdk_version": "29",
+  "sdk_version": "29",
+  "native_bridge_supported": true,
+  "ramdisk_available": true,
+  "recovery_available": true,
+  "run_cargo": false,
+  "tests": true,
+  "variants": [
+    {},
+    {
+      "package": {
+        "utf8_iter": {
+          "no_std": true
+        }
+      }
+    }
+  ],
+  "product_available": true,
+  "vendor_available": true,
+  "vendor_ramdisk_available": true
+}

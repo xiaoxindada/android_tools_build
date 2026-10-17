@@ -1,0 +1,26 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/darling_core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/h2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/http"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/http"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "fnv_test_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "fnv_test_lib"
+    }
+  ]
+}

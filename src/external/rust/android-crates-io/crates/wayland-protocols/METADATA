@@ -1,0 +1,17 @@
+name: "wayland-protocols"
+description: "Generated API for the officials wayland protocol extensions"
+third_party {
+  version: "0.32.13"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 6
+  }
+  homepage: "https://crates.io/crates/wayland-protocols"
+  identifier {
+    type: "crates.io"
+    value: "wayland-protocols"
+    version: "0.32.13"
+  }
+}

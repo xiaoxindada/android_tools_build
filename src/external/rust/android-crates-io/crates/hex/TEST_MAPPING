@@ -1,0 +1,160 @@
+{
+  "imports": [
+    {
+      "path": "external/avb/rust"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ciborium-ll"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/coset"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crates-index"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mls-rs"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mls-rs-core"
+    },
+    {
+      "path": "external/rust/beto-rust/nearby"
+    },
+    {
+      "path": "external/rust/pica"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtualizationservice"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/apkdmverity"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/authfs"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/compsvc"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/encryptedstore"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/pvmfw"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/pvmfw/avb"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apexutil"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apkverify"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/devicemapper"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/dice/driver"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/dtcompare"
+    },
+    {
+      "path": "system/authgraph/boringssl"
+    },
+    {
+      "path": "system/authgraph/core"
+    },
+    {
+      "path": "system/authgraph/tests"
+    },
+    {
+      "path": "system/authgraph/wire"
+    },
+    {
+      "path": "system/desktop/ec/src/ectool"
+    },
+    {
+      "path": "system/desktop/ec/src/libec"
+    },
+    {
+      "path": "system/desktop/security/gscutil"
+    },
+    {
+      "path": "system/desktop/security/pinweaver/storage"
+    },
+    {
+      "path": "system/desktop/security/trunks_send"
+    },
+    {
+      "path": "system/desktop/security/udsattestation"
+    },
+    {
+      "path": "system/gatekeeper/rust/boringssl"
+    },
+    {
+      "path": "system/gatekeeper/rust/ta"
+    },
+    {
+      "path": "system/gatekeeper/rust/tests"
+    },
+    {
+      "path": "system/gatekeeper/rust/wire"
+    },
+    {
+      "path": "system/keymint/common"
+    },
+    {
+      "path": "system/keymint/hal"
+    },
+    {
+      "path": "system/keymint/ta"
+    },
+    {
+      "path": "system/keymint/tests"
+    },
+    {
+      "path": "system/keymint/wire"
+    },
+    {
+      "path": "system/secretkeeper/client"
+    },
+    {
+      "path": "system/secretkeeper/core"
+    },
+    {
+      "path": "system/secure_element/omapi"
+    },
+    {
+      "path": "system/security/keystore2"
+    },
+    {
+      "path": "system/security/keystore2/test_utils/attestation"
+    },
+    {
+      "path": "system/security/keystore2/tests"
+    },
+    {
+      "path": "system/see/authmgr/authmgr-be"
+    },
+    {
+      "path": "tools/asuite/adevice"
+    },
+    {
+      "path": "tools/netsim"
+    },
+    {
+      "path": "tools/security/fuzzing/orphans/hex"
+    },
+    {
+      "path": "tools/security/remote_provisioning/hwtrust"
+    }
+  ]
+}

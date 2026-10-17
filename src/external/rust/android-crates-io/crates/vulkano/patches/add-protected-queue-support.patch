@@ -1,0 +1,41 @@
+diff --git a/src/device/mod.rs b/src/device/mod.rs
+index fee0471e1..345dad312 100644
+--- a/src/device/mod.rs
++++ b/src/device/mod.rs
+@@ -118,6 +118,7 @@ use crate::{
+     memory::ExternalMemoryHandleType, OomError, RequirementNotMet, RequiresOneOf, Version,
+     VulkanError, VulkanObject,
+ };
++use ash::vk::DeviceQueueInfo2;
+ use ash::vk::Handle;
+ use parking_lot::Mutex;
+ use smallvec::SmallVec;
+@@ -434,12 +435,22 @@ impl Device {
+                       }| unsafe {
+                     let fns = device.fns();
+                     let mut output = MaybeUninit::uninit();
+-                    (fns.v1_0.get_device_queue)(
+-                        handle,
+-                        queue_family_index,
+-                        id,
+-                        output.as_mut_ptr(),
+-                    );
++                    if flags.contains(QueueCreateFlags::PROTECTED) {
++                        let info2 = ash::vk::DeviceQueueInfo2 {
++                            queue_family_index,
++                            queue_index: id,
++                            flags: ash::vk::DeviceQueueCreateFlags::PROTECTED,
++                            ..Default::default()
++                        };
++                        (fns.v1_1.get_device_queue2)(handle, &info2, output.as_mut_ptr());
++                    } else {
++                        (fns.v1_0.get_device_queue)(
++                            handle,
++                            queue_family_index,
++                            id,
++                            output.as_mut_ptr(),
++                        );
++                    }
+ 
+                     Queue::from_handle(device.clone(), output.assume_init(), queue_family_index, id)
+                 },

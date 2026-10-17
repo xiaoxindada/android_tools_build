@@ -1,0 +1,17 @@
+name: "windows-sys"
+description: "Rust for Windows"
+third_party {
+  version: "0.61.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 7
+  }
+  homepage: "https://crates.io/crates/windows-sys"
+  identifier {
+    type: "crates.io"
+    value: "windows-sys"
+    version: "0.61.2"
+  }
+}

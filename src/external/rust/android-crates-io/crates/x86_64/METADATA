@@ -1,0 +1,17 @@
+name: "x86_64"
+description: "Support for x86_64 specific instructions, registers, and structures."
+third_party {
+  version: "0.15.5"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 15
+  }
+  homepage: "https://crates.io/crates/x86_64"
+  identifier {
+    type: "crates.io"
+    value: "x86_64"
+    version: "0.15.5"
+  }
+}

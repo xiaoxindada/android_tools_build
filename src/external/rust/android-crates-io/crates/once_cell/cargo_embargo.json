@@ -1,0 +1,44 @@
+{
+  "recovery_available": true,
+  "min_sdk_version": "29",
+  "ota_recovery_ramdisk_available": true,
+  "package": {
+    "once_cell": {
+      "dep_blocklist": [
+        "libcritical_section"
+      ],
+      "rulesmk_patch": "patches/rules.mk.diff",
+      "target_windows": true
+    }
+  },
+  "run_cargo": false,
+  "variants": [
+    {
+      "tests": true
+    },
+    {
+      "features": [
+        "alloc",
+        "race"
+      ],
+      "package": {
+        "once_cell": {
+          "alloc": true,
+          "force_rlib": true,
+          "host_supported": false,
+          "no_std": true
+        }
+      }
+    },
+    {
+      "package": {
+        "once_cell": {
+          "alloc": true,
+          "no_std": true
+        }
+      },
+      "generate_androidbp": false,
+      "generate_rulesmk": true
+    }
+  ]
+}

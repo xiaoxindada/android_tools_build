@@ -1,0 +1,17 @@
+name: "ident_case"
+description: "Utility for applying case rules to Rust identifiers."
+third_party {
+  version: "1.0.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 4
+    day: 9
+  }
+  homepage: "https://crates.io/crates/ident_case"
+  identifier {
+    type: "crates.io"
+    value: "ident_case"
+    version: "1.0.1"
+  }
+}

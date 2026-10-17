@@ -1,0 +1,40 @@
+[package]
+name = "tokio-io-utility"
+version = "0.7.6"
+edition = "2021"
+rust-version = "1.60"
+
+authors = ["Jiahao XU <Jiahao_XU@outlook.com>"]
+
+license = "MIT"
+description = "Some helper functions for tokio::io."
+repository = "https://github.com/openssh-rust/tokio-io-utility.git"
+
+keywords = ["tokio", "async"]
+categories = ["asynchronous"]
+
+# docs.rs-specific configuration, shamelessly copied from
+# https://stackoverflow.com/a/61417700/8375400.
+#
+# To test locally, use ` ./build_doc.sh`
+[package.metadata.docs.rs]
+# document all features
+all-features = true
+# defines the configuration attribute `docsrs`
+rustdoc-args = ["--cfg", "docsrs"]
+
+[features]
+read-exact-to-bytes = ["bytes"]
+
+[dependencies]
+tokio = { version = "1.0", features = ["io-util"] }
+bytes = { version = "1.2.1", optional = true }
+
+[dev-dependencies]
+tokio-pipe = "0.2.5"
+
+# Do not enable feature macro here!
+# It will cause the compilation of tests with address sanitizer to fail.
+tokio = { version = "1", features = ["rt"] }
+
+rayon = "1.5.1"

@@ -1,0 +1,60 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/atomic"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/bytemuck"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/drm"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/font-types"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/image"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/read-fonts"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/skrifa"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/uguid"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vulkano"
+    },
+    {
+      "path": "system/desktop/ec/src/ectool"
+    },
+    {
+      "path": "system/desktop/ec/src/libec"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "bytemuck_test_tests_array_tests"
+    },
+    {
+      "name": "bytemuck_test_tests_cast_slice_tests"
+    },
+    {
+      "name": "bytemuck_test_tests_checked_tests"
+    },
+    {
+      "name": "bytemuck_test_tests_doc_tests"
+    },
+    {
+      "name": "bytemuck_test_tests_offset_of_tests"
+    },
+    {
+      "name": "bytemuck_test_tests_std_tests"
+    },
+    {
+      "name": "bytemuck_test_tests_transparent"
+    }
+  ]
+}

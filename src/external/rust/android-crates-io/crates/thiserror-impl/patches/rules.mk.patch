@@ -1,0 +1,11 @@
+diff --git a/crates/thiserror-impl/rules.mk b/crates/thiserror-impl/rules.mk
+index 8299639a4..ea15232fa 100644
+--- a/rules.mk
++++ b/rules.mk
+@@ -14,4 +14,6 @@ MODULE_LIBRARY_DEPS := \
+ 	$(call FIND_CRATE,quote) \
+ 	$(call FIND_CRATE,syn)
+ 
++MODULE_RUST_ENV += CARGO_PKG_VERSION_PATCH=18
++
+ include make/library.mk

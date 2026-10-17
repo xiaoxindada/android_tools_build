@@ -1,0 +1,109 @@
+{
+  "imports": [
+    {
+      "path": "external/flashrom/util/flashrom_tester"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/cargo_metadata"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/config"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crates-index"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/criterion"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/either"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/fixedbitset"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/handlebars"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pdl-compiler"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rand_chacha"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tinytemplate"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/twox-hash"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/url"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/uuid"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vmm-sys-util"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/webpki"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/bitflags"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/rand_chacha"
+    },
+    {
+      "path": "external/rust/rutabaga_gfx"
+    },
+    {
+      "path": "packages/modules/UprobeStats/rust/src"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libmicrodroid_payload_metadata/config"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/vmconfig"
+    },
+    {
+      "path": "packages/services/DroidfoodAttestationFixer"
+    },
+    {
+      "path": "system/core/init/libprefetch/prefetch"
+    },
+    {
+      "path": "system/desktop/cros-codecs"
+    },
+    {
+      "path": "system/desktop/ec/src/ectool"
+    },
+    {
+      "path": "system/desktop/fingerprint/hal"
+    },
+    {
+      "path": "system/desktop/security/pinweaver/storage"
+    },
+    {
+      "path": "system/extras/profcollectd/libprofcollectd"
+    },
+    {
+      "path": "system/tools/aidl/scripts/redundancy_check"
+    },
+    {
+      "path": "tools/asuite/adevice"
+    },
+    {
+      "path": "tools/security/remote_provisioning/hwtrust"
+    }
+  ]
+}

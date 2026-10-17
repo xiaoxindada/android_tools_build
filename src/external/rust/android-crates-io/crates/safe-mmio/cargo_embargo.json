@@ -1,0 +1,18 @@
+{
+  "package": {
+    "safe-mmio": { "force_rlib": true, "host_supported": false, "no_std": true }
+  },
+  "variants": [
+    {},
+    {
+      "package": {
+        "safe-mmio": {
+          "no_std": false
+        }
+      }
+    }
+  ],
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "tests": true
+}

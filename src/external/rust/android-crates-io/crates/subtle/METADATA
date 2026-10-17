@@ -1,0 +1,17 @@
+name: "subtle"
+description: "Pure-Rust traits and utilities for constant-time cryptographic implementations."
+third_party {
+  version: "2.6.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 20
+  }
+  homepage: "https://crates.io/crates/subtle"
+  identifier {
+    type: "crates.io"
+    value: "subtle"
+    version: "2.6.1"
+  }
+}

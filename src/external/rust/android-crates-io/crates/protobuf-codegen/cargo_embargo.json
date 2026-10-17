@@ -1,0 +1,13 @@
+{
+    "module_name_overrides": {
+        "protoc_gen_rs": "protoc-gen-rs"
+    },
+    "package": {
+        "protobuf-codegen": {
+            "device_supported": false
+        }
+    },
+    "run_cargo": false,
+    "tests": true,
+    "min_sdk_version": "29"
+}

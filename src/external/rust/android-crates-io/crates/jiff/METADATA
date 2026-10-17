@@ -1,0 +1,17 @@
+name: "jiff"
+description: "A date-time library that encourages you to jump into the pit of success.  This library is heavily inspired by the Temporal project."
+third_party {
+  version: "0.2.32"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 10
+  }
+  homepage: "https://crates.io/crates/jiff"
+  identifier {
+    type: "crates.io"
+    value: "jiff"
+    version: "0.2.32"
+  }
+}

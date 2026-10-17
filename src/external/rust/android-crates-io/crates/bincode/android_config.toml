@@ -1,0 +1,3 @@
+[not_updateable]
+minor_version_allowed = false
+reason = "No longer being maintained upstream"

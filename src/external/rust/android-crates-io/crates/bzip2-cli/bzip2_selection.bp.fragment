@@ -1,0 +1,15 @@
+// Prevents collision with cc bzip2 when the flag is enabled
+enabled: select(release_flag("RELEASE_USE_RUST_BZIP2_CLI"), {
+    true: true,
+    default: false,
+}),
+// enabled: true enables windows, otherwise disabled by default
+// so explicitly disable it.
+target: {
+    windows: {
+        enabled: false,
+    },
+},
+// Performance improvement on some targets
+flags: ["-Cllvm-args=-enable-dfa-jump-thread"],
+stem: "bzip2"

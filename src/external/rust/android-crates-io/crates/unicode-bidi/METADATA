@@ -1,0 +1,17 @@
+name: "unicode-bidi"
+description: "Implementation of the Unicode Bidirectional Algorithm"
+third_party {
+  version: "0.3.18"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 8
+    day: 19
+  }
+  homepage: "https://crates.io/crates/unicode-bidi"
+  identifier {
+    type: "crates.io"
+    value: "unicode-bidi"
+    version: "0.3.18"
+  }
+}

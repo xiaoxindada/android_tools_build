@@ -1,0 +1,176 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/android_logger"
+    },
+    {
+      "path": "packages/modules/ConfigInfrastructure/aconfigd"
+    },
+    {
+      "path": "packages/modules/DnsResolver/rust/src/doh/tests/doh_frontend"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/VmAttestationDemoApp"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/compos_verify"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/composd"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/fd_server"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtualizationservice"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtualizationservice/vfio_handler"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtualizationservice/vmnic"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/authfs"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/authfs_service"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/compsvc"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/encryptedstore"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/pageout_bomb"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/service_vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apkverify"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvm_payload"
+    },
+    {
+      "path": "packages/modules/Virtualization/microfuchsia/microfuchsiad"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/authfs/common"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/backcompat_test"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/testapk"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vm_accessor/accessor"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vm_accessor/accessor_vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vm_attestation"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vmbase_example"
+    },
+    {
+      "path": "packages/services/DroidfoodAttestationFixer"
+    },
+    {
+      "path": "system/bpf/loader"
+    },
+    {
+      "path": "system/core/init/libprefetch/prefetch"
+    },
+    {
+      "path": "system/core/trusty/keymint"
+    },
+    {
+      "path": "system/core/trusty/secretkeeper"
+    },
+    {
+      "path": "system/desktop/cros-codecs"
+    },
+    {
+      "path": "system/desktop/security/gscd"
+    },
+    {
+      "path": "system/desktop/security/gscd/gscd_device_test"
+    },
+    {
+      "path": "system/desktop/security/gscutil"
+    },
+    {
+      "path": "system/desktop/security/pinweaver/storage"
+    },
+    {
+      "path": "system/desktop/security/trunks_send"
+    },
+    {
+      "path": "system/extras/profcollectd/libprofcollectd"
+    },
+    {
+      "path": "system/logging/rust"
+    },
+    {
+      "path": "system/secure_element/omapi"
+    },
+    {
+      "path": "system/security/keystore2"
+    },
+    {
+      "path": "system/security/keystore2/selinux"
+    },
+    {
+      "path": "system/security/keystore2/tests"
+    },
+    {
+      "path": "system/security/keystore2/watchdog"
+    },
+    {
+      "path": "system/server_configurable_flags/aconfigd"
+    },
+    {
+      "path": "tools/security/fuzzing/orphans/android_logger"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "android_logger_test_src_lib"
+    },
+    {
+      "name": "android_logger_test_tests_config_log_level"
+    },
+    {
+      "name": "android_logger_test_tests_default_init"
+    },
+    {
+      "name": "android_logger_test_tests_multiple_init"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "android_logger_test_src_lib"
+    },
+    {
+      "name": "android_logger_test_tests_config_log_level"
+    },
+    {
+      "name": "android_logger_test_tests_default_init"
+    },
+    {
+      "name": "android_logger_test_tests_multiple_init"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+name: "cgmath"
+description: "A linear algebra and mathematics library for computer graphics."
+third_party {
+  version: "0.18.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 15
+  }
+  homepage: "https://crates.io/crates/cgmath"
+  identifier {
+    type: "crates.io"
+    value: "cgmath"
+    version: "0.18.0"
+  }
+}

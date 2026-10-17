@@ -1,0 +1,17 @@
+name: "polycool"
+description: "Polynomial root-finding"
+third_party {
+  version: "0.4.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 29
+  }
+  homepage: "https://crates.io/crates/polycool"
+  identifier {
+    type: "crates.io"
+    value: "polycool"
+    version: "0.4.0"
+  }
+}

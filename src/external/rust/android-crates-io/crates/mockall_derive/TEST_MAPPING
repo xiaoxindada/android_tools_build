@@ -1,0 +1,7 @@
+{
+  "postsubmit": [
+    {
+      "name": "mockall_derive_test_src_lib"
+    }
+  ]
+}

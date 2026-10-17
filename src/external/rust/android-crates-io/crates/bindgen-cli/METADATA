@@ -1,0 +1,17 @@
+name: "bindgen-cli"
+description: "Automatically generates Rust FFI bindings to C and C++ libraries."
+third_party {
+  version: "0.72.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 9
+    day: 15
+  }
+  homepage: "https://crates.io/crates/bindgen-cli"
+  identifier {
+    type: "crates.io"
+    value: "bindgen-cli"
+    version: "0.72.1"
+  }
+}

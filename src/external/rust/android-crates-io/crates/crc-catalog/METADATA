@@ -1,0 +1,17 @@
+name: "crc-catalog"
+description: "Catalog of CRC algorithms (generated from http://reveng.sourceforge.net/crc-catalogue) expressed as simple Rust structs."
+third_party {
+  version: "2.5.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 27
+  }
+  homepage: "https://crates.io/crates/crc-catalog"
+  identifier {
+    type: "crates.io"
+    value: "crc-catalog"
+    version: "2.5.0"
+  }
+}

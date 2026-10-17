@@ -1,0 +1,17 @@
+name: "ref-cast"
+description: "Safely cast &T to &U where the struct U contains a single field of type T."
+third_party {
+  version: "1.0.25"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 20
+  }
+  homepage: "https://crates.io/crates/ref-cast"
+  identifier {
+    type: "crates.io"
+    value: "ref-cast"
+    version: "1.0.25"
+  }
+}

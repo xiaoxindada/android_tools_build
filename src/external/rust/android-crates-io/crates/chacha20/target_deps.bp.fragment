@@ -1,0 +1,12 @@
+arch: {
+  x86: {
+    rustlibs: [
+        "libcpufeatures",
+    ],
+  },
+  x86_64: {
+    rustlibs: [
+        "libcpufeatures",
+    ],
+  },
+}

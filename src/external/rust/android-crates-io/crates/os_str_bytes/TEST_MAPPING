@@ -1,0 +1,7 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/clap_lex"
+    }
+  ]
+}

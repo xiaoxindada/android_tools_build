@@ -1,0 +1,10 @@
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -352,7 +352,7 @@
+ // aws-lc-fips-sys tracks a FIPS 5+ branch.
+ #[must_use]
+ pub fn fips_version() -> Option<u32> {
+-    let version = aws_lc::fips_version();
++    let version = unsafe { aws_lc::FIPS_version() };
+     (version != 0).then_some(version)
+ }

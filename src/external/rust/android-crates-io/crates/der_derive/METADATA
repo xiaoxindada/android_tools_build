@@ -1,0 +1,17 @@
+name: "der_derive"
+description: "Custom derive support for the `der` crate\'s `Choice` and `Sequence` traits"
+third_party {
+  version: "0.7.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 10
+    day: 2
+  }
+  homepage: "https://crates.io/crates/der_derive"
+  identifier {
+    type: "crates.io"
+    value: "der_derive"
+    version: "0.7.3"
+  }
+}

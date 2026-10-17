@@ -1,0 +1,17 @@
+name: "argh"
+description: "Derive-based argument parsing optimized for code size"
+third_party {
+  version: "0.1.19"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 29
+  }
+  homepage: "https://crates.io/crates/argh"
+  identifier {
+    type: "crates.io"
+    value: "argh"
+    version: "0.1.19"
+  }
+}

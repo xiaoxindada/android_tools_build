@@ -1,0 +1,106 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/quiche"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ring"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/webpki"
+    },
+    {
+      "path": "system/desktop/security/gscutil"
+    },
+    {
+      "path": "tools/asuite/adevice"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "ring_test_tests_aead_tests"
+    },
+    {
+      "name": "ring_test_tests_agreement_tests"
+    },
+    {
+      "name": "ring_test_tests_constant_time_tests"
+    },
+    {
+      "name": "ring_test_tests_ecdsa_tests"
+    },
+    {
+      "name": "ring_test_tests_ed25519_tests"
+    },
+    {
+      "name": "ring_test_tests_hkdf_tests"
+    },
+    {
+      "name": "ring_test_tests_hmac_tests"
+    },
+    {
+      "name": "ring_test_tests_pbkdf2_tests"
+    },
+    {
+      "name": "ring_test_tests_quic_tests"
+    },
+    {
+      "name": "ring_test_tests_rand_tests"
+    },
+    {
+      "name": "ring_test_tests_rsa_tests"
+    },
+    {
+      "name": "ring_test_tests_signature_tests"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "ring_test_tests_aead_tests"
+    },
+    {
+      "name": "ring_test_tests_agreement_tests"
+    },
+    {
+      "name": "ring_test_tests_constant_time_tests"
+    },
+    {
+      "name": "ring_test_tests_ecdsa_tests"
+    },
+    {
+      "name": "ring_test_tests_ed25519_tests"
+    },
+    {
+      "name": "ring_test_tests_hkdf_tests"
+    },
+    {
+      "name": "ring_test_tests_hmac_tests"
+    },
+    {
+      "name": "ring_test_tests_pbkdf2_tests"
+    },
+    {
+      "name": "ring_test_tests_quic_tests"
+    },
+    {
+      "name": "ring_test_tests_rand_tests"
+    },
+    {
+      "name": "ring_test_tests_rsa_tests"
+    },
+    {
+      "name": "ring_test_tests_signature_tests"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "ring_test_src_lib"
+    },
+    {
+      "name": "ring_test_tests_digest_tests"
+    },
+    {
+      "name": "ring_test_tests_error_tests"
+    }
+  ]
+}

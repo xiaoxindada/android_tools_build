@@ -1,0 +1,17 @@
+name: "thin-vec"
+description: "A Vec that takes up less space on the stack."
+third_party {
+  version: "0.2.20"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 17
+  }
+  homepage: "https://crates.io/crates/thin-vec"
+  identifier {
+    type: "crates.io"
+    value: "thin-vec"
+    version: "0.2.20"
+  }
+}

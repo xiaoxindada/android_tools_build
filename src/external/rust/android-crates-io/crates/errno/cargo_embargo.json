@@ -1,0 +1,6 @@
+{
+  "min_sdk_version": "30",
+  "recovery_available": true,
+  "run_cargo": false,
+  "tests": true
+}

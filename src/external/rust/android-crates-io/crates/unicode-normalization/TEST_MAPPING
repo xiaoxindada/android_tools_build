@@ -1,0 +1,17 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/idna"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "unicode-normalization_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "unicode-normalization_test_src_lib"
+    }
+  ]
+}

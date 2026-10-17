@@ -1,0 +1,5 @@
+arch: {
+    arm64: {
+        enabled: true,
+    },
+}

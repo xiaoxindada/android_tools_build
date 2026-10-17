@@ -1,0 +1,17 @@
+name: "windows_x86_64_gnullvm"
+description: "Import lib for Windows"
+third_party {
+  version: "0.53.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 7
+  }
+  homepage: "https://crates.io/crates/windows_x86_64_gnullvm"
+  identifier {
+    type: "crates.io"
+    value: "windows_x86_64_gnullvm"
+    version: "0.53.1"
+  }
+}

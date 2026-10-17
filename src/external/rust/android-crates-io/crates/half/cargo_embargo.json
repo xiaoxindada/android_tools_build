@@ -1,0 +1,21 @@
+{
+  "run_cargo": false,
+  "variants": [
+    {},
+    {
+      "features": [
+        "alloc"
+      ],
+      "package": {
+        "half": {
+          "alloc": true,
+          "force_rlib": true,
+          "host_supported": false,
+          "no_std": true
+        }
+      }
+    }
+  ],
+  "generate_rulesmk": true,
+  "min_sdk_version": "29"
+}

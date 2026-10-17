@@ -1,0 +1,33 @@
+{
+  "features": [
+    "event",
+    "feature",
+    "fs",
+    "inotify",
+    "ioctl",
+    "mount",
+    "mman",
+    "net",
+    "poll",
+    "resource",
+    "sched",
+    "signal",
+    "socket",
+    "term",
+    "time",
+    "uio",
+    "user"
+  ],
+  "min_sdk_version": "29",
+  "run_cargo": false,
+  "module_name_overrides": {
+    "libnix": "libnix_0_29_0",
+    "external_rust_crates_nix_license": "external_rust_crates_nix-0.29.0_license"
+  },
+  "package": {
+    "nix": {
+      "add_module_block": "module_block.bp.fragment"
+    }
+  },
+  "recovery_available": true
+}

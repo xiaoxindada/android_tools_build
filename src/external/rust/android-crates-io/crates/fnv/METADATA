@@ -1,0 +1,17 @@
+name: "fnv"
+description: "Fowler\342\200\223Noll\342\200\223Vo hash function"
+third_party {
+  version: "1.0.7"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2020
+    month: 10
+    day: 15
+  }
+  homepage: "https://crates.io/crates/fnv"
+  identifier {
+    type: "crates.io"
+    value: "fnv"
+    version: "1.0.7"
+  }
+}

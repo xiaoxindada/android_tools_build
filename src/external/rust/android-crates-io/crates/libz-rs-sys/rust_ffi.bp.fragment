@@ -1,0 +1,25 @@
+
+rust_ffi {
+    name: "liblibz_rs_sys_ffi",
+    host_supported: true,
+    crate_name: "libz_rs_sys",
+    cargo_env_compat: true,
+    cargo_pkg_version: "0.5.0",
+    crate_root: "src/lib.rs",
+    edition: "2021",
+    features: [
+        "default",
+        "export-symbols",
+        "rust-allocator",
+        "std",
+    ],
+    rustlibs: ["libzlib_rs"],
+    export_include_dirs: ["include"],
+    apex_available: [
+        "//apex_available:platform",
+        "//apex_available:anyapex",
+    ],
+    product_available: true,
+    vendor_available: true,
+    min_sdk_version: "29",
+}

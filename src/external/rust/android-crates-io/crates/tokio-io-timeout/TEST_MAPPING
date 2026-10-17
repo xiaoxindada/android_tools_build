@@ -1,0 +1,12 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/hyper-timeout"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "tokio-io-timeout_test_src_lib"
+    }
+  ]
+}

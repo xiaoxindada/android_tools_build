@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/dc_bundle"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/dice/open_dice"
+    }
+  ]
+}

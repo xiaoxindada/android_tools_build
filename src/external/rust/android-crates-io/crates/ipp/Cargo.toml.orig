@@ -1,0 +1,63 @@
+[package]
+name = "ipp"
+description = "Asynchronous IPP print protocol implementation"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+documentation.workspace = true
+readme.workspace = true
+keywords.workspace = true
+edition.workspace = true
+
+[package.metadata.docs.rs]
+features = ["async-client-tls", "client-tls", "serde"]
+
+[lib]
+name = "ipp"
+
+[dependencies]
+enum-as-inner = "0.6"
+enum-primitive-derive = "0.3"
+futures-executor = { version = "0.3", optional = true }
+log = "0.4"
+num-traits = "0.2"
+bytes = "1"
+thiserror = "2"
+http = "1"
+serde = { version = "1", optional = true, features = ["derive"] }
+ureq = { version = "3", default-features = false, optional = true }
+base64 = { version = "0.22", optional = true }
+rustls-native-certs = { version = "0.8", optional = true }
+once_cell = { version  = "1", optional = true }
+
+[dependencies.futures-util]
+version = "0.3"
+optional = true
+default-features = false
+features = ["io"]
+
+[dependencies.reqwest]
+version = "0.13"
+optional = true
+default-features = false
+features = ["stream"]
+
+[dependencies.tokio-util]
+version = "0.7"
+optional = true
+features = ["io", "compat"]
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+[features]
+default = ["async-client-rustls"]
+serde = ["dep:serde", "bytes/serde"]
+async = ["futures-util", "futures-executor"]
+async-client = ["async", "reqwest", "tokio-util", "base64"]
+client = ["ureq", "base64"]
+async-client-tls = ["async-client", "reqwest/native-tls"]
+client-tls = ["client", "rustls-native-certs", "ureq/native-tls", "once_cell"]
+async-client-rustls = ["async-client", "reqwest/rustls", "reqwest/rustls-native-certs"]
+client-rustls = ["client", "rustls-native-certs", "ureq/rustls", "once_cell"]

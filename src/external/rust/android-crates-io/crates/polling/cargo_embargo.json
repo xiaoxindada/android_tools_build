@@ -1,0 +1,14 @@
+{
+  "module_visibility": {
+    "libpolling": [
+      "//external/rust/android-crates-io/crates/smithay:__subpackages__"
+    ]
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "module_visibility": {
+    "libpolling": [
+      "//external/rust/android-crates-io/crates/calloop"
+    ]
+  }
+}

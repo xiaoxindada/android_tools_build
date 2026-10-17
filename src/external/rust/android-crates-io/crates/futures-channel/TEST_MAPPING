@@ -1,0 +1,58 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/futures"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures-channel"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures-util"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/hyper"
+    },
+    {
+      "path": "system/libueventd-rs"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "futures-channel_test_src_lib"
+    },
+    {
+      "name": "futures-channel_test_tests_channel"
+    },
+    {
+      "name": "futures-channel_test_tests_mpsc"
+    },
+    {
+      "name": "futures-channel_test_tests_mpsc-close"
+    },
+    {
+      "name": "futures-channel_test_tests_oneshot"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "futures-channel_test_src_lib"
+    },
+    {
+      "name": "futures-channel_test_tests_channel"
+    },
+    {
+      "name": "futures-channel_test_tests_mpsc"
+    },
+    {
+      "name": "futures-channel_test_tests_mpsc-close"
+    },
+    {
+      "name": "futures-channel_test_tests_oneshot"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "futures-channel_test_tests_mpsc-size_hint"
+    }
+  ]
+}

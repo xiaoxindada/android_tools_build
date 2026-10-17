@@ -1,0 +1,17 @@
+name: "dc_figma_import"
+description: "Figma document serialization toolkit"
+third_party {
+  version: "0.39.6"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 29
+  }
+  homepage: "https://crates.io/crates/dc_figma_import"
+  identifier {
+    type: "crates.io"
+    value: "dc_figma_import"
+    version: "0.39.6"
+  }
+}

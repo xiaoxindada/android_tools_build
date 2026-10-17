@@ -1,0 +1,10 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/android_logger"
+    },
+    {
+      "path": "system/logging/rust"
+    }
+  ]
+}

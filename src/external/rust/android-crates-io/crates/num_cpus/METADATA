@@ -1,0 +1,17 @@
+name: "num_cpus"
+description: "Get the number of CPUs on a machine."
+third_party {
+  version: "1.17.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 8
+    day: 19
+  }
+  homepage: "https://crates.io/crates/num_cpus"
+  identifier {
+    type: "crates.io"
+    value: "num_cpus"
+    version: "1.17.0"
+  }
+}

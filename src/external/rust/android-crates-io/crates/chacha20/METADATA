@@ -1,0 +1,17 @@
+name: "chacha20"
+description: "The ChaCha20 stream cipher (RFC 8439) implemented in pure Rust using traits from the RustCrypto `cipher` crate, with optional architecture-specific hardware acceleration (AVX2, SSE2). Additionally provides the ChaCha8, ChaCha12, XChaCha20, XChaCha12 and XChaCha8 stream ciphers, and also optional rand_core-compatible RNGs based on those ciphers."
+third_party {
+  version: "0.10.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 14
+  }
+  homepage: "https://crates.io/crates/chacha20"
+  identifier {
+    type: "crates.io"
+    value: "chacha20"
+    version: "0.10.2"
+  }
+}

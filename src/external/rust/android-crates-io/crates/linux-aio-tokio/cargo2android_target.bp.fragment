@@ -1,0 +1,1 @@
+srcs: [":liblinux_aio_tokio_bindgen"]

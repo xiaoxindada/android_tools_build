@@ -1,0 +1,10 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-codegen"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-parse"
+    }
+  ]
+}

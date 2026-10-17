@@ -1,0 +1,23 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/itertools"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rayon"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/which"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "either_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "either_test_src_lib"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+name: "khronos-egl"
+description: "Rust bindings for EGL"
+third_party {
+  version: "6.0.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 2
+    day: 24
+  }
+  homepage: "https://crates.io/crates/khronos-egl"
+  identifier {
+    type: "crates.io"
+    value: "khronos-egl"
+    version: "6.0.0"
+  }
+}

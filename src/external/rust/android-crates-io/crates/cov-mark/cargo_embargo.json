@@ -1,0 +1,14 @@
+{
+  "tests": false,
+  "variants": [
+    {},
+    {
+      "features": [],
+      "module_name_overrides": {
+        "libcov_mark": "libcov_mark_disabled"
+        
+      }
+    }
+  ],
+  "min_sdk_version": "29"
+}

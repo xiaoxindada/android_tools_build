@@ -1,0 +1,14 @@
+{
+  "min_sdk_version": "29",
+  "package": {
+    "criterion" : {
+      "srcs": [
+        "src/**/*.rs",
+        "src/html/benchmark_report.html.tt",
+        "src/html/index.html.tt",
+        "src/html/report_link.html.tt",
+        "src/html/summary_report.html.tt"
+      ]
+    }
+  }
+}

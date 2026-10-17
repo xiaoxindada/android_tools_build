@@ -1,0 +1,3 @@
+deletions = [
+  "libusb"  # We use external/libusb instead
+]

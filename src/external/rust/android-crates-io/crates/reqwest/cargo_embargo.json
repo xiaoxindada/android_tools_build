@@ -1,0 +1,9 @@
+{
+  "run_cargo": true,
+  "min_sdk_version": "29",
+  "features": [
+    "http2",
+    "rustls-tls-native-roots-no-provider",
+    "blocking"
+  ]
+}

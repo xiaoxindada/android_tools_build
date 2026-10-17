@@ -1,0 +1,17 @@
+name: "openssl-macros"
+description: "Internal macros used by the openssl crate."
+third_party {
+  version: "0.1.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 12
+    day: 21
+  }
+  homepage: "https://crates.io/crates/openssl-macros"
+  identifier {
+    type: "crates.io"
+    value: "openssl-macros"
+    version: "0.1.1"
+  }
+}

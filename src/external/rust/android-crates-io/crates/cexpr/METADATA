@@ -1,0 +1,17 @@
+name: "cexpr"
+description: "A C expression parser and evaluator"
+third_party {
+  version: "0.6.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2022
+    month: 6
+    day: 27
+  }
+  homepage: "https://crates.io/crates/cexpr"
+  identifier {
+    type: "crates.io"
+    value: "cexpr"
+    version: "0.6.0"
+  }
+}

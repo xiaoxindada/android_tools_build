@@ -1,0 +1,17 @@
+name: "coset"
+description: "Set of types for supporting COSE"
+third_party {
+  version: "0.4.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 3
+    day: 3
+  }
+  homepage: "https://crates.io/crates/coset"
+  identifier {
+    type: "crates.io"
+    value: "coset"
+    version: "0.4.2"
+  }
+}

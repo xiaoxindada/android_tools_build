@@ -1,0 +1,25 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/arrayvec"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/bytes"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/hashlink"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ipnet"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/slab"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/unicode-bidi"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/uuid"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+name: "hash32"
+description: "32-bit hashing algorithms"
+third_party {
+  version: "1.0.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 11
+  }
+  homepage: "https://crates.io/crates/hash32"
+  identifier {
+    type: "crates.io"
+    value: "hash32"
+    version: "1.0.0"
+  }
+}

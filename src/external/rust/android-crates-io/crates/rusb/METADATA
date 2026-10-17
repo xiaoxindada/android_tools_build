@@ -1,0 +1,17 @@
+name: "rusb"
+description: "Rust library for accessing USB devices."
+third_party {
+  version: "0.9.4"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 11
+    day: 8
+  }
+  homepage: "https://crates.io/crates/rusb"
+  identifier {
+    type: "crates.io"
+    value: "rusb"
+    version: "0.9.4"
+  }
+}

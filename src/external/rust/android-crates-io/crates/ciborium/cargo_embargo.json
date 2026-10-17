@@ -1,0 +1,22 @@
+{
+  "run_cargo": false,
+  "variants": [
+    {},
+    {
+      "features": [],
+      "package": {
+        "ciborium": {
+          "alloc": true,
+          "force_rlib": true,
+          "host_supported": false,
+          "no_std": true
+        }
+      }
+    },
+    {
+      "generate_androidbp": false,
+      "generate_rulesmk": true
+    }
+  ],
+  "min_sdk_version": "29"
+}

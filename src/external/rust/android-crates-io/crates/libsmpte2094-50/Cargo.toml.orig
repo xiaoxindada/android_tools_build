@@ -1,0 +1,30 @@
+[package]
+name = "libsmpte2094-50"
+version = "0.1.10"
+edition = "2021"
+description = "SMPTE 2094-50 serialization/deserialization and utils"
+readme = "../README.md"
+license = "Apache-2.0"
+repository = "https://github.com/webmproject/libsmpte2094-50"
+homepage = "https://github.com/webmproject/libsmpte2094-50"
+
+[lib]
+name = "libsmpte2094_50"
+path = "src/lib.rs"
+crate-type = ["staticlib", "lib"]
+
+[dependencies]
+cxx = { version = "1.0", optional = true }
+
+[features]
+default = []
+cxxbridge = ["dep:cxx"]
+
+[build-dependencies]
+cxx-build = { version = "1.0", optional = true }
+
+[dev-dependencies]
+googletest = "0.14.3"
+
+[workspace]
+resolver = "2"

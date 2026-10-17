@@ -1,0 +1,17 @@
+name: "image-compare"
+description: "Image comparison library based upon the image crate. Currently it provides SSIM and RMS for comparing grayscale and rgb images, a cool hybrid compare as well as several grayscale histogram distance metrics. All with a friendly license."
+third_party {
+  version: "0.5.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 10
+  }
+  homepage: "https://crates.io/crates/image-compare"
+  identifier {
+    type: "crates.io"
+    value: "image-compare"
+    version: "0.5.0"
+  }
+}

@@ -1,0 +1,17 @@
+name: "percore"
+description: "Safe per-CPU core mutable state on no_std platforms through exception masking."
+third_party {
+  version: "0.3.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 19
+  }
+  homepage: "https://crates.io/crates/percore"
+  identifier {
+    type: "crates.io"
+    value: "percore"
+    version: "0.3.0"
+  }
+}

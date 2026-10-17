@@ -1,0 +1,9 @@
+{
+  "run_cargo": true,
+  "min_sdk_version": "29",
+  "package": {
+    "gherkin": {
+      "copy_out": true
+    }
+  }
+}

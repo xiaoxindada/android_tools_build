@@ -1,0 +1,37 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/pkcs1"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pkcs8"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/sec1"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/spki"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/x509-cert"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/service_vm/requests"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libservice_vm_comm"
+    },
+    {
+      "path": "system/keymint/common"
+    },
+    {
+      "path": "system/keymint/ta"
+    },
+    {
+      "path": "system/security/keystore2"
+    },
+    {
+      "path": "system/security/keystore2/test_utils/attestation"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+name: "volatile"
+description: "Volatile wrapper types for raw pointers"
+third_party {
+  version: "0.6.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 19
+  }
+  homepage: "https://crates.io/crates/volatile"
+  identifier {
+    type: "crates.io"
+    value: "volatile"
+    version: "0.6.1"
+  }
+}

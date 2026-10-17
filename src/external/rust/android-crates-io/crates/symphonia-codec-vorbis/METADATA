@@ -1,0 +1,17 @@
+name: "symphonia-codec-vorbis"
+description: "Pure Rust Vorbis decoder (a part of project Symphonia)."
+third_party {
+  version: "0.5.5"
+  license_type: RECIPROCAL
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 6
+  }
+  homepage: "https://crates.io/crates/symphonia-codec-vorbis"
+  identifier {
+    type: "crates.io"
+    value: "symphonia-codec-vorbis"
+    version: "0.5.5"
+  }
+}

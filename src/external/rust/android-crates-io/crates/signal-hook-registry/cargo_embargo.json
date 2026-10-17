@@ -1,0 +1,5 @@
+{
+  "min_sdk_version": "29",
+  "recovery_available": true,
+  "ota_recovery_ramdisk_available": true
+}

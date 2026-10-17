@@ -1,0 +1,17 @@
+name: "same-file"
+description: "A simple crate for determining whether two file paths point to the same file."
+third_party {
+  version: "1.0.6"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2020
+    month: 12
+    day: 21
+  }
+  homepage: "https://crates.io/crates/same-file"
+  identifier {
+    type: "crates.io"
+    value: "same-file"
+    version: "1.0.6"
+  }
+}

@@ -1,0 +1,17 @@
+name: "foreign-types"
+description: "A framework for Rust wrappers over C APIs"
+third_party {
+  version: "0.3.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 1
+    day: 22
+  }
+  homepage: "https://crates.io/crates/foreign-types"
+  identifier {
+    type: "crates.io"
+    value: "foreign-types"
+    version: "0.3.2"
+  }
+}

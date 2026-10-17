@@ -1,0 +1,17 @@
+name: "pathdiff"
+description: "Library for diffing paths to obtain relative paths"
+third_party {
+  version: "0.2.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 12
+    day: 20
+  }
+  homepage: "https://crates.io/crates/pathdiff"
+  identifier {
+    type: "crates.io"
+    value: "pathdiff"
+    version: "0.2.3"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "features": ["features"],
+  "package": {
+    "cargo_toml": {
+      "device_supported": false
+    }
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

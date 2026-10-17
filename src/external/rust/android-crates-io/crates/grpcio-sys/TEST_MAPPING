@@ -1,0 +1,17 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/grpcio"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "libgrpc_bindgen_test"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "libgrpc_bindgen_test"
+    }
+  ]
+}

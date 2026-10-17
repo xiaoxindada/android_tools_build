@@ -1,0 +1,14 @@
+{
+  "features": [
+    "proc-macro"
+  ],
+  "package": {
+    "synstructure": {
+      "device_supported": false,
+      "host_first_multilib": true
+    }
+  },
+  "run_cargo": false,
+  "generate_rulesmk": true,
+  "min_sdk_version": "29"
+}

@@ -1,0 +1,17 @@
+name: "anstyle-query"
+description: "Look up colored console capabilities"
+third_party {
+  version: "1.1.5"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 29
+  }
+  homepage: "https://crates.io/crates/anstyle-query"
+  identifier {
+    type: "crates.io"
+    value: "anstyle-query"
+    version: "1.1.5"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "package": {
+    "alloca": {
+      "add_toplevel_block": "cargo2android_alloca.bp.fragment",
+      "copy_out": true,
+      "add_module_block": "cargo2android_static.bp.fragment"
+    }
+  },
+  "module_visibility": {
+    "external_rust_crates_alloca_license": [
+      "//visibility:private"
+    ],
+    "alloca": [
+      "//visibility:private"
+    ],
+    "liballoca": [
+      "//external/rust/android-crates-io/crates/criterion"
+    ],
+    "liballoca_alloca": [
+      "//external/rust/android-crates-io/crates/criterion"
+    ]
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

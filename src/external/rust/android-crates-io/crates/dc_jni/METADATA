@@ -1,0 +1,17 @@
+name: "dc_jni"
+description: "Figma jni library for Android"
+third_party {
+  version: "0.39.6"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 29
+  }
+  homepage: "https://crates.io/crates/dc_jni"
+  identifier {
+    type: "crates.io"
+    value: "dc_jni"
+    version: "0.39.6"
+  }
+}

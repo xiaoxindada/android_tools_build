@@ -1,0 +1,17 @@
+name: "openssh-sftp-client"
+description: "Highlevel API used to communicate with openssh sftp server."
+third_party {
+  version: "0.15.8"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 2
+  }
+  homepage: "https://crates.io/crates/openssh-sftp-client"
+  identifier {
+    type: "crates.io"
+    value: "openssh-sftp-client"
+    version: "0.15.8"
+  }
+}

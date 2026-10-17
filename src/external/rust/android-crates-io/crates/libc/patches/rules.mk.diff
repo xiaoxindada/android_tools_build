@@ -1,0 +1,30 @@
+diff --git a/rules.mk b/rules.desired.mk
+index 4ca7b4d..e2f63f2 100644
+--- a/rules.mk
++++ b/rules.desired.mk
+@@ -10,8 +10,24 @@ MODULE_RUST_CRATE_TYPES := rlib
+ MODULE_SRCS := $(LOCAL_DIR)/src/lib.rs
+ MODULE_ADD_IMPLICIT_DEPS := false
+ MODULE_RUST_EDITION := 2021
++MODULE_RUSTFLAGS += \
++	--cfg 'freebsd11' \
++	--cfg 'libc_const_extern_fn' \
++	-A unknown-lints \
++
+ MODULE_LIBRARY_DEPS := \
+ 	trusty/user/base/lib/libcompiler_builtins-rust \
+ 	trusty/user/base/lib/libcore-rust
+ 
++ifeq ($(call TOBOOL,$(TRUSTY_USERSPACE)),true)
++
++MODULE_RUSTFLAGS += \
++	--cfg 'feature="trusty_sys"' \
++
++MODULE_LIBRARY_DEPS += \
++	trusty/user/base/lib/libc-trusty \
++	trusty/user/base/lib/trusty-sys \
++
++endif
++
+ include make/library.mk
+

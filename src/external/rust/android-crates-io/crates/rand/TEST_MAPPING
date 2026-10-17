@@ -1,0 +1,61 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/flate2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tungstenite"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/twox-hash"
+    },
+    {
+      "path": "packages/modules/ConfigInfrastructure/aflags"
+    },
+    {
+      "path": "packages/modules/UprobeStats/rust"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtualizationservice"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vm_accessor/accessor"
+    },
+    {
+      "path": "system/core/init/libprefetch/prefetch"
+    },
+    {
+      "path": "system/desktop/cros-codecs"
+    },
+    {
+      "path": "system/desktop/fingerprint/hal"
+    },
+    {
+      "path": "system/extras/profcollectd/libprofcollectd"
+    },
+    {
+      "path": "system/security/keystore2"
+    },
+    {
+      "path": "system/security/keystore2/rkpd_client"
+    },
+    {
+      "path": "system/security/keystore2/test_utils"
+    },
+    {
+      "path": "tools/netsim"
+    },
+    {
+      "path": "tools/rootcanal/rust"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index 5f3f4c25..e17251cf 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -14,7 +14,7 @@ edition = "2018"
+ name = "grpcio-sys"
+ version = "0.13.0+1.56.2-patched"
+ authors = ["The TiKV Project Developers"]
+-build = "build.rs"
++build = "android/build_cmake.rs"
+ exclude = [
+     "grpc/doc/*",
+     "grpc/etc/*",
+@@ -76,6 +76,7 @@ features = [
+     "libc",
+     "static",
+ ]
++optional = true
+ default-features = false
+ 
+ [dependencies.openssl-sys]
+@@ -84,7 +85,7 @@ features = ["vendored"]
+ optional = true
+ 
+ [build-dependencies.bindgen]
+-version = "0.59.0"
++version = "0.69.4"
+ features = ["runtime"]
+ optional = true
+ default-features = false
+@@ -98,15 +99,18 @@ version = "1.0"
+ 
+ [build-dependencies.cmake]
+ version = "0.1"
++optional = true
+ 
+ [build-dependencies.pkg-config]
+ version = "0.3"
++optional = true
+ 
+ [build-dependencies.walkdir]
+ version = "2.2.9"
+ 
+ [features]
+ _gen-bindings = ["bindgen"]
++_libz-sys = ["libz-sys"]
+ _list-package = []
+ _secure = []
+ boringssl = [
+@@ -121,4 +125,4 @@ openssl-vendored = [
+ ]
+ 
+ [target."cfg(not(all(any(target_os = \"linux\", target_os = \"macos\"), any(target_arch = \"x86_64\", target_arch = \"aarch64\"))))".build-dependencies.bindgen]
+-version = "0.59.0"
++version = "0.69.4"

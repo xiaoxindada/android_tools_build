@@ -1,0 +1,37 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/flate2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/png"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/zip"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/zlib-rs"
+    },
+    {
+      "path": "system/core/init/libprefetch/prefetch"
+    },
+    {
+      "path": "system/desktop/cros-codecs"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "crc32fast_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "crc32fast_test_src_lib"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "crc32fast_test_tests_exhaustive"
+    }
+  ]
+}

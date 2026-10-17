@@ -1,0 +1,34 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/h2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/petgraph"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-parse"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde_yaml"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/toml_edit"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tower"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/clap"
+    },
+    {
+      "path": "external/rust/cxx/gen/cmd"
+    },
+    {
+      "path": "external/rust/cxx/gen/lib"
+    },
+    {
+      "path": "external/rust/cxx/macro"
+    }
+  ]
+}

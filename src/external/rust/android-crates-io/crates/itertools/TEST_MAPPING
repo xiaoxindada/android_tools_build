@@ -1,0 +1,43 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/bindgen"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/criterion"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/criterion-plot"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mls-rs"
+    },
+    {
+      "path": "external/rust/beto-rust/nearby"
+    },
+    {
+      "path": "packages/modules/SdkExtensions/sdk-extensions-info-test"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/apkdmverity"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "system/secretkeeper/dice_policy/building"
+    },
+    {
+      "path": "system/secure_element/omapi"
+    },
+    {
+      "path": "system/zygote/zygote"
+    },
+    {
+      "path": "tools/asuite/adevice"
+    },
+    {
+      "path": "tools/security/remote_provisioning/hwtrust"
+    }
+  ]
+}

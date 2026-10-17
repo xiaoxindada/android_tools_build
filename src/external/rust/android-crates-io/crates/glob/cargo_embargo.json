@@ -1,0 +1,11 @@
+{
+  "package": {
+    "glob": {
+      "license_text": [
+        "LICENSE"
+      ]
+    }
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

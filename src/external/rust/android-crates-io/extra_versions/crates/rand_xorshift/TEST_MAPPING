@@ -1,0 +1,7 @@
+{
+  "postsubmit": [
+    {
+      "name": "rand_xorshift_test_tests_mod-0.3"
+    }
+  ]
+}

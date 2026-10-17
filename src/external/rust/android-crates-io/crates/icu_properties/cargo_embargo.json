@@ -1,0 +1,29 @@
+{
+  "run_cargo": false,
+  "features": [
+    "alloc",
+    "unicode_bidi",
+    "compiled_data"
+  ],
+  "ramdisk_available": true,
+  "recovery_available": true,
+  "vendor_ramdisk_available": true,
+  "package": {
+    "icu_properties": {
+      "add_module_block": "icu4x_bionic_dep.bp.fragment"
+    }
+  },
+  "variants": [
+    {},
+    {
+      "package": {
+        "icu_properties": {
+          "no_std": true
+        }
+      }
+    }
+  ],
+  "native_bridge_supported": true,
+  "sdk_version": "29",
+  "min_sdk_version": "29"
+}

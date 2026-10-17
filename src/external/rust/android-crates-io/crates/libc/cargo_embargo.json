@@ -1,0 +1,47 @@
+{
+  "features": [
+    "default",
+    "extra_traits",
+    "std"
+  ],
+  "recovery_available": true,
+  "min_sdk_version": "29",
+  "tests": true,
+  "package": {
+    "libc": {
+      "rulesmk_patch": "patches/rules.mk.diff",
+      "patch": "patches/Android.bp.diff",
+      "target_windows": true
+    }
+  },
+  "variants": [
+    {},
+    {
+      "package": {
+        "libc": {
+          "no_std": true
+        }
+      },
+      "features": [],
+      "tests": false,
+      "generate_androidbp": false,
+      "generate_rulesmk": true,
+      "run_cargo": false
+    },
+    {
+      "features": [
+        "extra_traits"
+      ],
+      "tests": false,
+      "package": {
+        "libc": {
+          "host_supported": false,
+          "no_std": true,
+          "force_rlib": true
+        }
+      }
+    }
+  ],
+  "native_bridge_supported": true,
+  "ota_recovery_ramdisk_available": true
+}

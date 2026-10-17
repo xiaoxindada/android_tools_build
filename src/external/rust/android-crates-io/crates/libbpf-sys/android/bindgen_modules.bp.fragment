@@ -1,0 +1,62 @@
+rust_binary_host {
+    name: "libbpf_bindgen_build",
+    host_cross_supported: false,
+    srcs: ["android/build.rs"],
+    rustlibs: [
+        "libbindgen",
+        "libbindgen_cmd",
+    ],
+    lints: "android",
+    clippy_lints: "android",
+}
+
+rust_bindgen {
+    name: "liblibbpf_bindgen",
+    crate_name: "libbpf_bindgen",
+    custom_bindgen: "libbpf_bindgen_build",
+    wrapper_src: "android/libbpf_wrapper.h",
+    source_stem: "bindings",
+    header_libs: ["libbpf_build_headers"],
+    shared_libs: ["libbpf"],
+    apex_available: [
+        "//apex_available:platform",
+        "//apex_available:anyapex",
+    ],
+    min_sdk_version: "35",
+}
+
+rust_library {
+    name: "liblibbpf_sys_uprobestats",
+    crate_name: "libbpf_sys_uprobestats",
+    cargo_env_compat: true,
+    cargo_pkg_version: "1.7.0+v1.7.0",
+    crate_root: "src/lib.rs",
+    edition: "2021",
+    features: ["bindgen"],
+    apex_available: [
+        "com.android.uprobestats",
+    ],
+    min_sdk_version: "29",
+    srcs: [":liblibbpf_bindgen_uprobestats"],
+    visibility: [
+        "//external/rust/android-crates-io/crates/libbpf-rs:__subpackages__",
+        "//packages/modules/UprobeStats:__subpackages__",
+    ],
+}
+
+rust_bindgen {
+    name: "liblibbpf_bindgen_uprobestats",
+    crate_name: "libbpf_bindgen_uprobestats",
+    custom_bindgen: "libbpf_bindgen_build",
+    wrapper_src: "android/libbpf_wrapper.h",
+    source_stem: "bindings",
+    header_libs: ["libbpf_build_headers"],
+    shared_libs: ["libbpf_trimmed_uprobestats"],
+    apex_available: [
+        "com.android.uprobestats",
+    ],
+    min_sdk_version: "35",
+    visibility: [
+        "//external/rust/android-crates-io/crates/libbpf-sys:__subpackages__",
+    ],
+}

@@ -1,0 +1,32 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/arrayvec"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/matches"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "matches_test_lib"
+    },
+    {
+      "name": "matches_test_tests_macro_use_one"
+    },
+    {
+      "name": "matches_test_tests_use_star"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "matches_test_lib"
+    },
+    {
+      "name": "matches_test_tests_macro_use_one"
+    },
+    {
+      "name": "matches_test_tests_use_star"
+    }
+  ]
+}

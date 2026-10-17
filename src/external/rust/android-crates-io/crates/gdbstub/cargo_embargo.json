@@ -1,0 +1,11 @@
+{
+  "run_cargo": false,
+  "package": {
+    "gdbstub": {
+      "license_text": [
+        "docs/LICENSE-APACHE"
+      ]
+    }
+  },
+  "min_sdk_version": "29"
+}

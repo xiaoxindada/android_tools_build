@@ -1,0 +1,10 @@
+{
+  "recovery_available": true,
+  "min_sdk_version": "29",
+  "package": {
+    "android_log-sys": {
+      "host_supported": false
+    }
+  },
+  "run_cargo": false
+}

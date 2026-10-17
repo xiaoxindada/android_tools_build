@@ -1,0 +1,52 @@
+diff --git a/src/deflate/mod.rs b/src/deflate/mod.rs
+index b5c5b6ca9..065a99cd0 100644
+--- a/src/deflate/mod.rs
++++ b/src/deflate/mod.rs
+@@ -6,7 +6,7 @@ pub mod write;
+ mod tests {
+     use std::io::prelude::*;
+ 
+-    use rand::{rng, Rng};
++    use rand::{prelude::*, rng};
+ 
+     use super::{read, write};
+     use crate::Compression;
+diff --git a/src/gz/mod.rs b/src/gz/mod.rs
+index 9f5b3021c..a834a5225 100644
+--- a/src/gz/mod.rs
++++ b/src/gz/mod.rs
+@@ -444,7 +444,7 @@ mod tests {
+ 
+     use super::{read, write, GzBuilder, GzHeaderParser};
+     use crate::{Compression, GzHeader};
+-    use rand::{rng, Rng};
++    use rand::{prelude::*, rng};
+ 
+     #[test]
+     fn roundtrip() {
+diff --git a/src/lib.rs b/src/lib.rs
+index 08033ded7..2cbb2474a 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -254,7 +254,7 @@ impl Default for Compression {
+ 
+ #[cfg(test)]
+ fn random_bytes() -> impl Iterator<Item = u8> {
+-    use rand::Rng;
++    use rand::prelude::*;
+     use std::iter;
+ 
+     iter::repeat(()).map(|_| rand::rng().random())
+diff --git a/src/zlib/mod.rs b/src/zlib/mod.rs
+index 5a99b0eb7..3867095a0 100644
+--- a/src/zlib/mod.rs
++++ b/src/zlib/mod.rs
+@@ -7,7 +7,7 @@ mod tests {
+     use std::io;
+     use std::io::prelude::*;
+ 
+-    use rand::{rng, Rng};
++    use rand::{prelude::*, rng};
+ 
+     use crate::zlib::{read, write};
+     use crate::Compression;

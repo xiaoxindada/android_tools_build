@@ -1,0 +1,52 @@
+diff --git a/src/vhu_vsock.rs b/src/vhu_vsock.rs
+index 00bc9d696..40b39ea6c 100644
+--- a/src/vhu_vsock.rs
++++ b/src/vhu_vsock.rs
+@@ -18,6 +18,7 @@ use virtio_bindings::bindings::{
+ use vm_memory::{ByteValued, GuestMemoryAtomic, GuestMemoryMmap, Le64};
+ use vmm_sys_util::{
+     epoll::EventSet,
++    event::{new_event_consumer_and_notifier, EventConsumer, EventFlag, EventNotifier},
+     eventfd::{EventFd, EFD_NONBLOCK},
+ };
+ 
+@@ -258,7 +259,7 @@ pub(crate) struct VhostUserVsockBackend {
+     queue_size: usize,
+     pub threads: Vec<Mutex<VhostUserVsockThread>>,
+     queues_per_thread: Vec<u64>,
+-    pub exit_event: EventFd,
++    pub exit_event: (EventConsumer, EventNotifier),
+ }
+ 
+ impl VhostUserVsockBackend {
+@@ -279,7 +280,7 @@ impl VhostUserVsockBackend {
+             queue_size: config.get_queue_size(),
+             threads: vec![thread],
+             queues_per_thread,
+-            exit_event: EventFd::new(EFD_NONBLOCK).map_err(Error::EventFdCreate)?,
++            exit_event: new_event_consumer_and_notifier(EventFlag::NONBLOCK).map_err(Error::EventFdCreate)?,
+         })
+     }
+ }
+@@ -390,8 +391,10 @@ impl VhostUserBackend for VhostUserVsockBackend {
+         self.queues_per_thread.clone()
+     }
+ 
+-    fn exit_event(&self, _thread_index: usize) -> Option<EventFd> {
+-        self.exit_event.try_clone().ok()
++    fn exit_event(&self, _thread_index: usize) -> Option<(EventConsumer, EventNotifier)> {
++        let consumer = self.exit_event.0.try_clone().ok()?;
++        let notifier = self.exit_event.1.try_clone().ok()?;
++        Some((consumer, notifier))
+     }
+ }
+ 
+@@ -447,7 +450,7 @@ mod tests {
+ 
+         let exit = backend.exit_event(0);
+         assert!(exit.is_some());
+-        exit.unwrap().write(1).unwrap();
++        exit.unwrap().1.write(1).unwrap();
+ 
+         let ret = backend.handle_event(RX_QUEUE_EVENT, EventSet::IN, &vrings, 0);
+         ret.unwrap();

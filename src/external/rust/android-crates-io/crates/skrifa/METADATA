@@ -1,0 +1,17 @@
+name: "skrifa"
+description: "Metadata reader and glyph scaler for OpenType fonts."
+third_party {
+  version: "0.45.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 29
+  }
+  homepage: "https://crates.io/crates/skrifa"
+  identifier {
+    type: "crates.io"
+    value: "skrifa"
+    version: "0.45.1"
+  }
+}

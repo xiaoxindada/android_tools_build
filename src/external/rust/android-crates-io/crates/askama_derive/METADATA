@@ -1,0 +1,17 @@
+name: "askama_derive"
+description: "Code generator of Askama templating engine"
+third_party {
+  version: "0.16.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 6
+  }
+  homepage: "https://crates.io/crates/askama_derive"
+  identifier {
+    type: "crates.io"
+    value: "askama_derive"
+    version: "0.16.0"
+  }
+}

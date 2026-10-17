@@ -1,0 +1,12 @@
+{
+  "features": [
+    "alloc",
+    "std",
+    "smallvec",
+    "parking_lot",
+    "fmt",
+    "registry"
+  ],
+  "min_sdk_version": "29",
+  "run_cargo": false
+}

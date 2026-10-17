@@ -1,0 +1,17 @@
+name: "icu_properties"
+description: "Definitions for Unicode properties"
+third_party {
+  version: "2.2.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 13
+  }
+  homepage: "https://crates.io/crates/icu_properties"
+  identifier {
+    type: "crates.io"
+    value: "icu_properties"
+    version: "2.2.0"
+  }
+}

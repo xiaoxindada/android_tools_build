@@ -1,0 +1,12 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/darling_core"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "ident_case_test_src_lib"
+    }
+  ]
+}

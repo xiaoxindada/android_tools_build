@@ -1,0 +1,17 @@
+name: "idna"
+description: "IDNA (Internationalizing Domain Names in Applications) and Punycode."
+third_party {
+  version: "1.1.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 12
+    day: 9
+  }
+  homepage: "https://crates.io/crates/idna"
+  identifier {
+    type: "crates.io"
+    value: "idna"
+    version: "1.1.0"
+  }
+}

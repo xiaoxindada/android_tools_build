@@ -1,0 +1,17 @@
+name: "globset"
+description: "Cross platform single glob and glob set matching. Glob set matching is the process of matching one or more glob patterns against a single candidate path simultaneously, and returning all of the globs that matched."
+third_party {
+  version: "0.4.20"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 11
+  }
+  homepage: "https://crates.io/crates/globset"
+  identifier {
+    type: "crates.io"
+    value: "globset"
+    version: "0.4.20"
+  }
+}

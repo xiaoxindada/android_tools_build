@@ -1,0 +1,70 @@
+diff --git a/src/expand.rs b/src/expand.rs
+index 813ba85d7..3d4e31485 100644
+--- a/src/expand.rs
++++ b/src/expand.rs
+@@ -23,7 +23,7 @@ fn try_cfg(introducer: &str, args: TokenStream, input: TokenStream) -> Result<To
+     let expr = expr::parse(full_args)?;
+     token::parse_end(full_args)?;
+ 
+-    if expr.eval(crate::RUSTVERSION) {
++    if expr.eval(crate::rust_version()) {
+         Ok(allow_incompatible_msrv(input))
+     } else {
+         Ok(TokenStream::new())
+@@ -31,7 +31,7 @@ fn try_cfg(introducer: &str, args: TokenStream, input: TokenStream) -> Result<To
+ }
+ 
+ pub fn try_attr(args: attr::Args, input: TokenStream) -> Result<TokenStream> {
+-    if !args.condition.eval(crate::RUSTVERSION) {
++    if !args.condition.eval(crate::rust_version()) {
+         return Ok(input);
+     }
+ 
+diff --git a/src/lib.rs b/src/lib.rs
+index 96e70c0b5..866153b82 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -213,12 +213,32 @@ use crate::error::Error;
+ use crate::version::Version;
+ use proc_macro::TokenStream;
+ 
+-#[cfg(not(host_os = "windows"))]
++#[cfg(all(not(host_os = "windows"), not(soong), not(trusty)))]
+ const RUSTVERSION: Version = include!(concat!(env!("OUT_DIR"), "/version.expr"));
+ 
+-#[cfg(host_os = "windows")]
++#[cfg(all(host_os = "windows", not(soong)))]
+ const RUSTVERSION: Version = include!(concat!(env!("OUT_DIR"), "\\version.expr"));
+ 
++#[cfg(all(not(soong), not(trusty)))]
++fn rust_version() -> Version { RUSTVERSION }
++
++#[cfg(any(soong, trusty))]
++fn rust_version() -> Version {
++    let version_str = {
++        #[cfg(soong)]
++        { option_env!("ANDROID_RUST_VERSION") }
++        #[cfg(trusty)]
++        { option_env!("TRUSTY_BUILD_RUST_VERSION") }
++    };
++
++    let v: Vec<&str> = version_str.unwrap().split('.').collect();
++    Version {
++        minor: v[1].parse().unwrap(),
++        patch: v[2].parse().unwrap(),
++        channel: version::Channel::Stable,
++    }
++}
++
+ #[proc_macro_attribute]
+ pub fn stable(args: TokenStream, input: TokenStream) -> TokenStream {
+     expand::cfg("stable", args, input)
+@@ -274,7 +294,7 @@ pub fn cfg(input: TokenStream) -> TokenStream {
+         let ref mut args = iter::new(input);
+         let expr = expr::parse(args)?;
+         token::parse_end(args)?;
+-        let boolean = expr.eval(RUSTVERSION);
++        let boolean = expr.eval(rust_version());
+         let ident = Ident::new(&boolean.to_string(), Span::call_site());
+         Ok(TokenStream::from(TokenTree::Ident(ident)))
+     })()

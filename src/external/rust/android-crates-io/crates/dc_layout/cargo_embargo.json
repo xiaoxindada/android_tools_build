@@ -1,0 +1,14 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "module_name_overrides": {
+    "liblog": "liblog_rust"
+  },
+  "package": {
+    "dc_layout": {
+      "dep_blocklist": [
+        "libandroid_logger"
+      ]
+    }
+  }
+}

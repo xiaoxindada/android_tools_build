@@ -1,0 +1,13 @@
+{
+  "run_cargo": false,
+  "tests": false,
+  "features": [],
+  "package": {
+    "num_enum_derive": {
+      "dep_blocklist": [
+        "libproc_macro_crate"
+      ]
+    }
+  },
+  "min_sdk_version": "29"
+}

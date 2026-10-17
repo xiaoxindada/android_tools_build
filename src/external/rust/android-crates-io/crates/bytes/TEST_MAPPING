@@ -1,0 +1,178 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/axum"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/axum-core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/bytes"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/combine"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/h2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/http"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/http-body"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/hyper"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ipp"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/netlink-proto"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/netlink-sys"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pdl-compiler"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pdl-runtime"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio-test"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio-util"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tonic"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tungstenite"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/http"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/protobuf"
+    },
+    {
+      "path": "external/rust/beto-rust/nearby"
+    },
+    {
+      "path": "external/rust/pica"
+    },
+    {
+      "path": "packages/modules/Bluetooth/system/rust"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/src"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/src/rust"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/src/rust/test"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/tools/casimir"
+    },
+    {
+      "path": "packages/modules/Uwb/libuwb-uci/src"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apkverify"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apkzip"
+    },
+    {
+      "path": "tools/netsim"
+    },
+    {
+      "path": "tools/rootcanal/rust"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "bytes_test_tests_test_buf"
+    },
+    {
+      "name": "bytes_test_tests_test_buf_mut"
+    },
+    {
+      "name": "bytes_test_tests_test_bytes"
+    },
+    {
+      "name": "bytes_test_tests_test_bytes_odd_alloc"
+    },
+    {
+      "name": "bytes_test_tests_test_bytes_vec_alloc"
+    },
+    {
+      "name": "bytes_test_tests_test_chain"
+    },
+    {
+      "name": "bytes_test_tests_test_debug"
+    },
+    {
+      "name": "bytes_test_tests_test_iter"
+    },
+    {
+      "name": "bytes_test_tests_test_reader"
+    },
+    {
+      "name": "bytes_test_tests_test_take"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "bytes_test_tests_test_buf"
+    },
+    {
+      "name": "bytes_test_tests_test_buf_mut"
+    },
+    {
+      "name": "bytes_test_tests_test_bytes"
+    },
+    {
+      "name": "bytes_test_tests_test_bytes_odd_alloc"
+    },
+    {
+      "name": "bytes_test_tests_test_bytes_vec_alloc"
+    },
+    {
+      "name": "bytes_test_tests_test_chain"
+    },
+    {
+      "name": "bytes_test_tests_test_debug"
+    },
+    {
+      "name": "bytes_test_tests_test_iter"
+    },
+    {
+      "name": "bytes_test_tests_test_reader"
+    },
+    {
+      "name": "bytes_test_tests_test_take"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "bytes_test_src_lib"
+    },
+    {
+      "name": "bytes_test_tests_test_limit"
+    },
+    {
+      "name": "bytes_test_tests_test_serde"
+    }
+  ]
+}

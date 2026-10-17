@@ -1,0 +1,16 @@
+{
+  "features": [
+    "default-hasher",
+    "inline-more",
+    "equivalent",
+    "raw-entry"
+  ],
+  "package": {
+    "hashbrown": {
+      "dep_blocklist": [
+        "libdoc_comment"
+      ]
+    }
+  },
+  "min_sdk_version": "29"
+}

@@ -1,0 +1,17 @@
+name: "twox-hash"
+description: "A Rust implementation of the XXHash and XXH3 algorithms"
+third_party {
+  version: "2.1.4"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 2
+  }
+  homepage: "https://crates.io/crates/twox-hash"
+  identifier {
+    type: "crates.io"
+    value: "twox-hash"
+    version: "2.1.4"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/ash"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/clang-sys"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/khronos-egl"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vulkano"
+    },
+    {
+      "path": "system/zygote/zygote"
+    }
+  ]
+}

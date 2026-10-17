@@ -1,0 +1,18 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/quiche"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "octets_test_src_lib"
+    },
+    {
+      "name": "octets_test_tests_huffman"
+    },
+    {
+      "name": "octets_test_tests_octets"
+    }
+  ]
+}

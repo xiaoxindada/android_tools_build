@@ -1,0 +1,556 @@
+{
+  "imports": [
+    {
+      "path": "external/flashrom/util/flashrom_tester"
+    },
+    {
+      "path": "external/flashrom/util/flashrom_tester/flashrom_abstraction"
+    },
+    {
+      "path": "external/mesa3d/src/util/rust"
+    },
+    {
+      "path": "external/mesa3d/src/virtio/virtgpu_kumquat_ffi"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/android_logger"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/bindgen-cli"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/dc_bundle"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/dc_layout"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/env_filter"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/env_logger"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/gdbstub"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/grpcio"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/handlebars"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ipp"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ippusb"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/jni"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/kernlog"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/netlink-packet-route"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/netlink-proto"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/netlink-sys"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-parse"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/quiche"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/quickcheck"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rtnetlink"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde-xml-rs"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/thread-priority"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tungstenite"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/uefi"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vhost-user-backend"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/virtio-drivers"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/virtio-queue"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/jni"
+    },
+    {
+      "path": "external/rust/beto-rust/betosync"
+    },
+    {
+      "path": "external/rust/beto-rust/nearby"
+    },
+    {
+      "path": "external/rust/crabbyavif"
+    },
+    {
+      "path": "external/rust/crates/v4l2r/ffi"
+    },
+    {
+      "path": "external/rust/crates/v4l2r/lib"
+    },
+    {
+      "path": "external/rust/crates/v4l2r/utils"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vhost-device-vsock"
+    },
+    {
+      "path": "external/rust/cros-libva/lib"
+    },
+    {
+      "path": "external/rust/pica"
+    },
+    {
+      "path": "external/rust/rutabaga_gfx"
+    },
+    {
+      "path": "external/rust/rutabaga_gfx/kumquat/server"
+    },
+    {
+      "path": "external/rust/rutabaga_gfx/third_party/mesa3d/src/util/rust"
+    },
+    {
+      "path": "external/virtio-media/device"
+    },
+    {
+      "path": "packages/modules/Bluetooth/offload/hal"
+    },
+    {
+      "path": "packages/modules/Bluetooth/offload/leaudio/audio"
+    },
+    {
+      "path": "packages/modules/Bluetooth/offload/leaudio/hci"
+    },
+    {
+      "path": "packages/modules/Bluetooth/system/rust"
+    },
+    {
+      "path": "packages/modules/ConfigInfrastructure/aconfigd"
+    },
+    {
+      "path": "packages/modules/Connectivity/remoteauth/service/jni"
+    },
+    {
+      "path": "packages/modules/DnsResolver/rust/src/doh/tests/doh_frontend"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/src"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/src/rust"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/src/rust/test"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/tools/casimir"
+    },
+    {
+      "path": "packages/modules/UprobeStats/rust/ffi"
+    },
+    {
+      "path": "packages/modules/UprobeStats/rust/src"
+    },
+    {
+      "path": "packages/modules/Uwb/libuwb-uci/src"
+    },
+    {
+      "path": "packages/modules/Uwb/service/uci/jni"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/VmAttestationDemoApp"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/compos_verify"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/composd"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/fd_server"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/forwarder_host"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtualizationservice"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtualizationservice/vfio_handler"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtualizationservice/vmnic"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/authfs"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/authfs_service"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/compsvc"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/encryptedstore"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/pageout_bomb"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/pvmfw"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/service_vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/service_vm/requests"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/vmbase_example"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/zipfuse"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apexutil"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apkverify"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apkzip"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/avf_features"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/avflog"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/cborutil"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/dice/driver"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/dice/sample_inputs"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libavf"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libcompos_common"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libservice_vm_comm"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libservice_vm_fake_chain"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libservice_vm_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvm_payload"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvmbase"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvmclient"
+    },
+    {
+      "path": "packages/modules/Virtualization/microfuchsia/microfuchsiad"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/authfs/common"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/backcompat_test"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/dtcompare"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/early_vm_test"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/old_images_avf_test"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/testapk"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vm_accessor/accessor"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vm_accessor/accessor_vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vm_accessor/test"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vm_attestation"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vmbase_example"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vts"
+    },
+    {
+      "path": "packages/modules/adb/client/adbmdns"
+    },
+    {
+      "path": "packages/services/DroidfoodAttestationFixer"
+    },
+    {
+      "path": "system/authgraph/core"
+    },
+    {
+      "path": "system/authgraph/hal"
+    },
+    {
+      "path": "system/bpf/loader"
+    },
+    {
+      "path": "system/core/init/libprefetch/prefetch"
+    },
+    {
+      "path": "system/core/libstats/pull_rust"
+    },
+    {
+      "path": "system/core/trusty/keymint"
+    },
+    {
+      "path": "system/core/trusty/libtrusty-rs"
+    },
+    {
+      "path": "system/core/trusty/secretkeeper"
+    },
+    {
+      "path": "system/desktop/cros-codecs"
+    },
+    {
+      "path": "system/desktop/ec/src/ec_crash_collector"
+    },
+    {
+      "path": "system/desktop/ec/src/ectool"
+    },
+    {
+      "path": "system/desktop/ec/src/libec"
+    },
+    {
+      "path": "system/desktop/ec/src/timberslide"
+    },
+    {
+      "path": "system/desktop/fingerprint/bio_wash"
+    },
+    {
+      "path": "system/desktop/fingerprint/hal"
+    },
+    {
+      "path": "system/desktop/fingerprint/libcrosfp"
+    },
+    {
+      "path": "system/desktop/fingerprint/libfpupdater"
+    },
+    {
+      "path": "system/desktop/security/gscd"
+    },
+    {
+      "path": "system/desktop/security/gscd/gscd_device_test"
+    },
+    {
+      "path": "system/desktop/security/gscutil"
+    },
+    {
+      "path": "system/desktop/security/libs/host_abstraction"
+    },
+    {
+      "path": "system/desktop/security/libs/tpmcommands"
+    },
+    {
+      "path": "system/desktop/security/libs/trusty_utils"
+    },
+    {
+      "path": "system/desktop/security/pinweaver/storage"
+    },
+    {
+      "path": "system/desktop/security/trunks_send"
+    },
+    {
+      "path": "system/desktop/security/udsattestation"
+    },
+    {
+      "path": "system/extras/profcollectd/libprofcollectd"
+    },
+    {
+      "path": "system/gatekeeper/rust/boringssl"
+    },
+    {
+      "path": "system/gatekeeper/rust/hal"
+    },
+    {
+      "path": "system/gatekeeper/rust/ta"
+    },
+    {
+      "path": "system/gatekeeper/rust/tests"
+    },
+    {
+      "path": "system/gatekeeper/rust/wire"
+    },
+    {
+      "path": "system/keymint/boringssl"
+    },
+    {
+      "path": "system/keymint/common"
+    },
+    {
+      "path": "system/keymint/hal"
+    },
+    {
+      "path": "system/keymint/ta"
+    },
+    {
+      "path": "system/keymint/tests"
+    },
+    {
+      "path": "system/keymint/wire"
+    },
+    {
+      "path": "system/libfmq"
+    },
+    {
+      "path": "system/libfmq/tests/aidl/default"
+    },
+    {
+      "path": "system/librustutils"
+    },
+    {
+      "path": "system/libueventd-rs"
+    },
+    {
+      "path": "system/logging/rust"
+    },
+    {
+      "path": "system/memory/lmkd/libpsi_rs"
+    },
+    {
+      "path": "system/memory/mmd"
+    },
+    {
+      "path": "system/secretkeeper/core"
+    },
+    {
+      "path": "system/secretkeeper/dice_policy/building"
+    },
+    {
+      "path": "system/secretkeeper/dice_policy/tests"
+    },
+    {
+      "path": "system/secretkeeper/hal"
+    },
+    {
+      "path": "system/secure_element/omapi"
+    },
+    {
+      "path": "system/security/keystore2"
+    },
+    {
+      "path": "system/security/keystore2/legacykeystore"
+    },
+    {
+      "path": "system/security/keystore2/postprocessor_client"
+    },
+    {
+      "path": "system/security/keystore2/rkpd_client"
+    },
+    {
+      "path": "system/security/keystore2/selinux"
+    },
+    {
+      "path": "system/security/keystore2/src/crypto"
+    },
+    {
+      "path": "system/security/keystore2/test_utils"
+    },
+    {
+      "path": "system/security/keystore2/test_utils/attestation"
+    },
+    {
+      "path": "system/security/keystore2/tests"
+    },
+    {
+      "path": "system/security/keystore2/watchdog"
+    },
+    {
+      "path": "system/security/prng_seeder"
+    },
+    {
+      "path": "system/see/authmgr/authmgr-be"
+    },
+    {
+      "path": "system/see/authmgr/authmgr-common"
+    },
+    {
+      "path": "system/see/authmgr/authmgr-common/util"
+    },
+    {
+      "path": "system/see/authmgr/authmgr-fe"
+    },
+    {
+      "path": "system/server_configurable_flags/aconfigd"
+    },
+    {
+      "path": "system/tools/aidl/codelab/service"
+    },
+    {
+      "path": "system/usb_info_tools/dumpsys_to_lsusb"
+    },
+    {
+      "path": "system/usb_info_tools/typec_connector_class_helper"
+    },
+    {
+      "path": "system/zygote/zygote"
+    },
+    {
+      "path": "tools/netsim"
+    },
+    {
+      "path": "tools/security/fuzzing/orphans/android_logger"
+    }
+  ]
+}

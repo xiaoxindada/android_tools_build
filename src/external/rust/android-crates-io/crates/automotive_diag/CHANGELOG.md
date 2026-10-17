@@ -1,0 +1,112 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.1.29](https://github.com/oxibus/automotive_diag/compare/v0.1.28...v0.1.29) - 2026-08-19
+
+### Fixed
+
+- *(doip)* [**breaking**] correct ActivationType::CentralSecurity to 0xE0 per ISO 13400-2 ([#94](https://github.com/oxibus/automotive_diag/pull/94))
+
+### Other
+
+- [pre-commit.ci] pre-commit autoupdate ([#91](https://github.com/oxibus/automotive_diag/pull/91))
+- *(deps)* bump the all-actions-version-updates group across 1 directory with 2 updates ([#93](https://github.com/oxibus/automotive_diag/pull/93))
+- update pyo3 and allow multiple ver due to syn ([#95](https://github.com/oxibus/automotive_diag/pull/95))
+
+## [0.1.28](https://github.com/oxibus/automotive_diag/compare/v0.1.27...v0.1.28) - 2026-04-15
+
+### Added
+
+- add several new UDS enums ([#85](https://github.com/oxibus/automotive_diag/pull/85))
+- add UDS `AuthenticationSubFunction` enum  ([#84](https://github.com/oxibus/automotive_diag/pull/84))
+
+### Other
+
+- *(deps)* bump dependabot/fetch-metadata from 2 to 3 in the all-actions-version-updates group ([#83](https://github.com/oxibus/automotive_diag/pull/83))
+- use only first doc str for Display impl ([#86](https://github.com/oxibus/automotive_diag/pull/86))
+- *(deps)* bump codecov/codecov-action from 5 to 6 in the all-actions-version-updates group ([#82](https://github.com/oxibus/automotive_diag/pull/82))
+- *(deps)* bump the all-cargo-version-updates group across 1 directory with 2 updates ([#76](https://github.com/oxibus/automotive_diag/pull/76))
+- [pre-commit.ci] pre-commit autoupdate ([#78](https://github.com/oxibus/automotive_diag/pull/78))
+
+## [0.1.27](https://github.com/oxibus/automotive_diag/compare/v0.1.26...v0.1.27) - 2026-03-10
+
+### Other
+
+- Add bin-proto support ([#77](https://github.com/oxibus/automotive_diag/pull/77))
+- add license checker to deny, format toml ([#79](https://github.com/oxibus/automotive_diag/pull/79))
+- add license checker to deny/CI ([#74](https://github.com/oxibus/automotive_diag/pull/74))
+- [pre-commit.ci] pre-commit autoupdate ([#73](https://github.com/oxibus/automotive_diag/pull/73))
+- minor justfile fixes ([#72](https://github.com/oxibus/automotive_diag/pull/72))
+- optimize msrv in the justfile ([#71](https://github.com/oxibus/automotive_diag/pull/71))
+- add .editorconfig ([#69](https://github.com/oxibus/automotive_diag/pull/69))
+
+## [0.1.26](https://github.com/oxibus/automotive_diag/compare/v0.1.25...v0.1.26) - 2025-12-12
+
+### Other
+
+All part of ([#67](https://github.com/oxibus/automotive_diag/pull/67)):
+- include `doip` feature as part of the default
+- minor cleanup of the justfile recipes
+- bump pyo3 dep version
+- bump MSRV to 1.74
+
+## [0.1.25](https://github.com/oxibus/automotive_diag/compare/v0.1.24...v0.1.25) - 2025-10-10
+
+### Other
+
+- upgrade to pyo3 0.26 ([#63](https://github.com/oxibus/automotive_diag/pull/63))
+
+## [0.1.24](https://github.com/oxibus/automotive_diag/compare/v0.1.23...v0.1.24) - 2025-10-01
+
+### Other
+
+- revert to RELEASE_PLZ_TOKEN ([#61](https://github.com/oxibus/automotive_diag/pull/61))
+- use github tokens in release ([#59](https://github.com/oxibus/automotive_diag/pull/59))
+
+## [0.1.23](https://github.com/nyurik/automotive_diag/compare/v0.1.22...v0.1.23) - 2025-09-19
+
+### Other
+
+- migrate this project to [OxiBUS](https://github.com/oxibus) GitHub organization
+- minor CI cleanups and improvements
+
+## [0.1.22](https://github.com/oxibus/automotive_diag/compare/v0.1.21...v0.1.22) - 2025-08-16
+
+### Other
+
+- Bump actions/checkout from 4 to 5 in the all-actions-version-updates group ([#53](https://github.com/oxibus/automotive_diag/pull/53))
+- [pre-commit.ci] pre-commit autoupdate ([#52](https://github.com/oxibus/automotive_diag/pull/52))
+- *(ci)* format Cargo.toml ([#51](https://github.com/oxibus/automotive_diag/pull/51))
+
+## [0.1.21](https://github.com/oxibus/automotive_diag/compare/v0.1.20...v0.1.21) - 2025-06-12
+
+### Fixed
+
+- ensure 2-digit hex formatting ([#50](https://github.com/oxibus/automotive_diag/pull/50)), reported by @ColinFinck ([#49](https://github.com/oxibus/automotive_diag/issues/49))
+
+### Other
+
+- use release-plz token in dependabot ci
+
+## [0.1.20](https://github.com/oxibus/automotive_diag/compare/v0.1.19...v0.1.20) - 2025-06-08
+
+### Other
+
+- remove default ci perms
+- update deps on release
+
+## [0.1.19](https://github.com/oxibus/automotive_diag/compare/v0.1.18...v0.1.19) - 2025-06-08
+
+### Other
+
+- improve release-plz CI process
+
+## [0.1.18](https://github.com/oxibus/automotive_diag/compare/v0.1.17...v0.1.18) - 2025-06-06
+
+- refactored CI, enabled release automation

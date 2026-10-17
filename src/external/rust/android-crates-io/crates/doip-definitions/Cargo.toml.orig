@@ -1,0 +1,53 @@
+[package]
+name = "doip-definitions"
+version = "3.0.14"
+authors = ["Samuel Preston <samp.reston@outlook.com>"]
+edition = "2021"
+description = "A Diagnostics over Internet Protocol (DoIP) definition library for use in DoIP applications."
+readme = "README.md"
+repository = "https://github.com/samp-reston/doip-definitions"
+license = "MIT"
+keywords = ["doip", "diagnostics", "vehicle", "standards"]
+categories = ["development-tools", "network-programming"]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.test]
+opt-level = 0
+debug = true
+
+[lib]
+name = "doip_definitions"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+derive_more = { version = "2.0.1", features = ["from"] }
+pyo3 = { version = "0.24.2", features = [
+  "abi3-py311",
+  "extension-module",
+], optional = true }
+
+[features]
+default = ["std", "builder"] # Enable std by default
+std = []
+python-bindings = [
+  "dep:pyo3",
+  "std",
+] # Enable std and pyo3 when building for Python
+builder = ["std"]
+
+[package.metadata]
+rust-analyzer = { checkOnSave.extraArgs = [
+  "--check-cfg",
+  "cfg(rust_analyzer)",
+] }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(rust_analyzer)"] }

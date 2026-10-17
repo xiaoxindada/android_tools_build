@@ -1,0 +1,18 @@
+{
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.virt"
+  ],
+  "features": [
+    "default",
+    "std",
+    "serde"
+  ],
+  "package": {
+    "semver": {
+      "host_supported": true
+    }
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

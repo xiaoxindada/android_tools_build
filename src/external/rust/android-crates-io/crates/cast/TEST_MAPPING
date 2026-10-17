@@ -1,0 +1,20 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/criterion"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/criterion-plot"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "cast_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "cast_test_src_lib"
+    }
+  ]
+}

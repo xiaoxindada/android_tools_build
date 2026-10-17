@@ -1,0 +1,7 @@
+{
+  "module_name_overrides": {
+    "librand": "librand-0.8"
+  },
+  "tests": true,
+  "min_sdk_version": "29"
+}

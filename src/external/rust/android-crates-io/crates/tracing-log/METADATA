@@ -1,0 +1,17 @@
+name: "tracing-log"
+description: "Provides compatibility between `tracing` and the `log` crate."
+third_party {
+  version: "0.2.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 6
+  }
+  homepage: "https://crates.io/crates/tracing-log"
+  identifier {
+    type: "crates.io"
+    value: "tracing-log"
+    version: "0.2.0"
+  }
+}

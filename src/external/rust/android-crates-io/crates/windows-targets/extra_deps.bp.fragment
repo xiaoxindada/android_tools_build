@@ -1,0 +1,15 @@
+target: {
+    windows: {
+        enabled: true,
+    },
+    windows_x86: {
+        rustlibs: [
+            "libwindows_i686_gnullvm",
+        ],
+    },
+    windows_x86_64: {
+        rustlibs: [
+            "libwindows_x86_64_gnullvm",
+        ],
+    },
+}

@@ -1,0 +1,8 @@
+{
+  "module_name_overrides": {
+    "libelf": "libelf_rust"
+  },
+  "run_cargo": false,
+  "tests": false,
+  "min_sdk_version": "29"
+}

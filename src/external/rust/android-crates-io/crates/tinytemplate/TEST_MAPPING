@@ -1,0 +1,17 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/criterion"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "tinytemplate_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "tinytemplate_test_src_lib"
+    }
+  ]
+}

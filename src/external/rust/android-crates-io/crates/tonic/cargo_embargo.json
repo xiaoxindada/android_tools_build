@@ -1,0 +1,14 @@
+{
+  "features": [
+    "transport",
+    "router"
+  ],
+  "module_visibility": {
+    "libtonic": [
+      "//system/software_defined_vehicle:__subpackages__",
+      "//tools/netsim:__subpackages__"
+    ]
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

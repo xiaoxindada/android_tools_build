@@ -1,0 +1,17 @@
+name: "atty"
+description: "A simple interface for querying atty"
+third_party {
+  version: "0.2.14"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2020
+    month: 12
+    day: 21
+  }
+  homepage: "https://crates.io/crates/atty"
+  identifier {
+    type: "crates.io"
+    value: "atty"
+    version: "0.2.14"
+  }
+}

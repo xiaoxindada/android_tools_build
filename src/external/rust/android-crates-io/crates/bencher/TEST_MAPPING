@@ -1,0 +1,23 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/arrayvec"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crc32fast"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/url"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "bencher_test_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "bencher_test_lib"
+    }
+  ]
+}

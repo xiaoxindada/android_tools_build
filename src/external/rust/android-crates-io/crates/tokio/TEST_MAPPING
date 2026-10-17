@@ -1,0 +1,494 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/async-stream"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/debug_tree"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures-util"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/h2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/http-body"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/hyper"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/hyper-timeout"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/inotify"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ipp"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ippusb"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/netlink-sys"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rtnetlink"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio-io-timeout"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio-openssl"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio-stream"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio-test"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio-util"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tonic"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tower"
+    },
+    {
+      "path": "external/rust/pica"
+    },
+    {
+      "path": "packages/modules/Bluetooth/system/rust"
+    },
+    {
+      "path": "packages/modules/Connectivity/remoteauth/service/jni"
+    },
+    {
+      "path": "packages/modules/DnsResolver/rust/src/doh/tests/doh_frontend"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/src/rust"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/src/rust/test"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/tools/casimir"
+    },
+    {
+      "path": "packages/modules/Uwb/libuwb-uci/src"
+    },
+    {
+      "path": "packages/modules/Uwb/service/uci/jni"
+    },
+    {
+      "path": "system/libueventd-rs"
+    },
+    {
+      "path": "system/security/keystore2"
+    },
+    {
+      "path": "system/security/keystore2/rkpd_client"
+    },
+    {
+      "path": "system/security/prng_seeder"
+    },
+    {
+      "path": "system/tools/aidl"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "tokio_test_tests__require_full"
+    },
+    {
+      "name": "tokio_test_tests_buffered"
+    },
+    {
+      "name": "tokio_test_tests_io_async_fd"
+    },
+    {
+      "name": "tokio_test_tests_io_async_read"
+    },
+    {
+      "name": "tokio_test_tests_io_chain"
+    },
+    {
+      "name": "tokio_test_tests_io_copy"
+    },
+    {
+      "name": "tokio_test_tests_io_copy_bidirectional"
+    },
+    {
+      "name": "tokio_test_tests_io_driver"
+    },
+    {
+      "name": "tokio_test_tests_io_driver_drop"
+    },
+    {
+      "name": "tokio_test_tests_io_lines"
+    },
+    {
+      "name": "tokio_test_tests_io_mem_stream"
+    },
+    {
+      "name": "tokio_test_tests_io_read"
+    },
+    {
+      "name": "tokio_test_tests_io_read_buf"
+    },
+    {
+      "name": "tokio_test_tests_io_read_exact"
+    },
+    {
+      "name": "tokio_test_tests_io_read_line"
+    },
+    {
+      "name": "tokio_test_tests_io_read_to_end"
+    },
+    {
+      "name": "tokio_test_tests_io_read_to_string"
+    },
+    {
+      "name": "tokio_test_tests_io_read_until"
+    },
+    {
+      "name": "tokio_test_tests_io_split"
+    },
+    {
+      "name": "tokio_test_tests_io_take"
+    },
+    {
+      "name": "tokio_test_tests_io_write"
+    },
+    {
+      "name": "tokio_test_tests_io_write_all"
+    },
+    {
+      "name": "tokio_test_tests_io_write_buf"
+    },
+    {
+      "name": "tokio_test_tests_io_write_int"
+    },
+    {
+      "name": "tokio_test_tests_macros_join"
+    },
+    {
+      "name": "tokio_test_tests_macros_pin"
+    },
+    {
+      "name": "tokio_test_tests_macros_select"
+    },
+    {
+      "name": "tokio_test_tests_macros_test"
+    },
+    {
+      "name": "tokio_test_tests_macros_try_join"
+    },
+    {
+      "name": "tokio_test_tests_net_bind_resource"
+    },
+    {
+      "name": "tokio_test_tests_net_lookup_host"
+    },
+    {
+      "name": "tokio_test_tests_no_rt"
+    },
+    {
+      "name": "tokio_test_tests_process_kill_on_drop"
+    },
+    {
+      "name": "tokio_test_tests_rt_basic"
+    },
+    {
+      "name": "tokio_test_tests_rt_common"
+    },
+    {
+      "name": "tokio_test_tests_rt_threaded"
+    },
+    {
+      "name": "tokio_test_tests_sync_barrier"
+    },
+    {
+      "name": "tokio_test_tests_sync_broadcast"
+    },
+    {
+      "name": "tokio_test_tests_sync_errors"
+    },
+    {
+      "name": "tokio_test_tests_sync_mutex"
+    },
+    {
+      "name": "tokio_test_tests_sync_mutex_owned"
+    },
+    {
+      "name": "tokio_test_tests_sync_notify"
+    },
+    {
+      "name": "tokio_test_tests_sync_oneshot"
+    },
+    {
+      "name": "tokio_test_tests_sync_rwlock"
+    },
+    {
+      "name": "tokio_test_tests_sync_semaphore"
+    },
+    {
+      "name": "tokio_test_tests_sync_semaphore_owned"
+    },
+    {
+      "name": "tokio_test_tests_sync_watch"
+    },
+    {
+      "name": "tokio_test_tests_task_abort"
+    },
+    {
+      "name": "tokio_test_tests_task_blocking"
+    },
+    {
+      "name": "tokio_test_tests_task_local"
+    },
+    {
+      "name": "tokio_test_tests_task_local_set"
+    },
+    {
+      "name": "tokio_test_tests_tcp_accept"
+    },
+    {
+      "name": "tokio_test_tests_tcp_connect"
+    },
+    {
+      "name": "tokio_test_tests_tcp_echo"
+    },
+    {
+      "name": "tokio_test_tests_tcp_into_split"
+    },
+    {
+      "name": "tokio_test_tests_tcp_into_std"
+    },
+    {
+      "name": "tokio_test_tests_tcp_peek"
+    },
+    {
+      "name": "tokio_test_tests_tcp_shutdown"
+    },
+    {
+      "name": "tokio_test_tests_tcp_socket"
+    },
+    {
+      "name": "tokio_test_tests_tcp_split"
+    },
+    {
+      "name": "tokio_test_tests_time_rt"
+    },
+    {
+      "name": "tokio_test_tests_udp"
+    },
+    {
+      "name": "tokio_test_tests_uds_cred"
+    },
+    {
+      "name": "tokio_test_tests_uds_split"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "tokio_test_tests__require_full"
+    },
+    {
+      "name": "tokio_test_tests_buffered"
+    },
+    {
+      "name": "tokio_test_tests_io_async_fd"
+    },
+    {
+      "name": "tokio_test_tests_io_async_read"
+    },
+    {
+      "name": "tokio_test_tests_io_chain"
+    },
+    {
+      "name": "tokio_test_tests_io_copy"
+    },
+    {
+      "name": "tokio_test_tests_io_copy_bidirectional"
+    },
+    {
+      "name": "tokio_test_tests_io_driver"
+    },
+    {
+      "name": "tokio_test_tests_io_driver_drop"
+    },
+    {
+      "name": "tokio_test_tests_io_lines"
+    },
+    {
+      "name": "tokio_test_tests_io_mem_stream"
+    },
+    {
+      "name": "tokio_test_tests_io_read"
+    },
+    {
+      "name": "tokio_test_tests_io_read_buf"
+    },
+    {
+      "name": "tokio_test_tests_io_read_exact"
+    },
+    {
+      "name": "tokio_test_tests_io_read_line"
+    },
+    {
+      "name": "tokio_test_tests_io_read_to_end"
+    },
+    {
+      "name": "tokio_test_tests_io_read_to_string"
+    },
+    {
+      "name": "tokio_test_tests_io_read_until"
+    },
+    {
+      "name": "tokio_test_tests_io_split"
+    },
+    {
+      "name": "tokio_test_tests_io_take"
+    },
+    {
+      "name": "tokio_test_tests_io_write"
+    },
+    {
+      "name": "tokio_test_tests_io_write_all"
+    },
+    {
+      "name": "tokio_test_tests_io_write_buf"
+    },
+    {
+      "name": "tokio_test_tests_io_write_int"
+    },
+    {
+      "name": "tokio_test_tests_macros_join"
+    },
+    {
+      "name": "tokio_test_tests_macros_pin"
+    },
+    {
+      "name": "tokio_test_tests_macros_select"
+    },
+    {
+      "name": "tokio_test_tests_macros_test"
+    },
+    {
+      "name": "tokio_test_tests_macros_try_join"
+    },
+    {
+      "name": "tokio_test_tests_net_bind_resource"
+    },
+    {
+      "name": "tokio_test_tests_net_lookup_host"
+    },
+    {
+      "name": "tokio_test_tests_no_rt"
+    },
+    {
+      "name": "tokio_test_tests_process_kill_on_drop"
+    },
+    {
+      "name": "tokio_test_tests_rt_basic"
+    },
+    {
+      "name": "tokio_test_tests_rt_common"
+    },
+    {
+      "name": "tokio_test_tests_rt_threaded"
+    },
+    {
+      "name": "tokio_test_tests_sync_barrier"
+    },
+    {
+      "name": "tokio_test_tests_sync_broadcast"
+    },
+    {
+      "name": "tokio_test_tests_sync_errors"
+    },
+    {
+      "name": "tokio_test_tests_sync_mutex"
+    },
+    {
+      "name": "tokio_test_tests_sync_mutex_owned"
+    },
+    {
+      "name": "tokio_test_tests_sync_notify"
+    },
+    {
+      "name": "tokio_test_tests_sync_oneshot"
+    },
+    {
+      "name": "tokio_test_tests_sync_rwlock"
+    },
+    {
+      "name": "tokio_test_tests_sync_semaphore"
+    },
+    {
+      "name": "tokio_test_tests_sync_semaphore_owned"
+    },
+    {
+      "name": "tokio_test_tests_sync_watch"
+    },
+    {
+      "name": "tokio_test_tests_task_abort"
+    },
+    {
+      "name": "tokio_test_tests_task_blocking"
+    },
+    {
+      "name": "tokio_test_tests_task_local"
+    },
+    {
+      "name": "tokio_test_tests_task_local_set"
+    },
+    {
+      "name": "tokio_test_tests_tcp_accept"
+    },
+    {
+      "name": "tokio_test_tests_tcp_connect"
+    },
+    {
+      "name": "tokio_test_tests_tcp_echo"
+    },
+    {
+      "name": "tokio_test_tests_tcp_into_split"
+    },
+    {
+      "name": "tokio_test_tests_tcp_into_std"
+    },
+    {
+      "name": "tokio_test_tests_tcp_peek"
+    },
+    {
+      "name": "tokio_test_tests_tcp_shutdown"
+    },
+    {
+      "name": "tokio_test_tests_tcp_socket"
+    },
+    {
+      "name": "tokio_test_tests_tcp_split"
+    },
+    {
+      "name": "tokio_test_tests_time_rt"
+    },
+    {
+      "name": "tokio_test_tests_udp"
+    },
+    {
+      "name": "tokio_test_tests_uds_cred"
+    },
+    {
+      "name": "tokio_test_tests_uds_split"
+    }
+  ]
+}

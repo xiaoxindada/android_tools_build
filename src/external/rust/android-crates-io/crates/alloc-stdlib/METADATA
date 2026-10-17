@@ -1,0 +1,17 @@
+name: "alloc-stdlib"
+description: "A dynamic allocator example that may be used with the stdlib"
+third_party {
+  version: "0.3.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 25
+  }
+  homepage: "https://crates.io/crates/alloc-stdlib"
+  identifier {
+    type: "crates.io"
+    value: "alloc-stdlib"
+    version: "0.3.0"
+  }
+}

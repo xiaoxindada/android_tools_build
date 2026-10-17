@@ -1,0 +1,10 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/vhost-user-backend"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vhost-device-vsock"
+    }
+  ]
+}

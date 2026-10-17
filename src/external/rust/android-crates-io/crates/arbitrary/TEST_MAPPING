@@ -1,0 +1,31 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/libfuzzer-sys"
+    },
+    {
+      "path": "external/rust/beto-rust/betosync"
+    },
+    {
+      "path": "packages/modules/Uwb/libuwb-uci/src"
+    },
+    {
+      "path": "system/librustutils"
+    },
+    {
+      "path": "system/security/keystore2/src/fuzzers"
+    },
+    {
+      "path": "tools/security/fuzzing/orphans/android_logger"
+    },
+    {
+      "path": "tools/security/fuzzing/orphans/hashbrown"
+    },
+    {
+      "path": "tools/security/fuzzing/orphans/hashlink"
+    },
+    {
+      "path": "tools/security/fuzzing/orphans/smallvec"
+    }
+  ]
+}

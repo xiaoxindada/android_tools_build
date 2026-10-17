@@ -1,0 +1,17 @@
+cc_library {
+    name: "libvsprintf_wrapper",
+    srcs: ["src/lib.c"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    host_supported: true,
+    product_available: true,
+    vendor_available: true,
+    visibility: ["//external/rust/crates/vsprintf"],
+    apex_available: [
+        "//apex_available:platform",
+        "//apex_available:anyapex",
+    ],
+    min_sdk_version: "29",
+}

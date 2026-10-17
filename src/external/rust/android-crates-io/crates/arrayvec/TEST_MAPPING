@@ -1,0 +1,30 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/arrayvec"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/etherparse"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/taffy"
+    },
+    {
+      "path": "system/desktop/ec/src/libec"
+    },
+    {
+      "path": "system/zygote/zygote"
+    },
+    {
+      "path": "system/zygote/zygote-sys"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "arrayvec_test_src_lib"
+    },
+    {
+      "name": "arrayvec_test_tests_tests"
+    }
+  ]
+}

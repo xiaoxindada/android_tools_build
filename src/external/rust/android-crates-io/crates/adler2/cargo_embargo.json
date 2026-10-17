@@ -1,0 +1,10 @@
+{
+    "run_cargo": false,
+    "min_sdk_version": "29",
+    "package": {
+        "adler2": {
+            "target_windows": true
+        }
+    },
+    "ota_recovery_ramdisk_available": true
+}

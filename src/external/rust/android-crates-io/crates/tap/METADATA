@@ -1,0 +1,17 @@
+name: "tap"
+description: "Generic extensions for tapping values in Rust"
+third_party {
+  version: "1.0.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 7
+    day: 8
+  }
+  homepage: "https://crates.io/crates/tap"
+  identifier {
+    type: "crates.io"
+    value: "tap"
+    version: "1.0.1"
+  }
+}

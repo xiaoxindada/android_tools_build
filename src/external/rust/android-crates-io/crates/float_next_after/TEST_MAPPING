@@ -1,0 +1,7 @@
+{
+  "postsubmit": [
+    {
+      "name": "float_next_after_test_src_lib"
+    }
+  ]
+}

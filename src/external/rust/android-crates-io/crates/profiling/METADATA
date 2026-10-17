@@ -1,0 +1,17 @@
+name: "profiling"
+description: "This crate provides a very thin abstraction over other profiler crates."
+third_party {
+  version: "1.0.18"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 6
+  }
+  homepage: "https://crates.io/crates/profiling"
+  identifier {
+    type: "crates.io"
+    value: "profiling"
+    version: "1.0.18"
+  }
+}

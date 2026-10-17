@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/hyper"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio"
+    },
+    {
+      "path": "packages/modules/adb/client/adbmdns"
+    }
+  ]
+}

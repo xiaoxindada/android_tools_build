@@ -1,0 +1,17 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/futures-channel"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "futures-test_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "futures-test_test_src_lib"
+    }
+  ]
+}

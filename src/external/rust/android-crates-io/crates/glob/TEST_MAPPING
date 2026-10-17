@@ -1,0 +1,25 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/clang-sys"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libcompos_common"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/liblinux"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vm_accessor/accessor"
+    }
+  ]
+}

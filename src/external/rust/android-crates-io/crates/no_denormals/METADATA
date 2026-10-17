@@ -1,0 +1,17 @@
+name: "no_denormals"
+description: "Temporarily turn off floating point denormals."
+third_party {
+  version: "0.3.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 26
+  }
+  homepage: "https://crates.io/crates/no_denormals"
+  identifier {
+    type: "crates.io"
+    value: "no_denormals"
+    version: "0.3.0"
+  }
+}

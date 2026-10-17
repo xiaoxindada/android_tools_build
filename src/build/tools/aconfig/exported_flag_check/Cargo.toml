@@ -1,0 +1,15 @@
+[package]
+name = "exported-flag-check"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["cargo"]
+cargo = []
+
+[dependencies]
+aconfig_protos = { path = "../aconfig_protos" }
+anyhow = { path = "../../../../../external/rust/android-crates-io/crates/anyhow" }
+clap = { path = "../../../../../external/rust/android-crates-io/crates/clap", features = ["derive"] }
+protobuf = "3.2.0"
+regex = "1.11.1"

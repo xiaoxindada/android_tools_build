@@ -1,0 +1,372 @@
+// Copyright 2025 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+//! A library for parsing and manipulating Flattened Device Tree (FDT) blobs.
+//!
+//! This library provides a comprehensive API for working with FDTs, including:
+//!
+//! - An in-place API for parsing, traversing, and modifying FDTs without memory
+//!   allocation.
+//! - An intermediate representation API for creating and modifying FDTs using
+//!   computationally efficient data structures.
+//! - Support for applying device tree overlays.
+//! - Outputting device trees in DTS source format.
+//!
+//! The library is written purely in Rust and is `#![no_std]` compatible. If
+//! you don't need the Device Tree manipulation functionality, the library is
+//! also no-`alloc`-compatible.
+//!
+//! ## In-place API
+//!
+//! The in-place API is centered around the [`Fdt`](fdt::Fdt) struct for
+//! read-only operations, and the [`FdtMut`](fdt_mut::FdtMut) struct for mutable
+//! operations. Both provide a safe, zero-copy view of an FDT blob. You can use
+//! this API to traverse the device tree, inspect nodes and properties, and read
+//! or write property values in-place.
+//!
+//! Note that because these structs operate directly on the serialized format,
+//! certain operations such as node or property lookups run in linear time. If
+//! you need to perform these operations often, and you can spare extra memory,
+//! it might be beneficial to convert from [`Fdt`](fdt::Fdt) to
+//! [`DeviceTree`](model::DeviceTree) first.
+//!
+//! ## Intermediate Representation API
+//!
+//! The intermediate representation API is centered around the
+//! [`DeviceTree`](model::DeviceTree) struct, which provides a mutable
+//! representation of a device tree built upon computationally efficient data
+//! structures. You can use this API to create new device trees from scratch,
+//! modify existing ones, and serialize them back to an FDT blob.
+//!
+//! Internally it is built upon hash maps, meaning that most lookup and
+//! modification operations run in constant time.
+//!
+//! # Examples
+//!
+//! ## General usage with the Intermediate Representation API
+//!
+//! ```
+//! use dtoolkit::fdt::Fdt;
+//! use dtoolkit::model::{DeviceTree, DeviceTreeNode, DeviceTreeProperty};
+//! use dtoolkit::{Node, Property};
+//!
+//! // Create a new device tree from scratch.
+//! let mut tree = DeviceTree::new();
+//!
+//! // Add a child node to the root.
+//! let child = DeviceTreeNode::builder("child")
+//!     .unwrap()
+//!     .property(DeviceTreeProperty::new("my-property", "hello").unwrap())
+//!     .build();
+//! tree.root.add_child(child);
+//!
+//! // Serialize the device tree to a DTB.
+//! let dtb = tree.to_dtb();
+//!
+//! // Parse the DTB with the read-only API.
+//! let fdt = Fdt::new(&dtb).unwrap();
+//!
+//! // Find the child node and read its property.
+//! let child_node = fdt.find_node("/child").unwrap();
+//! let prop = child_node.property("my-property").unwrap();
+//! let val = prop.value_as::<&str>().unwrap();
+//! assert_eq!(val, "hello");
+//!
+//! // Display the DTS
+//! println!("{}", fdt);
+//! ```
+//!
+//! ## In-place editing API
+//!
+//! ```
+//! use dtoolkit::fdt_mut::FdtMut;
+//! use dtoolkit::{Node, Property};
+//!
+//! # let mut dtb = include_bytes!("../tests/dtb/test_props.dtb").to_vec();
+//! let mut fdt = FdtMut::from_slice(&mut dtb).unwrap();
+//!
+//! let mut node = fdt.find_node_mut("/test-props").unwrap();
+//! node.property_mut("str-prop")
+//!     .unwrap()
+//!     .set_value(b"hello rust\0");
+//! let is_removed = node.remove_property("u32-prop");
+//! ```
+//!
+//! ## Applying Device Tree Overlays
+//!
+//! ```
+//! use dtoolkit::fdt::Fdt;
+//! use dtoolkit::model::DeviceTree;
+//! use dtoolkit::model::overlay::OverlayApplier;
+//!
+//! # let base_dtb = include_bytes!("../tests/dtb/overlay_target_path_base.dtb");
+//! # let overlay_dtb = include_bytes!("../tests/dtb/overlay_target_path_overlay.dtb");
+//! let mut base = DeviceTree::from_fdt(&Fdt::new(base_dtb).unwrap());
+//! let overlay = Fdt::new(overlay_dtb).unwrap();
+//!
+//! let mut applier = OverlayApplier::new(&mut base);
+//! applier.apply_overlay(&overlay).unwrap();
+//! ```
+
+#![cfg_attr(not(test), no_std)]
+#![warn(missing_docs, rustdoc::missing_crate_level_docs)]
+#![deny(unsafe_code)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
+pub mod error;
+pub mod fdt;
+pub mod fdt_mut;
+pub mod memreserve;
+#[cfg(feature = "write")]
+pub mod model;
+#[cfg(feature = "overlay")]
+pub mod overlay;
+pub mod standard;
+mod util;
+mod validate;
+mod values;
+use core::fmt::{self, Display, Formatter};
+use core::ops::{BitOr, Shl};
+
+use zerocopy::big_endian;
+
+use crate::error::{PropertyError, StandardError};
+pub use crate::values::{
+    FdtStringListIterator, FromPropertyValue, PropEncodedArrayIterator, ToPropertyValue,
+};
+
+macro_rules! impl_property_methods {
+    (get_value = |$self:ident| $get_value:expr) => {
+        fn value_as<'v, T: crate::FromPropertyValue<'v>>(&$self) -> Result<T, crate::error::PropertyError> where Self: 'v {
+            T::from_property_value($get_value)
+        }
+
+        fn as_prop_encoded_array<const N: usize>(
+            &$self,
+            fields_cells: [usize; N],
+        ) -> Result<crate::values::PropEncodedArrayIterator<'a, N>, crate::error::PropertyError> {
+            crate::values::PropEncodedArrayIterator::new($get_value, fields_cells)
+        }
+    };
+}
+use impl_property_methods;
+
+/// A device tree node.
+pub trait Node: Sized {
+    /// The type used for properties of the node.
+    type Property<'a>: Property + 'a
+    where
+        Self: 'a;
+
+    /// The type used for child nodes.
+    type Child<'a>: Node + 'a
+    where
+        Self: 'a;
+
+    /// The type used for the properties iterator.
+    type Properties<'a>: Iterator<Item = Self::Property<'a>> + 'a
+    where
+        Self: 'a;
+
+    /// The type used for the children iterator.
+    type Children<'a>: Iterator<Item = Self::Child<'a>> + 'a
+    where
+        Self: 'a;
+
+    /// The type used for the name of the node.
+    type Name<'a>: AsRef<str> + Copy + 'a
+    where
+        Self: 'a;
+
+    /// Returns the name of this node.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use dtoolkit::Node;
+    /// use dtoolkit::fdt::Fdt;
+    ///
+    /// # let dtb = include_bytes!("../tests/dtb/test_children.dtb");
+    /// let fdt = Fdt::new(dtb).unwrap();
+    /// let root = fdt.root();
+    /// let child = root.child("child1").unwrap();
+    /// assert_eq!(child.name(), "child1");
+    /// ```
+    #[must_use]
+    fn name(&self) -> Self::Name<'_>;
+
+    /// Returns the name of this node without the unit address, if any.
+    #[must_use]
+    fn name_without_address(&self) -> Self::Name<'_>;
+
+    /// Returns the property with the given name, if any.
+    ///
+    /// # Performance
+    ///
+    /// This default implementation iterates through all properties of the node.
+    fn property(&self, name: &str) -> Option<Self::Property<'_>> {
+        self.properties().find(|property| property.name() == name)
+    }
+
+    /// Returns an iterator over the properties of this node.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use dtoolkit::fdt::Fdt;
+    /// use dtoolkit::{Node, Property};
+    ///
+    /// # let dtb = include_bytes!("../tests/dtb/test_props.dtb");
+    /// let fdt = Fdt::new(dtb).unwrap();
+    /// let node = fdt.find_node("/test-props").unwrap();
+    /// let mut props = node.properties();
+    /// assert_eq!(props.next().unwrap().name(), "u32-prop");
+    /// assert_eq!(props.next().unwrap().name(), "u64-prop");
+    /// assert_eq!(props.next().unwrap().name(), "str-prop");
+    /// ```
+    fn properties(&self) -> Self::Properties<'_>;
+
+    /// Returns a child node by its name.
+    ///
+    /// If the given name contains a _unit-address_ (the part after the `@`
+    /// sign) then both the _node-name_ and _unit-address_ must match. If it
+    /// doesn't have a _unit-address_, then nodes with any _unit-address_ or
+    /// none will be allowed.
+    ///
+    /// For example, searching for `memory` as a child of `/` would match either
+    /// `/memory` or `/memory@4000`, while `memory@4000` would match only the
+    /// latter.
+    fn child(&self, name: &str) -> Option<Self::Child<'_>> {
+        let include_address = name.contains('@');
+        self.children().find(|child| {
+            if include_address {
+                child.name().as_ref() == name
+            } else {
+                child.name_without_address().as_ref() == name
+            }
+        })
+    }
+
+    /// Returns an iterator over the children of this node.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use dtoolkit::Node;
+    /// use dtoolkit::fdt::Fdt;
+    ///
+    /// # let dtb = include_bytes!("../tests/dtb/test_children.dtb");
+    /// let fdt = Fdt::new(dtb).unwrap();
+    /// let root = fdt.root();
+    /// let mut children = root.children();
+    /// assert_eq!(children.next().unwrap().name(), "child1");
+    /// assert_eq!(children.next().unwrap().name(), "child2@42");
+    /// assert!(children.next().is_none());
+    /// ```
+    fn children(&self) -> Self::Children<'_>;
+}
+
+/// A property of a device tree node.
+pub trait Property: Sized {
+    /// The type used for the prop-encoded-array iterator.
+    type PropEncodedArray<const N: usize>: Iterator<Item = [Self::CellsItem; N]>;
+
+    /// The type used for the cells.
+    type CellsItem: Copy + ToCellInt;
+
+    /// Returns the name of this property.
+    #[must_use]
+    fn name(&self) -> &str;
+
+    /// Returns the value of this property.
+    #[must_use]
+    fn value(&self) -> &[u8];
+
+    /// Returns the value of this property as a given type.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the value cannot be parsed or has invalid length.
+    fn value_as<'a, T: FromPropertyValue<'a>>(&self) -> Result<T, PropertyError>
+    where
+        Self: 'a;
+
+    /// Returns an iterator over the elements of the property interpreted as a
+    /// `prop-encoded-array`.
+    ///
+    /// Each element of the array will have will have the same number of fields,
+    /// where each field has the number of cells specified by the corresponding
+    /// entry in `fields_cells`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the property's value's length can't be divided into
+    /// a multiple of the given cells.
+    fn as_prop_encoded_array<const N: usize>(
+        &self,
+        fields_cells: [usize; N],
+    ) -> Result<Self::PropEncodedArray<N>, PropertyError>;
+}
+
+/// An integer value split into several big-endian u32 parts.
+///
+/// This is generally used in prop-encoded-array properties.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct Cells<'a>(pub(crate) &'a [big_endian::U32]);
+
+/// Trait for converting cells to integers.
+pub trait ToCellInt {
+    /// Converts the value to the given integer type.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StandardError::TooManyCells`] if the value has too many cells
+    /// to fit in the given type.
+    fn to_int<T: Default + From<u32> + Shl<usize, Output = T> + BitOr<Output = T>>(
+        self,
+    ) -> Result<T, StandardError>;
+}
+
+impl ToCellInt for Cells<'_> {
+    fn to_int<T: Default + From<u32> + Shl<usize, Output = T> + BitOr<Output = T>>(
+        self,
+    ) -> Result<T, StandardError> {
+        if size_of::<T>() < self.0.len() * size_of::<u32>() {
+            Err(StandardError::TooManyCells {
+                cells: self.0.len(),
+            })
+        } else if let [size] = self.0 {
+            Ok(size.get().into())
+        } else {
+            let mut value = Default::default();
+            for cell in self.0 {
+                value = value << 32 | cell.get().into();
+            }
+            Ok(value)
+        }
+    }
+}
+
+impl AsRef<[big_endian::U32]> for Cells<'_> {
+    fn as_ref(&self) -> &[big_endian::U32] {
+        self.0
+    }
+}
+
+impl Display for Cells<'_> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        f.write_str("0x")?;
+        for part in self.0 {
+            write!(f, "{part:08x}")?;
+        }
+        Ok(())
+    }
+}

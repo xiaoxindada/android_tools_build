@@ -1,0 +1,29 @@
+{
+  "features": [
+    "alloc",
+    "serde",
+    "writeable",
+    "zerovec"
+  ],
+  "ramdisk_available": true,
+  "recovery_available": true,
+  "vendor_ramdisk_available": true,
+  "native_bridge_supported": true,
+  "package": {
+    "potential_utf": {
+      "add_module_block": "icu4x_bionic_dep.bp.fragment"
+    }
+  },
+  "sdk_version": "29",
+  "min_sdk_version": "29",
+  "variants": [
+    {},
+    {
+      "package": {
+        "potential_utf": {
+          "no_std": true
+        }
+      }
+    }
+  ]
+}

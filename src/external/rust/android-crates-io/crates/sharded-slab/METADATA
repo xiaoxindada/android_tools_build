@@ -1,0 +1,17 @@
+name: "sharded-slab"
+description: "A lock-free concurrent slab."
+third_party {
+  version: "0.1.7"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 2
+    day: 5
+  }
+  homepage: "https://crates.io/crates/sharded-slab"
+  identifier {
+    type: "crates.io"
+    value: "sharded-slab"
+    version: "0.1.7"
+  }
+}

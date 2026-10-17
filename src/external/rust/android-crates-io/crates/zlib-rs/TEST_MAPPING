@@ -1,0 +1,12 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/libz-rs-sys"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "zlib-rs_test_src_lib"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+name: "nix"
+description: "Rust friendly bindings to *nix APIs"
+third_party {
+  version: "0.31.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 11
+  }
+  homepage: "https://crates.io/crates/nix"
+  identifier {
+    type: "crates.io"
+    value: "nix"
+    version: "0.31.3"
+  }
+}

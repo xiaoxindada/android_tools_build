@@ -1,0 +1,21 @@
+    // Manually translated build.rs cfg aliases.
+    target: {
+        host_linux: {
+            cfgs: [
+                "linux",
+                "linux_android",
+            ],
+        },
+        android: {
+            cfgs: [
+                "android",
+                "linux_android",
+            ],
+        },
+        darwin: {
+            cfgs: [
+                "apple_targets",
+                "bsd",
+            ],
+        },
+    }

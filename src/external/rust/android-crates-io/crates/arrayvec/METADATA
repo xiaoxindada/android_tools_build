@@ -1,0 +1,17 @@
+name: "arrayvec"
+description: "A vector with fixed capacity, backed by an array (it can be stored on the stack too). Implements fixed capacity ArrayVec and ArrayString."
+third_party {
+  version: "0.7.8"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 6
+  }
+  homepage: "https://crates.io/crates/arrayvec"
+  identifier {
+    type: "crates.io"
+    value: "arrayvec"
+    version: "0.7.8"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "features": [
+    "runtime",
+    "clang_11_0"
+  ],
+  "package": {
+    "clang-sys": {
+      "copy_out": true,
+      "device_supported": false
+    }
+  },
+  "min_sdk_version": "29"
+}

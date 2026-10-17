@@ -1,0 +1,16 @@
+{
+  "imports": [
+    {
+      "path": "system/extras/libatrace_rust"
+    },
+    {
+      "path": "system/extras/libatrace_rust/benchmark"
+    },
+    {
+      "path": "system/extras/libatrace_rust/example"
+    },
+    {
+      "path": "tools/asuite/adevice"
+    }
+  ]
+}

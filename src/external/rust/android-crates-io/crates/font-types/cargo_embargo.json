@@ -1,0 +1,12 @@
+{
+  "features": [
+    "bytemuck"
+  ],
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "package": {
+    "font-types": {
+      "target_windows": true
+    }
+  }
+}

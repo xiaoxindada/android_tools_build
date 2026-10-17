@@ -1,0 +1,18 @@
+{
+  "package": {
+    "handlebars": {
+      "device_supported": false,
+      "host_first_multilib": true,
+      "srcs": [
+        "src/**/*.rs",
+        "src/grammar.pest"
+      ]
+    }
+  },
+  "run_cargo": false,
+  "features": [
+    "dir_source",
+    "string_helpers"
+  ],
+  "min_sdk_version": "29"
+}

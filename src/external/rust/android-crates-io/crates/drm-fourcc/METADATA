@@ -1,0 +1,17 @@
+name: "drm-fourcc"
+description: "Provides an enum with every valid Direct Rendering Manager (DRM) format fourcc"
+third_party {
+  version: "2.2.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 3
+    day: 13
+  }
+  homepage: "https://crates.io/crates/drm-fourcc"
+  identifier {
+    type: "crates.io"
+    value: "drm-fourcc"
+    version: "2.2.0"
+  }
+}

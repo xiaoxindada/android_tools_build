@@ -1,0 +1,35 @@
+[package]
+name = "os_str_bytes"
+version = "7.2.1"
+authors = ["dylni"]
+edition = "2021"
+rust-version = "1.81.0"
+description = """
+Lossless functionality for platform-native strings
+"""
+readme = "README.md"
+repository = "https://github.com/dylni/os_str_bytes"
+license = "MIT OR Apache-2.0"
+keywords = ["bytes", "osstr", "osstring", "path", "windows"]
+categories = ["command-line-interface", "development-tools::ffi", "encoding", "os", "rust-patterns"]
+exclude = [".*", "tests.rs", "/rustfmt.toml", "/src/bin", "/tests"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustc-args = ["--cfg", "os_str_bytes_docs_rs"]
+rustdoc-args = ["--cfg", "os_str_bytes_docs_rs"]
+
+[dependencies]
+memchr = { version = "2.3.5", optional = true }
+
+[dev-dependencies]
+fastrand = "2.0"
+lazy_static = "1.0.3"
+tempfile = "3.8"
+
+[features]
+default = ["memchr", "raw_os_str"]
+
+checked_conversions = ["conversions"]
+conversions = []
+raw_os_str = []

@@ -1,0 +1,16 @@
+{
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.bt",
+    "com.android.nfcservices",
+    "com.android.npumanager",
+    "com.android.virt"
+  ],
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "package": {
+    "libloading": {
+      "target_windows": true
+    }
+  }
+}

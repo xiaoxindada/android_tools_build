@@ -1,0 +1,1 @@
+static_libs: ["libjemalloc5_je_prefixed"]

@@ -1,0 +1,24 @@
+# Changelog
+## [0.6.0] - 2025-04-02
+### Breaking changes
+ - Changed `DecodeError` from `struct` to `enum`. (5e39d65)
+ - Changed `EncodeError` from `struct` to `enum`. (0353682)
+ - DecodeError and EncodeError is marked as non_exhaustive. (1e7454c)
+ - Removed the use of `anyhow`. (5e39d65, 0353682)
+ - Replaced `paste` with pastey. (8897cf0)
+
+### New features
+ - Add `parse_i64()`. (414d14e)
+
+### Bug fixes
+ - N/A
+
+## [0.5.2] - 2023-01-28
+### Breaking changes
+ - N/A
+
+### New features
+ - Add `DefaultNla::new()`. (d3ef75d)
+
+### Bug fixes
+ - N/A

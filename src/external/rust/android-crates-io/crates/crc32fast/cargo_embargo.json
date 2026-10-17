@@ -1,0 +1,21 @@
+{
+    "module_name_overrides": {
+        "librand": "librand-0.8"
+    },
+    "run_cargo": false,
+    "apex_available": [
+        "//apex_available:platform",
+        "com.android.compos",
+        "com.android.configinfrastructure",
+        "com.android.virt"
+    ],
+    "tests": true,
+    "min_sdk_version": "29",
+    "recovery_available": true,
+    "ota_recovery_ramdisk_available": true,
+    "package": {
+        "crc32fast": {
+            "target_windows": true
+        }
+    }
+}

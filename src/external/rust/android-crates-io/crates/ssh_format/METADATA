@@ -1,0 +1,17 @@
+name: "ssh_format"
+description: "Data format used to communicate with openssh mux server."
+third_party {
+  version: "0.14.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 14
+  }
+  homepage: "https://crates.io/crates/ssh_format"
+  identifier {
+    type: "crates.io"
+    value: "ssh_format"
+    version: "0.14.2"
+  }
+}

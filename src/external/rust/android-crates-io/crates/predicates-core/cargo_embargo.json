@@ -1,0 +1,5 @@
+{
+  "tests": true,
+  "generate_rulesmk": true,
+  "min_sdk_version": "29"
+}

@@ -1,0 +1,17 @@
+name: "tracing-subscriber"
+description: "Utilities for implementing and composing `tracing` subscribers."
+third_party {
+  version: "0.3.23"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 3
+    day: 17
+  }
+  homepage: "https://crates.io/crates/tracing-subscriber"
+  identifier {
+    type: "crates.io"
+    value: "tracing-subscriber"
+    version: "0.3.23"
+  }
+}

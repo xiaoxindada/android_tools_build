@@ -1,0 +1,16 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/criterion"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mls-rs"
+    },
+    {
+      "path": "system/core/init/libprefetch/prefetch"
+    },
+    {
+      "path": "tools/asuite/adevice"
+    }
+  ]
+}

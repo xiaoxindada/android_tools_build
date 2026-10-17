@@ -1,0 +1,17 @@
+name: "askama"
+description: "Type-safe, compiled Jinja-like templates for Rust"
+third_party {
+  version: "0.16.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 6
+  }
+  homepage: "https://crates.io/crates/askama"
+  identifier {
+    type: "crates.io"
+    value: "askama"
+    version: "0.16.0"
+  }
+}

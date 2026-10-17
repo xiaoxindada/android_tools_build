@@ -1,0 +1,10 @@
+{
+  "run_cargo": false,
+  "package": {
+    "darling_core": {
+      "device_supported": false,
+      "host_first_multilib": true
+    }
+  },
+  "min_sdk_version": "29"
+}

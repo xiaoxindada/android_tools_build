@@ -1,0 +1,9 @@
+{
+  "module_visibility": {
+    "libconfigparser": [
+      "//vendor:__subpackages__"
+    ]
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

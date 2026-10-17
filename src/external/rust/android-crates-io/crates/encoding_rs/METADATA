@@ -1,0 +1,17 @@
+name: "encoding_rs"
+description: "A Gecko-oriented implementation of the Encoding Standard"
+third_party {
+  version: "0.8.35"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 17
+  }
+  homepage: "https://crates.io/crates/encoding_rs"
+  identifier {
+    type: "crates.io"
+    value: "encoding_rs"
+    version: "0.8.35"
+  }
+}

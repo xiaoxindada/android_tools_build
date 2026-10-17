@@ -1,0 +1,15 @@
+{
+  "generate_rulesmk" : true,
+  "run_cargo": false,
+  "apex_available": [
+    "//apex_available:platform",
+    "//apex_available:anyapex"
+  ],
+  "min_sdk_version": "29",
+  "package": {
+    "memchr": {
+      "target_windows": true
+    }
+  },
+  "recovery_available": true
+}

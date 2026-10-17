@@ -1,0 +1,118 @@
+{
+  "imports": [
+    {
+      "path": "external/flatbuffers/rust/flatbuffers"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/aarch64-paging"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/anes"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/arm-gic"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/arm-pl011-uart"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/arm-psci"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/bindgen"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/drm"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/epoll"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/gbm"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/gdbstub"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/gpio-cdev"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/inotify"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/libbpf-rs"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/netlink-packet-route"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/nix"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rusqlite"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rustix"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/selinux"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serialport"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/spidev"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/thread-priority"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/uefi"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/uefi-raw"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/userfaultfd"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vhost"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/virtio-drivers"
+    },
+    {
+      "path": "external/rust/crates/openssl"
+    },
+    {
+      "path": "external/rust/crates/v4l2r/lib"
+    },
+    {
+      "path": "external/rust/cros-libva/lib"
+    },
+    {
+      "path": "packages/modules/Bluetooth/system/rust"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/apkdmverity"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/devicemapper"
+    },
+    {
+      "path": "system/desktop/ec/src/libec"
+    },
+    {
+      "path": "system/desktop/fingerprint/libfmap"
+    },
+    {
+      "path": "system/extras/libatrace_rust"
+    },
+    {
+      "path": "system/zygote/capwrap"
+    },
+    {
+      "path": "system/zygote/zygote"
+    }
+  ]
+}

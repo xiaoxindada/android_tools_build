@@ -1,0 +1,9 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "package": {
+    "peg-macros": {
+      "device_supported": false
+    }
+  }
+}

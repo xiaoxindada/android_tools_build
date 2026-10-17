@@ -1,0 +1,17 @@
+name: "arm-psci"
+description: "Arm Power State Coordination Interface (PSCI) library"
+third_party {
+  version: "0.2.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 10
+    day: 30
+  }
+  homepage: "https://crates.io/crates/arm-psci"
+  identifier {
+    type: "crates.io"
+    value: "arm-psci"
+    version: "0.2.0"
+  }
+}

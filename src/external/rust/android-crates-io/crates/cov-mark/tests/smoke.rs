@@ -1,0 +1,43 @@
+fn safe_divide(dividend: u32, divisor: u32) -> u32 {
+    if divisor == 0 {
+        cov_mark::hit!(safe_divide_zero);
+        return 0;
+    }
+    dividend / divisor
+}
+
+#[test]
+fn test_safe_divide_by_zero() {
+    cov_mark::check!(safe_divide_zero);
+    assert_eq!(safe_divide(92, 0), 0);
+}
+
+struct CoveredDropper;
+impl Drop for CoveredDropper {
+    fn drop(&mut self) {
+        cov_mark::hit!(covered_dropper_drops);
+    }
+}
+
+#[test]
+fn test_drop_count() {
+    cov_mark::check_count!(covered_dropper_drops, 2);
+    let _covered_dropper1 = CoveredDropper;
+    let _covered_dropper2 = CoveredDropper;
+}
+
+#[test]
+#[should_panic(expected = "mark covered_dropper_drops was hit 2 times, expected 1")]
+fn test_drop_count_fail() {
+    cov_mark::check_count!(covered_dropper_drops, 1);
+    let _covered_dropper1 = CoveredDropper;
+    let _covered_dropper2 = CoveredDropper;
+}
+
+#[test]
+fn test_mark_survey() {
+    let _survey = cov_mark::survey();
+    cov_mark::check_count!(covered_dropper_drops, 2);
+    let _covered_dropper1 = CoveredDropper;
+    let _covered_dropper2 = CoveredDropper;
+}

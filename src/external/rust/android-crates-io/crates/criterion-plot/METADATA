@@ -1,0 +1,17 @@
+name: "criterion-plot"
+description: "Criterion\'s plotting library"
+third_party {
+  version: "0.8.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 6
+  }
+  homepage: "https://crates.io/crates/criterion-plot"
+  identifier {
+    type: "crates.io"
+    value: "criterion-plot"
+    version: "0.8.2"
+  }
+}

@@ -1,0 +1,17 @@
+name: "raw-cpuid"
+description: "A library to parse the x86 CPUID instruction, written in rust with no external dependencies. The implementation closely resembles the Intel CPUID manual description. The library does only depend on libcore."
+third_party {
+  version: "11.6.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 9
+    day: 30
+  }
+  homepage: "https://crates.io/crates/raw-cpuid"
+  identifier {
+    type: "crates.io"
+    value: "raw-cpuid"
+    version: "11.6.0"
+  }
+}

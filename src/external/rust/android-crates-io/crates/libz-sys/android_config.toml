@@ -1,0 +1,4 @@
+deletions = [
+  "src/zlib",    # We use external/zlib instead.
+  "src/zlib-ng"  # Not used, and contains a license file.
+]

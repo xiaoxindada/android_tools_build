@@ -1,0 +1,17 @@
+name: "symphonia-core"
+description: "Project Symphonia shared structs, traits, and features."
+third_party {
+  version: "0.5.5"
+  license_type: RECIPROCAL
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 12
+  }
+  homepage: "https://crates.io/crates/symphonia-core"
+  identifier {
+    type: "crates.io"
+    value: "symphonia-core"
+    version: "0.5.5"
+  }
+}

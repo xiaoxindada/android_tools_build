@@ -1,0 +1,17 @@
+name: "triomphe"
+description: "A fork of std::sync::Arc with some extra functionality and without weak references (originally servo_arc)"
+third_party {
+  version: "0.1.16"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 7
+  }
+  homepage: "https://crates.io/crates/triomphe"
+  identifier {
+    type: "crates.io"
+    value: "triomphe"
+    version: "0.1.16"
+  }
+}

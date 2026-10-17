@@ -1,0 +1,59 @@
+// Copyright (C) 2025 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+    default_team: "trendy_team_android_crumpet",
+}
+
+java_binary_host {
+    name: "dependency-mapper",
+    main_class: "com.android.dependencymapper.Main",
+    static_libs: [
+        "dependency-mapper-host-lib",
+    ],
+    visibility: ["//visibility:public"],
+}
+
+java_library_host {
+    name: "dependency-mapper-host-lib",
+    srcs: [
+        "src/**/*.java",
+        "proto/**/*.proto",
+    ],
+    static_libs: [
+        "gson",
+        "ow2-asm",
+    ],
+}
+
+java_test_host {
+    name: "dependency-mapper-tests",
+    srcs: ["tests/src/**/*.java"],
+    static_libs: [
+        "junit",
+        "dependency-mapper-host-lib",
+    ],
+    data: [
+        "tests/res/**/*",
+    ],
+    test_options: {
+        unit_test: true,
+    },
+}
+
+java_library {
+    name: "dependency-mapper-test-data",
+    srcs: ["tests/res/**/*.java"],
+}

@@ -1,0 +1,48 @@
+diff --git a/crates/acpi/src/aml/mod.rs b/crates/acpi/src/aml/mod.rs
+index 09526a84c..009a077d0 100644
+--- a/src/aml/mod.rs
++++ b/src/aml/mod.rs
+@@ -64,7 +64,7 @@ use object::{
+ };
+ use op_region::{OpRegion, RegionHandler, RegionSpace};
+ use pci_types::PciAddress;
+-use spinning_top::Spinlock;
++use spin::Mutex;
+ 
+ /// `Interpreter` implements a virtual machine for the dynamic AML bytecode. It can be used by a
+ /// host operating system to load tables containing AML bytecode (generally the DSDT and SSDTs) and
+@@ -74,11 +74,11 @@ where
+     H: Handler,
+ {
+     handler: H,
+-    pub namespace: Spinlock<Namespace>,
+-    pub object_token: Spinlock<ObjectToken>,
+-    context_stack: Spinlock<Vec<MethodContext>>,
++    pub namespace: Mutex<Namespace>,
++    pub object_token: Mutex<ObjectToken>,
++    context_stack: Mutex<Vec<MethodContext>>,
+     dsdt_revision: u8,
+-    region_handlers: Spinlock<BTreeMap<RegionSpace, Box<dyn RegionHandler>>>,
++    region_handlers: Mutex<BTreeMap<RegionSpace, Box<dyn RegionHandler>>>,
+ 
+     global_lock_mutex: Handle,
+     registers: Arc<FixedRegisters<H>>,
+@@ -109,11 +109,11 @@ where
+ 
+         Interpreter {
+             handler,
+-            namespace: Spinlock::new(Namespace::new(global_lock_mutex)),
+-            object_token: Spinlock::new(unsafe { ObjectToken::create_interpreter_token() }),
+-            context_stack: Spinlock::new(Vec::new()),
++            namespace: Mutex::new(Namespace::new(global_lock_mutex)),
++            object_token: Mutex::new(unsafe { ObjectToken::create_interpreter_token() }),
++            context_stack: Mutex::new(Vec::new()),
+             dsdt_revision,
+-            region_handlers: Spinlock::new(BTreeMap::new()),
++            region_handlers: Mutex::new(BTreeMap::new()),
+             global_lock_mutex,
+             registers,
+             facs,
+-- 
+2.51.0.740.g6adb054d12-goog
+

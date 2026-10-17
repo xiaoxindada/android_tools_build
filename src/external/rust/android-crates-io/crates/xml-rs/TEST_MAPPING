@@ -1,0 +1,18 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/serde-xml-rs"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/xml-rs"
+    },
+    {
+      "path": "packages/modules/SdkExtensions/sdk-extensions-info-test"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "xml-rs_test_src_lib"
+    }
+  ]
+}

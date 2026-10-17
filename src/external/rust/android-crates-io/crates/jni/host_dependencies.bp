@@ -1,0 +1,8 @@
+target: {
+    host: {
+        rustlibs: [
+            "libjava_locator",
+            "liblibloading",
+        ],
+    }
+}

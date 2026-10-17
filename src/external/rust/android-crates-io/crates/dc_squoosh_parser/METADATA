@@ -1,0 +1,17 @@
+name: "dc_squoosh_parser"
+description: "Parser for DesignCompose Squoosh Figma plugin data"
+third_party {
+  version: "0.39.6"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 29
+  }
+  homepage: "https://crates.io/crates/dc_squoosh_parser"
+  identifier {
+    type: "crates.io"
+    value: "dc_squoosh_parser"
+    version: "0.39.6"
+  }
+}

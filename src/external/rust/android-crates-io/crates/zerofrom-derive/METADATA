@@ -1,0 +1,17 @@
+name: "zerofrom-derive"
+description: "Custom derive for the zerofrom crate"
+third_party {
+  version: "0.1.7"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 3
+  }
+  homepage: "https://crates.io/crates/zerofrom-derive"
+  identifier {
+    type: "crates.io"
+    value: "zerofrom-derive"
+    version: "0.1.7"
+  }
+}

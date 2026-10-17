@@ -1,0 +1,129 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup update --no-self-update stable
+      - run: rustup default stable
+      - run: cargo run --release -p ci -- lints
+
+  test:
+    name: Test features
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        toolchain: [stable, beta, nightly]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup update --no-self-update ${{ matrix.toolchain }}
+      - run: rustup default ${{ matrix.toolchain }}
+      - run: cargo run --release -p ci -- test-features
+
+  test-i686:
+    name: Test i686 (32-bit)
+    strategy:
+      matrix:
+        toolchain: [stable]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install 32-bit linker and runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib
+
+      - run: rustup update --no-self-update ${{ matrix.toolchain }}
+      - run: rustup default ${{ matrix.toolchain }}
+      - run: rustup target add i686-unknown-linux-gnu
+      - run: cargo run --release -p ci -- test-i686
+
+  check-msrv:
+    name: Check MSRV
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup update --no-self-update stable
+      - run: rustup default stable
+      - run: rustup toolchain install 1.68.2
+      - run: cargo run --release -p ci -- msrv
+
+  test-core-simd:
+    name: Test portable simd
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        toolchain: [nightly]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup update --no-self-update ${{ matrix.toolchain }}
+      - run: rustup default ${{ matrix.toolchain }}
+      - run: cargo run --release -p ci -- core-simd
+
+  test-wasm32:
+    name: Test wasm32
+    strategy:
+      matrix:
+        toolchain: [stable]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-pack
+        uses: jetli/wasm-pack-action@v0.4.0
+
+      - run: cargo run --release -p ci -- wasm32
+
+  test-wasm64:
+    name: Test wasm64
+    strategy:
+      matrix:
+        toolchain: [nightly]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup component add rust-src --toolchain ${{ matrix.toolchain }}
+      - uses: bytecodealliance/actions/wasmtime/setup@v1
+      - run: cargo run --release -p ci -- wasm64

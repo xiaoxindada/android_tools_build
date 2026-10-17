@@ -1,0 +1,12 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/mockall"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "fragile_test_src_lib"
+    }
+  ]
+}

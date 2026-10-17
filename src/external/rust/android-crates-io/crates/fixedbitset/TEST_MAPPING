@@ -1,0 +1,15 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/fixedbitset"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/petgraph"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "fixedbitset_test_tests_tests"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+name: "strck"
+description: "Checked owned and borrowed strings"
+third_party {
+  version: "1.0.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 1
+    day: 24
+  }
+  homepage: "https://crates.io/crates/strck"
+  identifier {
+    type: "crates.io"
+    value: "strck"
+    version: "1.0.0"
+  }
+}

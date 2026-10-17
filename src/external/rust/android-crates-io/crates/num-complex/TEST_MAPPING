@@ -1,0 +1,7 @@
+{
+  "postsubmit": [
+    {
+      "name": "num-complex_test_src_lib"
+    }
+  ]
+}

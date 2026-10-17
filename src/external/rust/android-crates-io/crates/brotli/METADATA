@@ -1,0 +1,17 @@
+name: "brotli"
+description: "A brotli compressor and decompressor that with an interface avoiding the rust stdlib. This makes it suitable for embedded devices and kernels. It is designed with a pluggable allocator so that the standard lib\'s allocator may be employed. The default build also includes a stdlib allocator and stream interface. Disable this with --features=no-stdlib. All included code is safe."
+third_party {
+  version: "8.0.4"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 8
+  }
+  homepage: "https://crates.io/crates/brotli"
+  identifier {
+    type: "crates.io"
+    value: "brotli"
+    version: "8.0.4"
+  }
+}

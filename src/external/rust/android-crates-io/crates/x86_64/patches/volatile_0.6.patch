@@ -1,0 +1,22 @@
+--- a/src/structures/idt.rs
++++ b/src/structures/idt.rs
+@@ -32,7 +32,7 @@
+     Bound, Deref, Index, IndexMut, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive,
+     RangeTo, RangeToInclusive,
+ };
+-use volatile::Volatile;
++use volatile::VolatilePtr;
+ 
+ use super::gdt::SegmentSelector;
+ 
+@@ -1051,8 +1051,8 @@
+     /// Also, it is not fully clear yet whether modifications of the interrupt stack frame are
+     /// officially supported by LLVM's x86 interrupt calling convention.
+     #[inline]
+-    pub unsafe fn as_mut(&mut self) -> Volatile<&mut InterruptStackFrameValue> {
+-        Volatile::new(&mut self.0)
++    pub unsafe fn as_mut(&mut self) -> VolatilePtr<'_, InterruptStackFrameValue> {
++        VolatilePtr::new(core::ptr::NonNull::from(&mut self.0))
+     }
+ }
+ 

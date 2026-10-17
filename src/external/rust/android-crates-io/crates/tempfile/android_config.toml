@@ -1,0 +1,3 @@
+[not_updateable]
+minor_version_allowed = false
+reason = "Requires updating rustix which is not permitted"

@@ -1,0 +1,15 @@
+diff --git a/src/signature.rs b/src/signature.rs
+index 44d0ed14e..860b5439b 100644
+--- a/src/signature.rs
++++ b/src/signature.rs
+@@ -549,7 +549,9 @@ where
+ #[cfg(test)]
+ mod test {
+     use super::*;
+-    use assert_matches::assert_matches;
++    macro_rules! assert_matches {
++        ($left:expr, $right:pat) => { assert!(matches!($left, $right)) }
++    }
+ 
+     #[test]
+     fn test_parser_types() {

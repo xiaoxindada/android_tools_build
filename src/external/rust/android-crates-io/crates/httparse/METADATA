@@ -1,0 +1,17 @@
+name: "httparse"
+description: "A tiny, safe, speedy, zero-copy HTTP/1.x parser."
+third_party {
+  version: "1.10.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 3
+    day: 5
+  }
+  homepage: "https://crates.io/crates/httparse"
+  identifier {
+    type: "crates.io"
+    value: "httparse"
+    version: "1.10.1"
+  }
+}

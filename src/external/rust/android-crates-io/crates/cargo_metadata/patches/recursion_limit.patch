@@ -1,0 +1,12 @@
+diff --git a/src/messages.rs b/src/messages.rs
+index d5b7f3ad..097ffca2 100644
+--- a/src/messages.rs
++++ b/src/messages.rs
+@@ -277,7 +277,6 @@ impl<R: BufRead> Iterator for MessageIter<R> {
+                         line.truncate(line.len() - 1);
+                     }
+                     let mut deserializer = serde_json::Deserializer::from_str(&line);
+-                    deserializer.disable_recursion_limit();
+                     Some(Message::deserialize(&mut deserializer).unwrap_or(Message::TextLine(line)))
+                 }
+             })

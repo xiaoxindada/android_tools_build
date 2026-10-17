@@ -1,0 +1,11 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "package": {
+    "windows_x86_64_gnu": {
+      "device_supported": false,
+      "enabled": false,
+      "target_windows": true
+    }
+  }
+}

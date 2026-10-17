@@ -1,0 +1,17 @@
+name: "serde_yaml"
+description: "YAML data format for Serde"
+third_party {
+  version: "0.9.34+deprecated"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 1
+    day: 13
+  }
+  homepage: "https://crates.io/crates/serde_yaml"
+  identifier {
+    type: "crates.io"
+    value: "serde_yaml"
+    version: "0.9.34+deprecated"
+  }
+}

@@ -1,0 +1,17 @@
+name: "fastcdc"
+description: "FastCDC (content defined chunking) in pure Rust."
+third_party {
+  version: "5.0.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 2
+  }
+  homepage: "https://crates.io/crates/fastcdc"
+  identifier {
+    type: "crates.io"
+    value: "fastcdc"
+    version: "5.0.0"
+  }
+}

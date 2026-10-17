@@ -1,0 +1,9 @@
+{
+  "package": {
+    "cgmath": {
+      "copy_out": true
+    }
+  },
+  "run_cargo": true,
+  "min_sdk_version": "29"
+}

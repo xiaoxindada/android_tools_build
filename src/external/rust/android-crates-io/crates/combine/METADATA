@@ -1,0 +1,17 @@
+name: "combine"
+description: "Fast parser combinators on arbitrary streams with zero-copy support."
+third_party {
+  version: "4.6.8"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 2
+  }
+  homepage: "https://crates.io/crates/combine"
+  identifier {
+    type: "crates.io"
+    value: "combine"
+    version: "4.6.8"
+  }
+}

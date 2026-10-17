@@ -1,0 +1,23 @@
+{
+  "tests": true,
+  "min_sdk_version": "29",
+  "package": {
+    "android_logger": {
+      "host_supported": false,
+      "add_toplevel_block": "cargo_embargo_toplevel.bp.fragment"
+    }
+  },
+  "run_cargo": false,
+  "variants": [
+    {},
+    {
+      "module_name_overrides": {
+        "libandroid_logger": "libandroid_logger_max_level_info",
+        "libenv_filter": "libenv_filter_max_level_info",
+        "liblog": "liblog_rust_max_level_info"
+      },
+      "tests": false
+    }
+  ],
+  "recovery_available": true
+}

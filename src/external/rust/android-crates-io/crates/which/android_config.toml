@@ -1,0 +1,3 @@
+[not_updateable]
+minor_version_allowed = true
+reason = "Major updates are not permitted"

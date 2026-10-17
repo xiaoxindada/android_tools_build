@@ -1,0 +1,17 @@
+name: "jni-sys-macros"
+description: "Macros for jni-sys crate"
+third_party {
+  version: "0.4.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 3
+    day: 6
+  }
+  homepage: "https://crates.io/crates/jni-sys-macros"
+  identifier {
+    type: "crates.io"
+    value: "jni-sys-macros"
+    version: "0.4.1"
+  }
+}

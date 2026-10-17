@@ -1,0 +1,17 @@
+name: "aarch64-paging"
+description: "A library to manipulate AArch64 VMSA page tables."
+third_party {
+  version: "0.7.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 7
+    day: 24
+  }
+  homepage: "https://crates.io/crates/aarch64-paging"
+  identifier {
+    type: "crates.io"
+    value: "aarch64-paging"
+    version: "0.7.0"
+  }
+}

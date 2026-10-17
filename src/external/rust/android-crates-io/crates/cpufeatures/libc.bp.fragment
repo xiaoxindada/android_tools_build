@@ -1,0 +1,11 @@
+target: {
+    android_arm64: {
+        rustlibs: ["liblibc"],
+    },
+    linux_arm64: {
+        rustlibs: ["liblibc"],
+    },
+    darwin_arm64: {
+        rustlibs: ["liblibc"],
+    },
+}

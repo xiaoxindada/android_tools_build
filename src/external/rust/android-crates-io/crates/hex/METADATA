@@ -1,0 +1,17 @@
+name: "hex"
+description: "Encoding and decoding data into/from hexadecimal representation."
+third_party {
+  version: "0.4.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2022
+    month: 10
+    day: 11
+  }
+  homepage: "https://crates.io/crates/hex"
+  identifier {
+    type: "crates.io"
+    value: "hex"
+    version: "0.4.3"
+  }
+}

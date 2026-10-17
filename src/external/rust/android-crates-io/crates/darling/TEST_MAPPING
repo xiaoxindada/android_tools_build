@@ -1,0 +1,114 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/darling"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/derive_builder_core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mls-rs-codec-derive"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "darling_test_tests_accrue_errors"
+    },
+    {
+      "name": "darling_test_tests_attrs_with"
+    },
+    {
+      "name": "darling_test_tests_computed_bound"
+    },
+    {
+      "name": "darling_test_tests_custom_bound"
+    },
+    {
+      "name": "darling_test_tests_data_with"
+    },
+    {
+      "name": "darling_test_tests_defaults"
+    },
+    {
+      "name": "darling_test_tests_enums_default"
+    },
+    {
+      "name": "darling_test_tests_enums_newtype"
+    },
+    {
+      "name": "darling_test_tests_enums_struct"
+    },
+    {
+      "name": "darling_test_tests_enums_unit"
+    },
+    {
+      "name": "darling_test_tests_error"
+    },
+    {
+      "name": "darling_test_tests_flatten"
+    },
+    {
+      "name": "darling_test_tests_flatten_error_accumulation"
+    },
+    {
+      "name": "darling_test_tests_flatten_from_field"
+    },
+    {
+      "name": "darling_test_tests_forward_attrs_to_from_attributes"
+    },
+    {
+      "name": "darling_test_tests_from_generics"
+    },
+    {
+      "name": "darling_test_tests_from_meta"
+    },
+    {
+      "name": "darling_test_tests_from_type_param"
+    },
+    {
+      "name": "darling_test_tests_from_type_param_default"
+    },
+    {
+      "name": "darling_test_tests_from_variant"
+    },
+    {
+      "name": "darling_test_tests_generics"
+    },
+    {
+      "name": "darling_test_tests_generics_with"
+    },
+    {
+      "name": "darling_test_tests_happy_path"
+    },
+    {
+      "name": "darling_test_tests_hash_map"
+    },
+    {
+      "name": "darling_test_tests_meta_with"
+    },
+    {
+      "name": "darling_test_tests_multiple"
+    },
+    {
+      "name": "darling_test_tests_newtype"
+    },
+    {
+      "name": "darling_test_tests_override_callable"
+    },
+    {
+      "name": "darling_test_tests_skip"
+    },
+    {
+      "name": "darling_test_tests_spanned_value"
+    },
+    {
+      "name": "darling_test_tests_split_declaration"
+    },
+    {
+      "name": "darling_test_tests_supports"
+    },
+    {
+      "name": "darling_test_tests_unsupported_attributes"
+    }
+  ]
+}

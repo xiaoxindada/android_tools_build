@@ -1,0 +1,17 @@
+name: "pin-utils"
+description: "Utilities for pinning"
+third_party {
+  version: "0.1.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2020
+    month: 4
+    day: 22
+  }
+  homepage: "https://crates.io/crates/pin-utils"
+  identifier {
+    type: "crates.io"
+    value: "pin-utils"
+    version: "0.1.0"
+  }
+}

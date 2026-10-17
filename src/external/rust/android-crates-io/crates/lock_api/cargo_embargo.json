@@ -1,0 +1,23 @@
+{
+  "min_sdk_version": "29",
+  "variants": [
+    {},
+    {
+      "generate_androidbp": false,
+      "generate_rulesmk": true,
+      "features": [],
+      "tests": false,
+      "package": {
+        "lock_api": {
+          "no_std": true
+        }
+      }
+    }
+  ],
+  "tests": true,
+  "features": [
+    "arc_lock",
+    "atomic_usize",
+    "default"
+  ]
+}

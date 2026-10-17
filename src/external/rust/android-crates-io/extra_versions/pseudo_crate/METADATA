@@ -1,0 +1,5 @@
+name: "external/rust/android-crates-io/pseudo_crate"
+description: "Pseudo-crate for managing third-party Rust crates. go/maintaining_rust_crates_at_scale"
+third_party: {
+  type: GOOGLE_INTERNAL
+}

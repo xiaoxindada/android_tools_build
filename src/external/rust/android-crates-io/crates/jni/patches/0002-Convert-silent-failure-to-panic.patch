@@ -1,0 +1,38 @@
+From c3c0a2c96dca5794308584688ddd103e12ff7e07 Mon Sep 17 00:00:00 2001
+From: Chris Wailes <chriswailes@google.com>
+Date: Wed, 24 Jun 2026 15:07:13 -0700
+Subject: [PATCH 2/2] Convert silent failure to panic
+
+Now that the new `try_option_with_extra_info` function provides support
+for the `vfprintf`, `abort`, and `exit` arguments we can promote a
+silent failure to a panic that points the developer at the correct API
+function.
+---
+ src/vm/init_args.rs | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/vm/init_args.rs b/src/vm/init_args.rs
+index 48e8917..f95132f 100644
+--- a/src/vm/init_args.rs
++++ b/src/vm/init_args.rs
+@@ -231,7 +231,7 @@ impl<'a> InitArgsBuilder<'a> {
+         }
+         // If this is one of the special options, do nothing.
+         else if SPECIAL_OPTIONS.contains(&&*opt_string) {
+-            return Ok(());
++            panic!("`try_option` does not support special options ({:?}); please use `try_option_with_extra_info` instead.", SPECIAL_OPTIONS);
+         }
+ 
+         let encoded: Cow<'a, CStr> = {
+@@ -405,7 +405,7 @@ impl<'a> InitArgsBuilder<'a> {
+ 
+         // If this is one of the special options, do nothing.
+         if SPECIAL_OPTIONS_C.contains(&&*opt_string) {
+-            return self;
++            panic!("`option_encoded` does not support special options ({:?}); please use `try_option_with_extra_info` instead.", SPECIAL_OPTIONS);
+         }
+ 
+         // Add the option.
+-- 
+2.55.0.rc0.799.gd6f94ed593-goog
+

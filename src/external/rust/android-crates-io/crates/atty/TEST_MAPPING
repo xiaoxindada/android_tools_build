@@ -1,0 +1,10 @@
+{
+  "imports": [
+    {
+      "path": "external/flashrom/util/flashrom_tester"
+    },
+    {
+      "path": "tools/asuite/adevice"
+    }
+  ]
+}

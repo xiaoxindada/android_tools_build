@@ -1,0 +1,17 @@
+name: "genco"
+description: "A whitespace-aware quasiquoter for beautiful code generation."
+third_party {
+  version: "0.19.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 10
+    day: 21
+  }
+  homepage: "https://crates.io/crates/genco"
+  identifier {
+    type: "crates.io"
+    value: "genco"
+    version: "0.19.0"
+  }
+}

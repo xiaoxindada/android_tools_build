@@ -1,0 +1,16 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/cargo_metadata"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crates-index"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/vmconfig"
+    }
+  ]
+}

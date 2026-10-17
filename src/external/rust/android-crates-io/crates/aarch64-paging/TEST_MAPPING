@@ -1,0 +1,7 @@
+{
+  "postsubmit": [
+    {
+      "name": "aarch64-paging_test_src_lib"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+rust_bindgen {
+    name: "liblinux_aio_tokio_bindgen",
+    host_supported: true,
+    crate_name: "linux_aio_tokio_bindgen",
+    wrapper_src: "build/wrapper.h",
+    source_stem: "bindings",
+    product_available: true,
+    vendor_available: true,
+    min_sdk_version: "29",
+}

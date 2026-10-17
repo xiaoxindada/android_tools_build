@@ -1,0 +1,3 @@
+deletions = [
+    "examples/poll_client.rs",
+]

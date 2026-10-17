@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/pdl-compiler"
+    },
+    {
+      "path": "external/rust/cxx/gen/cmd"
+    },
+    {
+      "path": "external/rust/cxx/gen/lib"
+    }
+  ]
+}

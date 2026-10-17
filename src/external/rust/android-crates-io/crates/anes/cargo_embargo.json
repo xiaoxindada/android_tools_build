@@ -1,0 +1,8 @@
+{
+  "tests": true,
+  "features": [
+    "parser"
+  ],
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

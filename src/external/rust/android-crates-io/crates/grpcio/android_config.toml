@@ -1,0 +1,9 @@
+deletions = [
+  "src/log_util.rs", # Uses GPR logging functions that were removed in v1.67
+
+  # Filter out irrelevant files related to grpcio-sys
+  ".clang-format",
+  ".clang-tidy",
+  ".github",
+  ".gitmodules",
+]

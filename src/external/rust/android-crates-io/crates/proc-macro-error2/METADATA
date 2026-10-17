@@ -1,0 +1,17 @@
+name: "proc-macro-error2"
+description: "Almost drop-in replacement to panics in proc-macros"
+third_party {
+  version: "2.0.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 15
+  }
+  homepage: "https://crates.io/crates/proc-macro-error2"
+  identifier {
+    type: "crates.io"
+    value: "proc-macro-error2"
+    version: "2.0.1"
+  }
+}

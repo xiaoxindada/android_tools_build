@@ -1,0 +1,11 @@
+{
+  "package": {
+    "foreign-types-shared": {
+      "force_rlib": true
+    }
+  },
+  "min_sdk_version": "29",
+  "run_cargo": false,
+  "generate_rulesmk": true,
+  "ota_recovery_ramdisk_available": true
+}

@@ -1,0 +1,29 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/downcast-rs"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "downcast-rs_test_src_lib"
+    },
+    {
+      "name": "downcast-rs_test_tests_import_via_macro_use"
+    },
+    {
+      "name": "downcast-rs_test_tests_use_via_namespace"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "downcast-rs_test_src_lib"
+    },
+    {
+      "name": "downcast-rs_test_tests_import_via_macro_use"
+    },
+    {
+      "name": "downcast-rs_test_tests_use_via_namespace"
+    }
+  ]
+}

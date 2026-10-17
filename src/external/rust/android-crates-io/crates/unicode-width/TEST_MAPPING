@@ -1,0 +1,31 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/annotate-snippets"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/codespan-reporting"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/miette"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/unicode-width"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "unicode-width_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "unicode-width_test_src_lib"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "unicode-width_test_tests_tests"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "imports": [
+    {
+      "path": "system/core/init/libprefetch/prefetch"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "lru-cache_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "lru-cache_test_src_lib"
+    }
+  ]
+}

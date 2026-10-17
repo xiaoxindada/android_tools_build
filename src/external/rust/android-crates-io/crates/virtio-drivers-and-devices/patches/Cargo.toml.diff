@@ -1,0 +1,12 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index 013ec440d..7e374ac18 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -44,6 +44,7 @@ default = [
+ ]
+ embedded-io = ["dep:embedded-io"]
+ spin = ["dep:spin"]
++trusty_sleep = []
+
+ [lib]
+ name = "virtio_drivers_and_devices"

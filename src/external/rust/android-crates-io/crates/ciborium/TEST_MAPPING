@@ -1,0 +1,115 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/coset"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/criterion"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/derive_microdroid_vendor_dice_node"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/pvmfw"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/service_vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/service_vm/requests"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/cborutil"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/dice/driver"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/dice/sample_inputs"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libclient_vm_csr"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libservice_vm_comm"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libservice_vm_fake_chain"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libservice_vm_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/old_images_avf_test"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vts"
+    },
+    {
+      "path": "system/authgraph/hal"
+    },
+    {
+      "path": "system/authgraph/wire"
+    },
+    {
+      "path": "system/gatekeeper/rust/hal"
+    },
+    {
+      "path": "system/gatekeeper/rust/ta"
+    },
+    {
+      "path": "system/gatekeeper/rust/tests"
+    },
+    {
+      "path": "system/gatekeeper/rust/wire"
+    },
+    {
+      "path": "system/keymint/common"
+    },
+    {
+      "path": "system/keymint/derive"
+    },
+    {
+      "path": "system/keymint/hal"
+    },
+    {
+      "path": "system/keymint/ta"
+    },
+    {
+      "path": "system/keymint/tests"
+    },
+    {
+      "path": "system/keymint/wire"
+    },
+    {
+      "path": "system/secretkeeper/client"
+    },
+    {
+      "path": "system/secretkeeper/comm"
+    },
+    {
+      "path": "system/secretkeeper/core"
+    },
+    {
+      "path": "system/secretkeeper/dice_policy"
+    },
+    {
+      "path": "system/secretkeeper/dice_policy/building"
+    },
+    {
+      "path": "system/secretkeeper/dice_policy/tests"
+    },
+    {
+      "path": "system/security/hals/wire"
+    },
+    {
+      "path": "system/see/authmgr/authmgr-fe"
+    },
+    {
+      "path": "tools/security/remote_provisioning/hwtrust"
+    }
+  ]
+}

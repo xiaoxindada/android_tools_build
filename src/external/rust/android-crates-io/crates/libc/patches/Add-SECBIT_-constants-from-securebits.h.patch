@@ -1,0 +1,31 @@
+diff --git a/src/unix/linux_like/android/mod.rs b/src/unix/linux_like/android/mod.rs
+index 989cb383c..1ad558a8d 100644
+--- a/src/unix/linux_like/android/mod.rs
++++ b/src/unix/linux_like/android/mod.rs
+@@ -2824,6 +2824,26 @@ pub const FUTEX_PRIVATE_FLAG: c_int = 128;
+ pub const FUTEX_CLOCK_REALTIME: c_int = 256;
+ pub const FUTEX_CMD_MASK: c_int = !(FUTEX_PRIVATE_FLAG | FUTEX_CLOCK_REALTIME);
+ 
++// uapi/linux/securebits.h
++pub const SECBIT_NOROOT: c_int = 1 << 0;
++pub const SECBIT_NOROOT_LOCKED: c_int = 1 << 1;
++
++pub const SECBIT_NO_SETUID_FIXUP: c_int = 1 << 2;
++pub const SECBIT_NO_SETUID_FIXUP_LOCKED: c_int = 1 << 3;
++
++pub const SECBIT_KEEP_CAPS: c_int = 1 << 4;
++pub const SECBIT_KEEP_CAPS_LOCKED: c_int = 1 << 5;
++
++pub const SECBIT_NO_CAP_AMBIENT_RAISE: c_int = 1 << 6;
++pub const SECBIT_NO_CAP_AMBIENT_RAISE_LOCKED: c_int = 1 << 7;
++
++pub const SECUREBITS_DEFAULT: c_int = 0x00000000;
++pub const SECURE_ALL_BITS: c_int = SECBIT_NOROOT
++    | SECBIT_NO_SETUID_FIXUP
++    | SECBIT_KEEP_CAPS
++    | SECBIT_NO_CAP_AMBIENT_RAISE;
++pub const SECURE_ALL_LOCKS: c_int = SECURE_ALL_BITS << 1;
++
+ // linux/errqueue.h
+ pub const SO_EE_ORIGIN_NONE: u8 = 0;
+ pub const SO_EE_ORIGIN_LOCAL: u8 = 1;

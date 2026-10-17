@@ -1,0 +1,20 @@
+{
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.configinfrastructure",
+    "com.android.compos",
+    "com.android.virt"
+  ],
+  "features": [
+    "deflate-zlib"
+  ],
+  "package": {
+    "zip": {
+      "add_module_block": "cargo2android_target.bp.fragment"
+    }
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "recovery_available": true,
+  "ota_recovery_ramdisk_available": true
+}

@@ -1,0 +1,11 @@
+{
+  "package": {
+    "strum_macros": {
+      "device_supported": false
+    }
+  },
+  "run_cargo": false,
+  "tests": true,
+  "min_sdk_version": "29",
+  "recovery_available": true
+}

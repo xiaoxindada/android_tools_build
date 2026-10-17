@@ -1,0 +1,64 @@
+diff --git a/src/vm/java_vm.rs b/src/vm/java_vm.rs
+index b8242a5d3..b73200c79 100644
+--- a/src/vm/java_vm.rs
++++ b/src/vm/java_vm.rs
+@@ -18,9 +18,9 @@ use crate::{
+ };
+ 
+ #[cfg(all(feature = "invocation", not(target_os = "android")))]
+-use std::{os::raw::c_void, path::PathBuf};
++use std::path::PathBuf;
+ #[cfg(feature = "invocation")]
+-use {crate::InitArgs, std::ffi::OsStr};
++use {crate::InitArgs, std::{ffi::OsStr, os::raw::c_void}};
+ 
+ #[cfg(use_fls_attach_guard)]
+ use super::fls_attach_guard;
+@@ -50,6 +50,16 @@ pub const DEFAULT_LOCAL_FRAME_CAPACITY: usize = 32;
+ /// if know we can assume that `JavaVM::singleton()` will return a `JavaVM` when needed.
+ static JAVA_VM_SINGLETON: std::sync::OnceLock<JavaVM> = std::sync::OnceLock::new();
+ 
++/// On Android platforms the JVM library MUST be dynamically linked to the calling executable.
++#[cfg(all(feature = "invocation", target_os = "android"))]
++unsafe extern "system" {
++    unsafe fn JNI_CreateJavaVM(
++        pvm: *mut *mut sys::JavaVM,
++        penv: *mut *mut c_void,
++        args: *mut c_void,
++    ) -> sys::jint;
++}
++
+ /// The Java VM API, including (optional) [Invocation API][invocation-api] support.
+ ///
+ /// An existing JavaVM can be obtained either via [`JavaVM::singleton`], or [`Env::get_java_vm`]
+@@ -188,7 +198,6 @@ pub struct JavaVM(*mut sys::JavaVM);
+ 
+ unsafe impl Send for JavaVM {}
+ unsafe impl Sync for JavaVM {}
+-
+ impl JavaVM {
+     /// Launch a new JavaVM using the provided init args.
+     ///
+@@ -221,8 +230,11 @@ impl JavaVM {
+ 
+         #[cfg(target_os = "android")]
+         {
+-            let _a = args;
+-            Err(StartJvmError::Unsupported)
++            // SAFETY: The provided function pointer is provided by a
++            //         dynamically linked library.
++            Ok(unsafe {
++                Self::with_create_fn_ptr(args, JNI_CreateJavaVM)?
++            })
+         }
+     }
+ 
+@@ -271,7 +283,7 @@ impl JavaVM {
+             .ok_or(Error::UninitializedJavaVM)
+     }
+ 
+-    #[cfg(all(feature = "invocation", not(target_os = "android")))]
++    #[cfg(feature = "invocation")]
+     unsafe fn with_create_fn_ptr(
+         args: InitArgs,
+         create_fn_ptr: unsafe extern "system" fn(

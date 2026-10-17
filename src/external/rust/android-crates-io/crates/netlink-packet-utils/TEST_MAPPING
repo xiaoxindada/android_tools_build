@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/netlink-packet-core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/netlink-packet-route"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rtnetlink"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+name: "plotters-svg"
+description: "Plotters SVG backend"
+third_party {
+  version: "0.3.7"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 1
+    day: 14
+  }
+  homepage: "https://crates.io/crates/plotters-svg"
+  identifier {
+    type: "crates.io"
+    value: "plotters-svg"
+    version: "0.3.7"
+  }
+}

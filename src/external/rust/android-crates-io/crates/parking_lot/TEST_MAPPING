@@ -1,0 +1,33 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/grpcio"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/named-lock"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/parking_lot"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/selinux"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tracing-subscriber"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vulkano"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "parking_lot_test_src_lib"
+    },
+    {
+      "name": "parking_lot_test_tests_issue_203"
+    },
+    {
+      "name": "parking_lot_test_tests_issue_392"
+    }
+  ]
+}

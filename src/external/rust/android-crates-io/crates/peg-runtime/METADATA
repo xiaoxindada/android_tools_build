@@ -1,0 +1,17 @@
+name: "peg-runtime"
+description: "Runtime support for rust-peg grammars. To use rust-peg, see the `peg` crate."
+third_party {
+  version: "0.8.6"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 6
+  }
+  homepage: "https://crates.io/crates/peg-runtime"
+  identifier {
+    type: "crates.io"
+    value: "peg-runtime"
+    version: "0.8.6"
+  }
+}

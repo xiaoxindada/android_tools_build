@@ -1,0 +1,19 @@
+{
+  "min_sdk_version": "29",
+  "tests": true,
+  "package": {
+    "jni": {
+      "host_supported": true,
+      "dep_blocklist" : [
+        "libassert_matches",
+        "libjavac",
+        "libjava_locator",
+        "liblibloading",
+        "librusty_fork",
+        "libtrybuild"
+      ],
+      "add_module_block": "host_dependencies.bp",
+      "add_toplevel_block": "jni_platform.bp"
+    }
+  }
+}

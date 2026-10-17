@@ -1,0 +1,17 @@
+name: "rustls-native-certs"
+description: "rustls-native-certs allows rustls to use the platform native certificate store"
+third_party {
+  version: "0.8.4"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 3
+  }
+  homepage: "https://crates.io/crates/rustls-native-certs"
+  identifier {
+    type: "crates.io"
+    value: "rustls-native-certs"
+    version: "0.8.4"
+  }
+}

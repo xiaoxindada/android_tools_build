@@ -1,0 +1,17 @@
+name: "peg"
+description: "A simple Parsing Expression Grammar (PEG) parser generator."
+third_party {
+  version: "0.8.6"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 6
+  }
+  homepage: "https://crates.io/crates/peg"
+  identifier {
+    type: "crates.io"
+    value: "peg"
+    version: "0.8.6"
+  }
+}

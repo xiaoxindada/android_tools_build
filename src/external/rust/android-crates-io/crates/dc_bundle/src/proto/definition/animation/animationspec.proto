@@ -1,0 +1,203 @@
+// Copyright 2026 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+
+package designcompose.definition.animation;
+
+// Represents a color with red, green, blue, and alpha channels.
+// Values are typically in the range 0-255.
+message RgbaValue {
+    uint32 r = 1;
+    uint32 g = 2;
+    uint32 b = 3;
+    uint32 a = 4;
+}
+
+// Represents a single color stop in a gradient.
+message GradientStopValue {
+    // Position of the stop from 0.0 to 1.0.
+    float position = 1;
+    // Color at this stop.
+    RgbaValue color = 2;
+}
+
+// Represents a gradient with a collection of color stops.
+message GradientValue {
+    // List of stops defining the gradient.
+    repeated GradientStopValue stops = 1;
+}
+
+// Represents the corner radii for a rectangle or surface.
+message CornerRadiiValue {
+    float top_left = 1;
+    float top_right = 2;
+    float bottom_right = 3;
+    float bottom_left = 4;
+}
+
+// Represents parameters for drawing an arc or partial circle.
+message ArcDataValue {
+    // Starting angle in radians.
+    float starting_angle = 1;
+    // Ending angle in radians.
+    float ending_angle = 2;
+    // Inner radius (scale of 0 to 1).
+    float inner_radius = 3;
+}
+
+// Strongly typed union of property values animated by the Squoosh engine.
+// This replaces the legacy JSON serialization of keyframe values.
+message CustomKeyframeValue {
+    oneof value {
+        // For floating point properties like opacity, translation, etc.
+        // Rotation values are typically in degrees when coming from Figma.
+        float scalar = 1;
+        // For corner radius animations.
+        CornerRadiiValue radii = 2;
+        // For solid color fill animations.
+        RgbaValue color = 3;
+        // For gradient fill animations.
+        GradientValue gradient = 4;
+        // For arc data animations.
+        ArcDataValue arc = 5;
+    }
+}
+
+// A keyframe within a custom property timeline.
+message CustomKeyframe {
+    // Progress fraction from 0.0 to 1.0.
+    float fraction = 1;
+    // The strongly-typed value at this keyframe.
+    CustomKeyframeValue value = 2;
+    // Easing to use when interpolating from this keyframe.
+    Easing easing = 3;
+}
+
+// A sequence of keyframes for an arbitrary property on a node.
+message CustomTimeline {
+    // Default easing for the entire timeline.
+    Easing target_easing = 1;
+    // Chronological sequence of keyframes.
+    repeated CustomKeyframe keyframes = 2;
+}
+
+// Animation specification.
+message AnimationSpec {
+    optional google.protobuf.Duration initial_delay = 1;
+    Animations animation = 2;
+    optional StopType interrupt_type = 3;
+    map<string, CustomTimeline> custom_keyframe_data = 4;
+}
+
+// Specifies how to interrupt in-progress animations.
+message StopType {
+    oneof type {
+        google.protobuf.Empty reset_to_start = 1;
+        google.protobuf.Empty complete = 2;
+        float complete_with_progress = 3;
+        google.protobuf.Empty stop = 4;
+    }
+}
+
+// Animation types
+message Animations {
+    oneof type {
+        SmoothAnimation smooth = 1;
+        KeyFrameAnimation key_frame = 2;
+    }
+}
+
+// A smooth animation.
+message SmoothAnimation {
+    google.protobuf.Duration duration = 1;
+    RepeatType repeat_type = 2;
+    Easing easing = 3;
+}
+
+// Animation consist of key frames.
+message KeyFrameAnimation {
+    repeated KeyFrame steps = 1;
+    RepeatType repeat_type = 2;
+}
+
+// Specifies the animation repeat type.
+message RepeatType {
+    oneof type {
+        google.protobuf.Empty no_repeat = 1;
+        uint32 repeat = 2;
+        google.protobuf.Empty loop_forever = 3;
+    }
+}
+
+// A key frame in a key frame animation.
+message KeyFrame {
+    float value = 1;
+    google.protobuf.Duration duration = 2;
+}
+
+// Configures the animation easing curve.
+message Easing {
+    oneof type {
+        google.protobuf.Empty linear = 1;
+        BezierCurve bezier = 2;
+    }
+}
+
+// A Bezier curve
+message BezierCurve {
+    float p0 = 1;
+    float p1 = 2;
+    float p2 = 3;
+    float p3 = 4;
+}
+
+// Represents a single transition specification between variant states.
+message TransitionSpec {
+    // The origin variant state name or wildcard ("*") for any-to-one transitions.
+    string source_variant = 1;
+    // The destination variant state name.
+    string target_variant = 2;
+    // Custom animation identifier (defaults to "Default").
+    string animation_name = 3;
+    // Optional animation specification (delay, duration, easing, repeat behavior).
+    optional AnimationSpec spec = 4;
+    // Map of property names to custom keyframe timelines for this transition.
+    map<string, CustomTimeline> timelines = 5;
+}
+
+// A matrix of available transition specs for a component pair.
+message AnimationMatrix {
+    // Default animation spec fallback across all transitions in this matrix.
+    optional AnimationSpec default_spec = 1;
+    // Array of explicit transition specifications evaluated in cascade order.
+    repeated TransitionSpec transitions = 2;
+}
+
+// The main override type.
+// - no_override: to use the default
+// - disable_animations: to disregard any default animations
+// - custom: specify a custom AnimationSpec
+// - matrix: specify an explicit matrix of origin-aware transitions
+message AnimationOverride {
+    oneof animation_override {
+        google.protobuf.Empty no_override = 1;
+        google.protobuf.Empty disable_animations = 2;
+        AnimationSpec custom = 3;
+        AnimationMatrix matrix = 4;
+    }
+}

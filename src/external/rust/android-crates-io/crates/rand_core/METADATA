@@ -1,0 +1,17 @@
+name: "rand_core"
+description: "Core random number generation traits and tools for implementation."
+third_party {
+  version: "0.10.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 8
+  }
+  homepage: "https://crates.io/crates/rand_core"
+  identifier {
+    type: "crates.io"
+    value: "rand_core"
+    version: "0.10.1"
+  }
+}

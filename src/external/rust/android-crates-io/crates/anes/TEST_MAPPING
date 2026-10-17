@@ -1,0 +1,18 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/anes"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/criterion"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "anes_test_src_lib"
+    },
+    {
+      "name": "anes_test_tests_tests"
+    }
+  ]
+}

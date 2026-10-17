@@ -1,0 +1,31 @@
+{
+    "apex_available": [
+        "//apex_available:platform",
+        "com.android.compos",
+        "com.android.configinfrastructure",
+        "com.android.virt"
+    ],
+    "features": [
+        "zlib-rs"
+    ],
+    "package": {
+        "flate2": {
+            "patch": "patches/Android.bp.patch",
+            "test_data": {
+                "tests/gunzip.rs": [
+                    "tests/corrupt-gz-file.bin",
+                    "tests/good-file.gz",
+                    "tests/good-file.txt",
+                    "tests/multi.gz",
+                    "tests/multi.txt"
+                ]
+            },
+            "target_windows": true
+        }
+    },
+    "run_cargo": false,
+    "tests": true,
+    "min_sdk_version": "29",
+    "recovery_available": true,
+    "ota_recovery_ramdisk_available": true
+}

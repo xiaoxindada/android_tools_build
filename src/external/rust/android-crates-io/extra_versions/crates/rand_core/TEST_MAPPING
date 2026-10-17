@@ -1,0 +1,7 @@
+{
+  "postsubmit": [
+    {
+      "name": "rand_core_test_src_lib-0.6"
+    }
+  ]
+}

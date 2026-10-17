@@ -1,0 +1,59 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/async-stream"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/axum"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/axum-core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures-executor"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures-test"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/grpcio"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/h2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/hyper"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/inotify"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ipp"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio-test"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio-util"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tower"
+    },
+    {
+      "path": "tools/netsim"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "futures-util_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "futures-util_test_src_lib"
+    }
+  ]
+}

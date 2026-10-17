@@ -1,0 +1,15 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/crc"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "crc_test_src_lib"
+    },
+    {
+      "name": "crc_test_tests_crc"
+    }
+  ]
+}

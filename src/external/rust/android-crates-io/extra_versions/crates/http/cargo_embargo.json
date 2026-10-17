@@ -1,0 +1,8 @@
+{
+  "module_name_overrides": {
+    "libhttp": "libhttp-0.2.12",
+    "external_rust_crates_http_license": "external_rust_crates_http-0.2.12_license"
+  },
+  "min_sdk_version": "29",
+  "run_cargo": false
+}

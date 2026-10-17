@@ -1,0 +1,17 @@
+name: "num-derive"
+description: "Numeric syntax extensions"
+third_party {
+  version: "0.5.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 24
+  }
+  homepage: "https://crates.io/crates/num-derive"
+  identifier {
+    type: "crates.io"
+    value: "num-derive"
+    version: "0.5.1"
+  }
+}

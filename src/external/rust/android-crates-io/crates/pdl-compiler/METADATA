@@ -1,0 +1,17 @@
+name: "pdl-compiler"
+description: "Parser and serializer generator for protocol binary packets"
+third_party {
+  version: "0.5.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 3
+    day: 23
+  }
+  homepage: "https://crates.io/crates/pdl-compiler"
+  identifier {
+    type: "crates.io"
+    value: "pdl-compiler"
+    version: "0.5.2"
+  }
+}

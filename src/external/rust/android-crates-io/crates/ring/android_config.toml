@@ -1,0 +1,4 @@
+deletions = [
+    "Cargo.toml.orig",
+    "README.md",
+]

@@ -1,0 +1,30 @@
+diff --git a/rules.mk b/rules.mk.desired
+index 9caef97a..7c9f0e6d 100644
+--- a/rules.mk
++++ b/rules.mk.desired
+@@ -9,11 +9,22 @@ MODULE_CRATE_NAME := lazy_static
+ MODULE_RUST_CRATE_TYPES := rlib
+ MODULE_SRCS := $(LOCAL_DIR)/src/lib.rs
+ MODULE_RUST_EDITION := 2015
++MODULE_LIBRARY_DEPS := \
++
++ifeq ($(call TOBOOL,$(TRUSTY_USERSPACE)),false)
++
++# avoid cyclic dependence by adding dependencies manually
++MODULE_ADD_IMPLICIT_DEPS := false
++
+ MODULE_RUSTFLAGS += \
+ 	--cfg 'feature="spin"' \
+-	--cfg 'feature="spin_no_std"'
++	--cfg 'feature="spin_no_std"' \
+ 
+-MODULE_LIBRARY_DEPS := \
+-	$(call FIND_CRATE,spin)
++MODULE_DEPS := \
++	$(call FIND_CRATE,spin) \
++	trusty/user/base/lib/libcompiler_builtins-rust \
++	trusty/user/base/lib/libcore-rust
++
++endif
+ 
+ include make/library.mk

@@ -1,0 +1,23 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/intrusive-collections"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/nix"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/zlib-rs"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "memoffset_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "memoffset_test_src_lib"
+    }
+  ]
+}

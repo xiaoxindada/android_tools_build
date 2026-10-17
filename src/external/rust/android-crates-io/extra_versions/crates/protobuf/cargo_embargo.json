@@ -1,0 +1,31 @@
+{
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.bt",
+    "com.android.compos",
+    "com.android.virt"
+  ],
+  "features": [
+    "bytes"
+  ],
+  "min_sdk_version": "29",
+  "module_name_overrides": {
+    "copy_protobuf_build_out": "copy_protobuf_deprecated_build_out",
+    "libprotobuf": "libprotobuf_deprecated",
+    "external_rust_crates_protobuf_license": "external_rust_crates_protobuf-2.27.1_license"
+  },
+  "package": {
+    "protobuf": {
+      "copy_out": true
+    }
+  },
+  "variants": [
+    {},
+    {
+      "features": [
+      ],
+      "generate_rulesmk": true,
+      "generate_androidbp": false
+    }
+  ]
+}

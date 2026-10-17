@@ -1,0 +1,31 @@
+crate_denylist = [
+  "instant",        # Not maintained.
+  "bumpalo",        # Unsound. Reviewed by Alice Ryhl in Jan 2025.
+  "allocator-api2", # Unsound. Reviewed by Alice Ryhl in Jan 2025.
+
+  # Uniffi crates.
+  # Per mmaurer: "considered too difficult to verify and stopped being used for the original use case".
+  "oneshot-uniffi",
+  "uniffi",
+  "uniffi_checksum_derive",
+  "uniffi_core",
+  "uniffi_macros",
+  "uniffi_meta",
+
+  # Prevents issuing raw syscalls
+  "linux-raw-sys",             # rustix has local patch to remove this dependency.
+
+  # From go/android-restricted-rust-crates
+  "ctor",                      # Runs before main, can cause linking errors
+  "inventory",                 # Depends on ctor
+  "ouroboros",                 # Sketchy unsafe, code smell
+  "sled",                      # There is too much unsafe.
+  "proc-macro-error",          # Unmaintained and depends on syn 1
+  "derive-getters",            # Unmaintained and depends on syn 1
+  "android_system_properties", # Duplicates internal functionality
+  "x509-parser",               # Duplicates x509-cert and BoringSSL
+  "der-parser",                # Duplicates der
+  "oid-registry",
+  "asn1-rs",
+  "android-tzdata", # Relies on unsupported API
+]

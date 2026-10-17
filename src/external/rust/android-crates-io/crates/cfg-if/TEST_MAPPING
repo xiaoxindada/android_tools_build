@@ -1,0 +1,125 @@
+{
+  "imports": [
+    {
+      "path": "external/mesa3d/src/util/rust"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ahash"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/bitreader"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/cfg-if"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crc32fast"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/dashmap"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/evdev"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/filetime"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/gdbstub"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/getrandom"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/jni"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/libloading"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/miette"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mls-rs"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mockall"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mockall_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mockall_double"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/nix"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/parking_lot_core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serialport"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tempfile"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/thread-priority"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/thread_local"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/uefi"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/userfaultfd"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/userfaultfd-sys"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/getrandom"
+    },
+    {
+      "path": "external/rust/beto-rust/nearby"
+    },
+    {
+      "path": "external/rust/crates/openssl"
+    },
+    {
+      "path": "external/rust/rutabaga_gfx"
+    },
+    {
+      "path": "external/rust/rutabaga_gfx/third_party/mesa3d/src/util/rust"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/pvmfw"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvmbase"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "cfg-if_test_src_lib"
+    },
+    {
+      "name": "cfg-if_test_tests_xcrate"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "cfg-if_test_src_lib"
+    },
+    {
+      "name": "cfg-if_test_tests_xcrate"
+    }
+  ]
+}

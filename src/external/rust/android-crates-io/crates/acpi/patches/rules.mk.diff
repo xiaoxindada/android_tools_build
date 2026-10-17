@@ -1,0 +1,14 @@
+--- crates/acpi/rules.mk	2025-10-09 23:34:00.851164671 +0000
++++ rules.mk	2025-10-10 01:44:58.933787206 +0000
+@@ -21,8 +21,9 @@
+ 	$(call FIND_CRATE,byteorder) \
+ 	$(call FIND_CRATE,log) \
+ 	$(call FIND_CRATE,pci_types) \
+-	$(call FIND_CRATE,spinning_top) \
++	$(call FIND_CRATE,spin) \
+ 	trusty/user/base/lib/libcompiler_builtins-rust \
+-	trusty/user/base/lib/libcore-rust
++	trusty/user/base/lib/libcore-rust \
++	trusty/user/base/lib/liballoc-rust
+ 
+ include make/library.mk

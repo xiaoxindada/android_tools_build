@@ -1,0 +1,17 @@
+name: "rustfft"
+description: "High-performance FFT library written in pure Rust."
+third_party {
+  version: "6.4.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 13
+  }
+  homepage: "https://crates.io/crates/rustfft"
+  identifier {
+    type: "crates.io"
+    value: "rustfft"
+    version: "6.4.1"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "tests": true,
+  "module_blocklist": [
+    "openssh-sftp-client-lowlevel_test_tests_lowlevel",
+    "openssh-sftp-client-lowlevel_test_tests_queue"
+  ]
+}

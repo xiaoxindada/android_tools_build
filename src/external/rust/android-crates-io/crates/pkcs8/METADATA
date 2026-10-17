@@ -1,0 +1,17 @@
+name: "pkcs8"
+description: "Pure Rust implementation of Public-Key Cryptography Standards (PKCS) #8: Private-Key Information Syntax Specification (RFC 5208), with additional support for PKCS#8v2 asymmetric key packages (RFC 5958)"
+third_party {
+  version: "0.10.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2023
+    month: 12
+    day: 15
+  }
+  homepage: "https://crates.io/crates/pkcs8"
+  identifier {
+    type: "crates.io"
+    value: "pkcs8"
+    version: "0.10.2"
+  }
+}

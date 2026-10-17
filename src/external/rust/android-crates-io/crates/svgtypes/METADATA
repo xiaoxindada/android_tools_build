@@ -1,0 +1,17 @@
+name: "svgtypes"
+description: "SVG types parser."
+third_party {
+  version: "0.16.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 18
+  }
+  homepage: "https://crates.io/crates/svgtypes"
+  identifier {
+    type: "crates.io"
+    value: "svgtypes"
+    version: "0.16.1"
+  }
+}

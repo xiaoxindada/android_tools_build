@@ -1,0 +1,17 @@
+name: "glob"
+description: "Support for matching file paths against Unix shell style patterns."
+third_party {
+  version: "0.3.4"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 24
+  }
+  homepage: "https://crates.io/crates/glob"
+  identifier {
+    type: "crates.io"
+    value: "glob"
+    version: "0.3.4"
+  }
+}

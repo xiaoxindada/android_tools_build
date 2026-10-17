@@ -1,0 +1,30 @@
+{
+  "features": [
+    "event",
+    "feature",
+    "fs",
+    "inotify",
+    "ioctl",
+    "mount",
+    "mman",
+    "net",
+    "poll",
+    "resource",
+    "sched",
+    "signal",
+    "socket",
+    "term",
+    "time",
+    "uio",
+    "user"
+  ],
+  "min_sdk_version": "29",
+  "run_cargo": false,
+  "package": {
+    "nix": {
+      "add_module_block": "module_block.bp.fragment"
+    }
+  },
+  "native_bridge_supported": true,
+  "recovery_available": true
+}

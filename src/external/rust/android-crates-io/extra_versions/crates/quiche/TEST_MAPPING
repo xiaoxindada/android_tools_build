@@ -1,0 +1,22 @@
+{
+  "imports": [
+    {
+      "path": "packages/modules/DnsResolver/rust/src/doh/tests/doh_frontend"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "quiche_device_test_src_lib-0.17"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "quiche_device_test_src_lib-0.17"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "quiche_host_test_src_lib-0.17"
+    }
+  ]
+}

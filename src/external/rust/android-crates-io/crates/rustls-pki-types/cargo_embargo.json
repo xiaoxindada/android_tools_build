@@ -1,0 +1,16 @@
+{
+  "run_cargo": false,
+  "features": [
+    "std",
+    "default"
+  ],
+  "min_sdk_version": "29",
+  "package": {
+    "rustls-pki-types": {
+      "srcs": [
+        "src/*.rs",
+        "src/data/*.der"
+      ]
+    }
+  }
+}

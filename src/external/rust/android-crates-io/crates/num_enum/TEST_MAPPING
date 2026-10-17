@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/arm-ffa"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/arm-psci"
+    },
+    {
+      "path": "system/desktop/security/pinweaver/storage"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/netlink-proto"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rtnetlink"
+    },
+    {
+      "path": "system/libueventd-rs"
+    }
+  ]
+}

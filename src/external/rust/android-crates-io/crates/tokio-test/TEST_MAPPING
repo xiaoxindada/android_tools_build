@@ -1,0 +1,35 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/tokio"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio-test"
+    },
+    {
+      "path": "packages/modules/Bluetooth/system/rust"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "tokio-test_test_tests_block_on"
+    },
+    {
+      "name": "tokio-test_test_tests_io"
+    },
+    {
+      "name": "tokio-test_test_tests_macros"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "tokio-test_test_tests_block_on"
+    },
+    {
+      "name": "tokio-test_test_tests_io"
+    },
+    {
+      "name": "tokio-test_test_tests_macros"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "run_cargo": false,
+  "sdk_version": "26",
+  "min_sdk_version": "26",
+  "package": {
+     "libz-rs-sys": {
+       "add_toplevel_block": "rust_ffi.bp.fragment"
+     }
+  }
+}

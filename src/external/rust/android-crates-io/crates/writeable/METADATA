@@ -1,0 +1,17 @@
+name: "writeable"
+description: "A more efficient alternative to fmt::Display"
+third_party {
+  version: "0.6.4"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 14
+  }
+  homepage: "https://crates.io/crates/writeable"
+  identifier {
+    type: "crates.io"
+    value: "writeable"
+    version: "0.6.4"
+  }
+}

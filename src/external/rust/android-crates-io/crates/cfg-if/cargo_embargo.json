@@ -1,0 +1,26 @@
+{
+  "min_sdk_version": "29",
+  "run_cargo": false,
+  "tests": true,
+  "variants": [
+    {},
+    {
+      "package": {
+        "cfg-if": {
+          "no_std": true
+        }
+      },
+      "tests": false,
+      "generate_androidbp": true,
+      "generate_rulesmk": true
+    }
+  ],
+  "recovery_available": true,
+  "package": {
+    "cfg-if": {
+      "target_windows": true
+    }
+  },
+  "native_bridge_supported": true,
+  "ota_recovery_ramdisk_available": true
+}

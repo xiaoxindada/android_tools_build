@@ -1,0 +1,31 @@
+{
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.virt"
+  ],
+  "module_visibility": {
+    "libflagset": [
+      "//external/rust/android-crates-io/crates/der:__subpackages__",
+      "//external/rust/crates/x509-cert:__subpackages__",
+      "//system/keymint:__subpackages__"
+    ]
+  },
+  "run_cargo": false,
+  "variants": [
+    {},
+    {
+      "package": {
+        "flagset": {
+          "force_rlib": true,
+          "host_supported": false,
+          "no_std": true
+        }
+      }
+    },
+    {
+      "generate_androidbp": false,
+      "generate_rulesmk": true
+    }
+  ],
+  "min_sdk_version": "apex_inherit"
+}

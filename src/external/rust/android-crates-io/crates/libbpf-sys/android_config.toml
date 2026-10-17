@@ -1,0 +1,9 @@
+deletions = [
+  ".gitmodules",
+
+  # We use the versions of these libraries in external/ instead.
+  "elfutils",
+  "zlib",
+  "libbpf",
+  "src/bindings.rs"
+]

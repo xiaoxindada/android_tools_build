@@ -1,0 +1,108 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/base64"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/cast"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crc32fast"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crossbeam-deque"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crossbeam-epoch"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crossbeam-queue"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crossbeam-utils"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/flate2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/hashbrown"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/hashlink"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mio"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/quickcheck"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rand_chacha"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rand_core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rand_xorshift"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/regex"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ryu"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/zerocopy"
+    },
+    {
+      "path": "external/uwb/src"
+    },
+    {
+      "path": "packages/modules/Virtualization/apkdmverity"
+    },
+    {
+      "path": "packages/modules/Virtualization/authfs"
+    },
+    {
+      "path": "packages/modules/Virtualization/avmd"
+    },
+    {
+      "path": "packages/modules/Virtualization/encryptedstore"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/devicemapper"
+    },
+    {
+      "path": "packages/modules/Virtualization/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/virtualizationmanager"
+    },
+    {
+      "path": "packages/modules/Virtualization/vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/zipfuse"
+    },
+    {
+      "path": "system/security/keystore2"
+    },
+    {
+      "path": "system/security/keystore2/legacykeystore"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "getrandom_test_src_lib-0.2"
+    },
+    {
+      "name": "getrandom_test_tests_normal-0.2"
+    },
+    {
+      "name": "getrandom_test_tests_rdrand-0.2"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+name: "thread_local"
+description: "Per-object thread-local storage"
+third_party {
+  version: "1.1.10"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 24
+  }
+  homepage: "https://crates.io/crates/thread_local"
+  identifier {
+    type: "crates.io"
+    value: "thread_local"
+    version: "1.1.10"
+  }
+}

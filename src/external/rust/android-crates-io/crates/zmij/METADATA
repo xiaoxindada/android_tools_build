@@ -1,0 +1,17 @@
+name: "zmij"
+description: "A double-to-string conversion algorithm based on Schubfach and xjb"
+third_party {
+  version: "1.0.23"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 15
+  }
+  homepage: "https://crates.io/crates/zmij"
+  identifier {
+    type: "crates.io"
+    value: "zmij"
+    version: "1.0.23"
+  }
+}

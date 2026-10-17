@@ -1,0 +1,3 @@
+[not_updateable]
+minor_version_allowed = false
+reason = "Requires imports the linux-raw-sys crate which is not permitted"

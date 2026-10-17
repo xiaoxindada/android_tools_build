@@ -1,0 +1,17 @@
+name: "async-stream-impl"
+description: "proc macros for async-stream crate"
+third_party {
+  version: "0.3.6"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 1
+    day: 15
+  }
+  homepage: "https://crates.io/crates/async-stream-impl"
+  identifier {
+    type: "crates.io"
+    value: "async-stream-impl"
+    version: "0.3.6"
+  }
+}

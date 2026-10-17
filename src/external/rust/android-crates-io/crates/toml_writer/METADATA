@@ -1,0 +1,17 @@
+name: "toml_writer"
+description: "A low-level interface for writing out TOML"
+third_party {
+  version: "1.1.2+spec-1.1.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 15
+  }
+  homepage: "https://crates.io/crates/toml_writer"
+  identifier {
+    type: "crates.io"
+    value: "toml_writer"
+    version: "1.1.2+spec-1.1.0"
+  }
+}

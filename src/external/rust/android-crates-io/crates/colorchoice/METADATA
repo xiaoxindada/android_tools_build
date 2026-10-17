@@ -1,0 +1,17 @@
+name: "colorchoice"
+description: "Global override of color control"
+third_party {
+  version: "1.0.5"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 29
+  }
+  homepage: "https://crates.io/crates/colorchoice"
+  identifier {
+    type: "crates.io"
+    value: "colorchoice"
+    version: "1.0.5"
+  }
+}

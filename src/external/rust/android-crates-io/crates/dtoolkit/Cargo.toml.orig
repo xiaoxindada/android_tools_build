@@ -1,0 +1,51 @@
+[package]
+name = "dtoolkit"
+version = "0.4.1"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+rust-version = "1.88"
+description = "A library for parsing and manipulating Flattened Device Tree (FDT) blobs."
+repository = "https://github.com/google/dtoolkit"
+authors = ["Mateusz Maćkowski <mmac@google.com>"]
+categories = ["embedded", "encoding", "no-std::no-alloc", "parsing"]
+keywords = ["device-tree", "fdt", "dtb", "dts", "parser"]
+readme = "README.md"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[features]
+default = []
+alloc = []
+arrayvec07 = ["dep:arrayvec"]
+heapless09 = ["dep:heapless"]
+overlay = ["alloc"]
+write = ["alloc", "dep:indexmap", "dep:twox-hash"]
+
+[dependencies]
+arrayvec = { version = "0.7", optional = true, default-features = false }
+heapless = { version = "0.9", optional = true, default-features = false }
+indexmap = { version = "2", optional = true, default-features = false }
+thiserror = { version = "2", default-features = false }
+twox-hash = { version = "2", optional = true, features = ["xxhash64"], default-features = false }
+zerocopy = "0.8.28"
+zerocopy-derive = "0.8.28"
+
+[lints.rust]
+deprecated_safe = "warn"
+keyword_idents = "warn"
+missing_copy_implementations = "warn"
+missing_debug_implementations = "warn"
+trivial_casts = "warn"
+trivial_numeric_casts = "warn"
+unreachable_pub = "warn"
+unstable_features = "warn"
+unused_import_braces = "warn"
+unused_qualifications = "warn"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+undocumented_unsafe_blocks = "deny"
+unwrap_used = "warn"

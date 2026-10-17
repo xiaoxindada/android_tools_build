@@ -1,0 +1,17 @@
+name: "kurbo"
+description: "A 2D curves library"
+third_party {
+  version: "0.13.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 29
+  }
+  homepage: "https://crates.io/crates/kurbo"
+  identifier {
+    type: "crates.io"
+    value: "kurbo"
+    version: "0.13.1"
+  }
+}

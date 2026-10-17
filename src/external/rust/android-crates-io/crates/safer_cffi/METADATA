@@ -1,0 +1,17 @@
+name: "safer_cffi"
+description: "Building blocks for safer C/Rust interop."
+third_party {
+  version: "0.2.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 27
+  }
+  homepage: "https://crates.io/crates/safer_cffi"
+  identifier {
+    type: "crates.io"
+    value: "safer_cffi"
+    version: "0.2.0"
+  }
+}

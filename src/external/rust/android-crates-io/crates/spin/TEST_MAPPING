@@ -1,0 +1,32 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/buddy_system_allocator"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/lazy_static"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mls-rs"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ring"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/vmbase_example"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvmbase"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "spin_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "spin_test_src_lib"
+    }
+  ]
+}

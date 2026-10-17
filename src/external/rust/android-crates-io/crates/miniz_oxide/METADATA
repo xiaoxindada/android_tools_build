@@ -1,0 +1,17 @@
+name: "miniz_oxide"
+description: "DEFLATE compression and decompression library rewritten in Rust based on miniz"
+third_party {
+  version: "0.9.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 3
+    day: 17
+  }
+  homepage: "https://crates.io/crates/miniz_oxide"
+  identifier {
+    type: "crates.io"
+    value: "miniz_oxide"
+    version: "0.9.1"
+  }
+}

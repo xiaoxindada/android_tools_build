@@ -1,0 +1,17 @@
+name: "darling_macro"
+description: "Internal support for a proc-macro library for reading attributes into structs when implementing custom derives. Use https://crates.io/crates/darling in your code."
+third_party {
+  version: "0.23.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 12
+    day: 9
+  }
+  homepage: "https://crates.io/crates/darling_macro"
+  identifier {
+    type: "crates.io"
+    value: "darling_macro"
+    version: "0.23.0"
+  }
+}

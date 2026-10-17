@@ -1,0 +1,67 @@
+# Release-plz configuration for glam.
+#
+# Mirrors the previous manual release process: a "Prepare <version> release"
+# PR bumps the version and generates the changelog; merging that PR tags the
+# release and publishes to crates.io.
+
+[workspace]
+# Only tag + publish when the release PR is merged, not on every push to
+# main. Note: release PR detection relies on the default `release-plz-`
+# branch prefix, so don't set pr_branch_prefix.
+release_always = false
+
+# Only trigger when a commit matches this allowlist; everything else rides
+# along with the next release. Whether ride-along commits show up in the
+# changelog is decided by the `[changelog]` parsers below.
+release_commits = '^(feat|fix|perf|changed|deprecated|removed|security)(\(.*\))?!?:'
+
+# Match the existing tag style: 0.33.3 (no "v" prefix, no package prefix).
+git_tag_name = "{{ version }}"
+
+# glam releases are a git tag + crates.io publish; no GitHub release.
+git_release_enable = false
+
+# Squash-merging this PR produces the usual "Prepare <version> release"
+# commit on main. The `release` label is used by the PR-title lint
+# workflow to exempt release PRs from the Conventional Commits check.
+pr_name = "Prepare {{ version }} release"
+pr_labels = ["release"]
+
+# Run cargo-semver-checks and report API compatibility in the release PR
+# body. This check can also drive the version bump: if it detects an
+# incompatible API change, release-plz bumps the minor version (the 0.x
+# breaking slot) regardless of the commit titles.
+semver_check = true
+
+# The changelog is generated from conventional commit messages on the
+# release PR using git-cliff; see the `[changelog]` section for which
+# commits are kept. Version bumps
+# follow release-plz's pre-1.0 rules: breaking changes bump the minor
+# version (the 0.x breaking slot), whether detected by cargo-semver-checks
+# or by the `!` marker in a commit title. Everything else, including
+# `feat:`, bumps the patch version. This matches the bump policy used
+# before switching to release-plz.
+changelog_update = true
+
+# Only the glam crate is released. The `ci` and `glam-no_std` packages are
+# skipped automatically because they set `publish = false` in their
+# Cargo.toml; `codegen` needs an explicit exclusion as it doesn't.
+[[package]]
+name = "codegen"
+release = false
+
+# Keep a Changelog sections, with the noise filtered out: maintenance
+# commits are dropped, breaking changes are always kept, and anything else
+# (e.g. dependabot bumps) falls into "Other".
+[changelog]
+protect_breaking_commits = true
+commit_parsers = [
+    { message = '^feat', group = "added" },
+    { message = '^changed', group = "changed" },
+    { message = '^deprecated', group = "deprecated" },
+    { message = '^removed', group = "removed" },
+    { message = '^fix', group = "fixed" },
+    { message = '^security', group = "security" },
+    { message = '^(docs|chore|ci|test|refactor|style|build|revert)(\(.*\))?!?:', skip = true },
+    { message = '^.*', group = "other" },
+]

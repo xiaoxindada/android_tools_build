@@ -1,0 +1,10 @@
+{
+  "postsubmit": [
+    {
+      "name": "remain_test_tests_stable"
+    },
+    {
+      "name": "remain_test_tests_unstable"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+name: "awaitable-error"
+description: "Awaitable type with input and output that can be stored in container."
+third_party {
+  version: "0.1.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 4
+  }
+  homepage: "https://crates.io/crates/awaitable-error"
+  identifier {
+    type: "crates.io"
+    value: "awaitable-error"
+    version: "0.1.0"
+  }
+}

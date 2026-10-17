@@ -1,0 +1,20 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/rand_chacha"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/rand_chacha"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "ppv-lite86_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "ppv-lite86_test_src_lib"
+    }
+  ]
+}

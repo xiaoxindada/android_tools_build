@@ -1,0 +1,31 @@
+{
+  "run_cargo": false,
+  "package": {
+    "byteorder": {
+      "rulesmk_patch": "patches/rules.mk.diff"
+    }
+  },
+  "variants": [
+    {},
+    {
+      "features": [],
+      "module_name_overrides": {
+        "libbyteorder": "libbyteorder_nostd"
+      },
+      "package": {
+        "byteorder": {
+          "force_rlib": true,
+          "host_supported": false,
+          "no_std": true
+        }
+      }
+    },
+    {
+      "generate_androidbp": false,
+      "generate_rulesmk": true
+    }
+  ],
+  "min_sdk_version": "29",
+  "recovery_available": true,
+  "ota_recovery_ramdisk_available": true
+}

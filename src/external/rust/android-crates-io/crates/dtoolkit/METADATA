@@ -1,0 +1,17 @@
+name: "dtoolkit"
+description: "A library for parsing and manipulating Flattened Device Tree (FDT) blobs."
+third_party {
+  version: "0.4.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 10
+    day: 13
+  }
+  homepage: "https://crates.io/crates/dtoolkit"
+  identifier {
+    type: "crates.io"
+    value: "dtoolkit"
+    version: "0.4.1"
+  }
+}

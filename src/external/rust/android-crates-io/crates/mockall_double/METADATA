@@ -1,0 +1,17 @@
+name: "mockall_double"
+description: "Test double adapter for Mockall"
+third_party {
+  version: "0.3.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 5
+    day: 15
+  }
+  homepage: "https://crates.io/crates/mockall_double"
+  identifier {
+    type: "crates.io"
+    value: "mockall_double"
+    version: "0.3.1"
+  }
+}

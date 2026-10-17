@@ -1,0 +1,3 @@
+com.foo,known,finalized,exported
+com.bar,unknown,reverted,exported
+com.baz,known,kept

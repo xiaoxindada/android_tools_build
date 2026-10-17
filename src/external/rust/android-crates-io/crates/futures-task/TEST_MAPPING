@@ -1,0 +1,26 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/futures"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures-executor"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures-test"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures-util"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "futures-task_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "futures-task_test_src_lib"
+    }
+  ]
+}

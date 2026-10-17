@@ -1,0 +1,9 @@
+{
+  "package": {
+    "brotli-decompressor": {
+      "patch": "patches/Android.bp.patch"
+    }
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

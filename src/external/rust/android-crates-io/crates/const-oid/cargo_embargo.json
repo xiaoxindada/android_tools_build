@@ -1,0 +1,36 @@
+{
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.virt"
+  ],
+  "features": [
+    "db"
+  ],
+  "module_visibility": {
+    "libconst_oid": [
+      "//external/rust/android-crates-io/crates/der:__subpackages__",
+      "//external/rust/android-crates-io/crates/digest:__subpackages__",
+      "//external/rust/android-crates-io/crates/x509-cert:__subpackages__",
+      "//packages/modules/Virtualization:__subpackages__"
+    ]
+  },
+  "run_cargo": false,
+  "variants": [
+    {},
+    {
+      "package": {
+        "const-oid": {
+          "alloc": true,
+          "force_rlib": true,
+          "host_supported": false,
+          "no_std": true
+        }
+      }
+    },
+    {
+      "generate_androidbp": false,
+      "generate_rulesmk": true
+    }
+  ],
+  "min_sdk_version": "apex_inherit"
+}

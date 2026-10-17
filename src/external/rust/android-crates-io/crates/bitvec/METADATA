@@ -1,0 +1,17 @@
+name: "bitvec"
+description: "Addresses memory by bits, for packed collections and bitfields"
+third_party {
+  version: "1.1.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 24
+  }
+  homepage: "https://crates.io/crates/bitvec"
+  identifier {
+    type: "crates.io"
+    value: "bitvec"
+    version: "1.1.1"
+  }
+}

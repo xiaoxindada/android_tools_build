@@ -1,0 +1,17 @@
+name: "unty"
+description: "Explicitly types your generics"
+third_party {
+  version: "0.0.5"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 1
+    day: 28
+  }
+  homepage: "https://crates.io/crates/unty"
+  identifier {
+    type: "crates.io"
+    value: "unty"
+    version: "0.0.5"
+  }
+}

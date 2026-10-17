@@ -1,0 +1,12 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/ippusb"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "chunked_transfer_test_src_lib"
+    }
+  ]
+}

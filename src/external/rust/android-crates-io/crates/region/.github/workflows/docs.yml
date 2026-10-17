@@ -1,0 +1,37 @@
+name: Documentation
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  docs:
+    name: GitHub Pages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build documentation
+        run: cargo doc --all --no-deps
+
+      - name: Create index.html
+        run: echo '<meta http-equiv="refresh" content="0; URL=region/index.html"/>' > target/doc/index.html
+
+      - name: Deploy documentation
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./target/doc
+          user_name: github-actions[bot]
+          user_email: github-actions[bot]@users.noreply.github.com

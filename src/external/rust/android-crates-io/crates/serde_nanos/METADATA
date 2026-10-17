@@ -1,0 +1,17 @@
+name: "serde_nanos"
+description: "Wrapper to process duration and timestamps as nanoseconds"
+third_party {
+  version: "0.1.4"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 11
+  }
+  homepage: "https://crates.io/crates/serde_nanos"
+  identifier {
+    type: "crates.io"
+    value: "serde_nanos"
+    version: "0.1.4"
+  }
+}

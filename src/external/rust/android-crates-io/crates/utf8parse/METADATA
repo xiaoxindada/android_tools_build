@@ -1,0 +1,17 @@
+name: "utf8parse"
+description: "Table-driven UTF-8 parser"
+third_party {
+  version: "0.2.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 29
+  }
+  homepage: "https://crates.io/crates/utf8parse"
+  identifier {
+    type: "crates.io"
+    value: "utf8parse"
+    version: "0.2.2"
+  }
+}

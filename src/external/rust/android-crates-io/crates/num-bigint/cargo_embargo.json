@@ -1,0 +1,16 @@
+{
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.virt"
+  ],
+  "cfg_blocklist": [
+    "use_addcarry"
+  ],
+  "package": {
+    "num-bigint": {
+      "copy_out": true
+    }
+  },
+  "tests": true,
+  "min_sdk_version": "29"
+}

@@ -1,0 +1,17 @@
+name: "hound"
+description: "A wav encoding and decoding library"
+third_party {
+  version: "3.5.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 8
+    day: 9
+  }
+  homepage: "https://crates.io/crates/hound"
+  identifier {
+    type: "crates.io"
+    value: "hound"
+    version: "3.5.1"
+  }
+}

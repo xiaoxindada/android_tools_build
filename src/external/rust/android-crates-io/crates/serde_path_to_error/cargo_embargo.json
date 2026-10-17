@@ -1,0 +1,9 @@
+{
+  "package": {
+    "serde_path_to_error": {
+      "host_supported": true
+    }
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

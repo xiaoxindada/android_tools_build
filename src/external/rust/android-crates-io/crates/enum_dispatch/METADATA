@@ -1,0 +1,17 @@
+name: "enum_dispatch"
+description: "Near drop-in replacement for dynamic-dispatched method calls with up to 10x the speed"
+third_party {
+  version: "0.3.13"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 18
+  }
+  homepage: "https://crates.io/crates/enum_dispatch"
+  identifier {
+    type: "crates.io"
+    value: "enum_dispatch"
+    version: "0.3.13"
+  }
+}

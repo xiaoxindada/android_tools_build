@@ -1,0 +1,17 @@
+name: "axum"
+description: "HTTP routing and request handling library that focuses on ergonomics and modularity"
+third_party {
+  version: "0.8.9"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 17
+  }
+  homepage: "https://crates.io/crates/axum"
+  identifier {
+    type: "crates.io"
+    value: "axum"
+    version: "0.8.9"
+  }
+}

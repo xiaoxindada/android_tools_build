@@ -1,0 +1,21 @@
+rust_bindgen {
+   name: "libselinux_sys_raw",
+   host_supported: true,
+   crate_name: "selinux_sys_raw",
+   source_stem: "selinux-sys",
+   wrapper_src: "src/selinux-sys.h",
+   shared_libs: ["libselinux"],
+   bindgen_flag_files: ["android/selinux_bindgen_flags.txt"],
+   apex_available: [
+       "//apex_available:platform",
+       "//apex_available:anyapex",
+   ],
+   cflags: [
+       "-DSELINUX_SYS_RESTORECON_H",
+       "-DSELINUX_SYS_GET_CONTEXT_LIST_H",
+       "-DSELINUX_SYS_GET_DEFAULT_TYPE_H",
+   ],
+   product_available: true,
+   vendor_available: true,
+   min_sdk_version: "29",
+}

@@ -1,0 +1,19 @@
+{
+  "run_cargo": false,
+  "apex_available": [
+    "//apex_available:platform",
+    "//apex_available:anyapex"
+  ],
+  "features": [
+    "default",
+    "serde"
+  ],
+  "min_sdk_version": "29",
+  "ota_recovery_ramdisk_available": true,
+  "tests": true,
+  "package": {
+    "bytes": {
+      "target_windows": true
+    }
+  }
+}

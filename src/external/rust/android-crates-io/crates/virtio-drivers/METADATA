@@ -1,0 +1,17 @@
+name: "virtio-drivers"
+description: "VirtIO guest drivers."
+third_party {
+  version: "0.13.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 15
+  }
+  homepage: "https://crates.io/crates/virtio-drivers"
+  identifier {
+    type: "crates.io"
+    value: "virtio-drivers"
+    version: "0.13.0"
+  }
+}

@@ -1,0 +1,17 @@
+name: "hyper"
+description: "A fast and correct HTTP library."
+third_party {
+  version: "0.14.27"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 14
+  }
+  homepage: "https://crates.io/crates/hyper"
+  identifier {
+    type: "crates.io"
+    value: "hyper"
+    version: "0.14.27"
+  }
+}

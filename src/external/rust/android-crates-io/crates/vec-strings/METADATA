@@ -1,0 +1,17 @@
+name: "vec-strings"
+description: "Store any string efficiently in an immutable way."
+third_party {
+  version: "0.4.8"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 8
+  }
+  homepage: "https://crates.io/crates/vec-strings"
+  identifier {
+    type: "crates.io"
+    value: "vec-strings"
+    version: "0.4.8"
+  }
+}

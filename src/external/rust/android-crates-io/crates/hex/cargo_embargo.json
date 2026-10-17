@@ -1,0 +1,30 @@
+{
+  "run_cargo": false,
+  "variants": [
+    {
+      "features": [
+	"default",
+	"serde"
+      ]
+    },
+    {
+      "features": [
+        "alloc"
+      ],
+      "package": {
+        "hex": {
+          "alloc": true,
+          "force_rlib": true,
+          "host_supported": false,
+          "no_std": true
+        }
+      }
+    },
+    {
+      "generate_androidbp": false,
+      "generate_rulesmk": true
+    }
+  ],
+  "min_sdk_version": "29",
+  "recovery_available": true
+}

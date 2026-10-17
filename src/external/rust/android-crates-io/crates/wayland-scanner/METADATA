@@ -1,0 +1,17 @@
+name: "wayland-scanner"
+description: "Wayland Scanner for generating rust APIs from XML wayland protocol files."
+third_party {
+  version: "0.31.11"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 15
+  }
+  homepage: "https://crates.io/crates/wayland-scanner"
+  identifier {
+    type: "crates.io"
+    value: "wayland-scanner"
+    version: "0.31.11"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/unicode-xid"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "unicode-xid_test_src_lib"
+    },
+    {
+      "name": "unicode-xid_test_tests_exhaustive_tests"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "unicode-xid_test_src_lib"
+    },
+    {
+      "name": "unicode-xid_test_tests_exhaustive_tests"
+    }
+  ]
+}

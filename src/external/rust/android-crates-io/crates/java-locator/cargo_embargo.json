@@ -1,0 +1,10 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "module_blocklist": ["java_locator"],
+  "package": {
+    "java-locator": {
+      "device_supported": false
+    }
+  }
+}

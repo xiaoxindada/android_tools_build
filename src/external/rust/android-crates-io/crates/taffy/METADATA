@@ -1,0 +1,17 @@
+name: "taffy"
+description: "A flexible UI layout library"
+third_party {
+  version: "0.7.7"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 3
+    day: 14
+  }
+  homepage: "https://crates.io/crates/taffy"
+  identifier {
+    type: "crates.io"
+    value: "taffy"
+    version: "0.7.7"
+  }
+}

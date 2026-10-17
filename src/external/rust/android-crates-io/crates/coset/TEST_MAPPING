@@ -1,0 +1,101 @@
+{
+  "imports": [
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/pvmfw"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/service_vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/service_vm/requests"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/cborutil"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/dice/driver"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/dice/open_dice"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/dice/sample_inputs"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libclient_vm_csr"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libservice_vm_comm"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libservice_vm_fake_chain"
+    },
+    {
+      "path": "system/authgraph/boringssl"
+    },
+    {
+      "path": "system/authgraph/core"
+    },
+    {
+      "path": "system/authgraph/tests"
+    },
+    {
+      "path": "system/keymint/common"
+    },
+    {
+      "path": "system/keymint/ta"
+    },
+    {
+      "path": "system/keymint/wire"
+    },
+    {
+      "path": "system/secretkeeper/client"
+    },
+    {
+      "path": "system/secretkeeper/comm"
+    },
+    {
+      "path": "system/secretkeeper/core"
+    },
+    {
+      "path": "system/secretkeeper/dice_policy"
+    },
+    {
+      "path": "system/secretkeeper/dice_policy/tests"
+    },
+    {
+      "path": "system/secretkeeper/hal"
+    },
+    {
+      "path": "system/see/authmgr/authmgr-be"
+    },
+    {
+      "path": "system/see/authmgr/authmgr-be-impl"
+    },
+    {
+      "path": "system/see/authmgr/authmgr-common"
+    },
+    {
+      "path": "system/see/authmgr/authmgr-fe"
+    },
+    {
+      "path": "tools/security/remote_provisioning/hwtrust"
+    },
+    {
+      "path": "tools/security/remote_provisioning/hwtrust/cxxbridge"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "coset_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "coset_test_src_lib"
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.resolv",
+    "com.android.tethering"
+  ],
+  "product_available": false,
+  "vendor_available": false,
+  "min_sdk_version": "29",
+  "package": {
+    "quiche": {
+      "patch": "patches/Android.bp.patch",
+      "add_toplevel_block": "ffi_headers.bp.fragment",
+      "test_data": {
+        "src/lib.rs": [
+          "examples/cert.crt",
+          "examples/cert.key",
+          "examples/cert-big.crt",
+          "examples/rootca.crt"
+        ]
+      }
+    }
+  },
+  "variants": [
+    {
+      "module_blocklist": [
+        "libquiche_static"
+      ],
+      "module_name_overrides": {
+        "external_rust_crates_quiche_license": "external_rust_crates_quiche-0.17_license",
+        "libquiche": "libquiche-0.17",
+        "libquiche_shared": "libquiche_ffi-0.17"
+      }
+    },
+    {
+      "module_blocklist": [
+        "libquiche",
+        "libquiche_shared",
+        "libquiche_static"
+      ],
+      "module_name_overrides": {
+        "quiche_test_src_lib": "quiche_host_test_src_lib-0.17"
+      },
+      "tests": true,
+      "package": {
+        "quiche": {
+          "device_supported": false
+        }
+      }
+    },
+    {
+      "module_blocklist": [
+        "libquiche",
+        "libquiche_shared",
+        "libquiche_static"
+      ],
+      "module_name_overrides": {
+        "libcrypto": "libcrypto_static_for_legacy_quiche",
+        "quiche_test_src_lib": "quiche_device_test_src_lib-0.17"
+      },
+      "tests": true,
+      "package": {
+        "quiche": {
+          "host_supported": false
+        }
+      }
+    },
+    {
+      "module_blocklist": [
+        "libquiche_shared",
+        "libquiche_static"
+      ],
+      "module_name_overrides": {
+        "libcrypto": "libcrypto_static_for_legacy_quiche",
+        "libquiche": "libquiche_static-0.17"
+      },
+      "package": {
+        "quiche": {
+          "force_rlib": true
+        }
+      }
+    }
+  ]
+}

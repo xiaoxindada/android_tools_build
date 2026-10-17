@@ -1,0 +1,7 @@
+{
+  "postsubmit": [
+    {
+      "name": "utf8_iter_test_src_lib"
+    }
+  ]
+}

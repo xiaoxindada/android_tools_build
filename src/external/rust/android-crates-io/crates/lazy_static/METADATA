@@ -1,0 +1,17 @@
+name: "lazy_static"
+description: "A macro for declaring lazily evaluated statics in Rust."
+third_party {
+  version: "1.5.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 4
+  }
+  homepage: "https://crates.io/crates/lazy_static"
+  identifier {
+    type: "crates.io"
+    value: "lazy_static"
+    version: "1.5.0"
+  }
+}

@@ -1,0 +1,20 @@
+target: {
+    linux: {
+        cfgs: [
+            "linux_kernel",
+            "linux_like",
+        ],
+    },
+    android: {
+        cfgs: [
+            "linux_kernel",
+            "linux_like",
+        ],
+    },
+    darwin: {
+        cfgs: [
+            "apple",
+            "bsd",
+        ],
+    },
+}

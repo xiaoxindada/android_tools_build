@@ -1,0 +1,17 @@
+name: "tokio-util"
+description: "Additional utilities for working with Tokio."
+third_party {
+  version: "0.7.19"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 26
+  }
+  homepage: "https://crates.io/crates/tokio-util"
+  identifier {
+    type: "crates.io"
+    value: "tokio-util"
+    version: "0.7.19"
+  }
+}

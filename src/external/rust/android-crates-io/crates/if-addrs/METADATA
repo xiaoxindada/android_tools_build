@@ -1,0 +1,17 @@
+name: "if-addrs"
+description: "Return interface IP addresses on Posix and windows systems"
+third_party {
+  version: "0.15.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 3
+    day: 2
+  }
+  homepage: "https://crates.io/crates/if-addrs"
+  identifier {
+    type: "crates.io"
+    value: "if-addrs"
+    version: "0.15.0"
+  }
+}

@@ -1,0 +1,17 @@
+name: "utf8_iter"
+description: "Iterator by char over potentially-invalid UTF-8 in &[u8]"
+third_party {
+  version: "1.0.4"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 12
+    day: 2
+  }
+  homepage: "https://crates.io/crates/utf8_iter"
+  identifier {
+    type: "crates.io"
+    value: "utf8_iter"
+    version: "1.0.4"
+  }
+}

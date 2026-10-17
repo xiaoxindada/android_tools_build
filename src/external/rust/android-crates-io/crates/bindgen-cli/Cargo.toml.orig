@@ -1,0 +1,49 @@
+lints.workspace = true
+
+[package]
+authors = [
+    "The rust-bindgen project contributors",
+]
+description = "Automatically generates Rust FFI bindings to C and C++ libraries."
+keywords = ["bindings", "ffi", "code-generation"]
+categories = ["external-ffi-bindings", "development-tools::ffi"]
+license = "BSD-3-Clause"
+name = "bindgen-cli"
+readme = "../README.md"
+repository = "https://github.com/rust-lang/rust-bindgen"
+documentation = "https://docs.rs/bindgen"
+homepage = "https://rust-lang.github.io/rust-bindgen/"
+version = "0.72.1"
+rust-version.workspace = true
+edition.workspace = true
+
+[[bin]]
+path = "main.rs"
+name = "bindgen"
+
+[dependencies]
+bindgen = { workspace = true, features = ["__cli", "experimental", "prettyplease"] }
+env_logger = { workspace = true, optional = true }
+log = { workspace = true, optional = true }
+proc-macro2.workspace = true
+shlex.workspace = true
+
+[features]
+default = ["logging", "runtime"]
+logging = ["bindgen/logging", "dep:env_logger", "dep:log"]
+static = ["bindgen/static"]
+runtime = ["bindgen/runtime"]
+prettyplease = ["bindgen/prettyplease"]
+
+## The following features are for internal use and they shouldn't be used if
+## you're not hacking on bindgen
+# Features used for CI testing 
+__testing_only_extra_assertions = ["bindgen/__testing_only_extra_assertions"]
+__testing_only_libclang_9 = ["bindgen/__testing_only_libclang_9"]
+__testing_only_libclang_16 = ["bindgen/__testing_only_libclang_16"]
+
+[package.metadata.release]
+release = true
+
+[package.metadata.dist]
+dist = true

@@ -1,0 +1,22 @@
+{
+  "imports": [
+    {
+      "path": "external/mesa3d/src/util/rust"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/drm"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/drm-ffi"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tempfile"
+    },
+    {
+      "path": "external/rust/rutabaga_gfx/third_party/mesa3d/src/util/rust"
+    },
+    {
+      "path": "system/zygote/zygote"
+    }
+  ]
+}

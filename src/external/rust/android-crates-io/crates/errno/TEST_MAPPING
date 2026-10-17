@@ -1,0 +1,12 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/rustix"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "errno_test_src_lib"
+    }
+  ]
+}

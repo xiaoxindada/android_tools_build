@@ -1,0 +1,17 @@
+name: "const_fn"
+description: "A lightweight attribute for easy generation of const functions with conditional compilations."
+third_party {
+  version: "0.4.12"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 14
+  }
+  homepage: "https://crates.io/crates/const_fn"
+  identifier {
+    type: "crates.io"
+    value: "const_fn"
+    version: "0.4.12"
+  }
+}

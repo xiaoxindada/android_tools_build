@@ -1,0 +1,17 @@
+name: "foldhash"
+description: "A fast, non-cryptographic, minimally DoS-resistant hashing algorithm."
+third_party {
+  version: "0.2.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 20
+  }
+  homepage: "https://crates.io/crates/foldhash"
+  identifier {
+    type: "crates.io"
+    value: "foldhash"
+    version: "0.2.0"
+  }
+}

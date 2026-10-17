@@ -1,0 +1,10 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/serde_yaml"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/unsafe-libyaml"
+    }
+  ]
+}

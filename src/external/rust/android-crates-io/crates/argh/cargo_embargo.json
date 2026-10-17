@@ -1,0 +1,20 @@
+{
+  "run_cargo": false,
+  "tests": true,
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.virt"
+  ],
+  "package": {
+    "argh": {
+      "dep_blocklist": [
+        "libtrybuild",
+        "libargh_complete"
+      ]
+    }
+  },
+  "module_blocklist": [
+    "argh_test_tests_compiletest"
+  ],
+  "min_sdk_version": "29"
+}

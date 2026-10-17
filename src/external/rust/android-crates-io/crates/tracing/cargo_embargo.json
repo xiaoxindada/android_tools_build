@@ -1,0 +1,17 @@
+{
+  "run_cargo": false,
+  "variants": [
+    {},
+    {
+      "features": [
+        "default",
+        "max_level_off",
+        "release_max_level_off"
+      ],
+      "module_name_overrides": {
+        "libtracing": "libtracing_max_level_off"
+      }
+    }
+  ],
+  "min_sdk_version": "29"
+}

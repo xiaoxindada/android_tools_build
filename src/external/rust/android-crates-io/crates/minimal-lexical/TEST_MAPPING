@@ -1,0 +1,62 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/minimal-lexical"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/nom"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "minimal-lexical_test_tests_integration_tests"
+    },
+    {
+      "name": "minimal-lexical_test_tests_lemire_tests"
+    },
+    {
+      "name": "minimal-lexical_test_tests_mask_tests"
+    },
+    {
+      "name": "minimal-lexical_test_tests_number_tests"
+    },
+    {
+      "name": "minimal-lexical_test_tests_parse_tests"
+    },
+    {
+      "name": "minimal-lexical_test_tests_rounding_tests"
+    },
+    {
+      "name": "minimal-lexical_test_tests_slow_tests"
+    },
+    {
+      "name": "minimal-lexical_test_tests_vec_tests"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "minimal-lexical_test_tests_integration_tests"
+    },
+    {
+      "name": "minimal-lexical_test_tests_lemire_tests"
+    },
+    {
+      "name": "minimal-lexical_test_tests_mask_tests"
+    },
+    {
+      "name": "minimal-lexical_test_tests_number_tests"
+    },
+    {
+      "name": "minimal-lexical_test_tests_parse_tests"
+    },
+    {
+      "name": "minimal-lexical_test_tests_rounding_tests"
+    },
+    {
+      "name": "minimal-lexical_test_tests_slow_tests"
+    },
+    {
+      "name": "minimal-lexical_test_tests_vec_tests"
+    }
+  ]
+}

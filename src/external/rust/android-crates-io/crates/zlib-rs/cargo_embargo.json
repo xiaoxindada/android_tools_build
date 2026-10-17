@@ -1,0 +1,23 @@
+{
+    "features": [
+        "default",
+        "__internal-api"
+    ],
+    "tests": true,
+    "run_cargo": false,
+    "sdk_version": "26",
+    "min_sdk_version": "26",
+    "package": {
+        "zlib-rs": {
+            "srcs": [
+                "src/**/*.rs",
+                "src/deflate/test-data/inflate_buf_error.dat",
+                "src/deflate/test-data/paper-100k.pdf",
+                "README.md"
+            ],
+            "target_windows": true
+        }
+    },
+    "recovery_available": true,
+    "ota_recovery_ramdisk_available": true
+}

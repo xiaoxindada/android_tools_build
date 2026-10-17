@@ -1,0 +1,17 @@
+name: "reqwest"
+description: "higher level HTTP client library"
+third_party {
+  version: "0.12.28"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 1
+    day: 3
+  }
+  homepage: "https://crates.io/crates/reqwest"
+  identifier {
+    type: "crates.io"
+    value: "reqwest"
+    version: "0.12.28"
+  }
+}

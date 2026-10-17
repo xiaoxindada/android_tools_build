@@ -1,0 +1,17 @@
+name: "basic-toml"
+description: "Minimal TOML library with few dependencies"
+third_party {
+  version: "0.1.10"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 24
+  }
+  homepage: "https://crates.io/crates/basic-toml"
+  identifier {
+    type: "crates.io"
+    value: "basic-toml"
+    version: "0.1.10"
+  }
+}

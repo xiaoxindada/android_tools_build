@@ -1,0 +1,23 @@
+diff --git a/crates/serde_core/rules.mk b/crates/serde_core/rules.mk
+index fd836136d..ce18950c4 100644
+--- a/crates/serde_core/rules.mk
++++ b/crates/serde_core/rules.mk
+@@ -25,9 +25,17 @@ BUILD_OUT_FILES :=
+ MODULE_RUST_EDITION := 2021
+ MODULE_RUSTFLAGS += \
+ 	--cfg 'feature="result"' \
+-	--cfg 'feature="std"'
++	--cfg 'feature="alloc"'
++
++ifeq ($(call TOBOOL,$(TRUSTY_USERSPACE)),true)
++
++MODULE_RUSTFLAGS += \
++	--cfg 'feature="std"' \
++
++endif
+ 
+ MODULE_LIBRARY_DEPS := \
++	trusty/user/base/lib/liballoc-rust \
+ 	
+ 
+ include make/library.mk

@@ -1,0 +1,9 @@
+    // Doesn't compile on 32-bit targets.
+    target: {
+        android_arm: {
+            enabled: false,
+        },
+        android_x86: {
+            enabled: false,
+        },
+    }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config/>
+    <build-properties>
+        <build-property name="BUILD_NUMBER" value="{BUILD_NUMBER}">
+        <build-property name="PRODUCT_EXPORT_RUNTIME_APIS" value="{PRODUCT_EXPORT_RUNTIME_APIS}">
+        <build-property name="BUILD_UUID" value="{BUILD_UUID}">
+    <build-properties>
+</config>

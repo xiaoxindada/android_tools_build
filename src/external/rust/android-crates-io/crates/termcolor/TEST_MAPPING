@@ -1,0 +1,23 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/codespan-reporting"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/libtest-mimic"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/predicates"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "termcolor_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "termcolor_test_src_lib"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "apex_available": ["//apex_available:anyapex", "//apex_available:platform"],
+  "min_sdk_version": "29",
+  "ota_recovery_ramdisk_available": true,
+  "sdk_version": "current",
+  "package": {
+    "thiserror": {
+      "copy_out": true,
+      "target_windows": true
+    }
+  },
+  "variants": [
+    {"features": ["std"]},
+    {
+      "features": [],
+      "generate_rulesmk": true,
+      "package": {
+        "thiserror": {
+          "force_rlib": true,
+          "host_supported": false,
+          "no_std": true
+        }
+      }
+    }
+  ],
+  "native_bridge_supported": true,
+  "recovery_available": true
+}

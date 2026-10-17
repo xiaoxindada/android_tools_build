@@ -1,0 +1,14 @@
+{
+  "package": {
+    "googletest": {
+      "license_text": [
+        "LICENSE"
+      ]
+    }
+  },
+  "module_name_overrides": {
+    "libgoogletest": "libgoogletest_rust"
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

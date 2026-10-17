@@ -1,0 +1,7 @@
+cc_library_static {
+    name: "liballoca_alloca",
+    host_supported: true,
+    srcs: ["alloca.c"],
+    vendor_available: true,
+    product_available: true,
+}

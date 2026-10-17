@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/bindgen"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crates-index"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/hashlink"
+    }
+  ]
+}

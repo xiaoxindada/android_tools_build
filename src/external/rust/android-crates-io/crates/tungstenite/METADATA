@@ -1,0 +1,17 @@
+name: "tungstenite"
+description: "Lightweight stream-based WebSocket implementation"
+third_party {
+  version: "0.30.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 15
+  }
+  homepage: "https://crates.io/crates/tungstenite"
+  identifier {
+    type: "crates.io"
+    value: "tungstenite"
+    version: "0.30.0"
+  }
+}

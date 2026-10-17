@@ -1,0 +1,29 @@
+{
+  "features": [
+    "default",
+    "backend-bitmap",
+    "backend-mmap",
+    "backend-atomic",
+    "arc-swap"
+  ],
+  "module_name_overrides": {
+    "libvm_memory": "libvm_memory_android-0.12.2",
+    "external_rust_crates_vm-memory_license": "external_rust_crates_vm-memory-0.12.2_license"
+  },
+  "package": {
+    "vm-memory": {
+      "device_supported": false
+    }
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "variants": [
+    {
+      "features": [
+        "default"
+      ],
+      "generate_rulesmk": true,
+      "generate_androidbp": false
+    }
+  ]
+}

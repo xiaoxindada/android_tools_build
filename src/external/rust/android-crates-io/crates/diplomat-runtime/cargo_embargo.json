@@ -1,0 +1,17 @@
+{
+  "ramdisk_available": true,
+  "recovery_available": true,
+  "vendor_ramdisk_available": true,
+  "native_bridge_supported": true,
+  "min_sdk_version": "29",
+  "variants": [
+    {},
+    {
+      "package": {
+        "diplomat-runtime": {
+          "no_std": true
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+name: "rayon-core"
+description: "Core APIs for Rayon"
+third_party {
+  version: "1.13.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 8
+    day: 19
+  }
+  homepage: "https://crates.io/crates/rayon-core"
+  identifier {
+    type: "crates.io"
+    value: "rayon-core"
+    version: "1.13.0"
+  }
+}

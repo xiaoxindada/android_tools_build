@@ -1,0 +1,17 @@
+name: "wayland-server"
+description: "Bindings to the standard C implementation of the wayland protocol, server side."
+third_party {
+  version: "0.31.14"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 24
+  }
+  homepage: "https://crates.io/crates/wayland-server"
+  identifier {
+    type: "crates.io"
+    value: "wayland-server"
+    version: "0.31.14"
+  }
+}

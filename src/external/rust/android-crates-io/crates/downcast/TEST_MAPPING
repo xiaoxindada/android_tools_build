@@ -1,0 +1,15 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/downcast"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mockall"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "downcast_test_tests_tests"
+    }
+  ]
+}

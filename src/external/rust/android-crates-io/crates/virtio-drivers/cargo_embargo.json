@@ -1,0 +1,26 @@
+{
+  "features": [
+    "alloc"
+  ],
+  "package": {
+    "virtio-drivers": {
+      "force_rlib": true,
+      "host_supported": false,
+      "no_std": true,
+      "rulesmk_patch": "patches/rules.mk.diff"
+    }
+  },
+  "product_available": false,
+  "run_cargo": false,
+  "tests": true,
+  "vendor_available": false,
+  "variants": [
+    {},
+    {
+      "generate_androidbp": false,
+      "generate_rulesmk": true,
+      "tests": false
+    }
+  ],
+  "min_sdk_version": "29"
+}

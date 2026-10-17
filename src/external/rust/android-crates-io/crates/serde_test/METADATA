@@ -1,0 +1,17 @@
+name: "serde_test"
+description: "Token De/Serializer for testing De/Serialize implementations"
+third_party {
+  version: "1.0.177"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 12
+    day: 20
+  }
+  homepage: "https://crates.io/crates/serde_test"
+  identifier {
+    type: "crates.io"
+    value: "serde_test"
+    version: "1.0.177"
+  }
+}

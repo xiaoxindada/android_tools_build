@@ -1,0 +1,26 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/cast"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crc32fast"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/flate2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/zlib-rs"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "quickcheck_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "quickcheck_test_src_lib"
+    }
+  ]
+}

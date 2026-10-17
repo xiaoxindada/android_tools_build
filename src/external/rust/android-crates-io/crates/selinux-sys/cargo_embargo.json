@@ -1,0 +1,10 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "package": {
+    "selinux-sys": {
+      "add_toplevel_block": "raw_src.bp.fragment",
+      "add_module_block": "add_raw_src.bp.fragment"
+    }
+  }
+}

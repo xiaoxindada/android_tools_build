@@ -1,0 +1,17 @@
+name: "strum"
+description: "Helpful macros for working with enums and strings"
+third_party {
+  version: "0.28.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 27
+  }
+  homepage: "https://crates.io/crates/strum"
+  identifier {
+    type: "crates.io"
+    value: "strum"
+    version: "0.28.0"
+  }
+}

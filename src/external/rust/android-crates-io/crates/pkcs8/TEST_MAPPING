@@ -1,0 +1,10 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/sec1"
+    },
+    {
+      "path": "system/keymint/common"
+    }
+  ]
+}

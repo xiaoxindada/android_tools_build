@@ -1,0 +1,25 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/tonic"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/webpki"
+    },
+    {
+      "path": "packages/modules/DnsResolver/rust/src/doh/tests/doh_frontend"
+    },
+    {
+      "path": "packages/services/DroidfoodAttestationFixer"
+    },
+    {
+      "path": "system/desktop/fingerprint/hal"
+    },
+    {
+      "path": "system/desktop/security/udsattestation"
+    },
+    {
+      "path": "tools/security/remote_provisioning/hwtrust"
+    }
+  ]
+}

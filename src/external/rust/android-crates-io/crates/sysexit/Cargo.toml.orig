@@ -1,0 +1,17 @@
+[package]
+name = "sysexit"
+version = "0.2.0"
+authors = ["Andreas Tolfsen <ato@sny.no>"]
+license = "ISC"
+readme = "README.md"
+repository = "https://git.sny.no/sysexit-rs"
+documentation = "https://docs.rs/sysexit"
+description = "Exit codes for programs"
+categories = ["command-line-interface", "os", "os::unix-apis", ]
+keywords = ["cli", "exitcode", "exit-codes", "sysexit", "sysexits"]
+
+[dependencies]
+libc = { version = "0.2", default-features = false }
+
+[lib]
+path = "sysexit.rs"

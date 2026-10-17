@@ -1,0 +1,61 @@
+{
+  "imports": [
+    {
+      "path": "external/flashrom/bindings/rust/libflashrom"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/bindgen"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/criterion"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/env_filter"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/googletest"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/once_cell"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/predicates"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-codegen"
+    },
+    {
+      "path": "packages/modules/ConfigInfrastructure/aflags"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/compsvc"
+    },
+    {
+      "path": "system/core/init/libprefetch/prefetch"
+    },
+    {
+      "path": "system/desktop/cros-codecs"
+    },
+    {
+      "path": "system/desktop/ec/src/ec_crash_collector"
+    },
+    {
+      "path": "system/desktop/ec/src/ectool"
+    },
+    {
+      "path": "system/keymint/hal"
+    },
+    {
+      "path": "system/tools/aidl/scripts/redundancy_check"
+    },
+    {
+      "path": "system/usb_info_tools/typec_connector_class_helper"
+    },
+    {
+      "path": "tools/asuite/adevice"
+    }
+  ]
+}

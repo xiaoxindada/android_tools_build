@@ -1,0 +1,17 @@
+name: "elf"
+description: "A pure-rust library for parsing ELF files"
+third_party {
+  version: "0.8.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 5
+    day: 14
+  }
+  homepage: "https://crates.io/crates/elf"
+  identifier {
+    type: "crates.io"
+    value: "elf"
+    version: "0.8.0"
+  }
+}

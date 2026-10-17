@@ -1,0 +1,17 @@
+name: "tinyvec"
+description: "`tinyvec` provides 100% safe vec-like data structures."
+third_party {
+  version: "1.13.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 11
+  }
+  homepage: "https://crates.io/crates/tinyvec"
+  identifier {
+    type: "crates.io"
+    value: "tinyvec"
+    version: "1.13.2"
+  }
+}

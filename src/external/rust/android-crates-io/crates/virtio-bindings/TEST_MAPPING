@@ -1,0 +1,16 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/vhost-user-backend"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/virtio-queue"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/virtio-vsock"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vhost-device-vsock"
+    }
+  ]
+}

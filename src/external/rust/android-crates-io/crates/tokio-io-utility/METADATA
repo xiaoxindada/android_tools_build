@@ -1,0 +1,17 @@
+name: "tokio-io-utility"
+description: "Some helper functions for tokio::io."
+third_party {
+  version: "0.7.6"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 4
+  }
+  homepage: "https://crates.io/crates/tokio-io-utility"
+  identifier {
+    type: "crates.io"
+    value: "tokio-io-utility"
+    version: "0.7.6"
+  }
+}

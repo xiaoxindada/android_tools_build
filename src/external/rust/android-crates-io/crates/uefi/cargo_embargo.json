@@ -1,0 +1,22 @@
+{
+  "run_cargo": false,
+  "features": [
+    "alloc"
+  ],
+  "module_name_overrides": {
+    "libptr_meta": "libptr_meta_nostd",
+    "libucs2": "libucs2_nostd",
+    "libuefi": "libuefi_nostd",
+    "libuefi_raw": "libuefi_raw_nostd",
+    "libuguid": "libuguid_nostd"
+  },
+  "package": {
+    "uefi": {
+      "alloc": true,
+      "force_rlib": true,
+      "host_supported": false,
+      "no_std": true
+    }
+  },
+  "min_sdk_version": "29"
+}

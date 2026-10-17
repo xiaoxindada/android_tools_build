@@ -1,0 +1,17 @@
+name: "tower-http"
+description: "Tower middleware and utilities for HTTP clients and servers"
+third_party {
+  version: "0.7.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 11
+  }
+  homepage: "https://crates.io/crates/tower-http"
+  identifier {
+    type: "crates.io"
+    value: "tower-http"
+    version: "0.7.1"
+  }
+}

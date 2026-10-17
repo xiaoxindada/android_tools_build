@@ -1,0 +1,17 @@
+name: "concurrent_arena"
+description: "u32 concurrent insertion/removal arena that returns ArenaArc"
+third_party {
+  version: "0.1.11"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 8
+  }
+  homepage: "https://crates.io/crates/concurrent_arena"
+  identifier {
+    type: "crates.io"
+    value: "concurrent_arena"
+    version: "0.1.11"
+  }
+}

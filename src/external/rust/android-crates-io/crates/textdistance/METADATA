@@ -1,0 +1,17 @@
+name: "textdistance"
+description: "Lots of algorithms to compare how similar two sequences are"
+third_party {
+  version: "1.1.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 12
+    day: 18
+  }
+  homepage: "https://crates.io/crates/textdistance"
+  identifier {
+    type: "crates.io"
+    value: "textdistance"
+    version: "1.1.1"
+  }
+}

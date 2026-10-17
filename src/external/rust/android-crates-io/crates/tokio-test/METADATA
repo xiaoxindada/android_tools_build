@@ -1,0 +1,17 @@
+name: "tokio-test"
+description: "Testing utilities for Tokio- and futures-based code"
+third_party {
+  version: "0.4.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2021
+    month: 5
+    day: 19
+  }
+  homepage: "https://crates.io/crates/tokio-test"
+  identifier {
+    type: "crates.io"
+    value: "tokio-test"
+    version: "0.4.2"
+  }
+}

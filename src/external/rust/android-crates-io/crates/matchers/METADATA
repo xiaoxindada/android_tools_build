@@ -1,0 +1,17 @@
+name: "matchers"
+description: "Regex matching on character and byte streams."
+third_party {
+  version: "0.2.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 11
+  }
+  homepage: "https://crates.io/crates/matchers"
+  identifier {
+    type: "crates.io"
+    value: "matchers"
+    version: "0.2.0"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/bindgen"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/bindgen-cli"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "shlex_test_src_lib"
+    }
+  ]
+}

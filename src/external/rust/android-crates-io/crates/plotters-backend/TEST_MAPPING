@@ -1,0 +1,10 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/plotters"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/plotters-svg"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+From 7a5698fa4cfc32244a2cc2bef5e54c1e2ae69edc Mon Sep 17 00:00:00 2001
+From: Charisee <chiw@google.com>
+Date: Mon, 18 Aug 2025 23:08:03 +0000
+Subject: [PATCH] after
+
+Change-Id: Id75c8db9de681250f75472b7d11b111ccad11ff8
+---
+ crates/criterion/src/connection.rs | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/connection.rs b/src/connection.rs
+index b18a77335..570f7368d 100644
+--- a/src/connection.rs
++++ b/src/connection.rs
+@@ -99,9 +99,9 @@ impl InnerConnection {
+         hello_buf[0..BENCHMARK_MAGIC_NUMBER.len()]
+             .copy_from_slice(BENCHMARK_MAGIC_NUMBER.as_bytes());
+         let mut i = BENCHMARK_MAGIC_NUMBER.len();
+-        hello_buf[i] = env!("CARGO_PKG_VERSION_MAJOR").parse().unwrap();
+-        hello_buf[i + 1] = env!("CARGO_PKG_VERSION_MINOR").parse().unwrap();
+-        hello_buf[i + 2] = env!("CARGO_PKG_VERSION_PATCH").parse().unwrap();
++        hello_buf[i] = 0;
++        hello_buf[i + 1] = 0;
++        hello_buf[i + 2] = 0;
+         i += 3;
+         hello_buf[i..i + 2].clone_from_slice(&PROTOCOL_VERSION.to_be_bytes());
+         i += 2;
+-- 
+2.51.0.rc1.167.g924127e9c0-goog
+

@@ -1,0 +1,17 @@
+name: "read-fonts"
+description: "Reading OpenType font files."
+third_party {
+  version: "0.42.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 28
+  }
+  homepage: "https://crates.io/crates/read-fonts"
+  identifier {
+    type: "crates.io"
+    value: "read-fonts"
+    version: "0.42.1"
+  }
+}

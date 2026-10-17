@@ -1,0 +1,52 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/flate2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/png"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/zip"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "flate2_test_src_lib"
+    },
+    {
+      "name": "flate2_test_tests_early-flush"
+    },
+    {
+      "name": "flate2_test_tests_empty-read"
+    },
+    {
+      "name": "flate2_test_tests_gunzip"
+    },
+    {
+      "name": "flate2_test_tests_zero-write"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "flate2_test_src_lib"
+    },
+    {
+      "name": "flate2_test_tests_early-flush"
+    },
+    {
+      "name": "flate2_test_tests_empty-read"
+    },
+    {
+      "name": "flate2_test_tests_gunzip"
+    },
+    {
+      "name": "flate2_test_tests_zero-write"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "flate2_test_tests_capabilities"
+    }
+  ]
+}

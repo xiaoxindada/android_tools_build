@@ -1,0 +1,58 @@
+name: coverage
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  coverage:
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [native_simd, scalar_math, core_simd]
+        os: [ubuntu-latest]
+        include:
+          - profile: native_simd
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install toolchains
+        run: rustup update --no-self-update stable && rustup update --no-self-update nightly
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Generate code coverage
+        run: cargo run --release -p ci -- coverage-llvm -p ${{ matrix.profile }} --lcov
+
+      - name: Trust Coveralls Homebrew tap (Homebrew 6 requirement)
+        if: runner.os == 'macOS'
+        run: brew trust coverallsapp/coveralls
+
+      - name: Upload to coveralls.io
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          parallel: true
+          flag-name: ${{ matrix.profile }}-${{ matrix.os }}
+
+  coverage-finalize:
+    needs: [coverage]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Finalize coveralls
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          parallel-finished: true

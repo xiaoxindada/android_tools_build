@@ -1,0 +1,17 @@
+name: "faccess"
+description: "Simple file accessibility checks"
+third_party {
+  version: "0.2.4"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 19
+  }
+  homepage: "https://crates.io/crates/faccess"
+  identifier {
+    type: "crates.io"
+    value: "faccess"
+    version: "0.2.4"
+  }
+}

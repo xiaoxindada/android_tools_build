@@ -1,0 +1,29 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/futures-executor"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ryu"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/threadpool"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio"
+    },
+    {
+      "path": "system/security/keystore2/selinux"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "num_cpus_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "num_cpus_test_src_lib"
+    }
+  ]
+}

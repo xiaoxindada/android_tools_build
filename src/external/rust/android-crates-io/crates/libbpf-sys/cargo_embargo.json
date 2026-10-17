@@ -1,0 +1,16 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "features": ["bindgen"],
+  "module_blocklist" : ["liblibbpf_sys_static"],
+  "package": {
+    "libbpf-sys": {
+      "add_toplevel_block": "android/bindgen_modules.bp.fragment",
+      "host_supported": false,
+      "add_module_block": "cargo2android_target.bp.fragment"
+
+    }
+  },
+  "product_available": false,
+  "vendor_available": false
+}

@@ -1,0 +1,28 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/h2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/hyper"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tonic"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tower"
+    },
+    {
+      "path": "system/extras/libatrace_rust"
+    },
+    {
+      "path": "system/extras/libatrace_rust/benchmark"
+    },
+    {
+      "path": "system/extras/libatrace_rust/example"
+    },
+    {
+      "path": "tools/asuite/adevice"
+    }
+  ]
+}

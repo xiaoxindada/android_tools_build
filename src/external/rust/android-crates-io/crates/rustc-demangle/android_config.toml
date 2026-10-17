@@ -1,0 +1,5 @@
+deletions = [
+    ".cargo_vcs_info.json",
+    ".github",
+    "Cargo.toml.orig",
+]

@@ -1,0 +1,11 @@
+diff --git b/README.android a/README.android
+new file mode 100644
+index 00000000..7c130771
+--- /dev/null
++++ a/README.android
+@@ -0,0 +1,5 @@
++This package is imported to Android and uses Android's external/zlib
++header files and compilation flags to generate bindings.
++
++If features are changed for the libz-sys crate, please ensure those
++features are changed in the libz_bindgen_build module.

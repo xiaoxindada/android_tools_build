@@ -1,0 +1,44 @@
+{
+  "min_sdk_version": "29",
+  "recovery_available": true,
+  "run_cargo": false,
+  "variants": [
+    {
+      "features": [
+        "once",
+        "mutex",
+        "spin_mutex",
+        "std"
+      ],
+      "tests": true
+    },
+    {
+      "features": [
+        "once",
+        "mutex",
+        "spin_mutex"
+      ],
+      "package": {
+        "spin": {
+          "force_rlib": true,
+          "host_supported": false,
+          "no_std": true
+        }
+      }
+    },
+    {
+      "generate_androidbp": false,
+      "generate_rulesmk": true,
+      "features": [
+        "once",
+        "mutex",
+        "spin_mutex"
+      ],
+      "package": {
+        "spin": {
+          "no_std": true
+        }
+      }
+    }
+  ]
+}

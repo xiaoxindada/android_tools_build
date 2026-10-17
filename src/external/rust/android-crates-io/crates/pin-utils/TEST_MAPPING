@@ -1,0 +1,29 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/futures-util"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pin-utils"
+    },
+    {
+      "path": "tools/rootcanal/rust"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "pin-utils_test_tests_projection"
+    },
+    {
+      "name": "pin-utils_test_tests_stack_pin"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "pin-utils_test_tests_projection"
+    },
+    {
+      "name": "pin-utils_test_tests_stack_pin"
+    }
+  ]
+}

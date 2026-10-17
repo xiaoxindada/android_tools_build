@@ -1,0 +1,10 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/crates/openssl"
+    },
+    {
+      "path": "system/keymint/boringssl"
+    }
+  ]
+}

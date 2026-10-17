@@ -1,0 +1,14 @@
+diff --git a/src/definition.rs b/src/definition.rs
+index 2b72673a5..d83fe36f5 100644
+--- a/src/definition.rs
++++ b/src/definition.rs
+@@ -28,9 +28,7 @@ pub mod layout;
+ pub mod modifier;
+ pub mod view;
+ 
+-// LINT.IfChange
+ pub static CURRENT_VERSION: u32 = 28;
+-// Lint.ThenChange(common/src/main/java/com/android/designcompose/common/DCDVersion.kt)
+ 
+ impl DesignComposeDefinitionHeader {
+     pub fn current(

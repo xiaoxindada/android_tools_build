@@ -1,0 +1,41 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/axum"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/csv"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/http"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/hyper"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/itoa"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde_json"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde_yaml"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/http"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "itoa_test_tests_test"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "itoa_test_tests_test"
+    }
+  ]
+}

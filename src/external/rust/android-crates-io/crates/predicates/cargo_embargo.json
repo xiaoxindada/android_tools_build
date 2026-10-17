@@ -1,0 +1,18 @@
+{
+  "features": [
+    "regex",
+    "color"
+  ],
+  "run_cargo": false,
+  "tests": true,
+  "min_sdk_version": "29",
+  "variants": [
+    {},
+    {
+      "generate_androidbp": false,
+      "generate_rulesmk": true,
+      "tests": false,
+      "features": []
+    }
+  ]
+}

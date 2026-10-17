@@ -1,0 +1,17 @@
+name: "either"
+description: "The enum `Either` with variants `Left` and `Right` is a general purpose sum type with two cases."
+third_party {
+  version: "1.18.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 21
+  }
+  homepage: "https://crates.io/crates/either"
+  identifier {
+    type: "crates.io"
+    value: "either"
+    version: "1.18.0"
+  }
+}

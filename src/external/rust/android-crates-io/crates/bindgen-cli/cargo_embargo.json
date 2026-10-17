@@ -1,0 +1,11 @@
+{
+  "package": {
+    "bindgen-cli": {
+      "device_supported": false,
+      "host_first_multilib": true,
+      "host_cross_supported": false
+    }
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

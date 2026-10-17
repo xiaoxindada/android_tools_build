@@ -1,0 +1,17 @@
+name: "serialport"
+description: "A cross-platform low-level serial port library."
+third_party {
+  version: "4.9.0"
+  license_type: RECIPROCAL
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 1
+  }
+  homepage: "https://crates.io/crates/serialport"
+  identifier {
+    type: "crates.io"
+    value: "serialport"
+    version: "4.9.0"
+  }
+}

@@ -1,0 +1,17 @@
+name: "googletest_macro"
+description: "Procedural macros for GoogleTest Rust"
+third_party {
+  version: "0.14.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 11
+  }
+  homepage: "https://crates.io/crates/googletest_macro"
+  identifier {
+    type: "crates.io"
+    value: "googletest_macro"
+    version: "0.14.3"
+  }
+}

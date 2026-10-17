@@ -1,0 +1,13 @@
+diff --git a/src/sysinfo.rs b/src/sysinfo.rs
+index 53e7eae95a..6b223ad7a4 100644
+--- a/src/sysinfo.rs
++++ b/src/sysinfo.rs
+@@ -87,7 +87,7 @@ pub fn get_computer_name(kind: ComputerNameKind) -> io::Result<OsString> {
+     let format = kind.to_format();
+     let mut len1 = 0;
+     // SAFETY: As documented, we call this with a null pointer which will in
+-    // turn cause this routine to write the required buffer size fo `len1`.
++    // turn cause this routine to write the required buffer size for `len1`.
+     // Also, we explicitly ignore the return value since we expect this call to
+     // fail given that the destination buffer is too small by design.
+     let _ =

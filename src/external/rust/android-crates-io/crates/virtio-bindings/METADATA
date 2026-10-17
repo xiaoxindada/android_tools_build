@@ -1,0 +1,17 @@
+name: "virtio-bindings"
+description: "Rust FFI bindings to virtio generated using bindgen."
+third_party {
+  version: "0.2.7"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 1
+    day: 20
+  }
+  homepage: "https://crates.io/crates/virtio-bindings"
+  identifier {
+    type: "crates.io"
+    value: "virtio-bindings"
+    version: "0.2.7"
+  }
+}

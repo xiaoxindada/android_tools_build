@@ -1,0 +1,25 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+    default_team: "trendy_team_android_core_experiments",
+}
+
+rust_defaults {
+    name: "aflags.defaults",
+    edition: "2021",
+    clippy_lints: "android",
+    lints: "android",
+    srcs: ["src/main.rs"],
+    rustlibs: [
+        "libanyhow",
+        "libnix",
+    ],
+}
+
+rust_binary {
+    name: "aflags",
+    host_supported: true,
+    defaults: ["aflags.defaults"],
+    apex_available: [
+        "//apex_available:platform",
+    ],
+}

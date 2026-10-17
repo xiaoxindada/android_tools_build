@@ -1,0 +1,14 @@
+{
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.virt"
+  ],
+  "features": [],
+  "package": {
+    "vulkano": {
+      "copy_out": true,
+      "no_presubmit": true
+    }
+  },
+  "min_sdk_version": "29"
+}

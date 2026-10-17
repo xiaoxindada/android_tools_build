@@ -1,0 +1,17 @@
+name: "lyon_path"
+description: "Types and utilities to store, build and iterate over 2D paths."
+third_party {
+  version: "1.0.19"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 3
+    day: 24
+  }
+  homepage: "https://crates.io/crates/lyon_path"
+  identifier {
+    type: "crates.io"
+    value: "lyon_path"
+    version: "1.0.19"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "postsubmit": [
+    {
+      "name": "strum_macros_test_src_lib"
+    }
+  ]
+}

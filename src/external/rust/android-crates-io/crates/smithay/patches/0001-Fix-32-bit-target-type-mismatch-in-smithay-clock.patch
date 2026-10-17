@@ -1,0 +1,13 @@
+diff --git a/src/utils/clock.rs b/src/utils/clock.rs
+index 28270009e..6f2f68f5e 100644
+--- a/src/utils/clock.rs
++++ b/src/utils/clock.rs
+@@ -217,7 +217,7 @@ where
+     fn add(self, rhs: T) -> Self::Output {
+         let rhs = rhs.into();
+         let tv_nsec = (self.tp.tv_nsec + rhs.tp.tv_nsec) % NANOS_PER_SEC;
+-        let tv_sec = (self.tp.tv_sec + rhs.tp.tv_sec) + ((self.tp.tv_nsec + rhs.tp.tv_nsec) / NANOS_PER_SEC);
++        let tv_sec = (self.tp.tv_sec + rhs.tp.tv_sec) + i64::from((self.tp.tv_nsec + rhs.tp.tv_nsec) / NANOS_PER_SEC);
+         Self::from(Timespec { tv_sec, tv_nsec })
+     }
+ }

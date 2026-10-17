@@ -1,0 +1,17 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/rusqlite"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "fallible-iterator_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "fallible-iterator_test_src_lib"
+    }
+  ]
+}

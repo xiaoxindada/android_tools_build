@@ -1,0 +1,17 @@
+name: "hyper-timeout"
+description: "A connect, read and write timeout aware connector to be used with hyper Client."
+third_party {
+  version: "0.5.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 13
+  }
+  homepage: "https://crates.io/crates/hyper-timeout"
+  identifier {
+    type: "crates.io"
+    value: "hyper-timeout"
+    version: "0.5.2"
+  }
+}

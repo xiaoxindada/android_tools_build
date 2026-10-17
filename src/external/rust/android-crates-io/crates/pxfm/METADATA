@@ -1,0 +1,17 @@
+name: "pxfm"
+description: "Fast and accurate math"
+third_party {
+  version: "0.1.30"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 6
+  }
+  homepage: "https://crates.io/crates/pxfm"
+  identifier {
+    type: "crates.io"
+    value: "pxfm"
+    version: "0.1.30"
+  }
+}

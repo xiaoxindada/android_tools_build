@@ -1,0 +1,35 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "9",
+  "module_visibility": {
+    "libgiflib_rs": [
+        "//frameworks/base/core/jni",
+        "//frameworks/base/libs/hwui",
+        "//packages/apps/Messaging/jni",
+        "//external/giflib"
+    ]
+  },
+  
+  "package": {
+    "giflib-rs": {
+      "target_windows": true,
+      "srcs": [
+        ":libgiflib_bindings",
+        "src/c_types.rs",
+        "src/decoder.rs",
+        "src/decoder_lzw.rs",
+        "src/encoder.rs",
+        "src/encoder_lzw.rs",
+        "src/err.rs",
+        "src/ffi.rs",
+        "src/font.rs",
+        "src/helpers.rs",
+        "src/private.rs",
+        "src/private_c_types.rs",
+        "src/quantize.rs"
+      ],
+      "add_toplevel_block": "bindgen_module.bp.fragment"
+    }
+  }
+
+}

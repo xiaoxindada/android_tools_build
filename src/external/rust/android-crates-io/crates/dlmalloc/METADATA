@@ -1,0 +1,17 @@
+name: "dlmalloc"
+description: "A Rust port of the dlmalloc allocator"
+third_party {
+  version: "0.2.14"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 20
+  }
+  homepage: "https://crates.io/crates/dlmalloc"
+  identifier {
+    type: "crates.io"
+    value: "dlmalloc"
+    version: "0.2.14"
+  }
+}

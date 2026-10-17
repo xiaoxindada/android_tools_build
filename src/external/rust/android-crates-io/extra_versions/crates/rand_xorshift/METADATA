@@ -1,0 +1,17 @@
+name: "rand_xorshift"
+description: "Xorshift random number generator"
+third_party {
+  version: "0.3.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 5
+    day: 27
+  }
+  homepage: "https://crates.io/crates/rand_xorshift"
+  identifier {
+    type: "crates.io"
+    value: "rand_xorshift"
+    version: "0.3.0"
+  }
+}

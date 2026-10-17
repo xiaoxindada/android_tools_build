@@ -1,0 +1,17 @@
+name: "openssh-sftp-error"
+description: "Error type used when communicating with openssh sftp server."
+third_party {
+  version: "0.5.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 11
+  }
+  homepage: "https://crates.io/crates/openssh-sftp-error"
+  identifier {
+    type: "crates.io"
+    value: "openssh-sftp-error"
+    version: "0.5.1"
+  }
+}

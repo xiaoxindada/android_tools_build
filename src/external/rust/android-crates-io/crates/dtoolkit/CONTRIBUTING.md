@@ -1,0 +1,60 @@
+# How to contribute
+
+We'd love to accept your patches and contributions to this project.
+
+## Before you begin
+
+### Sign our Contributor License Agreement
+
+Contributions to this project must be accompanied by a
+[Contributor License Agreement](https://cla.developers.google.com/about) (CLA).
+You (or your employer) retain the copyright to your contribution; this simply
+gives us permission to use and redistribute your contributions as part of the
+project.
+
+If you or your current employer have already signed the Google CLA (even if it
+was for a different project), you probably don't need to do it again.
+
+Visit <https://cla.developers.google.com/> to see your current agreements or to
+sign a new one.
+
+### Review our community guidelines
+
+This project follows
+[Google's Open Source Community Guidelines](https://opensource.google/conduct/).
+
+## Contribution process
+
+### Code reviews
+
+All submissions, including submissions by project members, require review. We
+use GitHub pull requests for this purpose. Consult
+[GitHub Help](https://help.github.com/articles/about-pull-requests/) for more
+information on using pull requests.
+
+### Unsafe code policy
+
+* The use of `unsafe` code is generally disallowed. The Device Tree parser
+  must validate all input data, treating it as untrusted. This includes bounds
+  checking for all offsets and indices to prevent vulnerabilities.
+* Should a compelling justification arise for the inclusion of `unsafe` code
+  (beyond performance optimization) it must be accompanied by
+  an `#[expect(unsafe_code)]` attribute, stating the rationale.
+* All `unsafe` code must be tested. The CI suite includes Miri to detect any
+  undefined behavior.
+
+## Releasing a new version
+
+This project uses [git-cliff](https://git-cliff.org/) to generate changelogs.
+When releasing a new version, run:
+
+```
+git-cliff --unreleased --tag <version>
+```
+
+(where `<version>` is the version number to be released)
+
+Append the output to the `CHANGELOG.md` file and make changes if necessary.
+
+Note that in order for this to work properly, the commit messages must follow
+[Conventional Commits](https://git-cliff.org/docs/#how-should-i-write-my-commits).

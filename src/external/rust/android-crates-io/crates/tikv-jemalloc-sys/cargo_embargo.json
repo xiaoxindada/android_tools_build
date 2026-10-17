@@ -1,0 +1,14 @@
+{
+  "package": {
+    "tikv-jemalloc-sys": {
+      "add_module_block": "cargo2android_target.bp.fragment",
+      "device_supported": false
+    }
+  },
+  "run_cargo": false,
+  "extra_cfg": [
+    "prefixed"
+  ],
+  "tests": false,
+  "min_sdk_version": "29"
+}

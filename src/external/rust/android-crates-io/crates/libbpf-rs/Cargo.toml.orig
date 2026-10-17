@@ -1,0 +1,72 @@
+[package]
+name = "libbpf-rs"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
+documentation = "https://docs.rs/libbpf-rs"
+description = "libbpf-rs is a safe, idiomatic, and opinionated wrapper around libbpf-sys"
+readme = "README.md"
+authors = ["Daniel Xu <dxu@dxuuu.xyz>", "Daniel Müller <deso@posteo.net>"]
+keywords = ["bpf", "ebpf", "libbpf"]
+autotests = false
+
+[badges]
+maintenance = { status = "actively-developed" }
+
+[features]
+# By default the crate uses a vendored libbpf, but requires other necessary libs
+# to be present on the system.
+default = ["libbpf-sys/vendored-libbpf"]
+# Link all required libraries statically.
+static = ["libbpf-sys/static"]
+# Use vendored versions of all required libraries.
+vendored = ["libbpf-sys/vendored"]
+
+# Below here are dev-mostly features that should not be needed by
+# regular users.
+
+# Enable this feature to opt in to the generation of unit test files.
+# Having these test files created is necessary for running tests.
+generate-test-files = ["libbpf-sys/vendored-libbpf", "dep:tempfile"]
+# Disable generation of test files. This feature takes preference over
+# `generate-test-files`.
+dont-generate-test-files = []
+
+[[test]]
+name = "test"
+
+[dependencies]
+bitflags = "2.0"
+libbpf-sys = { version = "1.7.0", default-features = false }
+libc = "0.2"
+vsprintf = "2.0"
+
+[build-dependencies]
+libbpf-sys = { version = "1.7.0", default-features = false, optional = true }
+tempfile = { version = "3.3", optional = true }
+
+[dev-dependencies]
+goblin = "0.9.3"
+libbpf-rs = {path = ".", features = ["generate-test-files"]}
+libbpf-rs-dev = {path = "dev", features = ["generate-test-files"]}
+log = "0.4.4"
+memmem = "0.1.1"
+plain = "0.2.3"
+probe = "0.3"
+scopeguard = "1.1"
+serial_test = { version = "3.0", default-features = false }
+tempfile = "3.3"
+test-fork = "0.1"
+test-tag = "0.1"
+
+# A set of unused dependencies that we require to force correct minimum versions
+# of transitive dependencies, for cases where our dependencies have incorrect
+# dependency specifications themselves.
+_cc_unused = { package = "cc", version = "1.0.3" }
+_pkg-config_unused = { package = "pkg-config", version = "0.3.3" }
+
+[lints]
+workspace = true

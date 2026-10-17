@@ -1,0 +1,48 @@
+{
+  "sdk_version": "29",
+  "min_sdk_version": "29",
+  "run_cargo": true,
+  "ramdisk_available": true,
+  "recovery_available": true,
+  "vendor_ramdisk_available": true,
+  "package": {
+    "serde_core": {
+      "copy_out": true,
+      "target_windows": true,
+      "rulesmk_patch": "patches/rules.mk.diff"
+    }
+  },
+  "variants": [
+    {
+      "features": [
+        "std",
+        "rc",
+        "result"
+      ],
+      "tests": true
+    },
+    {
+      "features": [
+        "result",
+        "alloc"
+      ],
+      "package": {
+        "serde_core": {
+          "alloc": true,
+          "force_rlib": true,
+          "host_supported": false,
+          "no_std": true
+        }
+      }
+    },
+    {
+      "features": [
+        "std",
+        "result"
+      ],
+      "generate_rulesmk": true,
+      "generate_androidbp": false
+    }
+  ],
+  "native_bridge_supported": true
+}

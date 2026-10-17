@@ -1,0 +1,20 @@
+{
+  "run_cargo": false,
+  "product_available": false,
+  "variants": [
+    {},
+    {
+      "module_name_overrides": {
+        "librusb": "librusb_platform",
+        "liblibusb1_sys": "liblibusb1_sys_platform"
+      },
+      "package": {
+        "rusb": {
+          "add_module_block": "module_block_platform.bp.fragment"
+        }
+      }
+    }
+  ],
+  "min_sdk_version": "29",
+  "recovery_available": true
+}

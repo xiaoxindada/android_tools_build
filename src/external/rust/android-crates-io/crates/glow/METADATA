@@ -1,0 +1,17 @@
+name: "glow"
+description: "GL on Whatever: a set of bindings to run GL (Open GL, OpenGL ES, and WebGL) anywhere, and avoid target-specific code."
+third_party {
+  version: "0.18.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 10
+  }
+  homepage: "https://crates.io/crates/glow"
+  identifier {
+    type: "crates.io"
+    value: "glow"
+    version: "0.18.0"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "imports": [
+    {
+      "path": "system/secure_element/omapi"
+    },
+    {
+      "path": "tools/asuite/adevice"
+    }
+  ]
+}

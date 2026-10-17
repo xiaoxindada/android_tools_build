@@ -1,0 +1,6 @@
+diff --git a/Android.bp b/Android.bp
+--- a/Android.bp
++++ b/Android.bp
+@@ -12,3 +12,3 @@
+-    license_kinds: ["SPDX-license-identifier-MIT"],
++    license_kinds: ["SPDX-license-identifier-BSD-3-Clause"],

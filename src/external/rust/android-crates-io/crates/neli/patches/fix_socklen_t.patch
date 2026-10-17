@@ -1,0 +1,13 @@
+diff --git a/src/socket.rs b/src/socket.rs
+index 7bd86e1b5..0c03d8174 100644
+--- a/src/socket.rs
++++ b/src/socket.rs
+@@ -130,7 +130,7 @@ impl NlSocket {
+             libc::bind(
+                 self.fd,
+                 &nladdr as *const _ as *const libc::sockaddr,
+-                size_of::<libc::sockaddr_nl>() as u32,
++                size_of::<libc::sockaddr_nl>() as libc::socklen_t,
+             )
+         } {
+             i if i >= 0 => (),

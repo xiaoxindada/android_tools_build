@@ -1,0 +1,17 @@
+name: "escape8259"
+description: "RFC8259-compliant string escaping and un-escaping"
+third_party {
+  version: "0.5.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 29
+  }
+  homepage: "https://crates.io/crates/escape8259"
+  identifier {
+    type: "crates.io"
+    value: "escape8259"
+    version: "0.5.3"
+  }
+}

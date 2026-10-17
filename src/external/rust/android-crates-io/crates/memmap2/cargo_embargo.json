@@ -1,0 +1,14 @@
+{
+  "run_cargo": false,
+  "tests": true,
+  "ota_recovery_ramdisk_available": true,
+  "min_sdk_version": "29",
+  "package": {
+    "memmap2": {
+      "dep_blocklist": [
+        "libowning_ref"
+      ],
+      "target_windows": true
+    }
+  }
+}

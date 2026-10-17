@@ -1,0 +1,17 @@
+name: "aarch64-rt"
+description: "Startup code and exception vector for aarch64 Cortex-A processors."
+third_party {
+  version: "0.4.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 24
+  }
+  homepage: "https://crates.io/crates/aarch64-rt"
+  identifier {
+    type: "crates.io"
+    value: "aarch64-rt"
+    version: "0.4.3"
+  }
+}

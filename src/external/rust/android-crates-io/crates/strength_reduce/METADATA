@@ -1,0 +1,17 @@
+name: "strength_reduce"
+description: "Faster integer division and modulus operations"
+third_party {
+  version: "0.2.4"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 13
+  }
+  homepage: "https://crates.io/crates/strength_reduce"
+  identifier {
+    type: "crates.io"
+    value: "strength_reduce"
+    version: "0.2.4"
+  }
+}

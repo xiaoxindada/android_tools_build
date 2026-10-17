@@ -1,0 +1,159 @@
+// Copyright 2025 The aarch64-rt Authors.
+// This project is dual-licensed under Apache 2.0 and MIT terms.
+// See LICENSE-APACHE and LICENSE-MIT for details.
+
+//! Entrypoint code
+
+use core::{arch::naked_asm, mem::offset_of};
+
+use crate::StartCoreStack;
+
+/// This is a generic entry point for an image. It carries out the operations required to prepare the
+/// loaded image to be run. Specifically, it zeroes the bss section using registers x25 and above,
+/// prepares the stack, enables floating point, and sets up the exception vector. It preserves x0-x3
+/// for the Rust entry point, as these may contain boot parameters.
+///
+/// # Safety
+///
+/// This function is marked unsafe because it should never be called by anyone. The linker is
+/// responsible for setting it as the entry function.
+#[unsafe(naked)]
+#[unsafe(link_section = ".init.entry")]
+#[unsafe(export_name = "entry")]
+unsafe extern "C" fn entry() -> ! {
+    naked_asm!(
+        ".macro adr_l, reg:req, sym:req",
+        r"adrp \reg, \sym",
+        r"add \reg, \reg, :lo12:\sym",
+        ".endm",
+        "bl enable_mmu",
+        // Disable trapping floating point access in EL1.
+        "mrs x30, cpacr_el1",
+        "orr x30, x30, #(0x3 << 20)",
+        "msr cpacr_el1, x30",
+        "isb",
+        // Zero out the bss section.
+        "adr_l x29, bss_begin",
+        "adr_l x30, bss_end",
+        "0:",
+        "cmp x29, x30",
+        "b.hs 1f",
+        "stp xzr, xzr, [x29], #16",
+        "b 0b",
+        "1:",
+        // Prepare the stack.
+        "adr_l x30, boot_stack_end",
+        "mov sp, x30",
+        // Call into Rust code.
+        "b {rust_entry}",
+        rust_entry = sym crate::rust_entry,
+    )
+}
+
+/// An assembly entry point for secondary cores.
+///
+/// It will enable the MMU, disable trapping of floating point instructions, initialise the
+/// stack pointer to `stack_end` and then jump to the trampoline function pointer at the bottom
+/// of the stack with the closure pointer second on the stack as a parameter.
+///
+/// # Safety
+///
+/// This requires that an initial stack pointer value be passed in `x0`, and the stack must contain
+/// the address of a Rust entry point to jump to and a parameter value to pass to it.
+#[unsafe(naked)]
+pub unsafe extern "C" fn secondary_entry(stack_end: *mut u64) -> ! {
+    naked_asm!(
+        "bl enable_mmu",
+        // Disable trapping floating point access in EL1.
+        "mrs x30, cpacr_el1",
+        "orr x30, x30, #(0x3 << 20)",
+        "msr cpacr_el1, x30",
+        "isb",
+        // Set the stack pointer which was passed.
+        "mov sp, x0",
+        // Load the closure address into x19 and the trampoline address into x20.
+        // This is loaded from StartCoreStack.
+        "ldr x19, [sp, #{entry_ptr_offset}]",
+        "ldr x20, [sp, #{trampoline_ptr_offset}]",
+        // Set the exception vector.
+        "bl {set_exception_vector}",
+        // Pass the entry point (closure) address to the trampoline function.
+        "mov x0, x19",
+        // Call into Rust trampoline.
+        "br x20",
+        entry_ptr_offset = const offset_of!(StartCoreStack<()>, entry_ptr) as isize
+            - size_of::<StartCoreStack<()>>() as isize,
+        trampoline_ptr_offset = const offset_of!(StartCoreStack<()>, trampoline_ptr) as isize
+            - size_of::<StartCoreStack<()>>() as isize,
+        set_exception_vector = sym crate::set_exception_vector,
+    )
+}
+
+/// An assembly entry point for warm boot (e.g. resume from suspend).
+///
+/// It will enable the MMU, disable trapping of floating point instructions, set up the exception
+/// vector, set the stack pointer to `context.stack_ptr`, and then jump to
+/// `context.entry(context.arg)`.
+///
+/// The function expects to be passed a pointer to a `SuspendContext` instance that will be valid
+/// after resuming from suspend. It should therefore be a static, allocated on the heap, or on the
+/// stack of the resuming core, to avoid being deallocated before resuming.
+///
+/// This is a low-level function that should be used as the entry point when manually calling the
+/// `CPU_SUSPEND` PSCI call. It deliberately doesn't store any data itself so that the caller has
+/// maximum flexibility over things such as where the `SuspendContext` is stored. If you need to
+/// restore any state (such as the registers), or you want to emulate returning from a function
+/// after suspending the core, you need to implement this functionality yourself in the `entry`
+/// function of the `SuspendContext`.
+///
+/// # Safety
+///
+/// The caller must ensure that the `SuspendContext` instance passed to the function will be valid
+/// and safe to read when the core resumes, at least until the first call to any Rust function. The
+/// best way to do this is to put it on the stack of the core which is resuming, as the stack won't
+/// otherwise be used until after the `SuspendContext` has been read.
+///
+/// `context.stack_ptr` must be a valid stack pointer to use for the resuming core. Depending on how
+/// you want to handle resuming this could either be the bottom of the stack (if you want to treat
+/// resuming like `CPU_ON`) or the top (if `context.entry` will restore register state and return
+/// from the point where the suspend happened).
+#[unsafe(naked)]
+pub unsafe extern "C" fn warm_boot_entry(context: *const SuspendContext) -> ! {
+    naked_asm!(
+        "bl enable_mmu",
+        // Disable trapping floating point access in EL1.
+        "mrs x30, cpacr_el1",
+        "orr x30, x30, #(0x3 << 20)",
+        "msr cpacr_el1, x30",
+        "isb",
+        // Load stack pointer, entry point and arg from SuspendContext. This may be on the stack,
+        // so needs to happen before we set the stack pointer and call functions which may use the
+        // stack.
+        "ldr x19, [x0, #{stack_ptr_offset}]",
+        "ldr x20, [x0, #{entry_offset}]",
+        "ldr x21, [x0, #{arg_offset}]",
+        // Set the stack pointer which was passed.
+        "mov sp, x19",
+        // Set the exception vector. This may use the stack and caller-saved registers.
+        "bl {set_exception_vector}",
+        // Jump to entry point (x20) with arg (x0).
+        "mov x0, x21",
+        "br x20",
+        set_exception_vector = sym crate::set_exception_vector,
+        stack_ptr_offset = const offset_of!(SuspendContext, stack_ptr),
+        entry_offset = const offset_of!(SuspendContext, entry),
+        arg_offset = const offset_of!(SuspendContext, arg),
+    )
+}
+
+/// Data used by [`warm_boot_entry`] to restore the CPU state after resuming.
+#[derive(Debug, Copy, Clone)]
+#[repr(C)]
+pub struct SuspendContext {
+    /// Value to which to set the stack pointer before calling `entry`.
+    pub stack_ptr: *mut u64,
+    /// Entry point to call after resuming.
+    pub entry: extern "C" fn(u64) -> !,
+    /// Parameter to pass to `entry`.
+    pub arg: u64,
+}

@@ -1,0 +1,20 @@
+{
+  "package": {
+    "serde_derive": {
+      "device_supported": false,
+      "host_first_multilib": true,
+      "rulesmk_patch": "patches/rules.mk.diff"
+    }
+  },
+  "run_cargo": false,
+  "tests": true,
+  "variants": [
+    {},
+    {
+      "generate_androidbp": false,
+      "generate_rulesmk": true,
+      "tests": false
+    }
+  ],
+  "min_sdk_version": "29"
+}

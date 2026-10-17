@@ -1,0 +1,17 @@
+name: "lyon_geom"
+description: "2D quadratic and cubic b\303\251zier arcs and line segment math on top of euclid."
+third_party {
+  version: "1.0.19"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 3
+    day: 23
+  }
+  homepage: "https://crates.io/crates/lyon_geom"
+  identifier {
+    type: "crates.io"
+    value: "lyon_geom"
+    version: "1.0.19"
+  }
+}

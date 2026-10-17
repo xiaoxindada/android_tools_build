@@ -1,0 +1,17 @@
+name: "ref-cast-impl"
+description: "Derive implementation for ref_cast::RefCast."
+third_party {
+  version: "1.0.25"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 20
+  }
+  homepage: "https://crates.io/crates/ref-cast-impl"
+  identifier {
+    type: "crates.io"
+    value: "ref-cast-impl"
+    version: "1.0.25"
+  }
+}

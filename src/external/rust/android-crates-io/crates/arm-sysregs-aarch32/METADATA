@@ -1,0 +1,17 @@
+name: "arm-sysregs-aarch32"
+description: "Armv8-A system register helper crate for Aarch32 registers"
+third_party {
+  version: "0.4.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 10
+  }
+  homepage: "https://crates.io/crates/arm-sysregs-aarch32"
+  identifier {
+    type: "crates.io"
+    value: "arm-sysregs-aarch32"
+    version: "0.4.0"
+  }
+}

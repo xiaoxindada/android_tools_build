@@ -1,0 +1,10 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "package": {
+    "arm-sysregs-el1": {
+      "no_std": true,
+      "host_supported": false
+    }
+  }
+}

@@ -1,0 +1,216 @@
+//! Temporarily turn off floating point denormals.
+//!
+//! Internally, this uses a RAII-style guard to manage the state of certain processor flags.
+//! On x86 and x86_64, this sets the flush-to-zero and denormals-are-zero flags in the MXCSR register.
+//! On aarch64 this sets the flush-to-zero flag in the FPCR register, including the flag for fp16 if it is supported.
+//! In all cases, the register will be reset to its initial state when the guard is dropped.
+//!
+//! Note that according to the Rust docs, using this is technically undefined behaviour, see e.g. <https://doc.rust-lang.org/core/arch/x86_64/fn._mm_setcsr.html>
+//! So use this at your own risk.
+//!
+//! ## Usage
+//!
+//! ```rust
+//! use no_denormals::no_denormals;
+//!
+//! unsafe {
+//!     no_denormals(|| {
+//!         // your DSP code here.
+//!     })
+//! };
+//!
+//! ```
+
+#![warn(missing_docs, missing_debug_implementations, rust_2018_idioms)]
+#![cfg_attr(all(test, feature = "_f16_test"), feature(f16))]
+
+use core::marker::PhantomData;
+
+#[cfg(not(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64")))]
+compile_error!("This crate only supports x86, x86_64 and aarch64.");
+
+// FTZ and DAZ
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+const X86_MASK: u32 = 0x8040;
+
+// FZ
+#[cfg(all(target_arch = "aarch64", not(target_feature = "fp16")))]
+const AARCH64_MASK: u64 = 1 << 24;
+// FZ and FZ16
+#[cfg(all(target_arch = "aarch64", target_feature = "fp16"))]
+const AARCH64_MASK: u64 = (1 << 24) | (1 << 19);
+
+struct DenormalGuard {
+	#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+	mxcsr: u32,
+	#[cfg(target_arch = "aarch64")]
+	fpcr: u64,
+
+	// These processor flags are local to each thread.
+	// We implement !Send and !Sync with this workaround,
+	// because negative trait bounds are not yet supported.
+	// https://users.rust-lang.org/t/negative-trait-bounds-are-not-yet-fully-implemented-use-marker-types-for-now/64495/2
+	_not_send_sync: PhantomData<*const ()>,
+}
+
+impl DenormalGuard {
+	fn new() -> Self {
+		#[allow(deprecated)]
+		#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+		{
+			#[cfg(all(target_arch = "x86_64", target_feature = "sse"))]
+			use std::arch::x86_64::{_mm_getcsr, _mm_setcsr};
+
+			#[cfg(all(target_arch = "x86", target_feature = "sse"))]
+			use std::arch::x86::{_mm_getcsr, _mm_setcsr};
+
+			let mxcsr = unsafe { _mm_getcsr() };
+			unsafe { _mm_setcsr(mxcsr | X86_MASK) };
+
+			DenormalGuard { mxcsr, _not_send_sync: PhantomData }
+		}
+		#[cfg(target_arch = "aarch64")]
+		{
+			let mut fpcr: u64;
+			unsafe { std::arch::asm!("mrs {}, fpcr", out(reg) fpcr) };
+			unsafe { std::arch::asm!("msr fpcr, {}", in(reg) fpcr | AARCH64_MASK) };
+
+			DenormalGuard { fpcr, _not_send_sync: PhantomData }
+		}
+	}
+}
+
+impl Drop for DenormalGuard {
+	fn drop(&mut self) {
+		#[allow(deprecated)]
+		#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+		{
+			#[cfg(all(target_arch = "x86_64", target_feature = "sse"))]
+			use std::arch::x86_64::_mm_setcsr;
+
+			#[cfg(all(target_arch = "x86", target_feature = "sse"))]
+			use std::arch::x86::_mm_setcsr;
+
+			unsafe { _mm_setcsr(self.mxcsr) };
+		}
+		#[cfg(target_arch = "aarch64")]
+		{
+			unsafe { std::arch::asm!("msr fpcr, {}", in(reg) self.fpcr) }
+		};
+	}
+}
+
+/// Calls the `func` closure.
+/// # Safety
+///
+/// Modifying the masking flags, rounding mode, or denormals-are-zero mode flags leads to
+/// **immediate Undefined Behavior**: Rust assumes that these are always in their default state and
+/// will optimize accordingly.
+///
+/// Only use this when you are reasonably sure that it will not cause any issues.
+#[inline]
+pub unsafe fn no_denormals<T, F: FnOnce() -> T>(func: F) -> T {
+	let guard = DenormalGuard::new();
+	let ret = func();
+	std::mem::drop(guard);
+
+	ret
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::no_denormals;
+	use std::num::FpCategory;
+
+	fn half_f32(x: f32) -> f32 {
+		std::hint::black_box(x) * 0.5
+	}
+
+	#[cfg(feature = "_f16_test")]
+	fn half_f16(x: f16) -> f16 {
+		std::hint::black_box(x) * 0.5
+	}
+
+	#[test]
+	fn arch() {
+		println!("Architecture: {:?}", std::env::consts::ARCH);
+	}
+
+	#[test]
+	fn test_f32_positive() {
+		let small: f32 = f32::MIN_POSITIVE;
+		{
+			let smaller = half_f32(small);
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
+		}
+		unsafe {
+			no_denormals(|| {
+				let smaller = half_f32(small);
+				assert_eq!(smaller.classify(), FpCategory::Zero);
+			})
+		};
+		{
+			let smaller = half_f32(small);
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
+		};
+	}
+
+	#[test]
+	fn test_f32_negative() {
+		let small: f32 = -f32::MIN_POSITIVE;
+		{
+			let smaller = half_f32(small);
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
+		}
+		unsafe {
+			no_denormals(|| {
+				let smaller = half_f32(small);
+				assert_eq!(smaller.classify(), FpCategory::Zero);
+			})
+		};
+		{
+			let smaller = half_f32(small);
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
+		};
+	}
+
+	#[cfg(all(feature = "_f16_test", target_arch = "aarch64", target_feature = "fp16"))]
+	#[test]
+	fn test_f16_positive() {
+		let small: f16 = f16::MIN_POSITIVE;
+		{
+			let smaller = half_f16(small);
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
+		}
+		unsafe {
+			no_denormals(|| {
+				let smaller = half_f16(small);
+				assert_eq!(smaller.classify(), FpCategory::Zero);
+			})
+		};
+		{
+			let smaller = half_f16(small);
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
+		};
+	}
+
+	#[cfg(all(feature = "_f16_test", target_arch = "aarch64", target_feature = "fp16"))]
+	#[test]
+	fn test_f16_negative() {
+		let small: f16 = -f16::MIN_POSITIVE;
+		{
+			let smaller = half_f16(small);
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
+		}
+		unsafe {
+			no_denormals(|| {
+				let smaller = half_f16(small);
+				assert_eq!(smaller.classify(), FpCategory::Zero);
+			})
+		};
+		{
+			let smaller = half_f16(small);
+			assert_eq!(smaller.classify(), FpCategory::Subnormal);
+		};
+	}
+}

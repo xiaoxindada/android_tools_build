@@ -1,0 +1,40 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/icu_capi"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/icu_casemap"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/icu_collections"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/icu_locale"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/icu_locale_core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/icu_properties"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/icu_provider"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/icu_provider_adapters"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/icu_provider_baked"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/potential_utf"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tinystr"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/zerotrie"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.virt"
+  ],
+  "features": [
+    "alloc"
+  ],
+  "module_visibility": {
+    "libpkcs8": [
+      "//external/rust/android-crates-io/crates/pkcs1:__subpackages__",
+      "//external/rust/android-crates-io/crates/sec1:__subpackages__",
+      "//packages/modules/Virtualization:__subpackages__",
+      "//system/keymint:__subpackages__"
+    ]
+  },
+  "run_cargo": false,
+  "variants": [
+    {},
+    {
+      "package": {
+        "pkcs8": {
+          "force_rlib": true,
+          "host_supported": false,
+          "no_std": true
+        }
+      }
+    },
+    {
+      "generate_androidbp": false,
+      "generate_rulesmk": true
+    }
+  ],
+  "min_sdk_version": "29"
+}

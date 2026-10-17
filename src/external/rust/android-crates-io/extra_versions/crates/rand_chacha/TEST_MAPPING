@@ -1,0 +1,7 @@
+{
+  "postsubmit": [
+    {
+      "name": "rand_chacha_test_src_lib-0.3"
+    }
+  ]
+}

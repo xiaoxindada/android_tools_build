@@ -1,0 +1,17 @@
+name: "cursor-icon"
+description: "Cross platform cursor icon type"
+third_party {
+  version: "1.2.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 15
+  }
+  homepage: "https://crates.io/crates/cursor-icon"
+  identifier {
+    type: "crates.io"
+    value: "cursor-icon"
+    version: "1.2.0"
+  }
+}

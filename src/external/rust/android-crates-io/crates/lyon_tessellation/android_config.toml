@@ -1,0 +1,3 @@
+deletions = [
+    "src/earcut_tests.rs",
+]

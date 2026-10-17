@@ -1,0 +1,17 @@
+name: "num-traits"
+description: "Numeric traits for generic mathematics"
+third_party {
+  version: "0.2.19"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 7
+    day: 25
+  }
+  homepage: "https://crates.io/crates/num-traits"
+  identifier {
+    type: "crates.io"
+    value: "num-traits"
+    version: "0.2.19"
+  }
+}

@@ -1,0 +1,17 @@
+name: "typed-builder-macro"
+description: "Compile-time type-checked builder derive"
+third_party {
+  version: "0.23.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 10
+  }
+  homepage: "https://crates.io/crates/typed-builder-macro"
+  identifier {
+    type: "crates.io"
+    value: "typed-builder-macro"
+    version: "0.23.2"
+  }
+}

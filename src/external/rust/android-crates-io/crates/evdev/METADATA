@@ -1,0 +1,17 @@
+name: "evdev"
+description: "evdev interface for Linux"
+third_party {
+  version: "0.13.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 9
+    day: 16
+  }
+  homepage: "https://crates.io/crates/evdev"
+  identifier {
+    type: "crates.io"
+    value: "evdev"
+    version: "0.13.2"
+  }
+}

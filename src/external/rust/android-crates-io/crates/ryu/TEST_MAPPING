@@ -1,0 +1,64 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/csv"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ryu"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde_json"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde_yaml"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "ryu_test_tests_common_test"
+    },
+    {
+      "name": "ryu_test_tests_d2s_table_test"
+    },
+    {
+      "name": "ryu_test_tests_d2s_test"
+    },
+    {
+      "name": "ryu_test_tests_f2s_test"
+    },
+    {
+      "name": "ryu_test_tests_s2d_test"
+    },
+    {
+      "name": "ryu_test_tests_s2f_test"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "ryu_test_tests_common_test"
+    },
+    {
+      "name": "ryu_test_tests_d2s_table_test"
+    },
+    {
+      "name": "ryu_test_tests_d2s_test"
+    },
+    {
+      "name": "ryu_test_tests_f2s_test"
+    },
+    {
+      "name": "ryu_test_tests_s2d_test"
+    },
+    {
+      "name": "ryu_test_tests_s2f_test"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "ryu_test_tests_d2s_intrinsics_test"
+    },
+    {
+      "name": "ryu_test_tests_exhaustive"
+    }
+  ]
+}

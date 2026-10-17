@@ -1,0 +1,100 @@
+diff --git a/Android.bp b/Android.bp
+index 2187809e4..e7f111150 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -9,7 +9,11 @@ package {
+ license {
+     name: "external_rust_crates_quiche_license",
+     visibility: [":__subpackages__"],
+-    license_kinds: ["SPDX-license-identifier-BSD-2-Clause"],
++    license_kinds: [
++        "SPDX-license-identifier-BSD-2-Clause",
++        "SPDX-license-identifier-ISC",
++        "SPDX-license-identifier-OpenSSL",
++    ],
+     license_text: ["LICENSE"],
+ }
+ 
+@@ -21,11 +25,7 @@ rust_library {
+     cargo_pkg_version: "0.24.8",
+     crate_root: "src/lib.rs",
+     edition: "2021",
+-    features: [
+-        "boringssl-vendored",
+-        "default",
+-    ],
+-    rustlibs: [
++    rlibs: [
+         "libeither",
+         "libintrusive_collections",
+         "liblibc",
+@@ -36,7 +36,8 @@ rust_library {
+         "libsmallvec",
+     ],
+     proc_macros: ["libenum_dispatch"],
+-    static_libs: [
++    prefer_rlib: true,
++    shared_libs: [
+         "libcrypto",
+         "libssl",
+     ],
+@@ -50,7 +51,7 @@ rust_library {
+     min_sdk_version: "29",
+ }
+ 
+-rust_ffi_shared {
++rust_ffi {
+     name: "libquiche_ffi",
+     host_supported: true,
+     crate_name: "quiche",
+@@ -58,11 +59,7 @@ rust_ffi_shared {
+     cargo_pkg_version: "0.24.8",
+     crate_root: "src/lib.rs",
+     edition: "2021",
+-    features: [
+-        "boringssl-vendored",
+-        "default",
+-    ],
+-    rustlibs: [
++    rlibs: [
+         "libeither",
+         "libintrusive_collections",
+         "liblibc",
+@@ -73,7 +70,8 @@ rust_ffi_shared {
+         "libsmallvec",
+     ],
+     proc_macros: ["libenum_dispatch"],
+-    static_libs: [
++    prefer_rlib: true,
++    shared_libs: [
+         "libcrypto",
+         "libssl",
+     ],
+@@ -95,10 +93,6 @@ rust_library_rlib {
+     cargo_pkg_version: "0.24.8",
+     crate_root: "src/lib.rs",
+     edition: "2021",
+-    features: [
+-        "boringssl-vendored",
+-        "default",
+-    ],
+     rustlibs: [
+         "libeither",
+         "libintrusive_collections",
+@@ -162,6 +156,7 @@ rust_test {
+         "examples/cert-big.crt",
+         "examples/rootca.crt",
+     ],
++    shared_libs: ["libc++"],
+ }
+ 
+ rust_test_host {
+@@ -195,7 +190,7 @@ rust_test_host {
+         "liburl",
+     ],
+     proc_macros: ["libenum_dispatch"],
+-    static_libs: [
++    shared_libs: [
+         "libcrypto",
+         "libssl",
+     ],

@@ -1,0 +1,17 @@
+name: "pastey"
+description: "Macros for all your token pasting needs. Successor of paste."
+third_party {
+  version: "0.2.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 20
+  }
+  homepage: "https://crates.io/crates/pastey"
+  identifier {
+    type: "crates.io"
+    value: "pastey"
+    version: "0.2.3"
+  }
+}

@@ -1,0 +1,17 @@
+name: "vulkano"
+description: "Safe wrapper for the Vulkan graphics API"
+third_party {
+  version: "0.33.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 8
+    day: 19
+  }
+  homepage: "https://crates.io/crates/vulkano"
+  identifier {
+    type: "crates.io"
+    value: "vulkano"
+    version: "0.33.1"
+  }
+}

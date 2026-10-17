@@ -1,0 +1,17 @@
+name: "dasp_sample"
+description: "An abstraction for audio PCM DSP samples, along with useful conversions and operations."
+third_party {
+  version: "0.11.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 3
+    day: 31
+  }
+  homepage: "https://crates.io/crates/dasp_sample"
+  identifier {
+    type: "crates.io"
+    value: "dasp_sample"
+    version: "0.11.0"
+  }
+}

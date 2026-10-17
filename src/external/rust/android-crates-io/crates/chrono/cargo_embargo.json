@@ -1,0 +1,6 @@
+{
+  "features": ["now", "serde", "std"],
+  "run_cargo": false,
+  "tests": false,
+  "min_sdk_version": "29"
+}

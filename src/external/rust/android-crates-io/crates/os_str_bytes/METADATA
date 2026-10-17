@@ -1,0 +1,17 @@
+name: "os_str_bytes"
+description: "Lossless functionality for platform-native strings"
+third_party {
+  version: "7.2.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 18
+  }
+  homepage: "https://crates.io/crates/os_str_bytes"
+  identifier {
+    type: "crates.io"
+    value: "os_str_bytes"
+    version: "7.2.1"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "module_name_overrides": {
+    "external_rust_crates_rand_license": "external_rust_crates_rand-0.6_license",
+    "librand": "librand-0.8",
+    "librand_core": "librand_core-0.6",
+    "librand_chacha": "librand_chacha-0.3"
+  },
+  "features": [
+    "default",
+    "small_rng"
+  ],
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

@@ -1,0 +1,18 @@
+{
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.virt"
+  ],
+  "module_blocklist": [ "cpuid" ],
+  "package": {
+    "raw-cpuid": {
+      "no_std": true,
+      "host_supported": false,
+      "add_module_block": "cargo2android_module.bp.fragment",
+      "enabled": false
+    }
+  },
+  "run_cargo": false,
+  "generate_rulesmk": true,
+  "min_sdk_version": "29"
+}

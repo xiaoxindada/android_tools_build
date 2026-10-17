@@ -1,0 +1,17 @@
+name: "vhost-user-backend"
+description: "A framework to build vhost-user backend service daemon"
+third_party {
+  version: "0.23.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 21
+  }
+  homepage: "https://crates.io/crates/vhost-user-backend"
+  identifier {
+    type: "crates.io"
+    value: "vhost-user-backend"
+    version: "0.23.0"
+  }
+}

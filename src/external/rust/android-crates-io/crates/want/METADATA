@@ -1,0 +1,17 @@
+name: "want"
+description: "Detect when another Future wants a result."
+third_party {
+  version: "0.3.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 5
+    day: 28
+  }
+  homepage: "https://crates.io/crates/want"
+  identifier {
+    type: "crates.io"
+    value: "want"
+    version: "0.3.1"
+  }
+}

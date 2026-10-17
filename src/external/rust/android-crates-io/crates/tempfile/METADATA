@@ -1,0 +1,17 @@
+name: "tempfile"
+description: "A library for managing temporary files and directories."
+third_party {
+  version: "3.27.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 13
+  }
+  homepage: "https://crates.io/crates/tempfile"
+  identifier {
+    type: "crates.io"
+    value: "tempfile"
+    version: "3.27.0"
+  }
+}

@@ -1,0 +1,17 @@
+name: "wayland-sys"
+description: "FFI bindings to the various libwayland-*.so libraries. You should only need this crate if you are working on custom wayland protocol extensions. Look at the crate wayland-client for usable bindings."
+third_party {
+  version: "0.31.11"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 15
+  }
+  homepage: "https://crates.io/crates/wayland-sys"
+  identifier {
+    type: "crates.io"
+    value: "wayland-sys"
+    version: "0.31.11"
+  }
+}

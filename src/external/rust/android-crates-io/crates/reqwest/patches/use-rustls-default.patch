@@ -1,0 +1,29 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index 357a8e938..fbd5de922 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -368,6 +368,7 @@ version = "0.23.4"
+ features = [
+     "std",
+     "tls12",
++    "aws-lc-rs",
+ ]
+ optional = true
+ default-features = false
+diff --git a/src/async_impl/client.rs b/src/async_impl/client.rs
+index 8f3bebb1e..b884c830f 100644
+--- a/src/async_impl/client.rs
++++ b/src/async_impl/client.rs
+@@ -719,11 +719,7 @@ impl ClientBuilder {
+                     let provider = rustls::crypto::CryptoProvider::get_default()
+                         .map(|arc| arc.clone())
+                         .unwrap_or_else(|| {
+-                            #[cfg(not(feature = "__rustls-ring"))]
+-                            panic!("No provider set");
+-
+-                            #[cfg(feature = "__rustls-ring")]
+-                            Arc::new(rustls::crypto::ring::default_provider())
++                            Arc::new(rustls::crypto::aws_lc_rs::default_provider())
+                         });
+ 
+                     // Build TLS config

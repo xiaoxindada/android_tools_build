@@ -1,0 +1,17 @@
+name: "hyper-util"
+description: "hyper utilities"
+third_party {
+  version: "0.1.20"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 2
+  }
+  homepage: "https://crates.io/crates/hyper-util"
+  identifier {
+    type: "crates.io"
+    value: "hyper-util"
+    version: "0.1.20"
+  }
+}

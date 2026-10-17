@@ -1,0 +1,76 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/inotify"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/memmap2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pdl-compiler"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-codegen"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-parse"
+    },
+    {
+      "path": "packages/modules/ConfigInfrastructure/aconfigd"
+    },
+    {
+      "path": "packages/modules/Uwb/libuwb-uci/src"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/composd"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtualizationservice"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/apkdmverity"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/compsvc"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/zipfuse"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/devicemapper"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/dice/driver"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/vbmeta"
+    },
+    {
+      "path": "system/desktop/security/gscutil"
+    },
+    {
+      "path": "system/librustutils"
+    },
+    {
+      "path": "system/memory/libmeminfo/tools/alloctop"
+    },
+    {
+      "path": "system/memory/mmd"
+    },
+    {
+      "path": "system/security/keystore2"
+    },
+    {
+      "path": "system/usb_info_tools/typec_connector_class_helper"
+    },
+    {
+      "path": "tools/asuite/adevice"
+    }
+  ]
+}

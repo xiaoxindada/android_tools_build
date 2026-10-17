@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/cargo_toml"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/config"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crates-index"
+    }
+  ]
+}

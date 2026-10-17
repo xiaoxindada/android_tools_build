@@ -1,0 +1,17 @@
+name: "vsprintf"
+description: "Rust bindings to the libc vsprintf function"
+third_party {
+  version: "2.0.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 8
+    day: 22
+  }
+  homepage: "https://crates.io/crates/vsprintf"
+  identifier {
+    type: "crates.io"
+    value: "vsprintf"
+    version: "2.0.0"
+  }
+}

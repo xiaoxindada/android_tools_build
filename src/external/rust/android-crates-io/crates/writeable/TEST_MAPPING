@@ -1,0 +1,22 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/icu_capi"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/icu_casemap"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/icu_locale_core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/icu_provider"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/icu_provider_baked"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/potential_utf"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+name: "primal-check"
+description: "Fast standalone primality testing."
+third_party {
+  version: "0.3.4"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 13
+  }
+  homepage: "https://crates.io/crates/primal-check"
+  identifier {
+    type: "crates.io"
+    value: "primal-check"
+    version: "0.3.4"
+  }
+}

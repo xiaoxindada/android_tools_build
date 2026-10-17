@@ -1,0 +1,10 @@
+{
+  "module_name_overrides": {
+    "external_rust_crates_rand_xorshift_license": "external_rust_crates_rand_xorshift-0.3_license",
+    "librand_xorshift": "librand_xorshift-0.3",
+    "rand_xorshift_test_tests_mod": "rand_xorshift_test_tests_mod-0.3",
+    "librand_core": "librand_core-0.6"
+  },
+  "tests": true,
+  "min_sdk_version": "29"
+}

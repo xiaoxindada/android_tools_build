@@ -1,0 +1,16 @@
+{
+  "imports": [
+    {
+      "path": "packages/modules/Virtualization/android/composd"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/authfs_service"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvmclient"
+    }
+  ]
+}

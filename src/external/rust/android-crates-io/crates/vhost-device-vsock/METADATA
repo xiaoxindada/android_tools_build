@@ -1,0 +1,17 @@
+name: "vhost-device-vsock"
+description: "A virtio-vsock device using the vhost-user protocol."
+third_party {
+  version: "0.3.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 8
+  }
+  homepage: "https://crates.io/crates/vhost-device-vsock"
+  identifier {
+    type: "crates.io"
+    value: "vhost-device-vsock"
+    version: "0.3.0"
+  }
+}

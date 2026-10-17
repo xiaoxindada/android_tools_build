@@ -1,0 +1,17 @@
+name: "enum-as-inner"
+description: "A proc-macro for deriving inner field accessor functions on enums."
+third_party {
+  version: "0.7.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 2
+  }
+  homepage: "https://crates.io/crates/enum-as-inner"
+  identifier {
+    type: "crates.io"
+    value: "enum-as-inner"
+    version: "0.7.0"
+  }
+}

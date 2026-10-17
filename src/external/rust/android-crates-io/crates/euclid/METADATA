@@ -1,0 +1,17 @@
+name: "euclid"
+description: "Geometry primitives"
+third_party {
+  version: "0.22.14"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 3
+    day: 23
+  }
+  homepage: "https://crates.io/crates/euclid"
+  identifier {
+    type: "crates.io"
+    value: "euclid"
+    version: "0.22.14"
+  }
+}

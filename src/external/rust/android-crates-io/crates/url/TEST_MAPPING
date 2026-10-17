@@ -1,0 +1,26 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/quiche"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/url"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "url_test_src_lib"
+    },
+    {
+      "name": "url_test_tests_unit"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "url_test_src_lib"
+    },
+    {
+      "name": "url_test_tests_unit"
+    }
+  ]
+}

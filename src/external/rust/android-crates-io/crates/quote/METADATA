@@ -1,0 +1,17 @@
+name: "quote"
+description: "Quasi-quoting macro quote!(...)"
+third_party {
+  version: "1.0.47"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 24
+  }
+  homepage: "https://crates.io/crates/quote"
+  identifier {
+    type: "crates.io"
+    value: "quote"
+    version: "1.0.47"
+  }
+}

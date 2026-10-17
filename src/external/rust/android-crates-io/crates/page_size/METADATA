@@ -1,0 +1,17 @@
+name: "page_size"
+description: "Provides an easy, fast, cross-platform way to retrieve the memory page size"
+third_party {
+  version: "0.6.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 11
+  }
+  homepage: "https://crates.io/crates/page_size"
+  identifier {
+    type: "crates.io"
+    value: "page_size"
+    version: "0.6.0"
+  }
+}

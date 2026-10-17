@@ -1,0 +1,17 @@
+name: "critical-section"
+description: "Cross-platform critical section"
+third_party {
+  version: "1.2.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 2
+    day: 14
+  }
+  homepage: "https://crates.io/crates/critical-section"
+  identifier {
+    type: "crates.io"
+    value: "critical-section"
+    version: "1.2.0"
+  }
+}

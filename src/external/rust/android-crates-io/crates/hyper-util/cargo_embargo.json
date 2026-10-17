@@ -1,0 +1,5 @@
+{
+  "run_cargo": false,
+  "features": ["full"],
+  "min_sdk_version": "29"
+}

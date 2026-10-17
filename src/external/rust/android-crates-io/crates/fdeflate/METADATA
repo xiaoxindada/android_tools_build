@@ -1,0 +1,17 @@
+name: "fdeflate"
+description: "Fast specialized deflate implementation"
+third_party {
+  version: "0.3.7"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 3
+    day: 4
+  }
+  homepage: "https://crates.io/crates/fdeflate"
+  identifier {
+    type: "crates.io"
+    value: "fdeflate"
+    version: "0.3.7"
+  }
+}

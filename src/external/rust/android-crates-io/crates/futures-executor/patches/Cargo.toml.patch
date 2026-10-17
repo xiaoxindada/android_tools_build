@@ -1,0 +1,17 @@
+
+---
+ Cargo.toml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git b/Cargo.toml a/Cargo.toml
+index 1f5472d0..ca63f5b5 100644
+--- b/Cargo.toml
++++ a/Cargo.toml
+@@ -46,6 +46,7 @@ version = "1.8.0"
+ optional = true
+ 
+ [dev-dependencies]
++futures = "0.3.21"
+ 
+ [features]
+ default = ["std"]

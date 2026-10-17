@@ -1,0 +1,34 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/anes"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/chunked_transfer"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/httparse"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/httpdate"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ring"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/spin"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/thread_local"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tinytemplate"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/unicode-xid"
+    },
+    {
+      "path": "system/extras/libatrace_rust/benchmark"
+    }
+  ]
+}

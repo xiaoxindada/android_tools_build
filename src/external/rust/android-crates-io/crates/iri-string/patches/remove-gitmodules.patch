@@ -1,0 +1,9 @@
+diff --git a/.gitmodules b/.gitmodules
+deleted file mode 100644
+index 39374c1c1..000000000
+--- a/.gitmodules
++++ /dev/null
+@@ -1,3 +0,0 @@
+-[submodule "iri-string-tests/uritemplate-test"]
+-	path = iri-string-tests/assets/uritemplate-test
+-	url = https://github.com/uri-templates/uritemplate-test.git

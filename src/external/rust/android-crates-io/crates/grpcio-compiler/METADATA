@@ -1,0 +1,17 @@
+name: "grpcio-compiler"
+description: "gRPC compiler for grpcio"
+third_party {
+  version: "0.13.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 12
+    day: 19
+  }
+  homepage: "https://crates.io/crates/grpcio-compiler"
+  identifier {
+    type: "crates.io"
+    value: "grpcio-compiler"
+    version: "0.13.0"
+  }
+}

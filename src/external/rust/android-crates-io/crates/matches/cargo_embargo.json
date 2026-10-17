@@ -1,0 +1,10 @@
+{
+  "min_sdk_version": "29",
+  "run_cargo": true,
+  "tests": true,
+  "package": {
+    "matches": {
+      "device_supported": true
+    }
+  }
+}

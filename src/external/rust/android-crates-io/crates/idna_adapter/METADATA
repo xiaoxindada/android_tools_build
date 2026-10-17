@@ -1,0 +1,17 @@
+name: "idna_adapter"
+description: "Back end adapter for idna"
+third_party {
+  version: "1.2.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 27
+  }
+  homepage: "https://crates.io/crates/idna_adapter"
+  identifier {
+    type: "crates.io"
+    value: "idna_adapter"
+    version: "1.2.2"
+  }
+}

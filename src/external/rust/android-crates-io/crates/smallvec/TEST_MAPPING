@@ -1,0 +1,34 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/cfg-expr"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/diplomat_core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/genco"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/parking_lot_core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/quiche"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rusqlite"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/spdx"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tracing-subscriber"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vulkano"
+    },
+    {
+      "path": "tools/security/fuzzing/orphans/smallvec"
+    }
+  ]
+}

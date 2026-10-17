@@ -1,0 +1,17 @@
+name: "icu_normalizer"
+description: "API for normalizing text into Unicode Normalization Forms"
+third_party {
+  version: "2.2.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 13
+  }
+  homepage: "https://crates.io/crates/icu_normalizer"
+  identifier {
+    type: "crates.io"
+    value: "icu_normalizer"
+    version: "2.2.0"
+  }
+}

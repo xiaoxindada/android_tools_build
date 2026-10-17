@@ -1,0 +1,7 @@
+{
+  "min_sdk_version": "29",
+  "run_cargo": false,
+  "module_name_overrides": {
+    "libindexmap": "libindexmap-1.9.3"
+  }
+}

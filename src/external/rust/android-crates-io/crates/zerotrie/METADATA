@@ -1,0 +1,17 @@
+name: "zerotrie"
+description: "A data structure that efficiently maps strings to integers"
+third_party {
+  version: "0.2.5"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 11
+  }
+  homepage: "https://crates.io/crates/zerotrie"
+  identifier {
+    type: "crates.io"
+    value: "zerotrie"
+    version: "0.2.5"
+  }
+}

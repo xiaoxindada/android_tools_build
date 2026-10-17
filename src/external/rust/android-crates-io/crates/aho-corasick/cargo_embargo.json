@@ -1,0 +1,11 @@
+{
+  "tests": true,
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "package": {
+    "aho-corasick": {
+      "target_windows": true
+    }
+  },
+  "recovery_available": true
+}

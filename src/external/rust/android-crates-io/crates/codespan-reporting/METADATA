@@ -1,0 +1,17 @@
+name: "codespan-reporting"
+description: "Beautiful diagnostic reporting for text-based programming languages"
+third_party {
+  version: "0.13.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 25
+  }
+  homepage: "https://crates.io/crates/codespan-reporting"
+  identifier {
+    type: "crates.io"
+    value: "codespan-reporting"
+    version: "0.13.1"
+  }
+}

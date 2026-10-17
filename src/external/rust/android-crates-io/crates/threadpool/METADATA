@@ -1,0 +1,17 @@
+name: "threadpool"
+description: "A thread pool for running a number of jobs on a fixed set of worker threads."
+third_party {
+  version: "1.8.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2023
+    month: 4
+    day: 19
+  }
+  homepage: "https://crates.io/crates/threadpool"
+  identifier {
+    type: "crates.io"
+    value: "threadpool"
+    version: "1.8.1"
+  }
+}

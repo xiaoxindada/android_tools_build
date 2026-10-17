@@ -1,0 +1,14 @@
+{
+  "module_name_overrides": {
+    "external_rust_crates_rand_core_license": "external_rust_crates_rand_core-0.3_license",
+    "rand_core_test_src_lib": "rand_core_test_src_lib-0.6",
+    "librand_core": "librand_core-0.6",
+    "libgetrandom": "libgetrandom-0.2"
+  },
+  "features": [
+    "std"
+  ],
+  "run_cargo": false,
+  "tests": true,
+  "min_sdk_version": "29"
+}

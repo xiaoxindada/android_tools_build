@@ -1,0 +1,22 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/unicode-normalization"
+    },
+    {
+      "path": "external/rust/beto-rust/nearby"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/pvmfw"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/pvmfw/avb"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/service_vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvmbase"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/num-bigint"
+    },
+    {
+      "path": "external/rust/beto-rust/nearby"
+    },
+    {
+      "path": "tools/rootcanal/rust"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "num-bigint_test_src_lib"
+    },
+    {
+      "name": "num-bigint_test_tests_bigint"
+    },
+    {
+      "name": "num-bigint_test_tests_bigint_bitwise"
+    },
+    {
+      "name": "num-bigint_test_tests_bigint_scalar"
+    },
+    {
+      "name": "num-bigint_test_tests_biguint"
+    },
+    {
+      "name": "num-bigint_test_tests_biguint_scalar"
+    },
+    {
+      "name": "num-bigint_test_tests_fuzzed"
+    },
+    {
+      "name": "num-bigint_test_tests_modpow"
+    },
+    {
+      "name": "num-bigint_test_tests_roots"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "num-bigint_test_src_lib"
+    },
+    {
+      "name": "num-bigint_test_tests_bigint"
+    },
+    {
+      "name": "num-bigint_test_tests_bigint_bitwise"
+    },
+    {
+      "name": "num-bigint_test_tests_bigint_scalar"
+    },
+    {
+      "name": "num-bigint_test_tests_biguint"
+    },
+    {
+      "name": "num-bigint_test_tests_biguint_scalar"
+    },
+    {
+      "name": "num-bigint_test_tests_fuzzed"
+    },
+    {
+      "name": "num-bigint_test_tests_modpow"
+    },
+    {
+      "name": "num-bigint_test_tests_roots"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+[package]
+name = "uefi"
+version = "0.39.0"
+readme = "README.md"
+description = """
+This crate makes it easy to develop Rust software that leverages safe,
+convenient, and performant abstractions for UEFI functionality.
+"""
+
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+# Feature documentation in uefi/lib.rs.
+[features]
+# KEEP this feature list in sync with doc in uefi/lib.rs!
+default = [ ]
+alloc = []
+# Integration with jiff crate `v0.2`
+jiff02 = ["dep:jiff"]
+# Integration with time crate `v0.3`
+time03 = ["dep:time"]
+
+# Generic gate to code that uses unstable features of Rust, needing a nightly
+# toolchain.
+unstable = []
+
+# Helper features:
+logger = []
+global_allocator = []
+panic_handler = []
+# Some convenience when running inside QEMU.
+# - dependency log-debugcon: logical, not technical
+# - dependency panic_handler: logical, not technical
+qemu = ["dep:qemu-exit", "panic_handler", "log-debugcon"]
+log-debugcon = []
+
+[dependencies]
+bitflags.workspace = true
+log.workspace = true
+ptr_meta.workspace = true
+jiff = { workspace = true, optional = true }
+time = { workspace = true, optional = true }
+qemu-exit = { workspace = true, optional = true }
+uguid.workspace = true
+cfg-if = "1.0.0"
+ucs2 = "0.3.3"
+uefi-macros = "0.19.0"
+uefi-raw = "0.15.1"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

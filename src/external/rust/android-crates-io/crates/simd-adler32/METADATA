@@ -1,0 +1,17 @@
+name: "simd-adler32"
+description: "A SIMD-accelerated Adler-32 hash algorithm implementation."
+third_party {
+  version: "0.3.10"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 15
+  }
+  homepage: "https://crates.io/crates/simd-adler32"
+  identifier {
+    type: "crates.io"
+    value: "simd-adler32"
+    version: "0.3.10"
+  }
+}

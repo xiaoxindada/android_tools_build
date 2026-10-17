@@ -1,0 +1,20 @@
+{
+  "features": [
+    "backend_vulkan",
+    "wayland_frontend",
+    "desktop"
+  ],
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "module_name_overrides": {
+    "libash": "libash_rust-0.38.0",
+    "libxkbcommon": "libxkbcommon_rs",
+    "libwayland_server": "libwayland_server_rs"
+  },
+  "product_available": false,
+  "package": {
+    "smithay": {
+      "host_supported": false
+    }
+  }
+}

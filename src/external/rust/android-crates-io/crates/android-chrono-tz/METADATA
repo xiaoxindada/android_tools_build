@@ -1,0 +1,17 @@
+name: "android-chrono-tz"
+description: "Chrono timezone support for Android."
+third_party {
+  version: "0.1.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 20
+  }
+  homepage: "https://crates.io/crates/android-chrono-tz"
+  identifier {
+    type: "crates.io"
+    value: "android-chrono-tz"
+    version: "0.1.0"
+  }
+}

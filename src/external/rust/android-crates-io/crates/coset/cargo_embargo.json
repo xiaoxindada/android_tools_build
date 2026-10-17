@@ -1,0 +1,29 @@
+{
+  "run_cargo": false,
+  "variants": [
+    {
+      "features": [
+        "default",
+        "std"
+      ],
+      "tests": true
+    },
+    {
+      "features": [],
+      "package": {
+        "coset": {
+          "alloc": true,
+          "force_rlib": true,
+          "host_supported": false,
+          "no_std": true
+        }
+      }
+    },
+    {
+      "features": [],
+      "generate_androidbp": false,
+      "generate_rulesmk": true
+    }
+  ],
+  "min_sdk_version": "29"
+}

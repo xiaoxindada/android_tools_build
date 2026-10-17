@@ -1,0 +1,17 @@
+name: "virtio-vsock"
+description: "virtio vsock device implementation"
+third_party {
+  version: "0.12.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 21
+  }
+  homepage: "https://crates.io/crates/virtio-vsock"
+  identifier {
+    type: "crates.io"
+    value: "virtio-vsock"
+    version: "0.12.0"
+  }
+}

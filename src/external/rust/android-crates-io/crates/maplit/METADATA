@@ -1,0 +1,17 @@
+name: "maplit"
+description: "Collection \"literal\" macros for HashMap, HashSet, BTreeMap, and BTreeSet."
+third_party {
+  version: "1.0.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 11
+    day: 12
+  }
+  homepage: "https://crates.io/crates/maplit"
+  identifier {
+    type: "crates.io"
+    value: "maplit"
+    version: "1.0.2"
+  }
+}

@@ -1,0 +1,17 @@
+name: "lz4_flex"
+description: "Fastest LZ4 implementation in Rust, no unsafe by default."
+third_party {
+  version: "0.14.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 15
+  }
+  homepage: "https://crates.io/crates/lz4_flex"
+  identifier {
+    type: "crates.io"
+    value: "lz4_flex"
+    version: "0.14.0"
+  }
+}

@@ -1,0 +1,27 @@
+rust_library {
+    name: "liblibbpf_rs_uprobestats",
+    crate_name: "libbpf_rs_uprobestats",
+    cargo_env_compat: true,
+    cargo_pkg_version: "0.27.0",
+    crate_root: "src/lib.rs",
+    edition: "2021",
+    features: [
+        "default",
+        "libbpf-sys",
+    ],
+    rustlibs: [
+        "libbitflags",
+        "liblibbpf_sys_uprobestats",
+        "liblibc",
+        "libvsprintf",
+    ],
+    aliases: ["libbpf_sys_uprobestats:libbpf_sys"],
+    apex_available: [
+        "com.android.uprobestats",
+    ],
+    min_sdk_version: "29",
+    visibility: [
+        "//packages/modules/UprobeStats:__subpackages__",
+    ],
+    shared_libs: ["libbpf_trimmed_uprobestats"],
+}

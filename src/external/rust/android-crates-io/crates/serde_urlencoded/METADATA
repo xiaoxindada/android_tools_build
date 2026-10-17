@@ -1,0 +1,17 @@
+name: "serde_urlencoded"
+description: "`x-www-form-urlencoded` meets Serde"
+third_party {
+  version: "0.7.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 22
+  }
+  homepage: "https://crates.io/crates/serde_urlencoded"
+  identifier {
+    type: "crates.io"
+    value: "serde_urlencoded"
+    version: "0.7.1"
+  }
+}

@@ -1,0 +1,17 @@
+name: "ciborium"
+description: "serde implementation of CBOR using ciborium-basic"
+third_party {
+  version: "0.2.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 1
+    day: 24
+  }
+  homepage: "https://crates.io/crates/ciborium"
+  identifier {
+    type: "crates.io"
+    value: "ciborium"
+    version: "0.2.2"
+  }
+}

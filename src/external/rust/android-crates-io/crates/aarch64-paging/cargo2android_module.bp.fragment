@@ -1,0 +1,8 @@
+target: {
+    android_arm64: {
+        enabled: true,
+    },
+},
+sanitize: {
+    hwaddress: false,
+}

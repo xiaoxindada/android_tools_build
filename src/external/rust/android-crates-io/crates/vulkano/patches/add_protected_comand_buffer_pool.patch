@@ -1,0 +1,134 @@
+diff --git a/src/command_buffer/allocator.rs b/src/command_buffer/allocator.rs
+index a2ca51469..11d3e16fe 100644
+--- a/src/command_buffer/allocator.rs
++++ b/src/command_buffer/allocator.rs
+@@ -357,6 +357,7 @@ impl Pool {
+             device,
+             CommandPoolCreateInfo {
+                 queue_family_index,
++                protected: create_info.protected,
+                 ..Default::default()
+             },
+         )
+@@ -538,6 +539,9 @@ pub struct StandardCommandBufferAllocatorCreateInfo {
+     /// The default value is `256`.
+     pub secondary_buffer_count: usize,
+ 
++    /// Set to true for a protected buffer pool.
++    pub protected: bool,
++
+     pub _ne: crate::NonExhaustive,
+ }
+ 
+@@ -547,6 +551,7 @@ impl Default for StandardCommandBufferAllocatorCreateInfo {
+         StandardCommandBufferAllocatorCreateInfo {
+             primary_buffer_count: 256,
+             secondary_buffer_count: 256,
++            protected: false,
+             _ne: crate::NonExhaustive(()),
+         }
+     }
+diff --git a/src/command_buffer/pool.rs b/src/command_buffer/pool.rs
+index b93e6458c..7d085aed8 100644
+--- a/src/command_buffer/pool.rs
++++ b/src/command_buffer/pool.rs
+@@ -49,6 +49,7 @@ pub struct CommandPool {
+     queue_family_index: u32,
+     _transient: bool,
+     _reset_command_buffer: bool,
++    _protected: bool,
+     // Unimplement `Sync`, as Vulkan command pools are not thread-safe.
+     _marker: PhantomData<Cell<ash::vk::CommandPool>>,
+ }
+@@ -66,6 +67,7 @@ impl CommandPool {
+             queue_family_index,
+             transient,
+             reset_command_buffer,
++            protected,
+             _ne: _,
+         } = create_info;
+ 
+@@ -76,6 +78,7 @@ impl CommandPool {
+             queue_family_index,
+             _transient: transient,
+             _reset_command_buffer: reset_command_buffer,
++            _protected: protected,
+             _marker: PhantomData,
+         })
+     }
+@@ -96,6 +99,7 @@ impl CommandPool {
+             queue_family_index,
+             transient,
+             reset_command_buffer,
++            protected,
+             _ne: _,
+         } = create_info;
+ 
+@@ -106,6 +110,7 @@ impl CommandPool {
+             queue_family_index,
+             _transient: transient,
+             _reset_command_buffer: reset_command_buffer,
++            _protected: protected,
+             _marker: PhantomData,
+         }
+     }
+@@ -118,6 +123,7 @@ impl CommandPool {
+             queue_family_index,
+             transient: _,
+             reset_command_buffer: _,
++            protected: _,
+             _ne: _,
+         } = create_info;
+ 
+@@ -140,6 +146,7 @@ impl CommandPool {
+             queue_family_index,
+             transient,
+             reset_command_buffer,
++            protected,
+             _ne: _,
+         } = create_info;
+ 
+@@ -153,6 +160,10 @@ impl CommandPool {
+             flags |= ash::vk::CommandPoolCreateFlags::RESET_COMMAND_BUFFER;
+         }
+ 
++        if protected {
++            flags |= ash::vk::CommandPoolCreateFlags::PROTECTED;
++        }
++
+         let create_info = ash::vk::CommandPoolCreateInfo {
+             flags,
+             queue_family_index,
+@@ -320,6 +331,12 @@ impl CommandPool {
+     pub fn queue_family_index(&self) -> u32 {
+         self.queue_family_index
+     }
++
++    /// Returns true if the pool is protected.
++    #[inline]
++    pub fn is_protected(&self) -> bool {
++        self._protected
++    }
+ }
+ 
+ impl Drop for CommandPool {
+@@ -419,6 +430,11 @@ pub struct CommandPoolCreateInfo {
+     /// The default value is `false`.
+     pub reset_command_buffer: bool,
+ 
++    /// Whether the command buffers allocated from this pool can operate on protected images.
++    ///
++    /// The default value is `false`.
++    pub protected: bool,
++
+     pub _ne: crate::NonExhaustive,
+ }
+ 
+@@ -429,6 +445,7 @@ impl Default for CommandPoolCreateInfo {
+             queue_family_index: u32::MAX,
+             transient: false,
+             reset_command_buffer: false,
++            protected: false,
+             _ne: crate::NonExhaustive(()),
+         }
+     }

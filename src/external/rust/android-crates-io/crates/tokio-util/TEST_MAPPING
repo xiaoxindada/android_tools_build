@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/h2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio-stream"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tower"
+    }
+  ]
+}

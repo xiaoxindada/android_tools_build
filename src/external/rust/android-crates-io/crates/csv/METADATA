@@ -1,0 +1,17 @@
+name: "csv"
+description: "Fast CSV parsing with support for serde."
+third_party {
+  version: "1.4.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 27
+  }
+  homepage: "https://crates.io/crates/csv"
+  identifier {
+    type: "crates.io"
+    value: "csv"
+    version: "1.4.0"
+  }
+}

@@ -1,0 +1,17 @@
+name: "os_pipe"
+description: "a cross-platform library for opening OS pipes"
+third_party {
+  version: "1.2.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 10
+    day: 14
+  }
+  homepage: "https://crates.io/crates/os_pipe"
+  identifier {
+    type: "crates.io"
+    value: "os_pipe"
+    version: "1.2.3"
+  }
+}

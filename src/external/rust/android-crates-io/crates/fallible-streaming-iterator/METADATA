@@ -1,0 +1,17 @@
+name: "fallible-streaming-iterator"
+description: "Fallible streaming iteration"
+third_party {
+  version: "0.1.9"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2020
+    month: 6
+    day: 11
+  }
+  homepage: "https://crates.io/crates/fallible-streaming-iterator"
+  identifier {
+    type: "crates.io"
+    value: "fallible-streaming-iterator"
+    version: "0.1.9"
+  }
+}

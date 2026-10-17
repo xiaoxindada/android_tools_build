@@ -1,0 +1,874 @@
+// Copyright 2025 Google LLC
+// Copyright 2026 Arm Limited and/or its affiliates <open-source-office@arm.com>
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+//! A read-only API for parsing and traversing a [Flattened Device Tree (FDT)].
+//!
+//! This module provides the [`Fdt`] struct, which is the entry point for
+//! parsing and traversing an FDT blob. The API is designed to be safe and
+//! efficient, performing no memory allocation and providing a zero-copy view
+//! of the FDT data.
+//!
+//! [Flattened Device Tree (FDT)]: https://devicetree-specification.readthedocs.io/en/latest/chapter5-flattened-format.html
+
+pub(crate) mod node;
+pub(crate) mod property;
+
+use core::ffi::CStr;
+use core::fmt::{self, Debug, Display, Formatter};
+use core::mem::offset_of;
+use core::ptr;
+
+use zerocopy::FromBytes;
+use zerocopy::byteorder::big_endian;
+// Glob import to avoid duplicate import errors if the `derive` feature is
+// enabled on `zerocopy`. See https://github.com/google/zerocopy/issues/1587.
+#[allow(clippy::wildcard_imports)]
+use zerocopy_derive::*;
+
+pub use self::node::FdtNode;
+pub use self::property::FdtProperty;
+use crate::Node;
+use crate::error::{FdtErrorKind, FdtParseError};
+use crate::memreserve::MemoryReservation;
+
+/// Version of the FDT specification supported by this library.
+const FDT_VERSION: u32 = 17;
+pub(crate) const FDT_TAGSIZE: usize = size_of::<u32>();
+pub(crate) const FDT_MAGIC: u32 = 0xd00d_feed;
+pub(crate) const FDT_BEGIN_NODE: u32 = 0x1;
+pub(crate) const FDT_END_NODE: u32 = 0x2;
+pub(crate) const FDT_END: u32 = 0x9;
+pub(crate) const FDT_PROP: u32 = 0x3;
+pub(crate) const FDT_NOP: u32 = 0x4;
+
+#[repr(C, packed)]
+#[derive(Debug, Clone, Copy, FromBytes, IntoBytes, Unaligned, Immutable, KnownLayout)]
+pub(crate) struct FdtHeader {
+    /// Magic number of the device tree.
+    pub(crate) magic: big_endian::U32,
+    /// Total size of the device tree.
+    pub(crate) totalsize: big_endian::U32,
+    /// Offset of the device tree structure.
+    pub(crate) off_dt_struct: big_endian::U32,
+    /// Offset of the device tree strings.
+    pub(crate) off_dt_strings: big_endian::U32,
+    /// Offset of the memory reservation map.
+    pub(crate) off_mem_rsvmap: big_endian::U32,
+    /// Version of the device tree.
+    pub(crate) version: big_endian::U32,
+    /// Last compatible version of the device tree.
+    pub(crate) last_comp_version: big_endian::U32,
+    /// Physical ID of the boot CPU.
+    pub(crate) boot_cpuid_phys: big_endian::U32,
+    /// Size of the device tree strings.
+    pub(crate) size_dt_strings: big_endian::U32,
+    /// Size of the device tree structure.
+    pub(crate) size_dt_struct: big_endian::U32,
+}
+
+impl FdtHeader {
+    pub(crate) fn magic(&self) -> u32 {
+        self.magic.get()
+    }
+
+    pub(crate) fn totalsize(&self) -> u32 {
+        self.totalsize.get()
+    }
+
+    pub(crate) fn off_dt_struct(&self) -> u32 {
+        self.off_dt_struct.get()
+    }
+
+    pub(crate) fn off_dt_strings(&self) -> u32 {
+        self.off_dt_strings.get()
+    }
+
+    pub(crate) fn off_mem_rsvmap(&self) -> u32 {
+        self.off_mem_rsvmap.get()
+    }
+
+    pub(crate) fn version(&self) -> u32 {
+        self.version.get()
+    }
+
+    pub(crate) fn last_comp_version(&self) -> u32 {
+        self.last_comp_version.get()
+    }
+
+    pub(crate) fn boot_cpuid_phys(&self) -> u32 {
+        self.boot_cpuid_phys.get()
+    }
+
+    pub(crate) fn size_dt_strings(&self) -> u32 {
+        self.size_dt_strings.get()
+    }
+
+    pub(crate) fn size_dt_struct(&self) -> u32 {
+        self.size_dt_struct.get()
+    }
+}
+
+#[repr(C, packed)]
+#[derive(Debug, Clone, Copy, FromBytes, IntoBytes, Unaligned, Immutable, KnownLayout)]
+pub(crate) struct FdtPropertyHeader {
+    tag: big_endian::U32,
+    len: big_endian::U32,
+    nameoff: big_endian::U32,
+}
+
+impl FdtPropertyHeader {
+    #[must_use]
+    pub(crate) fn new(len: u32, nameoff: u32) -> Self {
+        Self {
+            tag: FDT_PROP.into(),
+            len: len.into(),
+            nameoff: nameoff.into(),
+        }
+    }
+
+    #[must_use]
+    pub(crate) fn len(&self) -> u32 {
+        self.len.get()
+    }
+
+    #[must_use]
+    pub(crate) fn nameoff(&self) -> u32 {
+        self.nameoff.get()
+    }
+}
+
+/// A flattened device tree.
+#[derive(Clone, Copy)]
+pub struct Fdt<'a> {
+    pub(crate) data: &'a [u8],
+}
+
+impl Debug for Fdt<'_> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Fdt {{ data: {} bytes at {:?} }}",
+            self.data.len(),
+            self.data.as_ptr()
+        )
+    }
+}
+
+/// A token in the device tree structure.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub(crate) enum FdtToken {
+    BeginNode,
+    EndNode,
+    Prop,
+    Nop,
+    End,
+}
+
+impl TryFrom<u32> for FdtToken {
+    type Error = u32;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        match value {
+            FDT_BEGIN_NODE => Ok(FdtToken::BeginNode),
+            FDT_END_NODE => Ok(FdtToken::EndNode),
+            FDT_PROP => Ok(FdtToken::Prop),
+            FDT_NOP => Ok(FdtToken::Nop),
+            FDT_END => Ok(FdtToken::End),
+            _ => Err(value),
+        }
+    }
+}
+
+impl<'a> Fdt<'a> {
+    /// Creates a new `Fdt` from the given byte slice.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`FdtErrorKind::InvalidLength`] if `data` is too short to
+    /// contain a valid FDT header or if the `totalsize` field in the header
+    /// does not match the length of `data`.
+    ///
+    /// Returns an [`FdtErrorKind::InvalidMagic`] if the `magic` field in the
+    /// header is not `0xd00dfeed`.
+    ///
+    /// Returns an [`FdtErrorKind::UnsupportedVersion`] if the `version` field
+    /// in the header is not supported by this library.
+    ///
+    /// Returns an [`FdtErrorKind::InvalidHeader`] if the header fails to pass
+    /// the header integrity checks.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use dtoolkit::fdt::Fdt;
+    /// # let dtb = include_bytes!("../tests/dtb/test.dtb");
+    /// let fdt = Fdt::new(dtb).unwrap();
+    /// ```
+    pub fn new(data: &'a [u8]) -> Result<Self, FdtParseError> {
+        let fdt = Self::new_unchecked(data);
+        fdt.validate()?;
+        Ok(fdt)
+    }
+
+    /// Creates a new `Fdt` from the given byte slice without validation.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure that `data` contains a valid Flattened Device
+    /// Tree (FDT) blob. If the blob is invalid, methods on `Fdt` and
+    /// related types may panic.
+    #[must_use]
+    pub fn new_unchecked(data: &'a [u8]) -> Self {
+        Self { data }
+    }
+
+    /// Creates a new `Fdt` from the given pointer without validation.
+    ///
+    /// # Safety
+    ///
+    /// The `data` pointer must be a valid pointer to a Flattened Device Tree
+    /// (FDT) blob. The memory region starting at `data` and spanning
+    /// `totalsize` bytes (as specified in the FDT header) must be valid and
+    /// accessible for reading.
+    #[expect(
+        unsafe_code,
+        reason = "Having a methods that reads a Device Tree from a raw pointer is useful for \
+        embedded applications, where the binary only gets a pointer to DT from the firmware or \
+        a bootloader. The user must ensure it trusts the data."
+    )]
+    #[must_use]
+    pub unsafe fn from_raw_unchecked(data: *const u8) -> Self {
+        // SAFETY: The caller guarantees that `data` is a valid pointer to a
+        // Flattened Device Tree (FDT) blob. We are reading an
+        // `FdtHeader` from this pointer, which is a `#[repr(C,
+        // packed)]` struct. The `totalsize` field of this header is
+        // then used to determine the total size of the FDT
+        // blob. The caller must ensure that the memory at `data` is valid for
+        // at least `size_of::<FdtHeader>()` bytes.
+        let header = unsafe { ptr::read_unaligned(data.cast::<FdtHeader>()) };
+        let size = header.totalsize();
+        // SAFETY: The caller must ensure that `data` is a valid pointer to a
+        // Flattened Device Tree (FDT) blob. The caller must ensure the
+        // `data` spans `totalsize` bytes (as specified in the FDT
+        // header).
+        let slice = unsafe { core::slice::from_raw_parts(data, size as usize) };
+        Self::new_unchecked(slice)
+    }
+
+    /// Creates a new `Fdt` from the given pointer.
+    ///
+    /// # Safety
+    ///
+    /// The `data` pointer must be a valid pointer to a Flattened Device Tree
+    /// (FDT) blob. The memory region starting at `data` and spanning
+    /// `totalsize` bytes (as specified in the FDT header) must be valid and
+    /// accessible for reading. The FDT blob must be well-formed and adhere
+    /// to the Device Tree Specification.
+    ///
+    /// # Errors
+    ///
+    /// This function can return the same errors as [`Fdt::new`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use dtoolkit::fdt::Fdt;
+    /// # let dtb = include_bytes!("../tests/dtb/test.dtb");
+    /// let ptr = dtb.as_ptr();
+    /// let fdt = unsafe { Fdt::from_raw(ptr).unwrap() };
+    /// ```
+    #[expect(
+        unsafe_code,
+        reason = "Having a methods that reads a Device Tree from a raw pointer is useful for \
+        embedded applications, where the binary only gets a pointer to DT from the firmware or \
+        a bootloader. The user must ensure it trusts the data."
+    )]
+    pub unsafe fn from_raw(data: *const u8) -> Result<Self, FdtParseError> {
+        // SAFETY: The caller guarantees that `data` is a valid pointer to a
+        // Flattened Device Tree (FDT) blob.
+        let fdt = unsafe { Self::from_raw_unchecked(data) };
+        fdt.validate()?;
+        Ok(fdt)
+    }
+
+    fn validate(self) -> Result<(), FdtParseError> {
+        if self.data.len() < size_of::<FdtHeader>() {
+            return Err(FdtParseError::new(FdtErrorKind::InvalidLength, 0));
+        }
+
+        let header = self.header();
+
+        if header.magic() != FDT_MAGIC {
+            return Err(FdtParseError::new(
+                FdtErrorKind::InvalidMagic,
+                offset_of!(FdtHeader, magic),
+            ));
+        }
+        if !(header.last_comp_version()..=header.version()).contains(&FDT_VERSION) {
+            return Err(FdtParseError::new(
+                FdtErrorKind::UnsupportedVersion(header.version()),
+                offset_of!(FdtHeader, version),
+            ));
+        }
+
+        if header.totalsize() as usize != self.data.len() {
+            return Err(FdtParseError::new(
+                FdtErrorKind::InvalidLength,
+                offset_of!(FdtHeader, totalsize),
+            ));
+        }
+
+        self.validate_header()?;
+        self.validate_mem_reservations()?;
+
+        // Validate structure block
+        let offset = header.off_dt_struct() as usize;
+        // Check root node
+        if self.read_token(offset)? != FdtToken::BeginNode {
+            return Err(FdtParseError::new(
+                FdtErrorKind::BadToken(FDT_BEGIN_NODE),
+                offset,
+            ));
+        }
+
+        let end_offset = self.traverse_node(offset, true)?;
+
+        // Check FDT_END
+        if self.read_token(end_offset)? != FdtToken::End {
+            return Err(FdtParseError::new(
+                FdtErrorKind::BadToken(FDT_END),
+                end_offset,
+            ));
+        }
+
+        Ok(())
+    }
+
+    fn validate_mem_reservations(self) -> Result<(), FdtParseError> {
+        let header = self.header();
+        let mut offset = header.off_mem_rsvmap() as usize;
+        loop {
+            if offset >= header.off_dt_struct() as usize {
+                return Err(FdtParseError::new(
+                    FdtErrorKind::MemReserveNotTerminated,
+                    offset,
+                ));
+            }
+
+            let (reservation, _) = MemoryReservation::ref_from_prefix(&self.data[offset..])
+                .map_err(|_| FdtParseError::new(FdtErrorKind::MemReserveInvalid, offset))?;
+            offset += size_of::<MemoryReservation>();
+
+            if *reservation == MemoryReservation::TERMINATOR {
+                break;
+            }
+        }
+        Ok(())
+    }
+
+    pub(crate) fn skip_props(
+        self,
+        offset: usize,
+        check_strings: bool,
+    ) -> Result<usize, FdtParseError> {
+        let mut offset = offset;
+        loop {
+            let token = self.read_token(offset)?;
+            match token {
+                FdtToken::Prop => {
+                    offset = self.next_property_offset(offset, check_strings)?;
+                }
+                FdtToken::Nop => offset += FDT_TAGSIZE,
+                _ => return Ok(offset),
+            }
+        }
+    }
+
+    fn traverse_node(self, offset: usize, check_strings: bool) -> Result<usize, FdtParseError> {
+        let mut offset = offset;
+        let mut depth = 0;
+        loop {
+            let token = self.read_token(offset)?;
+            match token {
+                FdtToken::BeginNode => {
+                    depth += 1;
+                    offset += FDT_TAGSIZE;
+                    let end_offset = self.find_string_end(offset)?;
+                    // Validate name
+                    if check_strings {
+                        let name = self.string_at_offset(offset, Some(end_offset))?;
+                        if depth == 1 {
+                            if !name.is_empty() {
+                                return Err(FdtParseError::new(
+                                    FdtErrorKind::InvalidNodeName,
+                                    offset,
+                                ));
+                            }
+                        } else if name.is_empty() || !crate::validate::is_valid_node_name(name) {
+                            return Err(FdtParseError::new(FdtErrorKind::InvalidNodeName, offset));
+                        }
+                    }
+                    offset = Self::align_tag_offset(end_offset);
+                    offset = self.skip_props(offset, check_strings)?;
+                }
+                FdtToken::EndNode => {
+                    if depth == 0 {
+                        return Err(FdtParseError::new(
+                            FdtErrorKind::BadToken(FDT_END_NODE),
+                            offset,
+                        ));
+                    }
+                    depth -= 1;
+                    offset += FDT_TAGSIZE;
+                    if depth == 0 {
+                        // End of root node
+                        return Ok(offset);
+                    }
+                }
+                FdtToken::Prop => {
+                    return Err(FdtParseError::new(FdtErrorKind::BadToken(FDT_PROP), offset));
+                }
+                FdtToken::Nop => offset += FDT_TAGSIZE,
+                FdtToken::End => {
+                    return Err(FdtParseError::new(FdtErrorKind::BadToken(FDT_END), offset));
+                }
+            }
+        }
+    }
+
+    fn validate_header(self) -> Result<(), FdtParseError> {
+        let header = self.header();
+        let data = &self.data;
+
+        let off_mem_rsvmap = header.off_mem_rsvmap() as usize;
+        let off_dt_struct = header.off_dt_struct() as usize;
+        let off_dt_strings = header.off_dt_strings() as usize;
+
+        if off_mem_rsvmap < size_of::<FdtHeader>() {
+            return Err(FdtParseError::new(
+                FdtErrorKind::InvalidHeader("memrsvmap not after header"),
+                offset_of!(FdtHeader, off_mem_rsvmap),
+            ));
+        }
+
+        if off_mem_rsvmap > off_dt_struct {
+            return Err(FdtParseError::new(
+                FdtErrorKind::InvalidHeader("dt_struct not after memrsvmap"),
+                offset_of!(FdtHeader, off_mem_rsvmap),
+            ));
+        }
+
+        if !off_mem_rsvmap.is_multiple_of(8) {
+            return Err(FdtParseError::new(
+                FdtErrorKind::InvalidHeader("memrsvmap is not 8-byte aligned"),
+                offset_of!(FdtHeader, off_mem_rsvmap),
+            ));
+        }
+
+        if off_dt_struct > data.len() {
+            return Err(FdtParseError::new(
+                FdtErrorKind::InvalidHeader("struct offset out of bounds"),
+                offset_of!(FdtHeader, off_dt_struct),
+            ));
+        }
+
+        if !off_dt_struct.is_multiple_of(4) {
+            return Err(FdtParseError::new(
+                FdtErrorKind::InvalidHeader("struct offset is not 4-byte aligned"),
+                offset_of!(FdtHeader, off_dt_struct),
+            ));
+        }
+
+        if off_dt_strings > data.len() {
+            return Err(FdtParseError::new(
+                FdtErrorKind::InvalidHeader("strings offset out of bounds"),
+                offset_of!(FdtHeader, off_dt_strings),
+            ));
+        }
+
+        let size_dt_struct = header.size_dt_struct() as usize;
+        let size_dt_strings = header.size_dt_strings() as usize;
+        if off_dt_struct.saturating_add(size_dt_struct) > data.len() {
+            return Err(FdtParseError::new(
+                FdtErrorKind::InvalidHeader("struct block overflows"),
+                offset_of!(FdtHeader, size_dt_struct),
+            ));
+        }
+        if off_dt_strings.saturating_add(size_dt_strings) > data.len() {
+            return Err(FdtParseError::new(
+                FdtErrorKind::InvalidHeader("strings block overflows"),
+                offset_of!(FdtHeader, size_dt_strings),
+            ));
+        }
+        if off_dt_struct.saturating_add(size_dt_struct) > off_dt_strings {
+            return Err(FdtParseError::new(
+                FdtErrorKind::InvalidHeader("strings block not after struct block"),
+                offset_of!(FdtHeader, off_dt_strings),
+            ));
+        }
+
+        Ok(())
+    }
+
+    /// Returns the header of the device tree.
+    pub(crate) fn header(self) -> &'a FdtHeader {
+        let (header, _remaining_bytes) = FdtHeader::ref_from_prefix(self.data)
+            .expect("new() checks if the slice is at least as big as the header");
+        header
+    }
+
+    /// Returns the underlying data slice of the FDT.
+    #[must_use]
+    pub fn data(self) -> &'a [u8] {
+        self.data
+    }
+
+    /// Returns the version of the FDT.
+    #[must_use]
+    pub fn version(self) -> u32 {
+        self.header().version()
+    }
+
+    /// Returns the last compatible version of the FDT.
+    #[must_use]
+    pub fn last_comp_version(self) -> u32 {
+        self.header().last_comp_version()
+    }
+
+    /// Returns the physical ID of the boot CPU.
+    #[must_use]
+    pub fn boot_cpuid_phys(self) -> u32 {
+        self.header().boot_cpuid_phys()
+    }
+
+    /// Returns an iterator over the memory reservation block.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the [`Fdt`] structure was constructed using
+    /// [`Fdt::new_unchecked`] or [`Fdt::from_raw_unchecked`] and the FDT is not
+    /// valid.
+    pub fn memory_reservations(self) -> impl Iterator<Item = MemoryReservation> + 'a {
+        let mut offset = self.header().off_mem_rsvmap() as usize;
+        core::iter::from_fn(move || {
+            let (reservation, _) = MemoryReservation::ref_from_prefix(&self.data[offset..])
+                .expect("Fdt should be valid");
+            offset += size_of::<MemoryReservation>();
+
+            if *reservation == MemoryReservation::TERMINATOR {
+                return None;
+            }
+            Some(*reservation)
+        })
+    }
+
+    /// Returns the root node of the device tree.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the [`Fdt`] structure was constructed using
+    /// [`Fdt::new_unchecked`] or [`Fdt::from_raw_unchecked`] and the FDT is not
+    /// valid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use dtoolkit::Node;
+    /// use dtoolkit::fdt::Fdt;
+    ///
+    /// # let dtb = include_bytes!("../tests/dtb/test.dtb");
+    /// let fdt = Fdt::new(dtb).unwrap();
+    /// let root = fdt.root();
+    /// assert_eq!(root.name(), "");
+    /// ```
+    #[must_use]
+    pub fn root(self) -> FdtNode<'a> {
+        let offset = self.header().off_dt_struct() as usize;
+        FdtNode::new(self, offset)
+    }
+
+    /// Finds a node by its path.
+    ///
+    /// If a name in the given path contains a _unit-address_ (the part after
+    /// the `@` sign) then both the _node-name_ and _unit-address_ must
+    /// match. If it doesn't have a _unit-address_, then nodes with any
+    /// _unit-address_ or none will be allowed.
+    ///
+    /// For example, searching for `/cpus/cpu` would match either `/cpus/cpu`,
+    /// `/cpus/cpu@0` or `/cpus/cpu@1`, while `/cpus/cpu@1` would match only the
+    /// latter.
+    ///
+    /// # Performance
+    ///
+    /// This method traverses the device tree and its performance is linear in
+    /// the number of nodes in the path. If you need to call this often,
+    /// consider using
+    /// [`DeviceTree::from_fdt`](crate::model::DeviceTree::from_fdt)
+    /// first. [`DeviceTree`](crate::model::DeviceTree) stores the nodes in a
+    /// hash map for constant-time lookup.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the [`Fdt`] structure was constructed using
+    /// [`Fdt::new_unchecked`] or [`Fdt::from_raw_unchecked`] and the FDT is not
+    /// valid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use dtoolkit::Node;
+    /// use dtoolkit::fdt::Fdt;
+    ///
+    /// # let dtb = include_bytes!("../tests/dtb/test_traversal.dtb");
+    /// let fdt = Fdt::new(dtb).unwrap();
+    /// let node = fdt.find_node("/a/b/c").unwrap();
+    /// assert_eq!(node.name(), "c");
+    /// ```
+    ///
+    /// ```
+    /// use dtoolkit::Node;
+    /// use dtoolkit::fdt::Fdt;
+    ///
+    /// # let dtb = include_bytes!("../tests/dtb/test_children.dtb");
+    /// let fdt = Fdt::new(dtb).unwrap();
+    /// let node = fdt.find_node("/child2").unwrap();
+    /// assert_eq!(node.name(), "child2@42");
+    /// let node = fdt.find_node("/child2@42").unwrap();
+    /// assert_eq!(node.name(), "child2@42");
+    /// ```
+    #[must_use]
+    pub fn find_node(self, path: &str) -> Option<FdtNode<'a>> {
+        if !path.starts_with('/') {
+            return None;
+        }
+        let mut current_node = self.root();
+        if path == "/" {
+            return Some(current_node);
+        }
+        for component in path.split('/').filter(|s| !s.is_empty()) {
+            current_node = current_node.child(component)?;
+        }
+        Some(current_node)
+    }
+
+    pub(crate) fn read_token(self, offset: usize) -> Result<FdtToken, FdtParseError> {
+        let val = big_endian::U32::ref_from_prefix(self.data_at_offset(offset)?)
+            .map(|(val, _)| val.get())
+            .map_err(|_e| FdtParseError::new(FdtErrorKind::InvalidLength, offset))?;
+        FdtToken::try_from(val).map_err(|t| FdtParseError::new(FdtErrorKind::BadToken(t), offset))
+    }
+
+    /// Returns a string from the string block.
+    pub(crate) fn string(self, string_block_offset: usize) -> Result<&'a str, FdtParseError> {
+        let header = self.header();
+        let str_block_start = header.off_dt_strings() as usize;
+        let str_block_size = header.size_dt_strings() as usize;
+        let str_block_end = str_block_start + str_block_size;
+        let str_start = str_block_start + string_block_offset;
+
+        if str_start >= str_block_end {
+            return Err(FdtParseError::new(FdtErrorKind::InvalidLength, str_start));
+        }
+
+        self.string_at_offset(str_start, Some(str_block_end))
+    }
+
+    /// Returns a NUL-terminated string from a given offset.
+    pub(crate) fn string_at_offset(
+        self,
+        offset: usize,
+        end: Option<usize>,
+    ) -> Result<&'a str, FdtParseError> {
+        let slice = match end {
+            Some(end) => self.data.get(offset..end),
+            None => self.data.get(offset..),
+        };
+        let slice = slice.ok_or(FdtParseError::new(FdtErrorKind::InvalidOffset, offset))?;
+
+        match CStr::from_bytes_until_nul(slice).map(|val| val.to_str()) {
+            Ok(Ok(val)) => Ok(val),
+            _ => Err(FdtParseError::new(FdtErrorKind::InvalidString, offset)),
+        }
+    }
+
+    pub(crate) fn find_string_end(self, start: usize) -> Result<usize, FdtParseError> {
+        let mut offset = start;
+        loop {
+            match self.data.get(offset) {
+                Some(0) => return Ok(offset + 1),
+                Some(_) => {}
+                None => return Err(FdtParseError::new(FdtErrorKind::InvalidString, start)),
+            }
+            offset += 1;
+        }
+    }
+
+    pub(crate) fn next_sibling_offset(self, offset: usize) -> Result<usize, FdtParseError> {
+        self.traverse_node(offset, false)
+    }
+
+    pub(crate) fn next_property_offset(
+        self,
+        offset: usize,
+        check_name: bool,
+    ) -> Result<usize, FdtParseError> {
+        let (header, _) = FdtPropertyHeader::ref_from_prefix(self.data_at_offset(offset)?)
+            .map_err(|_e| FdtParseError::new(FdtErrorKind::InvalidLength, offset))?;
+
+        let len = header.len() as usize;
+        let nameoff = header.nameoff() as usize;
+
+        if check_name {
+            let name = self.string(nameoff)?;
+            if !crate::validate::is_valid_property_name(name) {
+                return Err(FdtParseError::new(
+                    FdtErrorKind::InvalidPropertyName,
+                    offset + FDT_TAGSIZE,
+                ));
+            }
+        }
+
+        let prop_offset = offset + size_of::<FdtPropertyHeader>();
+        let end_offset = prop_offset + len;
+        if end_offset > self.data.len() {
+            return Err(FdtParseError::new(FdtErrorKind::InvalidLength, prop_offset));
+        }
+
+        Ok(Self::align_tag_offset(end_offset))
+    }
+
+    pub(crate) fn data_at_offset(&self, offset: usize) -> Result<&[u8], FdtParseError> {
+        self.data
+            .get(offset..)
+            .ok_or_else(|| FdtParseError::new(FdtErrorKind::InvalidOffset, offset))
+    }
+
+    pub(crate) fn align_tag_offset(offset: usize) -> usize {
+        offset.next_multiple_of(FDT_TAGSIZE)
+    }
+}
+
+impl Display for Fdt<'_> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        writeln!(f, "/dts-v1/;")?;
+        for reservation in self.memory_reservations() {
+            writeln!(
+                f,
+                "/memreserve/ {:#x} {:#x};",
+                reservation.address(),
+                reservation.size()
+            )?;
+        }
+        writeln!(f)?;
+        let root = self.root();
+        root.fmt_recursive(f, 0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::error::FdtErrorKind;
+
+    const FDT_HEADER_OK: &[u8] = &[
+        0xd0, 0x0d, 0xfe, 0xed, // magic
+        0x00, 0x00, 0x00, 0x48, // totalsize = 72
+        0x00, 0x00, 0x00, 0x38, // off_dt_struct = 56
+        0x00, 0x00, 0x00, 0x48, // off_dt_strings = 72
+        0x00, 0x00, 0x00, 0x28, // off_mem_rsvmap = 40
+        0x00, 0x00, 0x00, 0x11, // version = 17
+        0x00, 0x00, 0x00, 0x10, // last_comp_version = 16
+        0x00, 0x00, 0x00, 0x00, // boot_cpuid_phys = 0
+        0x00, 0x00, 0x00, 0x00, // size_dt_strings = 0
+        0x00, 0x00, 0x00, 0x10, // size_dt_struct = 16
+        0x00, 0x00, 0x00, 0x00, // memory reservation
+        0x00, 0x00, 0x00, 0x00, // ...
+        0x00, 0x00, 0x00, 0x00, // ...
+        0x00, 0x00, 0x00, 0x00, // ...
+        0x00, 0x00, 0x00, 0x01, // FDT_BEGIN_NODE
+        0x00, 0x00, 0x00, 0x00, // ""
+        0x00, 0x00, 0x00, 0x02, // FDT_END_NODE
+        0x00, 0x00, 0x00, 0x09, // FDT_END
+    ];
+
+    #[test]
+    fn header_is_parsed_correctly() {
+        let fdt = Fdt::new(FDT_HEADER_OK).unwrap();
+        let header = fdt.header();
+
+        assert_eq!(header.totalsize(), 72);
+        assert_eq!(header.off_dt_struct(), 56);
+        assert_eq!(header.off_dt_strings(), 72);
+        assert_eq!(header.off_mem_rsvmap(), 40);
+        assert_eq!(header.version(), 17);
+        assert_eq!(header.last_comp_version(), 16);
+        assert_eq!(header.boot_cpuid_phys(), 0);
+        assert_eq!(header.size_dt_strings(), 0);
+        assert_eq!(header.size_dt_struct(), 16);
+    }
+
+    #[test]
+    fn invalid_magic() {
+        let mut header = FDT_HEADER_OK.to_vec();
+        header[0] = 0x00;
+        let result = Fdt::new(&header);
+        assert!(matches!(result, Err(e) if matches!(e.kind, FdtErrorKind::InvalidMagic)));
+    }
+
+    #[test]
+    fn invalid_length() {
+        let header = &FDT_HEADER_OK[..10];
+        let result = Fdt::new(header);
+        assert!(matches!(result, Err(e) if matches!(e.kind, FdtErrorKind::InvalidLength)));
+    }
+
+    #[test]
+    fn unsupported_version() {
+        let mut header = FDT_HEADER_OK.to_vec();
+        header[23] = 0x10;
+        let result = Fdt::new(&header);
+        assert!(matches!(result, Err(e) if matches!(e.kind, FdtErrorKind::UnsupportedVersion(16))));
+    }
+
+    #[test]
+    fn next_property_offset_out_of_bounds() {
+        #[rustfmt::skip]
+        let data: [u8; 79] = [
+            // Header (0..40)
+            0xd0, 0x0d, 0xfe, 0xed, // magic
+            0x00, 0x00, 0x00, 79,   // totalsize = 79
+            0x00, 0x00, 0x00, 0x38, // off_dt_struct = 56
+            0x00, 0x00, 0x00, 77,   // off_dt_strings = 77
+            0x00, 0x00, 0x00, 0x28, // off_mem_rsvmap = 40
+            0x00, 0x00, 0x00, 0x11, // version = 17
+            0x00, 0x00, 0x00, 0x10, // last_comp_version = 16
+            0x00, 0x00, 0x00, 0x00, // boot_cpuid_phys = 0
+            0x00, 0x00, 0x00, 0x02, // size_dt_strings = 2
+            0x00, 0x00, 0x00, 21,   // size_dt_struct = 21
+            // Memreserve (40..56)
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // address = 0
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // size = 0 (TERMINATOR)
+            // Structure block (56..77)
+            0x00, 0x00, 0x00, 0x01, // FDT_BEGIN_NODE
+            0x00, 0x00, 0x00, 0x00, // ""
+            0x00, 0x00, 0x00, 0x03, // FDT_PROP
+            0x00, 0x00, 0x00, 0x01, // len = 1
+            0x00, 0x00, 0x00, 0x00, // nameoff = 0
+            0x42, // data = 0x42
+            // Strings block (77..79)
+            b'a', 0x00,
+            // advancing the offset by FDT_TAGSIZE makes offset point after this part,
+            // raising an error
+        ];
+
+        let result = Fdt::new(&data);
+        let err = result.unwrap_err();
+        assert_eq!(err, FdtParseError::new(FdtErrorKind::InvalidOffset, 80));
+    }
+}

@@ -1,0 +1,462 @@
+// Copyright 2025 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// https://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or https://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+use dtoolkit::fdt::Fdt;
+#[cfg(feature = "write")]
+use dtoolkit::fdt_mut::FdtMut;
+#[cfg(feature = "write")]
+use dtoolkit::model::DeviceTree;
+use dtoolkit::standard::{InitialMappedArea, NodeStandard, Status};
+use dtoolkit::{Node, Property, ToCellInt};
+
+#[test]
+fn read_child_nodes() {
+    let dtb = include_bytes!("dtb/test_children.dtb");
+    let fdt = Fdt::new(dtb).unwrap();
+    let root = fdt.root();
+    let mut children = root.children();
+
+    let child1 = children.next().unwrap();
+    assert_eq!(child1.name(), "child1");
+    assert_eq!(child1.name_without_address(), "child1");
+
+    let child3 = children.next().unwrap();
+    assert_eq!(child3.name(), "child2@42");
+    assert_eq!(child3.name_without_address(), "child2");
+
+    assert!(children.next().is_none());
+}
+
+#[test]
+fn name_outlives_fdt_and_node() {
+    let dtb = include_bytes!("dtb/test_children.dtb");
+    let name = {
+        let fdt = Fdt::new(dtb).unwrap();
+        let child1 = fdt.find_node("/child1").unwrap();
+        child1.name()
+    };
+
+    assert_eq!(name, "child1");
+}
+
+#[test]
+fn read_prop_values() {
+    let dtb = include_bytes!("dtb/test_props.dtb");
+    let fdt = Fdt::new(dtb).unwrap();
+    let root = fdt.root();
+    let mut children = root.children();
+    let node = children.next().unwrap();
+    assert_eq!(node.name(), "test-props");
+
+    let mut props = node.properties();
+
+    let prop = props.next().unwrap();
+    assert_eq!(prop.name(), "u32-prop");
+    assert_eq!(prop.value_as::<u32>().unwrap(), 0x1234_5678);
+
+    let prop = props.next().unwrap();
+    assert_eq!(prop.name(), "u64-prop");
+    assert_eq!(prop.value_as::<u64>().unwrap(), 0x1122_3344_5566_7788);
+
+    let prop = props.next().unwrap();
+    assert_eq!(prop.name(), "str-prop");
+    assert_eq!(prop.value_as::<&str>().unwrap(), "hello world");
+
+    let prop = props.next().unwrap();
+    assert_eq!(prop.name(), "str-list-prop");
+    let mut str_list = prop.value_as::<dtoolkit::FdtStringListIterator>().unwrap();
+    assert_eq!(str_list.next(), Some("first"));
+    assert_eq!(str_list.next(), Some("second"));
+    assert_eq!(str_list.next(), Some("third"));
+    assert_eq!(str_list.next(), None);
+
+    assert!(props.next().is_none());
+}
+
+#[test]
+fn get_property_by_name() {
+    let dtb = include_bytes!("dtb/test_props.dtb");
+    let fdt = Fdt::new(dtb).unwrap();
+    let root = fdt.root();
+    let node = root.child("test-props").unwrap();
+
+    let prop = node.property("u32-prop").unwrap();
+    assert_eq!(prop.name(), "u32-prop");
+    assert_eq!(prop.value_as::<u32>().unwrap(), 0x1234_5678);
+
+    let prop = node.property("str-prop").unwrap();
+    assert_eq!(prop.name(), "str-prop");
+    assert_eq!(prop.value_as::<&str>().unwrap(), "hello world");
+
+    assert!(node.property("non-existent-prop").is_none());
+}
+
+#[test]
+fn standard_properties() {
+    let dtb = include_bytes!("dtb/test_props.dtb");
+    let fdt = Fdt::new(dtb).unwrap();
+    let root = fdt.root();
+    let test_props_node = root.child("test-props").unwrap();
+    let standard_props_node = root.child("standard-props").unwrap();
+
+    // Default values.
+    assert_eq!(test_props_node.address_cells().unwrap(), 2);
+    assert_eq!(test_props_node.size_cells().unwrap(), 1);
+    assert_eq!(test_props_node.status().unwrap(), Status::Okay);
+    assert_eq!(test_props_node.model().unwrap(), None);
+    assert!(!test_props_node.dma_coherent());
+    assert_eq!(test_props_node.phandle().unwrap(), None);
+    assert_eq!(test_props_node.virtual_reg().unwrap(), None);
+    assert!(test_props_node.ranges().unwrap().is_none());
+    assert!(test_props_node.dma_ranges().unwrap().is_none());
+    assert!(test_props_node.compatible().is_none());
+
+    // Explicit values.
+    assert_eq!(standard_props_node.address_cells().unwrap(), 1);
+    assert_eq!(standard_props_node.size_cells().unwrap(), 1);
+    assert_eq!(standard_props_node.status().unwrap(), Status::Fail);
+    assert_eq!(standard_props_node.model().unwrap(), Some("Some Model"));
+    assert!(standard_props_node.dma_coherent());
+    assert_eq!(standard_props_node.phandle().unwrap(), Some(0x1234));
+    assert_eq!(standard_props_node.virtual_reg().unwrap(), Some(0xabcd));
+    assert_eq!(
+        standard_props_node
+            .compatible()
+            .unwrap()
+            .collect::<Vec<_>>(),
+        vec!["abc,def", "some,other"]
+    );
+
+    let reg = standard_props_node
+        .reg()
+        .unwrap()
+        .unwrap()
+        .collect::<Vec<_>>();
+    assert_eq!(reg.len(), 2);
+    assert_eq!(reg[0].address::<u64>().unwrap(), 0x1234_5678_0000_3000);
+    assert_eq!(reg[0].size::<u64>().unwrap(), 32);
+    assert_eq!(reg[1].address::<u64>().unwrap(), 0xfe00);
+    assert_eq!(reg[1].size::<u64>().unwrap(), 256);
+
+    let ranges = standard_props_node
+        .ranges()
+        .unwrap()
+        .unwrap()
+        .collect::<Vec<_>>();
+    assert_eq!(ranges.len(), 1);
+    assert_eq!(ranges[0].child_bus_address::<u32>().unwrap(), 0x1111_0000);
+    assert_eq!(
+        ranges[0].parent_bus_address::<u64>().unwrap(),
+        0x2222_0000_3333_0000
+    );
+    assert_eq!(ranges[0].length::<u32>().unwrap(), 0x4444_0000);
+
+    let dma_ranges = standard_props_node
+        .dma_ranges()
+        .unwrap()
+        .unwrap()
+        .collect::<Vec<_>>();
+    assert_eq!(dma_ranges.len(), 1);
+    assert_eq!(dma_ranges[0].child_bus_address::<u32>().unwrap(), 0xaaaa);
+    assert_eq!(
+        dma_ranges[0].parent_bus_address::<u64>().unwrap(),
+        0xbbbb_0000_cccc
+    );
+    assert_eq!(dma_ranges[0].length::<u32>().unwrap(), 0xdddd);
+}
+
+#[test]
+fn get_child_by_name() {
+    let dtb = include_bytes!("dtb/test_children.dtb");
+    let fdt = Fdt::new(dtb).unwrap();
+    let root = fdt.root();
+
+    let child1 = root.child("child1").unwrap();
+    assert_eq!(child1.name(), "child1");
+
+    let child2 = root.child("child2").unwrap();
+    assert_eq!(child2.name(), "child2@42");
+
+    let child2_with_address = root.child("child2@42").unwrap();
+    assert_eq!(child2_with_address.name(), "child2@42");
+
+    assert!(root.child("non-existent-child").is_none());
+}
+
+#[test]
+fn children_nested() {
+    let dtb = include_bytes!("dtb/test_children_nested.dtb");
+    let fdt = Fdt::new(dtb).unwrap();
+    let root = fdt.root();
+
+    for child in root.children() {
+        println!("{}", child.name());
+    }
+
+    let children_names: Vec<_> = root.children().map(|child| child.name()).collect();
+    assert_eq!(children_names, vec!["child1", "child3"]);
+
+    let child1 = root.child("child1").unwrap();
+    let child2 = child1.child("child2").unwrap();
+    let nested_properties: Vec<_> = child2
+        .properties()
+        .map(|prop| prop.name().to_owned())
+        .collect();
+    assert_eq!(nested_properties, vec!["prop2"]);
+}
+
+#[test]
+fn find_node_by_path() {
+    let dtb = include_bytes!("dtb/test_traversal.dtb");
+    let fdt = Fdt::new(dtb).unwrap();
+
+    let root = fdt.find_node("/").unwrap();
+    assert_eq!(root.name(), "");
+
+    let a = fdt.find_node("/a").unwrap();
+    assert_eq!(a.name(), "a");
+
+    let b = fdt.find_node("/a/b").unwrap();
+    assert_eq!(b.name(), "b");
+
+    let c = fdt.find_node("/a/b/c").unwrap();
+    assert_eq!(c.name(), "c");
+
+    let d = fdt.find_node("/d").unwrap();
+    assert_eq!(d.name(), "d");
+
+    assert!(fdt.find_node("/a/c").is_none());
+    assert!(fdt.find_node("/x").is_none());
+    assert!(fdt.find_node("").is_none());
+}
+
+#[test]
+fn memory() {
+    let dtb = include_bytes!("dtb/test_pretty_print.dtb");
+    let fdt = Fdt::new(dtb).unwrap();
+
+    let memory = fdt.memory().unwrap();
+    let reg = memory.reg().unwrap().unwrap().collect::<Vec<_>>();
+    assert_eq!(reg.len(), 1);
+    assert_eq!(reg[0].address::<u32>().unwrap(), 0x8000_0000);
+    assert_eq!(reg[0].size::<u32>().unwrap(), 0x2000_0000);
+    assert!(memory.hotpluggable());
+    assert_eq!(
+        memory
+            .initial_mapped_area()
+            .unwrap()
+            .unwrap()
+            .collect::<Vec<_>>(),
+        vec![InitialMappedArea {
+            effective_address: 0x1234,
+            physical_address: 0x4321,
+            size: 0x1000,
+        }]
+    );
+}
+
+#[test]
+fn reserved_memory() {
+    let dtb = include_bytes!("dtb/test_pretty_print.dtb");
+    let fdt = Fdt::new(dtb).unwrap();
+
+    let reserved = fdt.reserved_memory().unwrap().collect::<Vec<_>>();
+
+    assert!(reserved[0].reg().unwrap().is_none());
+    assert_eq!(
+        reserved[0]
+            .size()
+            .unwrap()
+            .unwrap()
+            .to_int::<u32>()
+            .unwrap(),
+        0x400_0000
+    );
+    assert_eq!(
+        reserved[0]
+            .alignment()
+            .unwrap()
+            .unwrap()
+            .to_int::<u32>()
+            .unwrap(),
+        0x2000
+    );
+    assert!(reserved[0].reusable());
+
+    assert!(reserved[1].size().unwrap().is_none());
+    assert!(reserved[1].alignment().unwrap().is_none());
+    assert!(!reserved[1].reusable());
+    let reg = reserved[1].reg().unwrap().unwrap().collect::<Vec<_>>();
+    assert_eq!(reg.len(), 1);
+    assert_eq!(reg[0].address::<u32>().unwrap(), 0x7800_0000);
+    assert_eq!(reg[0].size::<u32>().unwrap(), 0x80_0000);
+}
+
+#[macro_export]
+macro_rules! load_dtb_dts_pair {
+    ($name:expr) => {
+        (
+            include_bytes!(concat!("dtb/", $name, ".dtb")).as_slice(),
+            include_str!(concat!("dts/", $name, ".dts")),
+            $name,
+        )
+    };
+}
+
+const ALL_DT_FILES: &[(&[u8], &str, &str)] = &[
+    load_dtb_dts_pair!("test_children_nested"),
+    load_dtb_dts_pair!("test_children"),
+    load_dtb_dts_pair!("test_memreserve"),
+    load_dtb_dts_pair!("test_pretty_print"),
+    load_dtb_dts_pair!("test_props"),
+    load_dtb_dts_pair!("test_traversal"),
+    load_dtb_dts_pair!("test_zero_cells"),
+    load_dtb_dts_pair!("test"),
+];
+
+#[test]
+fn pretty_print() {
+    for (dtb, expected_dts, name) in ALL_DT_FILES {
+        let fdt = Fdt::new(dtb).unwrap();
+        let s = fdt.to_string();
+        let expected = expected_dts
+            // account for Windows newlines, if needed
+            .replace("\r\n", "\n");
+        assert_eq!(s, expected, "Mismatch for {name}");
+    }
+}
+
+#[test]
+#[cfg(feature = "write")]
+fn round_trip() {
+    round_trip_impl(|dtb| Fdt::new(dtb).unwrap());
+}
+
+#[test]
+#[cfg(feature = "write")]
+fn round_trip_unchecked() {
+    round_trip_impl(|dtb| Fdt::new_unchecked(dtb));
+}
+
+#[test]
+#[cfg(feature = "write")]
+fn round_trip_raw() {
+    // SAFETY: dtb is a valid FDT blob
+    round_trip_impl(|dtb| unsafe { Fdt::from_raw(dtb.as_ptr()).unwrap() });
+}
+
+#[test]
+#[cfg(feature = "write")]
+fn round_trip_raw_unchecked() {
+    // SAFETY: dtb is a valid FDT blob
+    round_trip_impl(|dtb| unsafe { Fdt::from_raw_unchecked(dtb.as_ptr()) });
+}
+
+#[test]
+#[cfg(feature = "write")]
+fn round_trip_mut() {
+    round_trip_impl(|dtb| FdtMut::from_slice(dtb).unwrap().into());
+}
+
+#[test]
+#[cfg(feature = "write")]
+fn round_trip_unchecked_mut() {
+    round_trip_impl(|dtb| FdtMut::from_slice_unchecked(dtb).into());
+}
+
+#[test]
+#[cfg(feature = "write")]
+fn round_trip_raw_mut() {
+    // SAFETY: dtb is a valid FDT blob
+    round_trip_impl(|dtb| unsafe { FdtMut::from_raw(dtb.as_mut_ptr()).unwrap().into() });
+}
+
+#[test]
+#[cfg(feature = "write")]
+fn round_trip_raw_unchecked_mut() {
+    // SAFETY: dtb is a valid FDT blob
+    round_trip_impl(|dtb| unsafe { FdtMut::from_raw_unchecked(dtb.as_mut_ptr()).into() });
+}
+
+#[cfg(feature = "write")]
+fn round_trip_impl(construct_fdt: impl Fn(&mut [u8]) -> Fdt) {
+    for (dtb, _dts, name) in ALL_DT_FILES {
+        let mut dtb_vec = dtb.to_vec();
+        let fdt = construct_fdt(&mut dtb_vec);
+        let ir = DeviceTree::from_fdt(&fdt);
+        let new_dtb = ir.to_dtb();
+        assert_eq!(dtb, &new_dtb, "Mismatch for {name}");
+    }
+}
+
+#[test]
+fn reserved_memory_alloc_ranges_zero_cells() {
+    let dtb = include_bytes!("dtb/test_zero_cells.dtb");
+    let fdt = Fdt::new(dtb).unwrap();
+    let mut reserved_memory = fdt.reserved_memory().unwrap();
+
+    let range = reserved_memory.next().unwrap();
+
+    // address-cells and size-cells are both 0; expecting prop encoded array
+    // error
+
+    // not using assert_matches! since alloc_ranges() return value doesn't
+    // implement Debug
+    assert!(matches!(
+        range.alloc_ranges(),
+        Err(dtoolkit::error::StandardError::PropertyConversion(
+            dtoolkit::error::PropertyError::PropEncodedArraySizeMismatch { size: 0, chunk: 0 },
+        ))
+    ));
+}
+
+#[test]
+fn child_of_child_string_lifetime() {
+    let dtb = include_bytes!("dtb/test_props.dtb");
+    let fdt = Fdt::new(dtb).unwrap();
+    let val: &str = {
+        let root = fdt.root();
+        let child1 = root.child("test-props").unwrap();
+        let prop = child1.property("str-prop").unwrap();
+        prop.value_as::<&str>().unwrap()
+    };
+    assert_eq!(val, "hello world");
+}
+
+#[test]
+fn standard_node_outlives_wrapper() {
+    let dtb = include_bytes!("dtb/test_props.dtb");
+    let fdt = Fdt::new(dtb).unwrap();
+
+    let model_str: &str = {
+        let root = fdt.root();
+        let standard_props = root.child("standard-props").unwrap();
+        standard_props.model().unwrap().unwrap()
+    };
+    assert_eq!(model_str, "Some Model");
+
+    let compatible: Vec<&str> = {
+        let root = fdt.root();
+        let standard_props = root.child("standard-props").unwrap();
+        standard_props.compatible().unwrap().collect()
+    };
+    assert_eq!(compatible, vec!["abc,def", "some,other"]);
+
+    let dtb_mem = include_bytes!("dtb/test_pretty_print.dtb");
+    let fdt_mem = Fdt::new(dtb_mem).unwrap();
+    let area = {
+        let memory = fdt_mem.memory().unwrap();
+        memory
+            .initial_mapped_area()
+            .unwrap()
+            .unwrap()
+            .next()
+            .unwrap()
+    };
+    assert_eq!(area.size, 0x1000);
+}

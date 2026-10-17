@@ -1,0 +1,15 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/quiche"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "mio_test_src_lib"
+    }
+  ]
+}

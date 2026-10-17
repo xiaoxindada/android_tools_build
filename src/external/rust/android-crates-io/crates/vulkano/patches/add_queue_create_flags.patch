@@ -1,0 +1,95 @@
+diff --git a/src/device/mod.rs b/src/device/mod.rs
+index af5354d3c..fee0471e1 100644
+--- a/src/device/mod.rs
++++ b/src/device/mod.rs
+@@ -114,8 +114,9 @@ pub use crate::{
+     fns::DeviceFunctions,
+ };
+ use crate::{
+-    instance::Instance, macros::impl_id_counter, memory::ExternalMemoryHandleType, OomError,
+-    RequirementNotMet, RequiresOneOf, Version, VulkanError, VulkanObject,
++    instance::Instance, macros::impl_id_counter, macros::vulkan_bitflags,
++    memory::ExternalMemoryHandleType, OomError, RequirementNotMet, RequiresOneOf, Version,
++    VulkanError, VulkanObject,
+ };
+ use ash::vk::Handle;
+ use parking_lot::Mutex;
+@@ -196,6 +197,7 @@ impl Device {
+         */
+ 
+         struct QueueToGet {
++            flags: QueueCreateFlags,
+             queue_family_index: u32,
+             id: u32,
+         }
+@@ -211,6 +213,7 @@ impl Device {
+ 
+         for queue_create_info in &queue_create_infos {
+             let &QueueCreateInfo {
++                flags,
+                 queue_family_index,
+                 ref queues,
+                 _ne: _,
+@@ -243,7 +246,7 @@ impl Device {
+             }
+ 
+             queue_create_infos_vk.push(ash::vk::DeviceQueueCreateInfo {
+-                flags: ash::vk::DeviceQueueCreateFlags::empty(),
++                flags: flags.into(),
+                 queue_family_index,
+                 queue_count: queues.len() as u32,
+                 p_queue_priorities: queues.as_ptr(), // borrows from queue_create
+@@ -251,6 +254,7 @@ impl Device {
+             });
+             active_queue_family_indices.push(queue_family_index);
+             queues_to_get.extend((0..queues.len() as u32).map(move |id| QueueToGet {
++                flags,
+                 queue_family_index,
+                 id,
+             }));
+@@ -424,6 +428,7 @@ impl Device {
+             let device = device.clone();
+             queues_to_get.into_iter().map(
+                 move |QueueToGet {
++                          flags,
+                           queue_family_index,
+                           id,
+                       }| unsafe {
+@@ -784,6 +789,11 @@ impl Default for DeviceCreateInfo {
+ /// Parameters to create queues in a new `Device`.
+ #[derive(Clone, Debug)]
+ pub struct QueueCreateInfo {
++    /// Additional properties of the queue.
++    ///
++    /// The default value is empty.
++    pub flags: QueueCreateFlags,
++
+     /// The index of the queue family to create queues for.
+     ///
+     /// The default value is `0`.
+@@ -806,6 +816,7 @@ impl Default for QueueCreateInfo {
+     #[inline]
+     fn default() -> Self {
+         Self {
++            flags: QueueCreateFlags::empty(),
+             queue_family_index: 0,
+             queues: vec![0.5],
+             _ne: crate::NonExhaustive(()),
+@@ -813,6 +824,17 @@ impl Default for QueueCreateInfo {
+     }
+ }
+ 
++vulkan_bitflags! {
++    #[non_exhaustive]
++    /// Flags specifying additional properties of a queue.
++    QueueCreateFlags = DeviceQueueCreateFlags(u32);
++
++    // Queue is a protected-capable device queue.
++    PROTECTED = PROTECTED {
++        api_version: V1_1,
++    },
++}
++
+ /// Implemented on objects that belong to a Vulkan device.
+ ///
+ /// # Safety

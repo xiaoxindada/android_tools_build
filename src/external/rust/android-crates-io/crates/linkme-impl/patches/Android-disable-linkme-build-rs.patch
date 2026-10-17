@@ -1,0 +1,16 @@
+`linkme` has a patch by a similar name that disables its `build.rs` file. This
+corresponding change is needed so `linkme-impl` emits the correct tokens.
+
+diff --git a/src/lib.rs b/src/lib.rs
+index 3f61832..4937b9d 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -40,7 +40,7 @@ struct private;
+ impl ToTokens for private {
+     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+         tokens.append(Ident::new(
+-            concat!("__private", env!("CARGO_PKG_VERSION_PATCH")),
++            "__private_android",
+             Span::call_site(),
+         ));
+     }

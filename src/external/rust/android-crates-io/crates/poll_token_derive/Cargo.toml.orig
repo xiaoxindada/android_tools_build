@@ -1,0 +1,18 @@
+[package]
+name = "poll_token_derive"
+version = "0.1.0"
+authors = ["The Chromium OS Authors"]
+include = ["*.rs", "Cargo.toml"]
+description = "Procedural macro for automatically deriving PollToken."
+documentation = "https://docs.rs/poll_token_derive/"
+homepage = "https://chromium.googlesource.com/chromiumos/platform/crosvm/"
+license = "BSD-3-Clause"
+
+[lib]
+proc-macro = true
+path = "poll_token_derive.rs"
+
+[dependencies]
+syn = "0.15"
+quote = "0.6"
+proc-macro2 = "0.4"

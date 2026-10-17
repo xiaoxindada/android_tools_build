@@ -1,0 +1,13 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "module_blocklist": ["example"],
+  "module_visibility": {
+    "liballoc_stdlib": [
+      "//external/rust/android-crates-io/crates/brotli",
+      "//external/rust/android-crates-io/crates/brotli-decompressor"
+    ]
+  }
+}
+
+

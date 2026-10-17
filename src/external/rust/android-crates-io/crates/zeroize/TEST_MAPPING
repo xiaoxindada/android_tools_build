@@ -1,0 +1,78 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/der"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mls-rs"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mls-rs-core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/sec1"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/zeroize"
+    },
+    {
+      "path": "packages/modules/Uwb/libuwb-uci/src"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/pvmfw"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/service_vm/requests"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/dice/open_dice"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libclient_vm_csr"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvmbase"
+    },
+    {
+      "path": "system/authgraph/boringssl"
+    },
+    {
+      "path": "system/authgraph/core"
+    },
+    {
+      "path": "system/gatekeeper/rust/ta"
+    },
+    {
+      "path": "system/gatekeeper/rust/wire"
+    },
+    {
+      "path": "system/keymint/common"
+    },
+    {
+      "path": "system/keymint/wire"
+    },
+    {
+      "path": "system/secretkeeper/comm"
+    },
+    {
+      "path": "system/secure_element/omapi"
+    },
+    {
+      "path": "system/security/mls/mls-rs-crypto-boringssl"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "zeroize_test_tests_alloc"
+    },
+    {
+      "name": "zeroize_test_tests_zeroize"
+    },
+    {
+      "name": "zeroize_test_tests_zeroize_derive"
+    }
+  ]
+}

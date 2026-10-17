@@ -1,0 +1,12 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/mls-rs"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "debug_tree_test_src_lib"
+    }
+  ]
+}

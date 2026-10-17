@@ -1,0 +1,17 @@
+name: "derive_builder_core"
+description: "Internal helper library for the derive_builder crate."
+third_party {
+  version: "0.20.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 8
+    day: 5
+  }
+  homepage: "https://crates.io/crates/derive_builder_core"
+  identifier {
+    type: "crates.io"
+    value: "derive_builder_core"
+    version: "0.20.2"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/aho-corasick"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/axum"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/bstr"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/combine"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crates-index"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/csv-core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures-util"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/json-strip-comments"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/nom"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/os_str_bytes"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pest"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/regex"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/regex-automata"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde_json"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio"
+    },
+    {
+      "path": "system/desktop/ec/src/ectool"
+    },
+    {
+      "path": "system/desktop/ec/src/timberslide"
+    }
+  ]
+}

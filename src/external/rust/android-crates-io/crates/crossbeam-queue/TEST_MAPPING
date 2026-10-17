@@ -1,0 +1,26 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/crossbeam-queue"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vulkano"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "crossbeam-queue_test_tests_array_queue"
+    },
+    {
+      "name": "crossbeam-queue_test_tests_seg_queue"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "crossbeam-queue_test_tests_array_queue"
+    },
+    {
+      "name": "crossbeam-queue_test_tests_seg_queue"
+    }
+  ]
+}

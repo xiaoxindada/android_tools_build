@@ -1,0 +1,17 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/gdbstub"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "managed_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "managed_test_src_lib"
+    }
+  ]
+}

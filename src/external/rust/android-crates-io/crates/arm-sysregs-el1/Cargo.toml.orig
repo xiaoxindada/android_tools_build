@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: Copyright The arm-sysregs Contributors.
+# SPDX-License-Identifier: MIT OR Apache-2.0
+
+[package]
+name = "arm-sysregs-el1"
+version = "0.4.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "Armv8-A system register helper crate for EL1"
+repository = "https://git.trustedfirmware.org/arm-firmware-crates/arm-sysregs.git"
+authors = ["Andrew Walbran <qwandor@google.com>"]
+keywords = ["arm", "aarch64", "sysregs", "system", "registers"]
+categories = ["hardware-support", "embedded", "no-std", "no-std::no-alloc"]
+readme = "README.md"
+rust-version = "1.88"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+arm-sysregs-common = { workspace = true }
+arm-sysregs-el0 = { workspace = true }
+bitflags = { workspace = true }
+
+[dev-dependencies]
+arm-sysregs-common = { workspace = true, features = [ "fakes" ] }
+log = { workspace = true }
+
+[target.'cfg(all(target_arch = "aarch64", target_os = "none"))'.dev-dependencies]
+aarch64-rt = { workspace = true }
+
+[features]
+fakes = ["arm-sysregs-common/fakes", "arm-sysregs-el0/fakes"]
+
+[lints.clippy]
+missing_safety_doc = "deny"
+undocumented_unsafe_blocks = "deny"
+unreadable_literal = "deny"
+
+[lints.rust]
+missing_docs = "deny"
+unsafe_op_in_unsafe_fn = "deny"

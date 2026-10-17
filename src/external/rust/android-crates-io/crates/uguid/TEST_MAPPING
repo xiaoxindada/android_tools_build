@@ -1,0 +1,10 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/uefi"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/uefi-raw"
+    }
+  ]
+}

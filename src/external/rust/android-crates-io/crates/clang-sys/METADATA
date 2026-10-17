@@ -1,0 +1,17 @@
+name: "clang-sys"
+description: "Rust bindings for libclang."
+third_party {
+  version: "1.9.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 29
+  }
+  homepage: "https://crates.io/crates/clang-sys"
+  identifier {
+    type: "crates.io"
+    value: "clang-sys"
+    version: "1.9.1"
+  }
+}

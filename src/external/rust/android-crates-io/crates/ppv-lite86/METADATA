@@ -1,0 +1,17 @@
+name: "ppv-lite86"
+description: "Cross-platform cryptography-oriented low-level SIMD library."
+third_party {
+  version: "0.2.21"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 3
+    day: 19
+  }
+  homepage: "https://crates.io/crates/ppv-lite86"
+  identifier {
+    type: "crates.io"
+    value: "ppv-lite86"
+    version: "0.2.21"
+  }
+}

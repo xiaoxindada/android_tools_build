@@ -1,0 +1,13 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "package": {
+    "icu_normalizer_data": {
+      "srcs": [
+        "src/**/*.rs",
+        "data/*.rs",
+        "data/*.rs.data"
+      ]
+    }
+  }
+}

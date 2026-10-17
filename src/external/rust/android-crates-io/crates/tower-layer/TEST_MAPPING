@@ -1,0 +1,21 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/axum"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/axum-core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tonic"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tower"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "tower-layer_test_src_lib"
+    }
+  ]
+}

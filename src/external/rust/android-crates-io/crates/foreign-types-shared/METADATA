@@ -1,0 +1,17 @@
+name: "foreign-types-shared"
+description: "An internal crate used by foreign-types"
+third_party {
+  version: "0.1.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 1
+    day: 22
+  }
+  homepage: "https://crates.io/crates/foreign-types-shared"
+  identifier {
+    type: "crates.io"
+    value: "foreign-types-shared"
+    version: "0.1.1"
+  }
+}

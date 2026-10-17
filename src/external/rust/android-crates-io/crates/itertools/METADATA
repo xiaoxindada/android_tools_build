@@ -1,0 +1,17 @@
+name: "itertools"
+description: "Extra iterator adaptors, iterator methods, free functions, and macros."
+third_party {
+  version: "0.15.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 25
+  }
+  homepage: "https://crates.io/crates/itertools"
+  identifier {
+    type: "crates.io"
+    value: "itertools"
+    version: "0.15.0"
+  }
+}

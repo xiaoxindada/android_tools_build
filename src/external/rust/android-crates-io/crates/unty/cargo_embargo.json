@@ -1,0 +1,10 @@
+{
+  "run_cargo": false,
+  "ota_recovery_ramdisk_available": true,
+  "module_visibility": {
+    "libunty": [
+      "//external/rust/android-crates-io/crates/bincode"
+    ]
+  },
+  "min_sdk_version": "29"
+}

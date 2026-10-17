@@ -1,0 +1,9 @@
+{
+  "run_cargo": false,
+  "package": {
+    "darling_macro": {
+      "device_supported": false
+    }
+  },
+  "min_sdk_version": "29"
+}

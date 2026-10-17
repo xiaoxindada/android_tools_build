@@ -1,0 +1,205 @@
+name: CI
+on:
+  pull_request:
+  push:
+  workflow_call:
+
+jobs:
+  test-gnu:
+    # dynamically linked glibc
+    name: Test on Ubuntu ${{ matrix.os-arch }} (${{ matrix.args }})
+    strategy:
+      matrix:
+        include:
+          - rust-target: x86_64-unknown-linux-gnu
+            os-target: x86_64-linux-gnu
+            os-arch: amd64
+            args: ''
+
+          - rust-target: x86_64-unknown-linux-gnu
+            os-target: x86_64-linux-gnu
+            os-arch: amd64
+            args: '-F static,vendored'
+
+          - rust-target: x86_64-unknown-linux-gnu
+            os-target: x86_64-linux-gnu
+            os-arch: amd64
+            args: --no-default-features
+            install-sys-libbpf: y
+
+          - rust-target: aarch64-unknown-linux-gnu
+            os-target: aarch64-linux-gnu
+            os-arch: arm64
+            args: ''
+          # Test cross-compilation to aarch64
+          - rust-target: aarch64-unknown-linux-gnu
+            os-target: aarch64-linux-gnu
+            os-arch: arm64
+            args: '-F static,vendored'
+          # Test cross-compilation to riscv64
+          - rust-target: riscv64gc-unknown-linux-gnu
+            os-target: riscv64-linux-gnu
+            os-arch: riscv64
+            args: '-F static,vendored'
+    runs-on: ubuntu-22.04
+    env:
+      CARGO_BUILD_TARGET: ${{ matrix.rust-target }}
+      CARGO_TERM_VERBOSE: 'true'
+      RUSTFLAGS: -C linker=/usr/bin/${{ matrix.os-target }}-gcc
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Add apt sources for ${{ matrix.os-arch }}
+        if: matrix.os-arch != 'amd64'
+        run: |
+          dpkg --add-architecture ${{ matrix.os-arch }}
+
+          release=$(. /etc/os-release && echo "$UBUNTU_CODENAME")
+          sed -i 's/^deb /deb [arch=amd64] /' /etc/apt/sources.list
+          printf 'deb [arch=${{ matrix.os-arch }}] http://ports.ubuntu.com/ %s main restricted\n' \
+              $release $release-updates $release-security \
+              >> /etc/apt/sources.list
+        shell: sudo sh -e {0}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install \
+              build-essential \
+              autopoint \
+              gettext \
+              libelf-dev:${{ matrix.os-arch }} \
+              zlib1g-dev:${{ matrix.os-arch }}
+
+      - name: Install libbpf-dev
+        if: matrix.install-sys-libbpf == 'y'
+        run: sudo apt-get install libbpf-dev:${{ matrix.os-arch }}
+
+      - name: Install linker for ${{ matrix.os-target }}
+        if: matrix.os-arch != 'amd64'
+        run: sudo apt-get install gcc-${{ matrix.os-target }}
+
+      - name: Install Rust stable for ${{ matrix.rust-target }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-target }}
+
+      - run: cargo build ${{ matrix.args }}
+
+      - run: cargo test ${{ matrix.args }}
+        if: matrix.os-arch == 'amd64'
+
+  test-musl:
+    # dynamically linked musl libc
+    name: Test on Alpine Linux x86_64 (${{ matrix.args }})
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include:
+          - args: ''
+          - args: --no-default-features
+            install-sys-libbpf: y
+    env:
+      CARGO_TERM_VERBOSE: 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install Alpine Linux with dependencies
+        uses: jirutka/setup-alpine@v1
+        with:
+          branch: latest-stable
+          packages: >
+            build-base
+            cargo
+            elfutils-dev
+            linux-headers
+            zlib-dev
+
+      - name: Install libbpf-dev
+        if: matrix.install-sys-libbpf == 'y'
+        run: apk add libbpf-dev
+        shell: alpine.sh --root {0}
+
+      - run: cargo build ${{ matrix.args }}
+        shell: alpine.sh {0}
+
+      - run: cargo test ${{ matrix.args }}
+        shell: alpine.sh {0}
+
+  test-libbpf-rs:
+    # check that libbpf-rs, one of the main consumers of the library, works with
+    # this version of libbpf-sys
+    name: Test libbpf-rs integration
+    runs-on: ubuntu-22.04
+    env:
+      CARGO_TERM_VERBOSE: 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install \
+              build-essential \
+              libelf-dev \
+              zlib1g-dev
+
+      - name: Build libbpf-rs with libbpf-sys
+        run: |
+          dir=$(pwd)
+          cd /tmp/
+          cargo init --bin libbpf-rs-test-project
+          cd libbpf-rs-test-project
+          # Add libbpf-rs dependency and override libbpf-sys in use with our
+          # current one.
+          cat >> Cargo.toml <<EOF
+          libbpf-rs = "*"
+          [patch.crates-io]
+          libbpf-sys = { path = "${dir}" }
+          EOF
+          cargo update
+          cargo build
+
+  rust-bindings:
+    name: Check generated Rust bindings
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - name: Install system dependencies
+        run: sudo apt-get install libelf-dev
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo check --features bindgen-source
+      - name: Check that generated Rust bindings are up-to-date
+        run: git diff --exit-code ||
+               (echo "!!!! CHECKED IN BINDINGS ARE OUTDATED !!!!" && false)
+
+  clippy:
+    name: Lint with clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install \
+              build-essential \
+              libelf-dev \
+              zlib1g-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo clippy --workspace --no-deps -- -A unknown_lints -D clippy::todo

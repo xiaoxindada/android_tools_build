@@ -1,0 +1,17 @@
+name: "walkdir"
+description: "Recursively walk a directory."
+third_party {
+  version: "2.5.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 12
+    day: 20
+  }
+  homepage: "https://crates.io/crates/walkdir"
+  identifier {
+    type: "crates.io"
+    value: "walkdir"
+    version: "2.5.0"
+  }
+}

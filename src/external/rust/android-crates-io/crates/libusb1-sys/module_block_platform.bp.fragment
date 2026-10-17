@@ -1,0 +1,5 @@
+// This library should be depended upon only by programs
+// running on Android at OS level (e.g. Android platform
+// services). The reason is that programs using "libusb_platform"
+// must have permission to access netlink sockets.
+shared_libs: ["libusb_platform"]

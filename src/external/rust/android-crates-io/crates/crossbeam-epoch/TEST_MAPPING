@@ -1,0 +1,17 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/crossbeam-deque"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "crossbeam-epoch_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "crossbeam-epoch_test_src_lib"
+    }
+  ]
+}

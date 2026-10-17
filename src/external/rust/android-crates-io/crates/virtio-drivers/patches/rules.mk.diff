@@ -1,0 +1,12 @@
+diff --git b/rules.mk a/rules.mk
+index 078c0bb..3ccd69f 100644
+--- b/rules.mk
++++ a/rules.mk
+@@ -14,6 +14,7 @@ MODULE_RUSTFLAGS += \
+ 	--cfg 'feature="alloc"'
+ 
+ MODULE_LIBRARY_DEPS := \
++	trusty/user/base/lib/liballoc-rust \
+ 	$(call FIND_CRATE,bitflags) \
+ 	$(call FIND_CRATE,log) \
+ 	$(call FIND_CRATE,zerocopy) \

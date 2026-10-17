@@ -1,0 +1,17 @@
+name: "yaml-rust"
+description: "The missing YAML 1.2 parser for rust"
+third_party {
+  version: "0.4.5"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2023
+    month: 8
+    day: 23
+  }
+  homepage: "https://crates.io/crates/yaml-rust"
+  identifier {
+    type: "crates.io"
+    value: "yaml-rust"
+    version: "0.4.5"
+  }
+}

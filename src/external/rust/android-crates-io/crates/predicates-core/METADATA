@@ -1,0 +1,17 @@
+name: "predicates-core"
+description: "An API for boolean-valued predicate functions."
+third_party {
+  version: "1.0.10"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 17
+  }
+  homepage: "https://crates.io/crates/predicates-core"
+  identifier {
+    type: "crates.io"
+    value: "predicates-core"
+    version: "1.0.10"
+  }
+}

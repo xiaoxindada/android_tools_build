@@ -1,0 +1,17 @@
+name: "textwrap"
+description: "Library for word wrapping, indenting, and dedenting strings. Has optional support for Unicode and emojis as well as machine hyphenation."
+third_party {
+  version: "0.16.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 3
+    day: 6
+  }
+  homepage: "https://crates.io/crates/textwrap"
+  identifier {
+    type: "crates.io"
+    value: "textwrap"
+    version: "0.16.2"
+  }
+}

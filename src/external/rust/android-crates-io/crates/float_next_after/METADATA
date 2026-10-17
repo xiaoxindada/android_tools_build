@@ -1,0 +1,17 @@
+name: "float_next_after"
+description: "A trait for native rust f64/f32 nextafter"
+third_party {
+  version: "2.0.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 2
+  }
+  homepage: "https://crates.io/crates/float_next_after"
+  identifier {
+    type: "crates.io"
+    value: "float_next_after"
+    version: "2.0.0"
+  }
+}

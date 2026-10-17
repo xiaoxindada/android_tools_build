@@ -1,0 +1,13 @@
+diff --git a/crates/serde_derive/rules.mk b/crates/serde_derive/rules.mk
+index 7bfd4f180..061a82dc9 100644
+--- a/crates/serde_derive/rules.mk
++++ b/crates/serde_derive/rules.mk
+@@ -12,6 +12,8 @@ MODULE_RUST_EDITION := 2021
+ MODULE_RUSTFLAGS += \
+ 	--cfg 'feature="default"'
+ 
++MODULE_RUST_ENV += CARGO_PKG_VERSION_PATCH=228
++
+ MODULE_LIBRARY_DEPS := \
+ 	$(call FIND_CRATE,proc-macro2) \
+ 	$(call FIND_CRATE,quote) \

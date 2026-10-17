@@ -1,0 +1,64 @@
+{
+  "run_cargo": false,
+  "recovery_available": true,
+  "min_sdk_version": "29",
+  "native_bridge_supported": true,
+  "ota_recovery_ramdisk_available": true,
+  "package": {
+    "log": {
+      "target_windows": true
+    }
+  },
+  "variants": [
+    {
+      "features": [
+        "std"
+      ],
+      "module_name_overrides": {
+        "liblog": "liblog_rust"
+      }
+    },
+    {
+      "features": [],
+      "module_name_overrides": {
+        "liblog": "liblog_rust"
+      },
+      "package": {
+        "log": {
+          "no_std": true
+        }
+      }
+    },
+    {
+      "features": [
+        "std",
+        "max_level_info",
+        "release_max_level_info"
+      ],
+      "module_name_overrides": {
+        "liblog": "liblog_rust_max_level_info"
+      }
+    },
+    {
+      "features": [
+        "std",
+        "max_level_off",
+        "release_max_level_off"
+      ],
+      "module_name_overrides": {
+        "liblog": "liblog_rust_max_level_off"
+      }
+    },
+    {
+      "generate_androidbp": false,
+      "generate_rulesmk": true,
+      "features": [
+      ],
+      "package": {
+        "log": {
+          "no_std": true
+        }
+      }
+    }
+  ]
+}

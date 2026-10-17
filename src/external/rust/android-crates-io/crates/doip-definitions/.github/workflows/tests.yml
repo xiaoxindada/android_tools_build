@@ -1,0 +1,76 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  lint-code:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+      - name: Run Clippy
+        run: cargo clippy -- -D warnings
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Install Tarpaulin
+        run: cargo install cargo-tarpaulin
+      - name: Run Tests
+        run: cargo test
+      - name: Run Tarpaulin Coverage
+        run: cargo tarpaulin --force-clean --ignore-tests --verbose --engine llvm --fail-under=100 --out xml
+      - name: Upload Coverage Report
+        uses: codecov/codecov-action@v3
+        with:
+          files: cobertura.xml
+
+  build-rust:
+    name: Build Rust Project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Build Rust Project
+        run: cargo build --release --no-default-features
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-build
+          path: target/release
+
+  docs:
+    name: Generate Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Generate Rust Documentation
+        run: cargo doc --no-deps
+      - name: Prepare Documentation
+        run: |
+          mkdir -p public
+          mv target/doc public
+          echo '<meta http-equiv=refresh content="0; url=doip_definitions/index.html">' > public/index.html
+      - name: Upload Documentation Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: public

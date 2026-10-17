@@ -51,6 +51,8 @@ GIT_CLONE_REPOS=(
 	"platform/system/libufdt"
 	"platform/system/gsid"
 	"platform/system/fs/fs_mgr"
+	"platform/build"
+	"platform/external/rust/android-crates-io"
 )
 
 GIT_CLONE_VERSION_REPOS=(

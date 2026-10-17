@@ -1,0 +1,10 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/vulkano"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/hashbrown"
+    }
+  ]
+}

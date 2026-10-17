@@ -1,0 +1,11 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "tests": true,
+  "package": {
+    "p9": {
+      "host_first_multilib": true,
+      "add_module_block": "cargo2android_target.bp.fragment"
+    }
+  }
+}

@@ -1,0 +1,1105 @@
+diff --git a/src/cipher.rs b/src/cipher.rs
+index 5c4be5361..d4b86404b 100644
+--- a/src/cipher.rs
++++ b/src/cipher.rs
+@@ -241,9 +241,8 @@ pub use padded::{PaddedBlockDecryptingKey, PaddedBlockEncryptingKey};
+ pub use streaming::{BufferUpdate, StreamingDecryptingKey, StreamingEncryptingKey};
+ 
+ use crate::aws_lc::{
+-    EVP_aes_128_cbc, EVP_aes_128_cfb128, EVP_aes_128_ctr, EVP_aes_128_ecb, EVP_aes_192_cbc,
+-    EVP_aes_192_cfb128, EVP_aes_192_ctr, EVP_aes_192_ecb, EVP_aes_256_cbc, EVP_aes_256_cfb128,
+-    EVP_aes_256_ctr, EVP_aes_256_ecb, EVP_CIPHER,
++    EVP_aes_128_cbc, EVP_aes_128_ctr, EVP_aes_128_ecb, EVP_aes_192_cbc, EVP_aes_192_ctr,
++    EVP_aes_192_ecb, EVP_aes_256_cbc, EVP_aes_256_ctr, EVP_aes_256_ecb, EVP_CIPHER,
+ };
+ #[cfg(feature = "legacy-des")]
+ use crate::aws_lc::{
+@@ -340,9 +339,6 @@ pub enum OperatingMode {
+     /// Counter (CTR) mode.
+     CTR,
+ 
+-    /// CFB 128-bit mode.
+-    CFB128,
+-
+     /// Electronic Code Book (ECB) mode.
+     ECB,
+ }
+@@ -352,15 +348,12 @@ impl OperatingMode {
+         let alg = match (self, algorithm.id) {
+             (OperatingMode::CBC, AlgorithmId::Aes128) => unsafe { EVP_aes_128_cbc() },
+             (OperatingMode::CTR, AlgorithmId::Aes128) => unsafe { EVP_aes_128_ctr() },
+-            (OperatingMode::CFB128, AlgorithmId::Aes128) => unsafe { EVP_aes_128_cfb128() },
+             (OperatingMode::ECB, AlgorithmId::Aes128) => unsafe { EVP_aes_128_ecb() },
+             (OperatingMode::CBC, AlgorithmId::Aes192) => unsafe { EVP_aes_192_cbc() },
+             (OperatingMode::CTR, AlgorithmId::Aes192) => unsafe { EVP_aes_192_ctr() },
+-            (OperatingMode::CFB128, AlgorithmId::Aes192) => unsafe { EVP_aes_192_cfb128() },
+             (OperatingMode::ECB, AlgorithmId::Aes192) => unsafe { EVP_aes_192_ecb() },
+             (OperatingMode::CBC, AlgorithmId::Aes256) => unsafe { EVP_aes_256_cbc() },
+             (OperatingMode::CTR, AlgorithmId::Aes256) => unsafe { EVP_aes_256_ctr() },
+-            (OperatingMode::CFB128, AlgorithmId::Aes256) => unsafe { EVP_aes_256_cfb128() },
+             (OperatingMode::ECB, AlgorithmId::Aes256) => unsafe { EVP_aes_256_ecb() },
+             #[cfg(feature = "legacy-des")]
+             #[allow(deprecated)]
+@@ -668,7 +661,7 @@ impl Algorithm {
+         match self.id {
+             // TODO: Hopefully support CFB1, and CFB8
+             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => match mode {
+-                OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 => {
++                OperatingMode::CBC | OperatingMode::CTR => {
+                     Ok(EncryptionContext::Iv128(FixedLength::new()?))
+                 }
+                 OperatingMode::ECB => Ok(EncryptionContext::None),
+@@ -689,7 +682,7 @@ impl Algorithm {
+         match self.id {
+             // TODO: Hopefully support CFB1, and CFB8
+             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => match mode {
+-                OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 => {
++                OperatingMode::CBC | OperatingMode::CTR => {
+                     matches!(input, EncryptionContext::Iv128(_))
+                 }
+                 OperatingMode::ECB => {
+@@ -712,7 +705,7 @@ impl Algorithm {
+         // TODO: Hopefully support CFB1, and CFB8
+         match self.id {
+             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => match mode {
+-                OperatingMode::CBC | OperatingMode::CTR | OperatingMode::CFB128 => {
++                OperatingMode::CBC | OperatingMode::CTR => {
+                     matches!(input, DecryptionContext::Iv128(_))
+                 }
+                 OperatingMode::ECB => {
+@@ -742,7 +735,6 @@ impl Algorithm {
+                 mode,
+                 OperatingMode::CBC
+                     | OperatingMode::CTR
+-                    | OperatingMode::CFB128
+                     | OperatingMode::ECB
+             ),
+             #[cfg(feature = "legacy-des")]
+@@ -893,21 +885,6 @@ impl EncryptingKey {
+         Self::new(key, OperatingMode::CTR)
+     }
+ 
+-    /// Constructs an `EncryptingKey` operating in cipher feedback 128-bit mode (CFB128) using the provided key.
+-    ///
+-    // # FIPS
+-    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+-    // * `AES_128`
+-    // * `AES_256`
+-    //
+-    /// # Errors
+-    /// * [`Unspecified`]: Returned if there is an error constructing the `EncryptingKey`.
+-    ///   With `legacy-des` enabled, also returned if `key`'s algorithm does not
+-    ///   support CFB128 mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
+-    ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+-    pub fn cfb128(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+-        Self::new(key, OperatingMode::CFB128)
+-    }
+ 
+     /// Constructs an `EncryptingKey` operating in cipher block chaining (CBC) mode using the provided key.
+     ///
+@@ -1061,21 +1038,6 @@ impl DecryptingKey {
+         Self::new(key, OperatingMode::CTR)
+     }
+ 
+-    /// Constructs a cipher decrypting key operating in cipher feedback 128-bit mode (CFB128) using the provided key and context.
+-    ///
+-    // # FIPS
+-    // Use this function with an `UnboundCipherKey` constructed with one of the following algorithms:
+-    // * `AES_128`
+-    // * `AES_256`
+-    //
+-    /// # Errors
+-    /// * [`Unspecified`]: Returned if there is an error during decryption.
+-    ///   With `legacy-des` enabled, also returned if `key`'s algorithm does not
+-    ///   support CFB128 mode (e.g. `DES_FOR_LEGACY_USE_ONLY`,
+-    ///   `DES_EDE_FOR_LEGACY_USE_ONLY`, `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+-    pub fn cfb128(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+-        Self::new(key, OperatingMode::CFB128)
+-    }
+ 
+     /// Constructs an `DecryptingKey` operating in cipher block chaining (CBC) mode using the provided key and context.
+     ///
+@@ -1221,19 +1183,7 @@ fn encrypt(
+                 unreachable!("DES does not support CTR mode.")
+             }
+         },
+-        // TODO: Hopefully support CFB1, and CFB8
+-        OperatingMode::CFB128 => match algorithm.id() {
+-            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
+-                aes::encrypt_cfb_mode(key, mode, context, in_out)
+-            }
+-            #[cfg(feature = "legacy-des")]
+-            #[allow(deprecated)]
+-            AlgorithmId::DesForLegacyUseOnly
+-            | AlgorithmId::DesEdeForLegacyUseOnly
+-            | AlgorithmId::DesEde3ForLegacyUseOnly => {
+-                unreachable!("DES does not support CFB128 mode.")
+-            }
+-        },
++
+         OperatingMode::ECB => match algorithm.id() {
+             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
+                 aes::encrypt_ecb_mode(key, context, in_out)
+@@ -1286,19 +1236,7 @@ fn decrypt<'in_out>(
+                 unreachable!("DES does not support CTR mode.")
+             }
+         },
+-        // TODO: Hopefully support CFB1, and CFB8
+-        OperatingMode::CFB128 => match algorithm.id() {
+-            AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
+-                aes::decrypt_cfb_mode(key, mode, context, in_out)
+-            }
+-            #[cfg(feature = "legacy-des")]
+-            #[allow(deprecated)]
+-            AlgorithmId::DesForLegacyUseOnly
+-            | AlgorithmId::DesEdeForLegacyUseOnly
+-            | AlgorithmId::DesEde3ForLegacyUseOnly => {
+-                unreachable!("DES does not support CFB128 mode.")
+-            }
+-        },
++
+         OperatingMode::ECB => match algorithm.id() {
+             AlgorithmId::Aes128 | AlgorithmId::Aes192 | AlgorithmId::Aes256 => {
+                 aes::decrypt_ecb_mode(key, context, in_out)
+@@ -1405,23 +1343,6 @@ mod tests {
+         }
+     }
+ 
+-    #[test]
+-    fn test_aes_128_cfb128() {
+-        let key = from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
+-        for i in 0..=50 {
+-            helper_test_cipher_n_bytes(key.as_slice(), &AES_128, OperatingMode::CFB128, i);
+-        }
+-    }
+-
+-    #[test]
+-    fn test_aes_256_cfb128() {
+-        let key =
+-            from_hex("000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f").unwrap();
+-        for i in 0..=50 {
+-            helper_test_cipher_n_bytes(key.as_slice(), &AES_256, OperatingMode::CFB128, i);
+-        }
+-    }
+-
+     #[test]
+     fn test_aes_256_ctr() {
+         let key =
+@@ -1567,26 +1488,6 @@ mod tests {
+         "b5098e5e788de6ac2f2098eb2fc6f8"
+     );
+ 
+-    cipher_kat!(
+-        test_sp800_38a_cfb128_aes128,
+-        &AES_128,
+-        OperatingMode::CFB128,
+-        "2b7e151628aed2a6abf7158809cf4f3c",
+-        "000102030405060708090a0b0c0d0e0f",
+-        "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
+-        "3b3fd92eb72dad20333449f8e83cfb4ac8a64537a0b3a93fcde3cdad9f1ce58b26751f67a3cbb140b1808cf187a4f4dfc04b05357c5d1c0eeac4c66f9ff7f2e6"
+-    );
+-
+-    cipher_kat!(
+-        test_sp800_38a_cfb128_aes256,
+-        &AES_256,
+-        OperatingMode::CFB128,
+-        "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4",
+-        "000102030405060708090a0b0c0d0e0f",
+-        "6bc1bee22e409f96e93d7e117393172aae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52eff69f2445df4f9b17ad2b417be66c3710",
+-        "dc7e84bfda79164b7ecd8486985d386039ffed143b28b1c832113c6331e5407bdf10132415e54b92a13ed0a8267ae2f975a385741ab9cef82031623d55b1e471"
+-    );
+-
+     cipher_kat!(
+         test_sp800_38a_ecb_aes128,
+         &AES_128,
+diff --git a/src/cipher/aes.rs b/src/cipher/aes.rs
+index d92cc448e..d8cfbdef2 100644
+--- a/src/cipher/aes.rs
++++ b/src/cipher/aes.rs
+@@ -128,71 +128,6 @@ pub(super) fn decrypt_cbc_mode<'in_out>(
+     Ok(in_out)
+ }
+ 
+-#[allow(clippy::needless_pass_by_value)]
+-pub(super) fn encrypt_cfb_mode(
+-    key: &SymmetricCipherKey,
+-    mode: OperatingMode,
+-    context: EncryptionContext,
+-    in_out: &mut [u8],
+-) -> Result<DecryptionContext, Unspecified> {
+-    let (SymmetricCipherKey::Aes128 { enc_key, .. }
+-    | SymmetricCipherKey::Aes192 { enc_key, .. }
+-    | SymmetricCipherKey::Aes256 { enc_key, .. }) = &key
+-    else {
+-        unreachable!()
+-    };
+-
+-    let mut iv = {
+-        let mut iv = [0u8; AES_CFB_IV_LEN];
+-        iv.copy_from_slice((&context).try_into()?);
+-        iv
+-    };
+-
+-    let cfb_encrypt: fn(&AES_KEY, &mut [u8], &mut [u8]) = match mode {
+-        // TODO: Hopefully support CFB1, and CFB8
+-        OperatingMode::CFB128 => aes_cfb128_encrypt,
+-        _ => unreachable!(),
+-    };
+-
+-    cfb_encrypt(enc_key, &mut iv, in_out);
+-    iv.zeroize();
+-
+-    Ok(context.into())
+-}
+-
+-#[allow(clippy::needless_pass_by_value)]
+-pub(super) fn decrypt_cfb_mode<'in_out>(
+-    key: &SymmetricCipherKey,
+-    mode: OperatingMode,
+-    context: DecryptionContext,
+-    in_out: &'in_out mut [u8],
+-) -> Result<&'in_out mut [u8], Unspecified> {
+-    let (SymmetricCipherKey::Aes128 { enc_key, .. }
+-    | SymmetricCipherKey::Aes192 { enc_key, .. }
+-    | SymmetricCipherKey::Aes256 { enc_key, .. }) = &key
+-    else {
+-        unreachable!()
+-    };
+-
+-    let mut iv = {
+-        let mut iv = [0u8; AES_CFB_IV_LEN];
+-        iv.copy_from_slice((&context).try_into()?);
+-        iv
+-    };
+-
+-    let cfb_decrypt: fn(&AES_KEY, &mut [u8], &mut [u8]) = match mode {
+-        // TODO: Hopefully support CFB1, and CFB8
+-        OperatingMode::CFB128 => aes_cfb128_decrypt,
+-        _ => unreachable!(),
+-    };
+-
+-    cfb_decrypt(enc_key, &mut iv, in_out);
+-
+-    iv.zeroize();
+-
+-    Ok(in_out)
+-}
+-
+ #[allow(clippy::needless_pass_by_value, clippy::unnecessary_wraps)]
+ pub(super) fn encrypt_ecb_mode(
+     key: &SymmetricCipherKey,
+diff --git a/src/cipher/streaming.rs b/src/cipher/streaming.rs
+index 4a01e11b8..9b948a060 100644
+--- a/src/cipher/streaming.rs
++++ b/src/cipher/streaming.rs
+@@ -363,20 +363,6 @@ impl StreamingEncryptingKey {
+         Self::less_safe_cbc_pkcs7(key, context)
+     }
+ 
+-    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB128 cipher mode.
+-    /// The resulting ciphertext will be the same length as the plaintext.
+-    ///
+-    /// # Errors
+-    /// Returns an error on an internal failure. With `legacy-des` enabled, also
+-    /// returned if `key`'s algorithm does not support CFB128 mode (e.g.
+-    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+-    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+-    pub fn cfb128(key: UnboundCipherKey) -> Result<Self, Unspecified> {
+-        let context = key
+-            .algorithm()
+-            .new_encryption_context(OperatingMode::CFB128)?;
+-        Self::less_safe_cfb128(key, context)
+-    }
+ 
+     /// Constructs a `StreamingEncryptingKey` for encrypting using ECB cipher mode with PKCS7 padding.
+     /// The resulting plaintext will be the same length as the ciphertext.
+@@ -397,23 +383,6 @@ impl StreamingEncryptingKey {
+         Self::new(key, OperatingMode::ECB, context)
+     }
+ 
+-    /// Constructs a `StreamingEncryptingKey` for encrypting data using the CFB128 cipher mode.
+-    /// The resulting ciphertext will be the same length as the plaintext.
+-    ///
+-    /// This is considered less safe because the caller could potentially construct
+-    /// an `EncryptionContext` from a previously used initialization vector (IV).
+-    ///
+-    /// # Errors
+-    /// Returns an error on an internal failure. With `legacy-des` enabled, also
+-    /// returned if `key`'s algorithm does not support CFB128 mode (e.g.
+-    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+-    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+-    pub fn less_safe_cfb128(
+-        key: UnboundCipherKey,
+-        context: EncryptionContext,
+-    ) -> Result<Self, Unspecified> {
+-        Self::new(key, OperatingMode::CFB128, context)
+-    }
+ 
+     /// Constructs a `StreamingEncryptingKey` for encrypting data using the CBC cipher mode
+     /// with pkcs7 padding.
+@@ -667,17 +636,6 @@ impl StreamingDecryptingKey {
+         Self::new(key, OperatingMode::CBC, context)
+     }
+ 
+-    // Constructs a `StreamingDecryptingKey` for decrypting using the CFB128 cipher mode.
+-    /// The resulting plaintext will be the same length as the ciphertext.
+-    ///
+-    /// # Errors
+-    /// Returns an error on an internal failure. With `legacy-des` enabled, also
+-    /// returned if `key`'s algorithm does not support CFB128 mode (e.g.
+-    /// `DES_FOR_LEGACY_USE_ONLY`, `DES_EDE_FOR_LEGACY_USE_ONLY`,
+-    /// `DES_EDE3_FOR_LEGACY_USE_ONLY`).
+-    pub fn cfb128(key: UnboundCipherKey, context: DecryptionContext) -> Result<Self, Unspecified> {
+-        Self::new(key, OperatingMode::CFB128, context)
+-    }
+ 
+     /// Constructs a `StreamingDecryptingKey` for decrypting using the ECB cipher mode.
+     /// The resulting plaintext will be the same length as the ciphertext.
+@@ -968,12 +926,10 @@ mod tests {
+ 
+     helper_stream_step_encrypt_test!(cbc_pkcs7);
+     helper_stream_step_encrypt_test!(ctr);
+-    helper_stream_step_encrypt_test!(cfb128);
+     helper_stream_step_encrypt_test!(ecb_pkcs7);
+ 
+     helper_stream_step_encrypt_test!(cbc_pkcs7, less_safe);
+     helper_stream_step_encrypt_test!(ctr, less_safe);
+-    helper_stream_step_encrypt_test!(cfb128, less_safe);
+     helper_stream_step_encrypt_test!(ecb_pkcs7, less_safe);
+ 
+     #[test]
+@@ -1087,61 +1043,6 @@ mod tests {
+         }
+     }
+ 
+-    #[test]
+-    fn test_step_cfb128() {
+-        let random = SystemRandom::new();
+-        let mut key = [0u8; AES_256_KEY_LEN];
+-        random.fill(&mut key).unwrap();
+-
+-        let encrypting_key_creator = || {
+-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+-            StreamingEncryptingKey::cfb128(key).unwrap()
+-        };
+-        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
+-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+-            StreamingDecryptingKey::cfb128(key, decryption_ctx).unwrap()
+-        };
+-
+-        for i in 13..=21 {
+-            for j in 124..=131 {
+-                helper_test_cfb128_stream_encrypt_step_n_bytes(
+-                    encrypting_key_creator,
+-                    decrypting_key_creator,
+-                    j,
+-                    i,
+-                );
+-            }
+-            for j in 124..=131 {
+-                helper_test_cfb128_stream_encrypt_step_n_bytes(
+-                    encrypting_key_creator,
+-                    decrypting_key_creator,
+-                    j,
+-                    j - i,
+-                );
+-            }
+-        }
+-        for j in 124..=131 {
+-            helper_test_cfb128_stream_encrypt_step_n_bytes(
+-                encrypting_key_creator,
+-                decrypting_key_creator,
+-                j,
+-                j,
+-            );
+-            helper_test_cfb128_stream_encrypt_step_n_bytes(
+-                encrypting_key_creator,
+-                decrypting_key_creator,
+-                j,
+-                256,
+-            );
+-            helper_test_cfb128_stream_encrypt_step_n_bytes(
+-                encrypting_key_creator,
+-                decrypting_key_creator,
+-                j,
+-                1,
+-            );
+-        }
+-    }
+-
+     #[test]
+     fn test_step_ecb_pkcs7() {
+         let random = SystemRandom::new();
+@@ -1308,61 +1209,6 @@ mod tests {
+         }
+     }
+ 
+-    #[test]
+-    fn test_step_cfb128_less_safe() {
+-        let random = SystemRandom::new();
+-        let mut key = [0u8; AES_256_KEY_LEN];
+-        random.fill(&mut key).unwrap();
+-
+-        let encrypting_key_creator = || {
+-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+-            StreamingEncryptingKey::cfb128(key).unwrap()
+-        };
+-        let decrypting_key_creator = |decryption_ctx: DecryptionContext| {
+-            let key = UnboundCipherKey::new(&AES_256, &key.clone()).unwrap();
+-            StreamingDecryptingKey::cfb128(key, decryption_ctx).unwrap()
+-        };
+-
+-        for i in 13..=21 {
+-            for j in 124..=131 {
+-                helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe(
+-                    encrypting_key_creator,
+-                    decrypting_key_creator,
+-                    j,
+-                    i,
+-                );
+-            }
+-            for j in 124..=131 {
+-                helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe(
+-                    encrypting_key_creator,
+-                    decrypting_key_creator,
+-                    j,
+-                    j - i,
+-                );
+-            }
+-        }
+-        for j in 124..=131 {
+-            helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe(
+-                encrypting_key_creator,
+-                decrypting_key_creator,
+-                j,
+-                j,
+-            );
+-            helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe(
+-                encrypting_key_creator,
+-                decrypting_key_creator,
+-                j,
+-                256,
+-            );
+-            helper_test_cfb128_stream_encrypt_step_n_bytes_less_safe(
+-                encrypting_key_creator,
+-                decrypting_key_creator,
+-                j,
+-                1,
+-            );
+-        }
+-    }
+-
+     #[test]
+     fn test_step_ecb_pkcs7_less_safe() {
+         let random = SystemRandom::new();
+@@ -1598,54 +1444,6 @@ mod tests {
+         9
+     );
+ 
+-    streaming_cipher_kat!(
+-        test_openssl_aes_128_cfb128_16_bytes,
+-        &AES_128,
+-        OperatingMode::CFB128,
+-        "5c353f739429bbd48b7e3f9a76facf4d",
+-        "7b2c7ce17a9b6a59a9e64253b98c8cd1",
+-        "add1bcebeaabe9423d4e916400e877c5",
+-        "8440ec442e4135a613ddb2ce26107e10",
+-        2,
+-        9
+-    );
+-
+-    streaming_cipher_kat!(
+-        test_openssl_aes_128_cfb128_15_bytes,
+-        &AES_128,
+-        OperatingMode::CFB128,
+-        "e1f39d70ad378efc1ac318aa8ac4489f",
+-        "ec78c3d54fff2fe09678c7883024ddce",
+-        "b8c905004b2a92a323769f1b8dc1b2",
+-        "964c3e9bf8bf2a3cca02d8e2e75608",
+-        2,
+-        9
+-    );
+-
+-    streaming_cipher_kat!(
+-        test_openssl_aes_256_cfb128_16_bytes,
+-        &AES_256,
+-        OperatingMode::CFB128,
+-        "0e8117d0984d6acb957a5d6ca526a12fa612ce5de2daadebd42c14d28a0a192e",
+-        "09147a153b230a40cd7bf4197ad0e825",
+-        "13f4540a4e06394148ade31a6f678787",
+-        "250e590e47b7613b7d0a53f684e970d6",
+-        2,
+-        9
+-    );
+-
+-    streaming_cipher_kat!(
+-        test_openssl_aes_256_cfb128_15_bytes,
+-        &AES_256,
+-        OperatingMode::CFB128,
+-        "5cb17d8d5b9dbd81e4f1e0a2c82ebf36cf61156388fb7abf99d4526622858225",
+-        "13c77415ec24f3e2f784f228478a85be",
+-        "3efa583df4405aab61e18155aa7e0d",
+-        "c1f2ffe8aa5064199e8f4f1b388303",
+-        2,
+-        9
+-    );
+-
+     streaming_cipher_kat!(
+         test_openssl_aes_128_ecb_pkcs7_16_bytes,
+         &AES_128,
+diff --git a/src/digest.rs b/src/digest.rs
+index 18e68f988..b8909921a 100644
+--- a/src/digest.rs
++++ b/src/digest.rs
+@@ -34,8 +34,8 @@ use crate::{debug, derive_debug_via_id};
+ pub(crate) mod digest_ctx;
+ mod sha;
+ use crate::aws_lc::{
+-    EVP_DigestFinal, EVP_DigestUpdate, EVP_sha1, EVP_sha224, EVP_sha256, EVP_sha384, EVP_sha3_256,
+-    EVP_sha3_384, EVP_sha3_512, EVP_sha512, EVP_sha512_256, EVP_MD,
++    EVP_DigestFinal, EVP_DigestUpdate, EVP_sha1, EVP_sha224, EVP_sha256, EVP_sha384, EVP_sha512,
++    EVP_sha512_256, EVP_MD,
+ };
+ use crate::error::Unspecified;
+ use crate::ptr::ConstPointer;
+@@ -44,7 +44,7 @@ use core::mem::MaybeUninit;
+ use digest_ctx::DigestContext;
+ pub use sha::{
+     SHA1_FOR_LEGACY_USE_ONLY, SHA1_OUTPUT_LEN, SHA224, SHA224_OUTPUT_LEN, SHA256,
+-    SHA256_OUTPUT_LEN, SHA384, SHA384_OUTPUT_LEN, SHA3_256, SHA3_384, SHA3_512, SHA512, SHA512_256,
++    SHA256_OUTPUT_LEN, SHA384, SHA384_OUTPUT_LEN, SHA512, SHA512_256,
+     SHA512_256_OUTPUT_LEN, SHA512_OUTPUT_LEN,
+ };
+ 
+@@ -334,9 +334,6 @@ pub(crate) enum AlgorithmID {
+     SHA384,
+     SHA512,
+     SHA512_256,
+-    SHA3_256,
+-    SHA3_384,
+-    SHA3_512,
+ }
+ 
+ impl PartialEq for Algorithm {
+@@ -371,9 +368,6 @@ pub(crate) fn match_digest_type(algorithm_id: &AlgorithmID) -> ConstPointer<'_,
+             AlgorithmID::SHA384 => EVP_sha384(),
+             AlgorithmID::SHA512 => EVP_sha512(),
+             AlgorithmID::SHA512_256 => EVP_sha512_256(),
+-            AlgorithmID::SHA3_256 => EVP_sha3_256(),
+-            AlgorithmID::SHA3_384 => EVP_sha3_384(),
+-            AlgorithmID::SHA3_512 => EVP_sha3_512(),
+         })
+         .unwrap_or_else(|()| panic!("Digest algorithm not found: {algorithm_id:?}"))
+     }
+@@ -456,8 +450,6 @@ mod tests {
+         max_input_tests!(SHA256);
+         max_input_tests!(SHA384);
+         max_input_tests!(SHA512);
+-        max_input_tests!(SHA3_384);
+-        max_input_tests!(SHA3_512);
+     }
+ 
+     #[test]
+@@ -468,8 +460,6 @@ mod tests {
+             &digest::SHA256,
+             &digest::SHA384,
+             &digest::SHA512,
+-            &digest::SHA3_384,
+-            &digest::SHA3_512,
+         ] {
+             // Clone after updating context with message, then check if the final Digest is the same.
+             let mut ctx = digest::Context::new(alg);
+diff --git a/src/digest/sha.rs b/src/digest/sha.rs
+index 2d3e5a532..fbe2dcf84 100644
+--- a/src/digest/sha.rs
++++ b/src/digest/sha.rs
+@@ -32,24 +32,6 @@ pub const SHA512_256_OUTPUT_LEN: usize = 256 / 8;
+ /// The length of a block for SHA-512-based algorithms, in bytes.
+ const SHA512_BLOCK_LEN: usize = 1024 / 8;
+ 
+-/// The length of a block for SHA3-256-based algorithms, in bytes.
+-const SHA3_256_BLOCK_LEN: usize = 136;
+-
+-/// The length of a block for SHA3-384-based algorithms, in bytes.
+-const SHA3_384_BLOCK_LEN: usize = 104;
+-
+-/// The length of a block for SHA3-512-based algorithms, in bytes.
+-const SHA3_512_BLOCK_LEN: usize = 72;
+-
+-/// The length of the output of SHA3-256 in bytes.
+-pub const SHA3_256_OUTPUT_LEN: usize = 256 / 8;
+-
+-/// The length of the output of SHA3-384, in bytes.
+-pub const SHA3_384_OUTPUT_LEN: usize = 384 / 8;
+-
+-/// The length of the output of SHA3-512, in bytes.
+-pub const SHA3_512_OUTPUT_LEN: usize = 512 / 8;
+-
+ /// SHA-1, SHA-224, and SHA-256 are limited to an input size of 2^64-1 bits.
+ /// SHA-384, SHA-512, and SHA-512/256 are limited to an input size of 2^128-1 bits according to the spec.
+ /// u64 is more than sufficient enough for practical usecases, so we limit the input length to 2^64-1 bits.
+@@ -152,51 +134,6 @@ pub const SHA512_256: Algorithm = Algorithm {
+     id: AlgorithmID::SHA512_256,
+ };
+ 
+-/// SHA3-256 as specified in [FIPS 202].
+-///
+-/// [FIPS 202]: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf
+-#[allow(deprecated)]
+-pub const SHA3_256: Algorithm = Algorithm {
+-    output_len: SHA3_256_OUTPUT_LEN,
+-    chaining_len: SHA3_256_OUTPUT_LEN,
+-    block_len: SHA3_256_BLOCK_LEN,
+-    max_input_len: DIGEST_MAX_INPUT_LEN,
+-
+-    one_shot_hash: sha3_256_digest,
+-
+-    id: AlgorithmID::SHA3_256,
+-};
+-
+-/// SHA3-384 as specified in [FIPS 202].
+-///
+-/// [FIPS 202]: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf
+-#[allow(deprecated)]
+-pub const SHA3_384: Algorithm = Algorithm {
+-    output_len: SHA3_384_OUTPUT_LEN,
+-    chaining_len: SHA3_384_OUTPUT_LEN,
+-    block_len: SHA3_384_BLOCK_LEN,
+-    max_input_len: DIGEST_MAX_INPUT_LEN,
+-
+-    one_shot_hash: sha3_384_digest,
+-
+-    id: AlgorithmID::SHA3_384,
+-};
+-
+-/// SHA3-512 as specified in [FIPS 202].
+-///
+-/// [FIPS 202]: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf
+-#[allow(deprecated)]
+-pub const SHA3_512: Algorithm = Algorithm {
+-    output_len: SHA3_512_OUTPUT_LEN,
+-    chaining_len: SHA3_512_OUTPUT_LEN,
+-    block_len: SHA3_512_BLOCK_LEN,
+-    max_input_len: DIGEST_MAX_INPUT_LEN,
+-
+-    one_shot_hash: sha3_512_digest,
+-
+-    id: AlgorithmID::SHA3_512,
+-};
+-
+ fn sha1_digest(msg: &[u8], output: &mut [u8]) {
+     unsafe {
+         aws_lc::SHA1(msg.as_ptr(), msg.len(), output.as_mut_ptr());
+@@ -232,24 +169,3 @@ fn sha512_256_digest(msg: &[u8], output: &mut [u8]) {
+         aws_lc::SHA512_256(msg.as_ptr(), msg.len(), output.as_mut_ptr());
+     }
+ }
+-
+-fn sha3_256_digest(msg: &[u8], output: &mut [u8]) {
+-    let mut ctx = Context::new(&SHA3_256);
+-    ctx.update(msg);
+-    let digest = ctx.finish();
+-    output[0..SHA3_256_OUTPUT_LEN].copy_from_slice(digest.as_ref());
+-}
+-
+-fn sha3_384_digest(msg: &[u8], output: &mut [u8]) {
+-    let mut ctx = Context::new(&SHA3_384);
+-    ctx.update(msg);
+-    let digest = ctx.finish();
+-    output[0..SHA3_384_OUTPUT_LEN].copy_from_slice(digest.as_ref());
+-}
+-
+-fn sha3_512_digest(msg: &[u8], output: &mut [u8]) {
+-    let mut ctx = Context::new(&SHA3_512);
+-    ctx.update(msg);
+-    let digest = ctx.finish();
+-    output[0..SHA3_512_OUTPUT_LEN].copy_from_slice(digest.as_ref());
+-}
+diff --git a/src/ec.rs b/src/ec.rs
+index 3a22fbbe4..b21eda364 100644
+--- a/src/ec.rs
++++ b/src/ec.rs
+@@ -10,9 +10,9 @@ use crate::aws_lc::EC_KEY_check_key;
+ use crate::aws_lc::{
+     ECDSA_SIG_from_bytes, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, EC_GROUP_get_curve_name,
+     EC_KEY_get0_group, EC_group_p224, EC_group_p256, EC_group_p384, EC_group_p521,
+-    EC_group_secp256k1, EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_get0_EC_KEY,
+-    NID_X9_62_prime256v1, NID_secp224r1, NID_secp256k1, NID_secp384r1, NID_secp521r1, EC_GROUP,
+-    EC_KEY, EVP_PKEY, EVP_PKEY_EC,
++    EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_get0_EC_KEY, NID_X9_62_prime256v1,
++    NID_secp224r1, NID_secp384r1, NID_secp521r1, EC_GROUP, EC_KEY, EVP_PKEY,
++    EVP_PKEY_EC,
+ };
+ use crate::ec::signature::AlgorithmID;
+ use crate::error::{KeyRejected, Unspecified};
+@@ -105,7 +105,6 @@ pub(crate) fn ec_group_from_nid(nid: i32) -> Result<ConstPointer<'static, EC_GRO
+             NID_X9_62_prime256v1 => EC_group_p256(),
+             NID_secp384r1 => EC_group_p384(),
+             NID_secp521r1 => EC_group_p521(),
+-            NID_secp256k1 => EC_group_secp256k1(),
+             _ => {
+                 // OPENSSL_PUT_ERROR(EC, EC_R_UNKNOWN_GROUP);
+                 null()
+diff --git a/src/ed25519.rs b/src/ed25519.rs
+index 635237f99..9a9c8453b 100644
+--- a/src/ed25519.rs
++++ b/src/ed25519.rs
+@@ -15,7 +15,7 @@ use crate::aws_lc::{EVP_PKEY, EVP_PKEY_ED25519};
+ use crate::buffer::Buffer;
+ use crate::digest::Digest;
+ use crate::encoding::{
+-    AsBigEndian, AsDer, Curve25519SeedBin, Pkcs8V1Der, Pkcs8V2Der, PublicKeyX509Der,
++    AsBigEndian, AsDer, Curve25519SeedBin, Pkcs8V1Der, PublicKeyX509Der,
+ };
+ use crate::error::{KeyRejected, Unspecified};
+ use crate::evp_pkey::No_EVP_PKEY_CTX_consumer;
+@@ -264,7 +264,7 @@ impl Ed25519KeyPair {
+         Ok(Document::new(
+             evp_pkey
+                 .as_const()
+-                .marshal_rfc5208_private_key(Version::V2)?,
++                .marshal_rfc5208_private_key(Version::V1)?,
+         ))
+     }
+ 
+@@ -277,7 +277,7 @@ impl Ed25519KeyPair {
+         Ok(Document::new(
+             self.evp_pkey
+                 .as_const()
+-                .marshal_rfc5208_private_key(Version::V2)?,
++                .marshal_rfc5208_private_key(Version::V1)?,
+         ))
+     }
+ 
+@@ -492,24 +492,10 @@ impl AsDer<Pkcs8V1Der<'static>> for Ed25519KeyPair {
+     }
+ }
+ 
+-impl AsDer<Pkcs8V2Der<'static>> for Ed25519KeyPair {
+-    /// Serializes this `Ed25519KeyPair` into a PKCS#8 v1 document.
+-    ///
+-    /// # Errors
+-    /// `error::Unspecified` on internal error.
+-    fn as_der(&self) -> Result<Pkcs8V2Der<'static>, crate::error::Unspecified> {
+-        Ok(Pkcs8V2Der::new(
+-            self.evp_pkey
+-                .as_const()
+-                .marshal_rfc5208_private_key(Version::V2)?,
+-        ))
+-    }
+-}
+-
+ #[cfg(test)]
+ mod tests {
+     use crate::ed25519::Ed25519KeyPair;
+-    use crate::encoding::{AsBigEndian, AsDer, Pkcs8V1Der, Pkcs8V2Der, PublicKeyX509Der};
++    use crate::encoding::{AsBigEndian, AsDer, Pkcs8V1Der, PublicKeyX509Der};
+     use crate::rand::SystemRandom;
+     use crate::signature::{KeyPair, UnparsedPublicKey, ED25519};
+     use crate::{hex, test};
+@@ -531,10 +517,6 @@ mod tests {
+         let rng = SystemRandom::new();
+         let document = Ed25519KeyPair::generate_pkcs8(&rng).unwrap();
+         let kp1: Ed25519KeyPair = Ed25519KeyPair::from_pkcs8(document.as_ref()).unwrap();
+-        assert_eq!(
+-            document.as_ref(),
+-            AsDer::<Pkcs8V2Der>::as_der(&kp1).unwrap().as_ref()
+-        );
+         let kp2: Ed25519KeyPair =
+             Ed25519KeyPair::from_pkcs8_maybe_unchecked(document.as_ref()).unwrap();
+         assert_eq!(
+diff --git a/src/evp_pkey.rs b/src/evp_pkey.rs
+index b9464b5f1..97ab2d97d 100644
+--- a/src/evp_pkey.rs
++++ b/src/evp_pkey.rs
+@@ -8,7 +8,7 @@ use crate::aws_lc::{
+     EVP_PKEY_get_raw_private_key, EVP_PKEY_get_raw_public_key, EVP_PKEY_id, EVP_PKEY_keygen,
+     EVP_PKEY_keygen_init, EVP_PKEY_new_raw_private_key, EVP_PKEY_new_raw_public_key, EVP_PKEY_sign,
+     EVP_PKEY_sign_init, EVP_PKEY_size, EVP_PKEY_up_ref, EVP_PKEY_verify, EVP_PKEY_verify_init,
+-    EVP_marshal_private_key, EVP_marshal_private_key_v2, EVP_marshal_public_key,
++    EVP_marshal_private_key, EVP_marshal_public_key,
+     EVP_parse_private_key, EVP_parse_public_key, EC_KEY, EVP_PKEY, EVP_PKEY_CTX, EVP_PKEY_ED25519,
+     RSA,
+ };
+@@ -140,12 +140,6 @@ impl ConstPointer<'_, EVP_PKEY> {
+                     return Err(Unspecified);
+                 }
+             }
+-            Version::V2 => {
+-                if 1 != unsafe { EVP_marshal_private_key_v2(cbb.as_mut_ptr(), self.as_const_ptr()) }
+-                {
+-                    return Err(Unspecified);
+-                }
+-            }
+         }
+         cbb.into_vec()
+     }
+diff --git a/src/kem.rs b/src/kem.rs
+index fe03301bf..84213c5cc 100644
+--- a/src/kem.rs
++++ b/src/kem.rs
+@@ -57,11 +57,6 @@ use alloc::borrow::Cow;
+ use core::cmp::Ordering;
+ use zeroize::Zeroize;
+ 
+-const ML_KEM_512_SHARED_SECRET_LENGTH: usize = 32;
+-const ML_KEM_512_PUBLIC_KEY_LENGTH: usize = 800;
+-const ML_KEM_512_SECRET_KEY_LENGTH: usize = 1632;
+-const ML_KEM_512_CIPHERTEXT_LENGTH: usize = 768;
+-
+ const ML_KEM_768_SHARED_SECRET_LENGTH: usize = 32;
+ const ML_KEM_768_PUBLIC_KEY_LENGTH: usize = 1184;
+ const ML_KEM_768_SECRET_KEY_LENGTH: usize = 2400;
+@@ -72,15 +67,6 @@ const ML_KEM_1024_PUBLIC_KEY_LENGTH: usize = 1568;
+ const ML_KEM_1024_SECRET_KEY_LENGTH: usize = 3168;
+ const ML_KEM_1024_CIPHERTEXT_LENGTH: usize = 1568;
+ 
+-/// NIST FIPS 203 ML-KEM-512 algorithm.
+-pub const ML_KEM_512: Algorithm<AlgorithmId> = Algorithm {
+-    id: AlgorithmId::MlKem512,
+-    decapsulate_key_size: ML_KEM_512_SECRET_KEY_LENGTH,
+-    encapsulate_key_size: ML_KEM_512_PUBLIC_KEY_LENGTH,
+-    ciphertext_size: ML_KEM_512_CIPHERTEXT_LENGTH,
+-    shared_secret_size: ML_KEM_512_SHARED_SECRET_LENGTH,
+-};
+-
+ /// NIST FIPS 203 ML-KEM-768 algorithm.
+ pub const ML_KEM_768: Algorithm<AlgorithmId> = Algorithm {
+     id: AlgorithmId::MlKem768,
+@@ -99,7 +85,7 @@ pub const ML_KEM_1024: Algorithm<AlgorithmId> = Algorithm {
+     shared_secret_size: ML_KEM_1024_SHARED_SECRET_LENGTH,
+ };
+ 
+-use crate::aws_lc::{NID_MLKEM1024, NID_MLKEM512, NID_MLKEM768};
++use crate::aws_lc::{NID_MLKEM1024, NID_MLKEM768};
+ 
+ /// An identifier for a KEM algorithm.
+ pub trait AlgorithmIdentifier:
+@@ -176,9 +162,6 @@ where
+ #[non_exhaustive]
+ #[derive(Clone, Copy, Debug, PartialEq)]
+ pub enum AlgorithmId {
+-    /// NIST FIPS 203 ML-KEM-512 algorithm.
+-    MlKem512,
+-
+     /// NIST FIPS 203 ML-KEM-768 algorithm.
+     MlKem768,
+ 
+@@ -189,7 +172,6 @@ pub enum AlgorithmId {
+ impl AlgorithmIdentifier for AlgorithmId {
+     fn nid(self) -> i32 {
+         match self {
+-            AlgorithmId::MlKem512 => NID_MLKEM512,
+             AlgorithmId::MlKem768 => NID_MLKEM768,
+             AlgorithmId::MlKem1024 => NID_MLKEM1024,
+         }
+diff --git a/src/lib.rs b/src/lib.rs
+index 9d4ab899a..de93a6f78 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -241,10 +241,7 @@
+ #![cfg_attr(aws_lc_rs_docsrs, feature(doc_cfg))]
+ 
+ extern crate alloc;
+-#[cfg(feature = "fips")]
+-extern crate aws_lc_fips_sys as aws_lc;
+-#[cfg(not(feature = "fips"))]
+-extern crate aws_lc_sys as aws_lc;
++extern crate bssl_sys as aws_lc;
+ 
+ pub mod aead;
+ pub mod agreement;
+@@ -277,9 +274,6 @@ mod evp_pkey;
+ mod fips;
+ mod hex;
+ pub mod iv;
+-pub mod kdf;
+-#[allow(clippy::module_name_repetitions)]
+-pub mod kem;
+ #[cfg(all(feature = "unstable", not(feature = "fips")))]
+ mod pqdsa;
+ mod ptr;
+@@ -352,10 +346,7 @@ pub fn try_fips_cpu_jitter_entropy() -> Result<(), &'static str> {
+         Err("FIPS CPU Jitter Entropy not enabled!")
+     }
+     #[cfg(not(feature = "fips"))]
+-    match unsafe { aws_lc::FIPS_is_entropy_cpu_jitter() } {
+-        1 => Ok(()),
+-        _ => Err("FIPS CPU Jitter Entropy not enabled!"),
+-    }
++    Err("FIPS CPU Jitter Entropy not enabled!")
+ }
+ 
+ #[allow(dead_code)]
+diff --git a/src/pkcs8.rs b/src/pkcs8.rs
+index 36906cb5b..0cefbdbe4 100644
+--- a/src/pkcs8.rs
++++ b/src/pkcs8.rs
+@@ -36,5 +36,4 @@ impl Drop for Document {
+ #[derive(Copy, Clone)]
+ pub(crate) enum Version {
+     V1,
+-    V2,
+ }
+diff --git a/src/signature.rs b/src/signature.rs
+index 3d77c10e8..9bf7342ea 100644
+--- a/src/signature.rs
++++ b/src/signature.rs
+@@ -840,13 +840,6 @@ pub const ECDSA_P384_SHA384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificatio
+     sig_format: EcdsaSignatureFormat::Fixed,
+ };
+ 
+-/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA3-384.
+-pub const ECDSA_P384_SHA3_384_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+-    id: &ec::signature::AlgorithmID::ECDSA_P384,
+-    digest: &digest::SHA3_384,
+-    sig_format: EcdsaSignatureFormat::Fixed,
+-};
+-
+ /// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-1.
+ pub const ECDSA_P521_SHA1_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+     id: &ec::signature::AlgorithmID::ECDSA_P521,
+@@ -882,13 +875,6 @@ pub const ECDSA_P521_SHA512_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificatio
+     sig_format: EcdsaSignatureFormat::Fixed,
+ };
+ 
+-/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA3-512.
+-pub const ECDSA_P521_SHA3_512_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+-    id: &ec::signature::AlgorithmID::ECDSA_P521,
+-    digest: &digest::SHA3_512,
+-    sig_format: EcdsaSignatureFormat::Fixed,
+-};
+-
+ /// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA-256.
+ pub const ECDSA_P256K1_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+     id: &ec::signature::AlgorithmID::ECDSA_P256K1,
+@@ -896,13 +882,6 @@ pub const ECDSA_P256K1_SHA256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificat
+     sig_format: EcdsaSignatureFormat::Fixed,
+ };
+ 
+-/// Verification of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA3-256.
+-pub const ECDSA_P256K1_SHA3_256_FIXED: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+-    id: &ec::signature::AlgorithmID::ECDSA_P256K1,
+-    digest: &digest::SHA3_256,
+-    sig_format: EcdsaSignatureFormat::Fixed,
+-};
+-
+ /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-256.
+ pub const ECDSA_P256_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+     id: &ec::signature::AlgorithmID::ECDSA_P256,
+@@ -945,13 +924,6 @@ pub const ECDSA_P384_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerification
+     sig_format: EcdsaSignatureFormat::ASN1,
+ };
+ 
+-/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA3-384.
+-pub const ECDSA_P384_SHA3_384_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+-    id: &ec::signature::AlgorithmID::ECDSA_P384,
+-    digest: &digest::SHA3_384,
+-    sig_format: EcdsaSignatureFormat::ASN1,
+-};
+-
+ /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-1.
+ pub const ECDSA_P521_SHA1_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+     id: &ec::signature::AlgorithmID::ECDSA_P521,
+@@ -987,13 +959,6 @@ pub const ECDSA_P521_SHA512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerification
+     sig_format: EcdsaSignatureFormat::ASN1,
+ };
+ 
+-/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA3-512.
+-pub const ECDSA_P521_SHA3_512_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+-    id: &ec::signature::AlgorithmID::ECDSA_P521,
+-    digest: &digest::SHA3_512,
+-    sig_format: EcdsaSignatureFormat::ASN1,
+-};
+-
+ /// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA-256.
+ pub const ECDSA_P256K1_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+     id: &ec::signature::AlgorithmID::ECDSA_P256K1,
+@@ -1001,13 +966,6 @@ pub const ECDSA_P256K1_SHA256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificati
+     sig_format: EcdsaSignatureFormat::ASN1,
+ };
+ 
+-/// Verification of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA3-256.
+-pub const ECDSA_P256K1_SHA3_256_ASN1: EcdsaVerificationAlgorithm = EcdsaVerificationAlgorithm {
+-    id: &ec::signature::AlgorithmID::ECDSA_P256K1,
+-    digest: &digest::SHA3_256,
+-    sig_format: EcdsaSignatureFormat::ASN1,
+-};
+-
+ /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256 curve and SHA-256.
+ pub const ECDSA_P256_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
+     EcdsaSigningAlgorithm(&ECDSA_P256_SHA256_FIXED);
+@@ -1016,10 +974,6 @@ pub const ECDSA_P256_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
+ pub const ECDSA_P384_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm =
+     EcdsaSigningAlgorithm(&ECDSA_P384_SHA384_FIXED);
+ 
+-/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-384 curve and SHA3-384.
+-pub const ECDSA_P384_SHA3_384_FIXED_SIGNING: EcdsaSigningAlgorithm =
+-    EcdsaSigningAlgorithm(&ECDSA_P384_SHA3_384_FIXED);
+-
+ /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA-224.
+ /// # ⚠️ Warning
+ /// The security design strength of SHA-224 digests is less then security strength of P-521.
+@@ -1045,18 +999,10 @@ pub const ECDSA_P521_SHA384_FIXED_SIGNING: EcdsaSigningAlgorithm =
+ pub const ECDSA_P521_SHA512_FIXED_SIGNING: EcdsaSigningAlgorithm =
+     EcdsaSigningAlgorithm(&ECDSA_P521_SHA512_FIXED);
+ 
+-/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-521 curve and SHA3-512.
+-pub const ECDSA_P521_SHA3_512_FIXED_SIGNING: EcdsaSigningAlgorithm =
+-    EcdsaSigningAlgorithm(&ECDSA_P521_SHA3_512_FIXED);
+-
+ /// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA-256.
+ pub const ECDSA_P256K1_SHA256_FIXED_SIGNING: EcdsaSigningAlgorithm =
+     EcdsaSigningAlgorithm(&ECDSA_P256K1_SHA256_FIXED);
+ 
+-/// Signing of fixed-length (PKCS#11 style) ECDSA signatures using the P-256K1 curve and SHA3-256.
+-pub const ECDSA_P256K1_SHA3_256_FIXED_SIGNING: EcdsaSigningAlgorithm =
+-    EcdsaSigningAlgorithm(&ECDSA_P256K1_SHA3_256_FIXED);
+-
+ /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256 curve and SHA-256.
+ pub const ECDSA_P256_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
+     EcdsaSigningAlgorithm(&ECDSA_P256_SHA256_ASN1);
+@@ -1065,10 +1011,6 @@ pub const ECDSA_P256_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
+ pub const ECDSA_P384_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
+     EcdsaSigningAlgorithm(&ECDSA_P384_SHA384_ASN1);
+ 
+-/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-384 curve and SHA3-384.
+-pub const ECDSA_P384_SHA3_384_ASN1_SIGNING: EcdsaSigningAlgorithm =
+-    EcdsaSigningAlgorithm(&ECDSA_P384_SHA3_384_ASN1);
+-
+ /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA-224.
+ /// # ⚠️ Warning
+ /// The security design strength of SHA-224 digests is less then security strength of P-521.
+@@ -1094,18 +1036,10 @@ pub const ECDSA_P521_SHA384_ASN1_SIGNING: EcdsaSigningAlgorithm =
+ pub const ECDSA_P521_SHA512_ASN1_SIGNING: EcdsaSigningAlgorithm =
+     EcdsaSigningAlgorithm(&ECDSA_P521_SHA512_ASN1);
+ 
+-/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-521 curve and SHA3-512.
+-pub const ECDSA_P521_SHA3_512_ASN1_SIGNING: EcdsaSigningAlgorithm =
+-    EcdsaSigningAlgorithm(&ECDSA_P521_SHA3_512_ASN1);
+-
+ /// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA-256.
+ pub const ECDSA_P256K1_SHA256_ASN1_SIGNING: EcdsaSigningAlgorithm =
+     EcdsaSigningAlgorithm(&ECDSA_P256K1_SHA256_ASN1);
+ 
+-/// Signing of ASN.1 DER-encoded ECDSA signatures using the P-256K1 curve and SHA3-256.
+-pub const ECDSA_P256K1_SHA3_256_ASN1_SIGNING: EcdsaSigningAlgorithm =
+-    EcdsaSigningAlgorithm(&ECDSA_P256K1_SHA3_256_ASN1);
+-
+ /// Verification of Ed25519 signatures.
+ pub const ED25519: EdDSAParameters = EdDSAParameters {};
+ 
+diff --git a/src/test.rs b/src/test.rs
+index f89b2c2bd..e240fa6a9 100644
+--- a/src/test.rs
++++ b/src/test.rs
+@@ -178,9 +178,6 @@ impl TestCase {
+             "SHA384" => Some(&digest::SHA384),
+             "SHA512" => Some(&digest::SHA512),
+             "SHA512_256" => Some(&digest::SHA512_256),
+-            "SHA3_256" => Some(&digest::SHA3_256),
+-            "SHA3_384" => Some(&digest::SHA3_384),
+-            "SHA3_512" => Some(&digest::SHA3_512),
+             _ => unreachable!("Unsupported digest algorithm: {}", name),
+         }
+     }

@@ -1,0 +1,19 @@
+diff --git a/crates/figment/Android.bp b/crates/figment/Android.bp
+index 8e0ed4fef..48df3c622 100644
+--- a/crates/figment/Android.bp
++++ b/crates/figment/Android.bp
+@@ -25,6 +25,14 @@ rust_library {
+         "libserde",
+         "libuncased",
+     ],
++    arch: {
++        x86: {
++            rustlibs: ["libatomic_rust"],
++        },
++        arm: {
++            rustlibs: ["libatomic_rust"],
++        },
++    },
+     apex_available: [
+         "//apex_available:platform",
+         "//apex_available:anyapex",

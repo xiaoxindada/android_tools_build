@@ -1,0 +1,17 @@
+name: "icu_locale"
+description: "API for Unicode Language and Locale Identifiers canonicalization"
+third_party {
+  version: "2.2.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 13
+  }
+  homepage: "https://crates.io/crates/icu_locale"
+  identifier {
+    type: "crates.io"
+    value: "icu_locale"
+    version: "2.2.0"
+  }
+}

@@ -1,0 +1,17 @@
+name: "toml_datetime"
+description: "A TOML-compatible datetime type"
+third_party {
+  version: "1.1.1+spec-1.1.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 4
+  }
+  homepage: "https://crates.io/crates/toml_datetime"
+  identifier {
+    type: "crates.io"
+    value: "toml_datetime"
+    version: "1.1.1+spec-1.1.0"
+  }
+}

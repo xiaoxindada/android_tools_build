@@ -1,0 +1,50 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+    default_team: "trendy_team_android_core_experiments",
+}
+
+rust_defaults {
+    name: "aconfig_storage_write_api.defaults",
+    edition: "2021",
+    lints: "none",
+    srcs: ["src/lib.rs"],
+    rustlibs: [
+        "libanyhow",
+        "libmemmap2",
+        "libthiserror",
+    ],
+    min_sdk_version: "34",
+    apex_available: [
+        "//apex_available:anyapex",
+        "//apex_available:platform",
+    ],
+    cfgs: select(release_flag("RELEASE_ACONFIG_PARSE_V4"), {
+        true: ["enable_parse_v4"],
+        default: [],
+    }),
+}
+
+rust_library {
+    name: "libaconfig_storage_write_api",
+    crate_name: "aconfig_storage_write_api",
+    host_supported: true,
+    defaults: ["aconfig_storage_write_api.defaults"],
+    rustlibs: [
+        "libaconfig_storage_file",
+        "libaconfig_storage_read_api",
+    ],
+}
+
+rust_test_host {
+    name: "aconfig_storage_write_api.test",
+    test_suites: ["general-tests"],
+    defaults: ["aconfig_storage_write_api.defaults"],
+    data: [
+        ":test_storage_files",
+    ],
+    rustlibs: [
+        "libaconfig_storage_read_api_with_test_utils",
+        "libaconfig_storage_file_with_test_utils",
+        "libtempfile",
+    ],
+}

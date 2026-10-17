@@ -1,0 +1,17 @@
+name: "num-complex"
+description: "Complex numbers implementation for Rust"
+third_party {
+  version: "0.4.6"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 7
+    day: 25
+  }
+  homepage: "https://crates.io/crates/num-complex"
+  identifier {
+    type: "crates.io"
+    value: "num-complex"
+    version: "0.4.6"
+  }
+}

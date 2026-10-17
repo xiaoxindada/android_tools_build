@@ -1,0 +1,17 @@
+name: "vsock"
+description: "Virtio socket support for Rust"
+third_party {
+  version: "0.5.4"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 2
+  }
+  homepage: "https://crates.io/crates/vsock"
+  identifier {
+    type: "crates.io"
+    value: "vsock"
+    version: "0.5.4"
+  }
+}

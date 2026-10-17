@@ -1,0 +1,22 @@
+{
+  "imports": [
+    {
+      "path": "packages/modules/Virtualization/android/composd"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/compsvc"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libcompos_common"
+    },
+    {
+      "path": "system/libueventd-rs"
+    },
+    {
+      "path": "system/memory/mmd"
+    },
+    {
+      "path": "system/secure_element/omapi"
+    }
+  ]
+}

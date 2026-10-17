@@ -1,0 +1,15 @@
+{
+  "run_cargo": false,
+  "module_name_overrides": {
+    "libucs2": "libucs2_nostd",
+    "libbit_field": "libbit_field_nostd"
+  },
+  "package": {
+    "ucs2": {
+      "force_rlib": true,
+      "host_supported": false,
+      "no_std": true
+    }
+  },
+  "min_sdk_version": "29"
+}

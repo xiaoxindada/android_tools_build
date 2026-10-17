@@ -1,0 +1,17 @@
+name: "sysexit"
+description: "Exit codes for programs"
+third_party {
+  version: "0.2.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 20
+  }
+  homepage: "https://crates.io/crates/sysexit"
+  identifier {
+    type: "crates.io"
+    value: "sysexit"
+    version: "0.2.0"
+  }
+}

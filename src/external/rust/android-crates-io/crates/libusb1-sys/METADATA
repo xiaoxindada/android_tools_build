@@ -1,0 +1,17 @@
+name: "libusb1-sys"
+description: "FFI bindings for libusb."
+third_party {
+  version: "0.7.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 11
+    day: 8
+  }
+  homepage: "https://crates.io/crates/libusb1-sys"
+  identifier {
+    type: "crates.io"
+    value: "libusb1-sys"
+    version: "0.7.0"
+  }
+}

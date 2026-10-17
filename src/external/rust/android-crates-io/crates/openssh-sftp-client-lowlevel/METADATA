@@ -1,0 +1,17 @@
+name: "openssh-sftp-client-lowlevel"
+description: "Lowlevel utilities to communicate with openssh sftp server."
+third_party {
+  version: "0.7.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 13
+  }
+  homepage: "https://crates.io/crates/openssh-sftp-client-lowlevel"
+  identifier {
+    type: "crates.io"
+    value: "openssh-sftp-client-lowlevel"
+    version: "0.7.2"
+  }
+}

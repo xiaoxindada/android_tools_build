@@ -1,0 +1,16 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "package": {
+    "rustversion": {
+      "rulesmk_patch": "patches/rules.mk.diff"
+    }
+  },
+  "variants": [
+    {},
+    {
+      "generate_androidbp": false,
+      "generate_rulesmk": true
+    }
+  ]
+}

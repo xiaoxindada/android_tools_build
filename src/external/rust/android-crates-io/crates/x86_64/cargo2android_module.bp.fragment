@@ -1,0 +1,8 @@
+arch: {
+    x86_64: {
+        enabled: true,
+    },
+},
+sanitize: {
+    hwaddress: false,
+}

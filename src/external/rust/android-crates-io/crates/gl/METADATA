@@ -1,0 +1,17 @@
+name: "gl"
+description: "OpenGL bindings"
+third_party {
+  version: "0.14.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 2
+    day: 11
+  }
+  homepage: "https://crates.io/crates/gl"
+  identifier {
+    type: "crates.io"
+    value: "gl"
+    version: "0.14.0"
+  }
+}

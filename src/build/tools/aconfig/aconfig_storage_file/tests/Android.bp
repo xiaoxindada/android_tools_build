@@ -1,0 +1,68 @@
+package {
+    default_team: "trendy_team_android_core_experiments",
+}
+
+cc_test {
+    name: "aconfig_storage_file.test.cpp",
+    srcs: [
+        "storage_file_test.cpp",
+    ],
+    static_libs: [
+        "libgmock",
+        "libaconfig_storage_file_cc",
+        "libbase",
+    ],
+    data: [
+        ":test_storage_files",
+    ],
+    test_suites: [
+        "device-tests",
+        "general-tests",
+    ],
+}
+
+android_test {
+    name: "aconfig_storage_file.test.java",
+    srcs: [
+        "srcs/**/*.java",
+    ],
+    static_libs: [
+        "androidx.test.runner",
+        "junit",
+        "aconfig_storage_file_java",
+    ],
+    test_config: "AndroidStorageJaveTest.xml",
+    sdk_version: "test_current",
+    data: [
+        ":test_storage_files",
+    ],
+    test_suites: [
+        "general-tests",
+    ],
+    jarjar_rules: "jarjar.txt",
+}
+
+filegroup {
+    name: "test_storage_files",
+    srcs: [
+        "data/v1/package_v1.map",
+        "data/v1/flag_v1.map",
+        "data/v1/flag_v1.val",
+        "data/v1/flag_v1.info",
+        "data/v2/package_v2.map",
+        "data/v2/flag_v2.map",
+        "data/v2/flag_v2.val",
+        "data/v2/flag_v2.info",
+        "data/v3/package_v3.map",
+        "data/v3/flag_v3.map",
+        "data/v3/flag_v3.val",
+        "data/v3/flag_v3.info",
+        "data/v4/package_v4.map",
+        "data/v4/flag_v4.map",
+        "data/v4/flag_v4.val",
+        "data/v4/flag_v4.info",
+    ],
+    visibility: [
+        "//build/make/tools/aconfig:__subpackages__",
+    ],
+}

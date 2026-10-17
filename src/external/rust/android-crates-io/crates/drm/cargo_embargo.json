@@ -1,0 +1,7 @@
+{
+  "run_cargo": false,
+  "module_name_overrides": {
+    "libdrm": "libdrm_rust"
+  },
+  "min_sdk_version": "29"
+}

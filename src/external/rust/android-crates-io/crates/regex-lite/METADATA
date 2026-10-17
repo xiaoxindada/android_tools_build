@@ -1,0 +1,17 @@
+name: "regex-lite"
+description: "A lightweight regex engine that optimizes for binary size and compilation time."
+third_party {
+  version: "0.1.9"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 20
+  }
+  homepage: "https://crates.io/crates/regex-lite"
+  identifier {
+    type: "crates.io"
+    value: "regex-lite"
+    version: "0.1.9"
+  }
+}

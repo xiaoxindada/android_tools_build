@@ -1,0 +1,17 @@
+name: "linkme-impl"
+description: "Implementation detail of the linkme crate"
+third_party {
+  version: "0.3.36"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 27
+  }
+  homepage: "https://crates.io/crates/linkme-impl"
+  identifier {
+    type: "crates.io"
+    value: "linkme-impl"
+    version: "0.3.36"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/skrifa"
+    },
+    {
+      "path": "external/skia"
+    }
+  ]
+}

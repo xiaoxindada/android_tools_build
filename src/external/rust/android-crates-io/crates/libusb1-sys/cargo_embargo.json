@@ -1,0 +1,25 @@
+{
+  "run_cargo": false,
+  "product_available": false,
+  "variants": [
+    {
+      "package": {
+        "libusb1-sys": {
+          "add_module_block": "module_block.bp.fragment"
+        }
+      }
+    },
+    {
+      "module_name_overrides": {
+        "liblibusb1_sys": "liblibusb1_sys_platform"
+      },
+      "package": {
+        "libusb1-sys": {
+          "add_module_block": "module_block_platform.bp.fragment"
+        }
+      }
+    }
+  ],
+  "min_sdk_version": "29",
+  "recovery_available": true
+}

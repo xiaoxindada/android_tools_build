@@ -1,0 +1,7 @@
+{
+    "module_name_overrides": {
+        "libpng": "libpng_rust"
+    },
+    "features": ["png", "webp"],
+    "min_sdk_version": "29"
+}

@@ -1,0 +1,17 @@
+name: "tower-layer"
+description: "Decorates a `Service` to allow easy composition between `Service`s."
+third_party {
+  version: "0.3.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 12
+    day: 20
+  }
+  homepage: "https://crates.io/crates/tower-layer"
+  identifier {
+    type: "crates.io"
+    value: "tower-layer"
+    version: "0.3.3"
+  }
+}

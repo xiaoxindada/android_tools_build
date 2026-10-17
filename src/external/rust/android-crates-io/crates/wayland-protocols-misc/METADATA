@@ -1,0 +1,17 @@
+name: "wayland-protocols-misc"
+description: "Generated API for misc and deprecated wayland protocol extensions"
+third_party {
+  version: "0.3.12"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 15
+  }
+  homepage: "https://crates.io/crates/wayland-protocols-misc"
+  identifier {
+    type: "crates.io"
+    value: "wayland-protocols-misc"
+    version: "0.3.12"
+  }
+}

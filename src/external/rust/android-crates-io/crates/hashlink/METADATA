@@ -1,0 +1,17 @@
+name: "hashlink"
+description: "HashMap-like containers that hold their key-value pairs in a user controllable order"
+third_party {
+  version: "0.12.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 11
+  }
+  homepage: "https://crates.io/crates/hashlink"
+  identifier {
+    type: "crates.io"
+    value: "hashlink"
+    version: "0.12.2"
+  }
+}

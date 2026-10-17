@@ -1,0 +1,38 @@
+{
+  "features": [
+    "std"
+  ],
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.runtime",
+    "com.android.art.debug",
+    "com.android.art"
+  ],
+  "min_sdk_version": "S",
+  "native_bridge_supported": true,
+  "ramdisk_available": true,
+  "recovery_available": true,
+  "run_cargo": false,
+  "tests": true,
+  "vendor_ramdisk_available": true,
+  "package": {
+    "rustc-demangle": {
+      "srcs": [
+        "src/**/*.rs",
+        "src/v0-large-test-symbols/early-recursion-limit"
+      ]
+    }
+  },
+  "variants": [
+    {},
+    {
+      "features": [],
+      "tests": false,
+      "package": {
+        "rustc-demangle": {
+          "no_std": true
+        }
+      }
+    }
+  ]
+}

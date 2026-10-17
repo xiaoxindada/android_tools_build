@@ -1,0 +1,17 @@
+name: "kernlog"
+description: "Kernel logger implementation (for low level logging to `/dev/kmsg`)."
+third_party {
+  version: "0.3.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2021
+    month: 6
+    day: 8
+  }
+  homepage: "https://crates.io/crates/kernlog"
+  identifier {
+    type: "crates.io"
+    value: "kernlog"
+    version: "0.3.1"
+  }
+}

@@ -1,0 +1,17 @@
+name: "heapless"
+description: "`static` friendly data structures that don\'t require dynamic memory allocation"
+third_party {
+  version: "0.9.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 7
+  }
+  homepage: "https://crates.io/crates/heapless"
+  identifier {
+    type: "crates.io"
+    value: "heapless"
+    version: "0.9.3"
+  }
+}

@@ -1,0 +1,78 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index d756d3f78..4a96d00cf 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -497,7 +497,7 @@ name = "bench"
+ path = "benches/bench.rs"
+ 
+ [dependencies.bitflags]
+-version = "1.0"
++version = "2.0"
+ default-features = false
+ 
+ [dependencies.byteorder]
+diff --git a/src/wire/dhcpv4.rs b/src/wire/dhcpv4.rs
+index e96d06954..a6728a412 100644
+--- a/src/wire/dhcpv4.rs
++++ b/src/wire/dhcpv4.rs
+@@ -38,6 +38,7 @@ enum_with_unknown! {
+ }
+ 
+ bitflags! {
++    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+     pub struct Flags: u16 {
+         const BROADCAST = 0b1000_0000_0000_0000;
+     }
+diff --git a/src/wire/dns.rs b/src/wire/dns.rs
+index b1f2e030b..f507c941e 100644
+--- a/src/wire/dns.rs
++++ b/src/wire/dns.rs
+@@ -47,6 +47,7 @@ enum_with_unknown! {
+ }
+ 
+ bitflags! {
++    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+     #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+     pub struct Flags: u16 {
+         const RESPONSE            = 0b1000_0000_0000_0000;
+@@ -225,7 +226,7 @@ impl<T: AsRef<[u8]> + AsMut<[u8]>> Packet<T> {
+ 
+     pub fn set_flags(&mut self, val: Flags) {
+         let field = &mut self.buffer.as_mut()[field::FLAGS];
+-        let mask = Flags::all().bits;
++        let mask = Flags::all().bits();
+         let old = NetworkEndian::read_u16(field);
+         NetworkEndian::write_u16(field, (old & !mask) | val.bits());
+     }
+diff --git a/src/wire/ndisc.rs b/src/wire/ndisc.rs
+index c67a42a6a..be9f1114d 100644
+--- a/src/wire/ndisc.rs
++++ b/src/wire/ndisc.rs
+@@ -10,6 +10,7 @@ use crate::wire::{NdiscOption, NdiscOptionRepr};
+ use crate::wire::{NdiscPrefixInformation, NdiscRedirectedHeader};
+ 
+ bitflags! {
++    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+     #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+     pub struct RouterFlags: u8 {
+         const MANAGED = 0b10000000;
+@@ -18,6 +19,7 @@ bitflags! {
+ }
+ 
+ bitflags! {
++    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+     #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+     pub struct NeighborFlags: u8 {
+         const ROUTER    = 0b10000000;
+diff --git a/src/wire/ndiscoption.rs b/src/wire/ndiscoption.rs
+index 4bef77754..887b90553 100644
+--- a/src/wire/ndiscoption.rs
++++ b/src/wire/ndiscoption.rs
+@@ -38,6 +38,7 @@ impl fmt::Display for Type {
+ }
+ 
+ bitflags! {
++    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+     #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+     pub struct PrefixInfoFlags: u8 {
+         const ON_LINK  = 0b10000000;

@@ -1,0 +1,9 @@
+{
+  "package": {
+    "ahash": {
+     "add_module_block": "cargo2android_arch.bp.fragment"
+    }
+  },
+  "min_sdk_version": "29",
+  "cfg_blocklist": ["folded_multiply"]
+}

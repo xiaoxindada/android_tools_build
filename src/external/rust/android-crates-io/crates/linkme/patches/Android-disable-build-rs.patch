@@ -1,0 +1,22 @@
+This crate uses a `build.rs` to generate `OUT_DIR/private.rs` so linkme-impl
+can generate calls into linkme. Rather than hooking build logic up to
+facilitate this, just hardcode `__private_android`. Note this requires a
+corresponding `linkme-impl` patch.
+
+diff --git a/src/lib.rs b/src/lib.rs
+index 314117c..090ee22 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -150,7 +150,11 @@
+ mod distributed_slice;
+ mod private;
+ 
+-include!(concat!(env!("OUT_DIR"), "/private.rs"));
++#[doc(hidden)]
++pub mod __private_android {
++    #[doc(hidden)]
++    pub use crate::private::*;
++}
+ 
+ pub use linkme_impl::*;
+ 

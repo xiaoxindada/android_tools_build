@@ -1,0 +1,94 @@
+{
+  "imports": [
+    {
+      "path": "external/avb/rust"
+    },
+    {
+      "path": "external/mesa3d/src/util/rust"
+    },
+    {
+      "path": "external/mesa3d/src/virtio/protocols"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ahash"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/arm-ffa"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/arm-gic"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/arm-pl011-uart"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/percore"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ppv-lite86"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/safe-mmio"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/virtio-drivers"
+    },
+    {
+      "path": "external/rust/rutabaga_gfx"
+    },
+    {
+      "path": "external/rust/rutabaga_gfx/third_party/mesa3d/src/util/rust"
+    },
+    {
+      "path": "external/rust/rutabaga_gfx/third_party/mesa3d/src/virtio/protocols"
+    },
+    {
+      "path": "packages/modules/UprobeStats/rust/src"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtualizationservice/vfio_handler"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/pvmfw"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/devicemapper"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvmbase"
+    },
+    {
+      "path": "system/desktop/cros-codecs"
+    },
+    {
+      "path": "system/desktop/ec/src/libec"
+    },
+    {
+      "path": "system/desktop/fingerprint/hal"
+    },
+    {
+      "path": "system/desktop/fingerprint/libcrosfp"
+    },
+    {
+      "path": "system/desktop/security/gscutil"
+    },
+    {
+      "path": "system/desktop/security/pinweaver/storage"
+    },
+    {
+      "path": "system/libfmq"
+    },
+    {
+      "path": "system/tools/mkbootimg/rust"
+    },
+    {
+      "path": "system/zygote/zygote"
+    },
+    {
+      "path": "system/zygote/zygote-sys"
+    }
+  ]
+}

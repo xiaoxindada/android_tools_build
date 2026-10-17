@@ -1,0 +1,369 @@
+//! # cov-mark
+//!
+//! This library at its core provides two macros, [`hit!`] and [`check!`],
+//! which can be used to verify that a certain test exercises a certain code
+//! path.
+//!
+//! Here's a short example:
+//!
+//! ```
+//! fn parse_date(s: &str) -> Option<(u32, u32, u32)> {
+//!     if 10 != s.len() {
+//!         // By using `cov_mark::hit!`
+//!         // we signal which test exercises this code.
+//!         cov_mark::hit!(short_date);
+//!         return None;
+//!     }
+//!
+//!     if "-" != &s[4..5] || "-" != &s[7..8] {
+//!         cov_mark::hit!(bad_dashes);
+//!         return None;
+//!     }
+//!     // ...
+//! #    unimplemented!()
+//! }
+//!
+//! #[test]
+//! fn test_parse_date() {
+//!     {
+//!         // `cov_mark::check!` creates a guard object
+//!         // that verifies that by the end of the scope we've
+//!         // executed the corresponding `cov_mark::hit`.
+//!         cov_mark::check!(short_date);
+//!         assert!(parse_date("92").is_none());
+//!     }
+//!
+//! //  This will fail. Although the test looks like
+//! //  it exercises the second condition, it does not.
+//! //  The call to `check!` call catches this bug in the test.
+//! //  {
+//! //      cov_mark::check!(bad_dashes);
+//! //      assert!(parse_date("27.2.2013").is_none());
+//! //  }
+//!
+//!     {
+//!         cov_mark::check!(bad_dashes);
+//!         assert!(parse_date("27.02.2013").is_none());
+//!     }
+//! }
+//!
+//! # fn main() {}
+//! ```
+//!
+//! Here's why coverage marks are useful:
+//!
+//! * Verifying that something doesn't happen for the *right* reason.
+//! * Finding the test that exercises the code (grep for `check!(mark_name)`).
+//! * Finding the code that the test is supposed to check (grep for `hit!(mark_name)`).
+//! * Making sure that code and tests don't diverge during refactorings.
+//! * (If used pervasively) Verifying that each branch has a corresponding test.
+//!
+//! # Limitations
+//!
+//! * Names of marks must be globally unique.
+//!
+//! # Implementation Details
+//!
+//! Each coverage mark is an `AtomicUsize` counter. [`hit!`] increments
+//! this counter, [`check!`] returns a guard object which checks that
+//! the mark was incremented.
+//! Each counter is stored as a thread-local, allowing for accurate per-thread
+//! counting.
+//!
+//! # Porting existing tests to cov-mark
+//!
+//! When incrementally outfitting a set of tests with markers, [`survey`] may be useful.
+
+#![deny(rustdoc::broken_intra_doc_links)]
+#![allow(clippy::test_attr_in_doctest)]
+
+/// Hit a mark with a specified name.
+///
+/// # Example
+///
+/// ```
+/// fn safe_divide(dividend: u32, divisor: u32) -> u32 {
+///     if divisor == 0 {
+///         cov_mark::hit!(safe_divide_zero);
+///         return 0;
+///     }
+///     dividend / divisor
+/// }
+/// ```
+#[macro_export]
+macro_rules! hit {
+    ($ident:ident) => {
+        $crate::__rt::hit(stringify!($ident))
+    };
+}
+
+/// Checks that a specified mark was hit.
+///
+/// # Example
+///
+/// ```
+/// #[test]
+/// fn test_safe_divide_by_zero() {
+///     cov_mark::check!(safe_divide_zero);
+///     assert_eq!(safe_divide(92, 0), 0);
+/// }
+/// # fn safe_divide(dividend: u32, divisor: u32) -> u32 {
+/// #     if divisor == 0 {
+/// #         cov_mark::hit!(safe_divide_zero);
+/// #         return 0;
+/// #     }
+/// #     dividend / divisor
+/// # }
+/// ```
+#[macro_export]
+macro_rules! check {
+    ($ident:ident) => {
+        let _guard = $crate::__rt::Guard::new(stringify!($ident), None, $crate::assert!());
+    };
+}
+
+/// Checks that a specified mark was hit exactly the specified number of times.
+///
+/// # Example
+///
+/// ```
+/// struct CoveredDropper;
+/// impl Drop for CoveredDropper {
+///     fn drop(&mut self) {
+///         cov_mark::hit!(covered_dropper_drops);
+///     }
+/// }
+///
+/// #[test]
+/// fn drop_count_test() {
+///     cov_mark::check_count!(covered_dropper_drops, 2);
+///     let _covered_dropper1 = CoveredDropper;
+///     let _covered_dropper2 = CoveredDropper;
+/// }
+/// ```
+#[macro_export]
+macro_rules! check_count {
+    ($ident:ident, $count: literal) => {
+        let _guard = $crate::__rt::Guard::new(stringify!($ident), Some($count), $crate::assert!());
+    };
+}
+
+/// Survey which marks are hit.
+///
+/// # Example
+///
+/// ```
+/// struct CoveredDropper;
+/// impl Drop for CoveredDropper {
+///     fn drop(&mut self) {
+///         cov_mark::hit!(covered_dropper_drops);
+///     }
+/// }
+///
+/// # fn safe_divide(dividend: u32, divisor: u32) -> u32 {
+/// #     if divisor == 0 {
+/// #         cov_mark::hit!(safe_divide_zero);
+/// #         return 0;
+/// #     }
+/// #     dividend / divisor
+/// # }
+///
+/// #[test]
+/// fn drop_count_test() {
+///     let _survey = cov_mark::survey(); // sets a drop guard that tracks hits
+///     let _covered_dropper1 = CoveredDropper;
+///     let _covered_dropper2 = CoveredDropper;
+///     safe_divide(92, 0);
+///     // prints
+///     // "mark safe_divide_zero ... hit once"
+///     // "mark covered_dropper_drops ... hit 2 times"
+/// }
+/// ```
+pub fn survey() -> __rt::SurveyGuard {
+    __rt::SurveyGuard::new()
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! assert {
+    () => {
+        |expected_hits, hit_count, mark| match expected_hits {
+            Some(hits) => assert!(
+                hit_count == hits,
+                "mark {mark} was hit {hit_count} times, expected {hits}"
+            ),
+            None => assert!(hit_count > 0, "mark {mark} was not hit"),
+        }
+    };
+}
+
+#[doc(hidden)]
+pub type AssertCallback = fn(Option<usize>, usize, &'static str);
+
+#[doc(hidden)]
+#[cfg(feature = "enable")]
+pub mod __rt {
+    use std::{
+        cell::RefCell,
+        sync::atomic::{AtomicUsize, Ordering::Relaxed},
+    };
+
+    use super::AssertCallback;
+
+    /// Even with
+    /// <https://github.com/rust-lang/rust/commit/641d3b09f41b441f2c2618de32983ad3d13ea3f8>,
+    /// a `thread_local` generates significantly more verbose assembly on x86
+    /// than atomic, so we'll use atomic for the fast path
+    static LEVEL: AtomicUsize = AtomicUsize::new(0);
+    const SURVEY_LEVEL: usize = !(usize::MAX >> 1);
+
+    thread_local! {
+        static ACTIVE: RefCell<Vec<GuardInner>> = const { RefCell::new(Vec::new()) };
+        static SURVEY_RESPONSE: RefCell<Vec<GuardInner>> = const { RefCell::new(Vec::new()) };
+    }
+
+    #[inline(always)]
+    pub fn hit(key: &'static str) {
+        let level = LEVEL.load(Relaxed);
+        if level > 0 {
+            if level >= SURVEY_LEVEL {
+                add_to_survey(key);
+            }
+            hit_cold(key);
+        }
+
+        #[cold]
+        fn hit_cold(key: &'static str) {
+            ACTIVE.with(|it| it.borrow_mut().iter_mut().for_each(|g| g.hit(key)))
+        }
+
+        #[cold]
+        fn add_to_survey(mark: &'static str) {
+            SURVEY_RESPONSE.with(|it| {
+                let mut it = it.borrow_mut();
+                for survey in it.iter_mut() {
+                    if survey.mark == mark {
+                        survey.hits = survey.hits.saturating_add(1);
+                        return;
+                    }
+                }
+                it.push(GuardInner {
+                    mark,
+                    hits: 1,
+                    expected_hits: None,
+                });
+            });
+        }
+    }
+
+    #[derive(PartialEq, Eq, PartialOrd, Ord)]
+    struct GuardInner {
+        mark: &'static str,
+        hits: usize,
+        expected_hits: Option<usize>,
+    }
+
+    pub struct Guard {
+        mark: &'static str,
+        f: AssertCallback,
+    }
+
+    impl GuardInner {
+        fn hit(&mut self, key: &'static str) {
+            if key == self.mark {
+                self.hits = self.hits.saturating_add(1);
+            }
+        }
+    }
+
+    impl Guard {
+        // macro expansion inserts a [`AssertCallback`] defined in user code, so the panic location
+        // points to user code instead of cov-mark internals
+        pub fn new(mark: &'static str, expected_hits: Option<usize>, f: AssertCallback) -> Guard {
+            LEVEL.fetch_add(1, Relaxed);
+            ACTIVE.with(|it| {
+                it.borrow_mut().push(GuardInner {
+                    mark,
+                    hits: 0,
+                    expected_hits,
+                })
+            });
+            Guard { mark, f }
+        }
+    }
+
+    impl Drop for Guard {
+        fn drop(&mut self) {
+            LEVEL.fetch_sub(1, Relaxed);
+            let last = ACTIVE.with(|it| it.borrow_mut().pop());
+
+            if std::thread::panicking() {
+                return;
+            }
+
+            let last = last.unwrap();
+            assert_eq!(last.mark, self.mark);
+            let hit_count = last.hits;
+            (self.f)(last.expected_hits, hit_count, self.mark)
+        }
+    }
+
+    pub struct SurveyGuard;
+
+    impl SurveyGuard {
+        #[allow(clippy::new_without_default)]
+        pub fn new() -> SurveyGuard {
+            LEVEL.fetch_or(SURVEY_LEVEL, Relaxed);
+            SurveyGuard
+        }
+    }
+
+    impl Drop for SurveyGuard {
+        fn drop(&mut self) {
+            LEVEL.fetch_and(!SURVEY_LEVEL, Relaxed);
+
+            if std::thread::panicking() {
+                return;
+            }
+
+            SURVEY_RESPONSE.with(|it| {
+                let mut it = it.borrow_mut();
+                it.sort();
+                for g in it.iter() {
+                    let hit_count = g.hits;
+                    if hit_count == 1 {
+                        eprintln!("mark {} ... hit once", g.mark);
+                    } else if 1 < hit_count {
+                        eprintln!("mark {} ... hit {} times", g.mark, hit_count);
+                    }
+                }
+                it.clear();
+            });
+        }
+    }
+}
+
+#[doc(hidden)]
+#[cfg(not(feature = "enable"))]
+pub mod __rt {
+    #[inline(always)]
+    pub fn hit(_: &'static str) {}
+
+    #[non_exhaustive]
+    pub struct Guard;
+
+    impl Guard {
+        pub fn new(_: &'static str, _: Option<usize>, _: super::AssertCallback) -> Guard {
+            Guard
+        }
+    }
+
+    pub struct SurveyGuard;
+
+    impl SurveyGuard {
+        #[allow(clippy::new_without_default)]
+        pub fn new() -> SurveyGuard {
+            SurveyGuard
+        }
+    }
+}

@@ -1,0 +1,17 @@
+name: "lscolors"
+description: "Colorize paths using the LS_COLORS environment variable"
+third_party {
+  version: "0.21.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 12
+    day: 12
+  }
+  homepage: "https://crates.io/crates/lscolors"
+  identifier {
+    type: "crates.io"
+    value: "lscolors"
+    version: "0.21.0"
+  }
+}

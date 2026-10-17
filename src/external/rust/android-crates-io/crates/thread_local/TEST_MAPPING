@@ -1,0 +1,23 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/tracing-subscriber"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vulkano"
+    },
+    {
+      "path": "system/extras/libatrace_rust"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "thread_local_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "thread_local_test_src_lib"
+    }
+  ]
+}

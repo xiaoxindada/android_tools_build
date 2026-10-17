@@ -1,0 +1,17 @@
+name: "displaydoc"
+description: "A derive macro for implementing the display Trait via a doc comment and string interpolation"
+third_party {
+  version: "0.2.6"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 27
+  }
+  homepage: "https://crates.io/crates/displaydoc"
+  identifier {
+    type: "crates.io"
+    value: "displaydoc"
+    version: "0.2.6"
+  }
+}

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+REPO_ROOT=$(realpath $(dirname $0)/../../..)
+${REPO_ROOT}/development/tools/external_crates/android_cargo.py run -q --manifest-path ${REPO_ROOT}/development/tools/external_crates/Cargo.toml -- $*

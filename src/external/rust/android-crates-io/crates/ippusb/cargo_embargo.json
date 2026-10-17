@@ -1,0 +1,8 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "module_name_overrides": {
+    "libhyper": "libhyper-0.14"
+  },
+  "product_available": false
+}

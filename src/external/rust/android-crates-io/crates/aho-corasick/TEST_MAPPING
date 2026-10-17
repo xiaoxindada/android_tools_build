@@ -1,0 +1,20 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/regex"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/regex-automata"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "aho-corasick_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "aho-corasick_test_src_lib"
+    }
+  ]
+}

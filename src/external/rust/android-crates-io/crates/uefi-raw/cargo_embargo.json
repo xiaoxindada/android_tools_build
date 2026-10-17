@@ -1,0 +1,16 @@
+{
+  "run_cargo": false,
+  "module_name_overrides": {
+    "libuefi_raw": "libuefi_raw_nostd",
+    "libuguid": "libuguid_nostd",
+    "libptr_meta": "libptr_meta_nostd"
+  },
+  "package": {
+    "uefi-raw": {
+      "force_rlib": true,
+      "host_supported": false,
+      "no_std": true
+    }
+  },
+  "min_sdk_version": "29"
+}

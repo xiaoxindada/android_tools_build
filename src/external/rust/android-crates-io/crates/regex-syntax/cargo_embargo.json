@@ -1,0 +1,11 @@
+{
+  "run_cargo": false,
+  "tests": true,
+  "min_sdk_version": "29",
+  "package": {
+    "regex-syntax": {
+      "target_windows": true
+    }
+  },
+  "recovery_available": true
+}

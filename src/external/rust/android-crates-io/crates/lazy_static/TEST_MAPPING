@@ -1,0 +1,36 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/config"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/jni"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/lazy_static"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/quiche"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/sharded-slab"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/shared_library"
+    },
+    {
+      "path": "external/rust/beto-rust/common"
+    },
+    {
+      "path": "external/rust/beto-rust/nearby"
+    },
+    {
+      "path": "system/desktop/cros-codecs"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "lazy_static_test_tests_test"
+    }
+  ]
+}

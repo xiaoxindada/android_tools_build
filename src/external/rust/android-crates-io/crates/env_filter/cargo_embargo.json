@@ -1,0 +1,27 @@
+{
+  "min_sdk_version": "29",
+  "run_cargo": false,
+  "features": ["std"],
+  "variants": [
+    {
+      "package": {
+        "env_filter": {
+          "target_windows": true
+        }
+      }
+    },
+    {
+      "module_name_overrides": {
+        "libenv_filter": "libenv_filter_max_level_info",
+        "liblog": "liblog_rust_max_level_info"
+      },
+      "package": {
+        "env_filter": {
+          "target_windows": true
+        }
+      },
+      "tests": false
+    }
+  ],
+  "recovery_available": true
+}

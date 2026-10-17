@@ -1,0 +1,20 @@
+{
+  "module_name_overrides": {
+    "librand": "librand-0.8"
+  },
+  "features": [
+    "net",
+    "os-ext",
+    "os-poll"
+  ],
+  "package": {
+    "mio": {
+      "target_windows": true
+    }
+  },
+  "min_sdk_version": "29",
+  "recovery_available": true,
+  "run_cargo": false,
+  "tests": true,
+  "ota_recovery_ramdisk_available": true
+}

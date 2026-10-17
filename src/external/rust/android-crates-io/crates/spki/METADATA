@@ -1,0 +1,17 @@
+name: "spki"
+description: "X.509 Subject Public Key Info (RFC5280) describing public keys as well as their associated AlgorithmIdentifiers (i.e. OIDs)"
+third_party {
+  version: "0.7.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2023
+    month: 12
+    day: 15
+  }
+  homepage: "https://crates.io/crates/spki"
+  identifier {
+    type: "crates.io"
+    value: "spki"
+    version: "0.7.3"
+  }
+}

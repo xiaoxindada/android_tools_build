@@ -1,0 +1,10 @@
+{
+  "min_sdk_version": "29",
+  "native_bridge_supported": true,
+  "sdk_version": "current",
+  "package": {
+    "foldhash": {
+      "target_windows": true
+    }
+  }
+}

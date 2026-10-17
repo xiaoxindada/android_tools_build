@@ -1,0 +1,17 @@
+name: "parking_lot"
+description: "More compact and efficient implementations of the standard synchronization primitives."
+third_party {
+  version: "0.12.5"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 5
+  }
+  homepage: "https://crates.io/crates/parking_lot"
+  identifier {
+    type: "crates.io"
+    value: "parking_lot"
+    version: "0.12.5"
+  }
+}

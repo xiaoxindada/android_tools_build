@@ -1,0 +1,9 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "features": [
+    "log",
+    "std",
+    "aws-lc-rs"
+  ]
+}

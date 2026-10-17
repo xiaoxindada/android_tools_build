@@ -1,0 +1,17 @@
+name: "aws-lc-rs"
+description: "aws-lc-rs is a cryptographic library using AWS-LC for its cryptographic operations. This library strives to be API-compatible with the popular Rust library named ring."
+third_party {
+  version: "1.17.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 18
+  }
+  homepage: "https://crates.io/crates/aws-lc-rs"
+  identifier {
+    type: "crates.io"
+    value: "aws-lc-rs"
+    version: "1.17.3"
+  }
+}

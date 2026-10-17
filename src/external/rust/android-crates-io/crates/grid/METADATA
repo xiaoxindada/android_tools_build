@@ -1,0 +1,17 @@
+name: "grid"
+description: "Dynamic generic 2D data structure."
+third_party {
+  version: "1.0.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 21
+  }
+  homepage: "https://crates.io/crates/grid"
+  identifier {
+    type: "crates.io"
+    value: "grid"
+    version: "1.0.1"
+  }
+}

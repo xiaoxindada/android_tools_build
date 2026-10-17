@@ -1,0 +1,17 @@
+name: "profiling-procmacros"
+description: "This crate provides a very thin abstraction over other profiler crates."
+third_party {
+  version: "1.0.18"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 25
+  }
+  homepage: "https://crates.io/crates/profiling-procmacros"
+  identifier {
+    type: "crates.io"
+    value: "profiling-procmacros"
+    version: "1.0.18"
+  }
+}

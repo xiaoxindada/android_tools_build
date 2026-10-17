@@ -1,0 +1,21 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/ahash"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/getrandom"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rand_core"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "getrandom_test_tests_mod"
+    },
+    {
+      "name": "getrandom_test_tests_sys_rng"
+    }
+  ]
+}

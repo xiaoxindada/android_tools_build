@@ -1,0 +1,17 @@
+name: "futures-executor"
+description: "Executors for asynchronous tasks based on the futures-rs library."
+third_party {
+  version: "0.3.34"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 21
+  }
+  homepage: "https://crates.io/crates/futures-executor"
+  identifier {
+    type: "crates.io"
+    value: "futures-executor"
+    version: "0.3.34"
+  }
+}

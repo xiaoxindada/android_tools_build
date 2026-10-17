@@ -1,0 +1,12 @@
+diff --git a/src/lib.rs b/src/lib.rs
+index 1111111..2222222 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -3,6 +3,7 @@
+ #![crate_type = "proc-macro"]
+ #![forbid(unsafe_code)]
+ #![warn(trivial_casts, unused_qualifications)]
++extern crate proc_macro;
+ 
+ use proc_macro2::{Ident, TokenStream};
+ use quote::{format_ident, quote};

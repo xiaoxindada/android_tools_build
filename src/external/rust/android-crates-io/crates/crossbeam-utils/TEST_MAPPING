@@ -1,0 +1,68 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/crossbeam-channel"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crossbeam-deque"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crossbeam-epoch"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crossbeam-queue"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crossbeam-utils"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rayon-core"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "crossbeam-utils_test_src_lib"
+    },
+    {
+      "name": "crossbeam-utils_test_tests_atomic_cell"
+    },
+    {
+      "name": "crossbeam-utils_test_tests_cache_padded"
+    },
+    {
+      "name": "crossbeam-utils_test_tests_parker"
+    },
+    {
+      "name": "crossbeam-utils_test_tests_sharded_lock"
+    },
+    {
+      "name": "crossbeam-utils_test_tests_thread"
+    },
+    {
+      "name": "crossbeam-utils_test_tests_wait_group"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "crossbeam-utils_test_src_lib"
+    },
+    {
+      "name": "crossbeam-utils_test_tests_atomic_cell"
+    },
+    {
+      "name": "crossbeam-utils_test_tests_cache_padded"
+    },
+    {
+      "name": "crossbeam-utils_test_tests_parker"
+    },
+    {
+      "name": "crossbeam-utils_test_tests_sharded_lock"
+    },
+    {
+      "name": "crossbeam-utils_test_tests_thread"
+    },
+    {
+      "name": "crossbeam-utils_test_tests_wait_group"
+    }
+  ]
+}

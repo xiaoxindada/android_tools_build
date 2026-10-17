@@ -1,0 +1,51 @@
+diff --git a/src/android.rs b/src/android.rs
+new file mode 100644
+index 000000000..308a84cd6
+--- /dev/null
++++ b/src/android.rs
+@@ -0,0 +1,9 @@
++use crate::{CertPaths, CertificateResult};
++
++pub fn load_native_certs() -> CertificateResult {
++    CertPaths {
++        file: None,
++        dirs: vec!["/apex/com.android.conscrypt/cacerts".into()],
++    }
++    .load()
++}
+diff --git a/src/lib.rs b/src/lib.rs
+index 0f63db483..cabc14027 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -28,11 +28,16 @@ use std::{env, fmt, fs, io};
+ use pki_types::pem::{self, PemObject};
+ use pki_types::CertificateDer;
+ 
+-#[cfg(all(unix, not(target_os = "macos")))]
++#[cfg(all(unix, not(any(target_os = "macos", target_os = "android"))))]
+ mod unix;
+-#[cfg(all(unix, not(target_os = "macos")))]
++#[cfg(all(unix, not(any(target_os = "macos", target_os = "android"))))]
+ use unix as platform;
+ 
++#[cfg(target_os = "android")]
++mod android;
++#[cfg(target_os = "android")]
++use android as platform;
++
+ #[cfg(windows)]
+ mod windows;
+ #[cfg(windows)]
+diff --git a/Cargo.toml b/Cargo.toml
+index 415266fbb..849ebec85 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -79,7 +79,7 @@ version = "1"
+ [dev-dependencies.x509-parser]
+ version = "0.18"
+ 
+-[target.'cfg(all(unix, not(target_os = "macos")))'.dependencies.openssl-probe]
++[target.'cfg(all(unix, not(any(target_os = "macos", target_os = "android"))))'.dependencies.openssl-probe]
+ version = "0.2"
+ 
+ [target.'cfg(target_os = "macos")'.dependencies.security-framework]

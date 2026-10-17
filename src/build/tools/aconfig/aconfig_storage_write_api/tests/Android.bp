@@ -1,0 +1,22 @@
+package {
+    default_team: "trendy_team_android_core_experiments",
+}
+
+rust_test {
+    name: "aconfig_storage_write_api.test.rust",
+    srcs: [
+        "storage_write_api_test.rs",
+    ],
+    rustlibs: [
+        "libanyhow",
+        "libaconfig_storage_file",
+        "libaconfig_storage_read_api",
+        "libaconfig_storage_write_api",
+        "libprotobuf",
+        "libtempfile",
+    ],
+    data: [
+        ":test_storage_files",
+    ],
+    test_suites: ["general-tests"],
+}

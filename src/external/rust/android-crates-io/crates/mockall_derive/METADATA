@@ -1,0 +1,17 @@
+name: "mockall_derive"
+description: "Procedural macros for Mockall"
+third_party {
+  version: "0.15.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 6
+  }
+  homepage: "https://crates.io/crates/mockall_derive"
+  identifier {
+    type: "crates.io"
+    value: "mockall_derive"
+    version: "0.15.0"
+  }
+}

@@ -1,0 +1,11 @@
+[package]
+authors = ["Jorge Aparicio <jorge@japaric.io>"]
+categories = ["no-std"]
+description = "32-bit hashing algorithms"
+keywords = ["32-bit", "hash", "fnv", "murmur3"]
+license = "MIT OR Apache-2.0"
+name = "hash32"
+repository = "https://github.com/rust-embedded-community/hash32"
+version = "1.0.0"
+edition = "2021"
+rust-version = "1.56"

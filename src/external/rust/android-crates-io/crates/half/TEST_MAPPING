@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/ciborium-ll"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde_cbor"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vulkano"
+    }
+  ]
+}

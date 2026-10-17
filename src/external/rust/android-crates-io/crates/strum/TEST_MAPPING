@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/beto-rust/nearby"
+    },
+    {
+      "path": "system/desktop/ec/src/libec"
+    },
+    {
+      "path": "system/secure_element/omapi"
+    }
+  ]
+}

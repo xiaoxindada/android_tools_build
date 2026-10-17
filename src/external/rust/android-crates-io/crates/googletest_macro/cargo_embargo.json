@@ -1,0 +1,11 @@
+{
+  "package": {
+    "googletest_macro": {
+      "license_text": [
+        "LICENSE"
+      ]
+    }
+  },
+  "tests": true,
+  "min_sdk_version": "29"
+}

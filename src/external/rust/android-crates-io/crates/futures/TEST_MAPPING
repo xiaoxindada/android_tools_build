@@ -1,0 +1,43 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/anyhow"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/debug_tree"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures-channel"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures-executor"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mls-rs"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/netlink-proto"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/netlink-sys"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rtnetlink"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio"
+    },
+    {
+      "path": "external/rust/pica"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/tools/casimir"
+    },
+    {
+      "path": "system/libueventd-rs"
+    },
+    {
+      "path": "tools/netsim"
+    }
+  ]
+}

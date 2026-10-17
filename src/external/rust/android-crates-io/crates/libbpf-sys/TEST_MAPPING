@@ -1,0 +1,10 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/libbpf-rs"
+    },
+    {
+      "path": "system/bpf/loader"
+    }
+  ]
+}

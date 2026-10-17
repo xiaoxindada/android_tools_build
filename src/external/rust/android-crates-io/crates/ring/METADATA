@@ -1,0 +1,17 @@
+name: "ring"
+description: "Safe, fast, small crypto using Rust."
+third_party {
+  version: "0.17.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 11
+    day: 5
+  }
+  homepage: "https://crates.io/crates/ring"
+  identifier {
+    type: "crates.io"
+    value: "ring"
+    version: "0.17.2"
+  }
+}

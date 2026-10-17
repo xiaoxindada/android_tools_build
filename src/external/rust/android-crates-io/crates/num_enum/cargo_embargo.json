@@ -1,0 +1,16 @@
+{
+  "run_cargo": false,
+  "tests": false,
+  "min_sdk_version": "29",
+  "variants": [
+    {},
+    {
+      "features": [],
+      "package": {
+        "num_enum": {
+          "no_std": true
+	}
+      }
+    }
+  ]
+}

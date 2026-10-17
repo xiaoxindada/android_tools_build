@@ -1,0 +1,5 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "module_name_overrides": {"cat": "os_pipe_cat"}
+}

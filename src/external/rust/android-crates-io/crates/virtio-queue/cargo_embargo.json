@@ -1,0 +1,20 @@
+{
+  "module_name_overrides": {
+    "libvm_memory": "libvm_memory_android"
+  },
+  "features":  [
+    "test-utils"
+  ],
+  "package": {
+    "virtio-queue": {
+      "device_supported": true,
+      "host_first_multilib": true,
+      "license_text": [
+        "LICENSE-APACHE",
+        "LICENSE-BSD-3-Clause"
+      ]
+    }
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

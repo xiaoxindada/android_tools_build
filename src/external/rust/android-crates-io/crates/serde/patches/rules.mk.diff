@@ -1,0 +1,23 @@
+diff --git a/rules.mk b/rules.mk
+index 31951ffcb..ddf458078 100644
+--- a/rules.mk
++++ b/rules.mk
+@@ -28,10 +28,17 @@ MODULE_RUSTFLAGS += \
+ 	--cfg 'feature="default"' \
+ 	--cfg 'feature="derive"' \
+ 	--cfg 'feature="serde_derive"' \
+-	--cfg 'feature="std"' \
+ 	--cfg 'if_docsrs_then_no_serde_core'
+ 
++ifeq ($(call TOBOOL,$(TRUSTY_USERSPACE)),true)
++
++MODULE_RUSTFLAGS += \
++	--cfg 'feature="std"' \
++
++endif
++
+ MODULE_LIBRARY_DEPS := \
++	trusty/user/base/lib/liballoc-rust \
+ 	$(call FIND_CRATE,serde_core) \
+ 	$(call FIND_CRATE,serde_derive)
+ 

@@ -1,0 +1,7 @@
+{
+  "run_cargo": false,
+  "module_name_overrides": {
+    "libbrotli": "libbrotli_rs"
+  },
+  "min_sdk_version": "29"
+}

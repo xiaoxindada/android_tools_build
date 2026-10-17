@@ -1,0 +1,17 @@
+{
+  "features": [
+    "default",
+    "tags"
+  ],
+  "tests": true,
+  "min_sdk_version": "29",
+  "package": {
+    "serde_cbor": {
+      "srcs": [
+        "src/**/*.rs",
+        "tests/crash.cbor",
+        "tests/kietaub.cbor"
+      ]
+    }
+  }
+}

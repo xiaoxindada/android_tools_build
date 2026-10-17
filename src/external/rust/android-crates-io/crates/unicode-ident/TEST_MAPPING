@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/proc-macro2"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/strck"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/syn"
+    }
+  ]
+}

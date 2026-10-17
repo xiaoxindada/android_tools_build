@@ -1,0 +1,23 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/icu_capi"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/icu_properties"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/idna"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "unicode-bidi_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "unicode-bidi_test_src_lib"
+    }
+  ]
+}

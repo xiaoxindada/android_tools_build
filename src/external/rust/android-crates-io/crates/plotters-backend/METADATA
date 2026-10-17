@@ -1,0 +1,17 @@
+name: "plotters-backend"
+description: "Plotters Backend API"
+third_party {
+  version: "0.3.7"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 12
+    day: 20
+  }
+  homepage: "https://crates.io/crates/plotters-backend"
+  identifier {
+    type: "crates.io"
+    value: "plotters-backend"
+    version: "0.3.7"
+  }
+}

@@ -1,0 +1,17 @@
+name: "image-webp"
+description: "WebP encoding and decoding in pure Rust"
+third_party {
+  version: "0.2.4"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 16
+  }
+  homepage: "https://crates.io/crates/image-webp"
+  identifier {
+    type: "crates.io"
+    value: "image-webp"
+    version: "0.2.4"
+  }
+}

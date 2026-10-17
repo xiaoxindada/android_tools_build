@@ -1,0 +1,31 @@
+{
+  "imports": [
+    {
+      "path": "packages/modules/Virtualization/android/forwarder_host"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtualizationservice"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libforwarder"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libservice_vm_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvm_payload"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/old_images_avf_test"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vts"
+    }
+  ]
+}

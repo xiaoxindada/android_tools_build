@@ -1,0 +1,17 @@
+name: "ptr_meta_derive"
+description: "Proc macros for ptr_meta"
+third_party {
+  version: "0.3.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 10
+    day: 21
+  }
+  homepage: "https://crates.io/crates/ptr_meta_derive"
+  identifier {
+    type: "crates.io"
+    value: "ptr_meta_derive"
+    version: "0.3.1"
+  }
+}

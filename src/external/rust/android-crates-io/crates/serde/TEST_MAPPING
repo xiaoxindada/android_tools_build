@@ -1,0 +1,229 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/axum"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/bincode"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/bytes"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/camino"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/cargo-platform"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/cargo_metadata"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/cargo_toml"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/chrono"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ciborium"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/cidr"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/config"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crates-index"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/criterion"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/csv"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/dc_bundle"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/dc_layout"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/diplomat_core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/handlebars"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/hex"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/indexmap"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/litemap"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/macaddr"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/p9"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pdl-compiler"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/potential_utf"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/semver"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde-xml-rs"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde_bytes"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde_cbor"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde_json"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde_spanned"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde_test"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde_yaml"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/slab"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/smol_str"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tinytemplate"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/toml"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/toml_datetime"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/toml_edit"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/uguid"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/url"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/uuid"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/webpki"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/yoke"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/zerotrie"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/zerovec"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/bitflags"
+    },
+    {
+      "path": "external/rust/beto-rust/betosync"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vhost-device-vsock"
+    },
+    {
+      "path": "external/rust/pica"
+    },
+    {
+      "path": "external/rust/rutabaga_gfx"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtualizationservice"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/service_vm/requests"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apkverify"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/cborutil"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/dice/open_dice"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libmicrodroid_payload_metadata/config"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libservice_vm_comm"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/vmconfig"
+    },
+    {
+      "path": "system/core/init/libprefetch/prefetch"
+    },
+    {
+      "path": "system/desktop/ec/src/libec"
+    },
+    {
+      "path": "system/desktop/fingerprint/hal"
+    },
+    {
+      "path": "system/desktop/security/pinweaver/storage"
+    },
+    {
+      "path": "system/extras/profcollectd/libprofcollectd"
+    },
+    {
+      "path": "system/secure_element/omapi"
+    },
+    {
+      "path": "system/security/keystore2"
+    },
+    {
+      "path": "system/security/keystore2/test_utils"
+    },
+    {
+      "path": "system/security/keystore2/tests"
+    },
+    {
+      "path": "system/security/keystore2/tests/legacy_blobs"
+    },
+    {
+      "path": "system/tools/aidl/scripts/redundancy_check"
+    },
+    {
+      "path": "tools/asuite/adevice"
+    }
+  ]
+}

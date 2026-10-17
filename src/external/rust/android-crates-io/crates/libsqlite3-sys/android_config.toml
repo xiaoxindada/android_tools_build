@@ -1,0 +1,5 @@
+deletions = [
+  # We use the code in external/sqlite, so we don't need these directories
+  "sqlite3",
+  "sqlcipher"
+]

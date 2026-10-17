@@ -1,0 +1,28 @@
+{
+  "imports": [
+    {
+      "path": "packages/modules/Virtualization/guest/pvmfw"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libfdt"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvm_payload"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvmbase"
+    },
+    {
+      "path": "system/desktop/cros-codecs"
+    },
+    {
+      "path": "system/extras/libatrace_rust"
+    },
+    {
+      "path": "system/zygote/zygote"
+    },
+    {
+      "path": "system/zygote/zygote-sys"
+    }
+  ]
+}

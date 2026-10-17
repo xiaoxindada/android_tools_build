@@ -1,0 +1,24 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/arm-gic"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/arm-pl011-uart"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/virtio-drivers"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvmbase"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "safe-mmio_test_src_lib"
+    },
+    {
+      "name": "safe-mmio_test_tests_custom_mmio"
+    }
+  ]
+}

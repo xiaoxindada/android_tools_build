@@ -1,0 +1,17 @@
+name: "ucs2"
+description: "UCS-2 decoding and encoding functions"
+third_party {
+  version: "0.3.3"
+  license_type: RECIPROCAL
+  last_upgrade_date {
+    year: 2024
+    month: 11
+    day: 4
+  }
+  homepage: "https://crates.io/crates/ucs2"
+  identifier {
+    type: "crates.io"
+    value: "ucs2"
+    version: "0.3.3"
+  }
+}

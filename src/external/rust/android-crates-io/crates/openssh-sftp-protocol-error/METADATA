@@ -1,0 +1,17 @@
+name: "openssh-sftp-protocol-error"
+description: "Data format used to communicate with openssh mux server."
+third_party {
+  version: "0.1.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 8
+  }
+  homepage: "https://crates.io/crates/openssh-sftp-protocol-error"
+  identifier {
+    type: "crates.io"
+    value: "openssh-sftp-protocol-error"
+    version: "0.1.1"
+  }
+}

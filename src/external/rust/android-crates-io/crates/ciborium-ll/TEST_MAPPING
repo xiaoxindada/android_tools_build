@@ -1,0 +1,17 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/ciborium"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "ciborium-ll_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "ciborium-ll_test_src_lib"
+    }
+  ]
+}

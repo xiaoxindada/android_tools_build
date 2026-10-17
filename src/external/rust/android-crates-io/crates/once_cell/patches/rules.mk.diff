@@ -1,0 +1,33 @@
+diff --git a/rules.mk b/rules.mk
+index d9b6b71f..1bb39ffc 100644
+--- a/rules.mk
++++ b/rules.mk
+@@ -8,17 +8,26 @@ MODULE := $(LOCAL_DIR)
+ MODULE_CRATE_NAME := once_cell
+ MODULE_RUST_CRATE_TYPES := rlib
+ MODULE_SRCS := $(LOCAL_DIR)/src/lib.rs
+-MODULE_ADD_IMPLICIT_DEPS := false
+ MODULE_RUST_EDITION := 2021
+ MODULE_RUSTFLAGS += \
+ 	--cfg 'feature="alloc"' \
+ 	--cfg 'feature="default"' \
+ 	--cfg 'feature="race"' \
+-	--cfg 'feature="std"'
++
++ifeq ($(call TOBOOL,$(TRUSTY_USERSPACE)),true)
++
++MODULE_RUSTFLAGS += \
++	--cfg 'feature="std"' \
++
++else
++
++MODULE_ADD_IMPLICIT_DEPS := false
+
+ MODULE_LIBRARY_DEPS := \
+ 	trusty/user/base/lib/liballoc-rust \
+ 	trusty/user/base/lib/libcompiler_builtins-rust \
+ 	trusty/user/base/lib/libcore-rust
+
++endif
++
+ include make/library.mk

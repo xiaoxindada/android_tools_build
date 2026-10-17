@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvmclient"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/authfs/common"
+    }
+  ]
+}

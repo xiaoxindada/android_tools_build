@@ -1,0 +1,17 @@
+name: "binrw"
+description: "A Rust crate for helping read structs from binary data using \342\234\250macro magic\342\234\250"
+third_party {
+  version: "0.15.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 24
+  }
+  homepage: "https://crates.io/crates/binrw"
+  identifier {
+    type: "crates.io"
+    value: "binrw"
+    version: "0.15.2"
+  }
+}

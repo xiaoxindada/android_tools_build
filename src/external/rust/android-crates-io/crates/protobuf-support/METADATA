@@ -1,0 +1,17 @@
+name: "protobuf-support"
+description: "Code supporting protobuf implementation. None of code in this crate is public API."
+third_party {
+  version: "3.7.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 10
+    day: 27
+  }
+  homepage: "https://crates.io/crates/protobuf-support"
+  identifier {
+    type: "crates.io"
+    value: "protobuf-support"
+    version: "3.7.2"
+  }
+}

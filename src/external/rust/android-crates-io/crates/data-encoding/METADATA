@@ -1,0 +1,17 @@
+name: "data-encoding"
+description: "Efficient and customizable data-encoding functions like base64, base32, and hex"
+third_party {
+  version: "2.11.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 4
+  }
+  homepage: "https://crates.io/crates/data-encoding"
+  identifier {
+    type: "crates.io"
+    value: "data-encoding"
+    version: "2.11.1"
+  }
+}

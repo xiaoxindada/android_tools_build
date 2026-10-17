@@ -1,0 +1,8 @@
+name: "external/rust/android-crates-io"
+description: "Third-party Rust crates. go/maintaining_rust_crates_at_scale"
+third_party: {
+  type: GROUP
+  group: {
+   approval: "b/303584371"
+  }
+}

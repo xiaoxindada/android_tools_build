@@ -1,0 +1,17 @@
+name: "litrs"
+description: "Parse and inspect Rust literals (i.e. tokens in the Rust programming language representing fixed values). Particularly useful for proc macros, but can also be used outside of a proc-macro context."
+third_party {
+  version: "1.0.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 10
+    day: 21
+  }
+  homepage: "https://crates.io/crates/litrs"
+  identifier {
+    type: "crates.io"
+    value: "litrs"
+    version: "1.0.0"
+  }
+}

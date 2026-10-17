@@ -1,0 +1,13 @@
+{
+  "features": [
+    "all"
+  ],
+  "package": {
+    "socket2": {
+      "target_windows": true
+    }
+  },
+  "min_sdk_version": "29",
+  "run_cargo": false,
+  "ota_recovery_ramdisk_available": true
+}

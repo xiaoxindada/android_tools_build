@@ -1,0 +1,17 @@
+name: "crc"
+description: "Rust implementation of CRC with support of various standards"
+third_party {
+  version: "3.4.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 27
+  }
+  homepage: "https://crates.io/crates/crc"
+  identifier {
+    type: "crates.io"
+    value: "crc"
+    version: "3.4.0"
+  }
+}

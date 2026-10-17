@@ -1,0 +1,34 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/rand"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rand_chacha"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rand_xorshift"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "rand_core_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "rand_core_test_src_lib"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "rand_core_test_tests_block"
+    },
+    {
+      "name": "rand_core_test_tests_mod"
+    },
+    {
+      "name": "rand_core_test_tests_utils"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+    "package": {
+        "aarch64-rt": {
+            "no_std": true,
+            "host_supported": false,
+            "add_module_block": "cargo2android_module.bp.fragment",
+            "enabled": false
+        }
+    },
+    "run_cargo": false,
+    "min_sdk_version": "29",
+    "features": [
+        "exceptions"
+    ],
+    "tests": false
+}

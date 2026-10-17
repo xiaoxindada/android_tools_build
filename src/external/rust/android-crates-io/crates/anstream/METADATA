@@ -1,0 +1,17 @@
+name: "anstream"
+description: "IO stream adapters for writing colored text that will gracefully degrade according to your terminal\'s capabilities."
+third_party {
+  version: "1.0.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 29
+  }
+  homepage: "https://crates.io/crates/anstream"
+  identifier {
+    type: "crates.io"
+    value: "anstream"
+    version: "1.0.0"
+  }
+}

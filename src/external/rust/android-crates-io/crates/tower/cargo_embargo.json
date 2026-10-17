@@ -1,0 +1,24 @@
+{
+  "features":[
+    "balance",
+    "buffer",
+    "discover",
+    "futures-core",
+    "futures-util",
+    "indexmap",
+    "limit",
+    "load",
+    "load-shed",
+    "make",
+    "ready-cache",
+    "retry",
+    "slab",
+    "timeout",
+    "tokio",
+    "tokio-util",
+    "tracing",
+    "util"
+  ],
+  "run_cargo":false,
+  "min_sdk_version": "29"
+}

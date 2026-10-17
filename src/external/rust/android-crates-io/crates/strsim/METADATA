@@ -1,0 +1,17 @@
+name: "strsim"
+description: "Implementations of string similarity metrics. Includes Hamming, Levenshtein, OSA, Damerau-Levenshtein, Jaro, Jaro-Winkler, and S\303\270rensen-Dice."
+third_party {
+  version: "0.11.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 10
+    day: 2
+  }
+  homepage: "https://crates.io/crates/strsim"
+  identifier {
+    type: "crates.io"
+    value: "strsim"
+    version: "0.11.1"
+  }
+}

@@ -1,0 +1,17 @@
+name: "transpose"
+description: "Utility for transposing multi-dimensional data"
+third_party {
+  version: "0.2.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 13
+  }
+  homepage: "https://crates.io/crates/transpose"
+  identifier {
+    type: "crates.io"
+    value: "transpose"
+    version: "0.2.3"
+  }
+}

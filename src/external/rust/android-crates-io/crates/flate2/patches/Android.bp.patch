@@ -1,0 +1,44 @@
+diff --git a/Android.bp b/Android.bp
+index 01b3f6f..444f861 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -15,7 +15,6 @@ license {
+ 
+ rust_test {
+     name: "flate2_test_src_lib",
+-    host_supported: true,
+     crate_name: "flate2",
+     cargo_env_compat: true,
+     cargo_pkg_version: "1.0.28",
+@@ -42,7 +41,6 @@ rust_test {
+ 
+ rust_test {
+     name: "flate2_test_tests_early-flush",
+-    host_supported: true,
+     crate_name: "early_flush",
+     cargo_env_compat: true,
+     cargo_pkg_version: "1.0.28",
+@@ -70,7 +68,6 @@ rust_test {
+ 
+ rust_test {
+     name: "flate2_test_tests_empty-read",
+-    host_supported: true,
+     crate_name: "empty_read",
+     cargo_env_compat: true,
+     cargo_pkg_version: "1.0.28",
+@@ -98,7 +95,6 @@ rust_test {
+ 
+ rust_test {
+     name: "flate2_test_tests_gunzip",
+-    host_supported: true,
+     crate_name: "gunzip",
+     cargo_env_compat: true,
+     cargo_pkg_version: "1.0.28",
+@@ -133,7 +129,6 @@ rust_test {
+ 
+ rust_test {
+     name: "flate2_test_tests_zero-write",
+-    host_supported: true,
+     crate_name: "zero_write",
+     cargo_env_compat: true,
+     cargo_pkg_version: "1.0.28",

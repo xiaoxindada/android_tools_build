@@ -1,0 +1,21 @@
+rust_bindgen {
+    name: "libgiflib_bindings",
+    wrapper_src: "gif_lib.h",
+    crate_name: "giflib_bindings",
+    source_stem: "c_types_gen",
+    bindgen_flags: [
+        "--rustified-enum=GifRecordType",
+        "--default-macro-constant-type=signed",
+        "--ignore-functions",
+    ],
+
+    host_supported: true,
+    product_available: true,
+    vendor_available: true,
+    target: {
+        windows: {
+            enabled: true,
+        },
+    },
+}
+

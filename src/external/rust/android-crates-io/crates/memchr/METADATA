@@ -1,0 +1,17 @@
+name: "memchr"
+description: "Provides extremely fast (uses SIMD on x86_64, aarch64 and wasm32) routines for 1, 2 or 3 byte search and single substring search."
+third_party {
+  version: "2.8.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 8
+  }
+  homepage: "https://crates.io/crates/memchr"
+  identifier {
+    type: "crates.io"
+    value: "memchr"
+    version: "2.8.3"
+  }
+}

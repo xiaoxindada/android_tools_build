@@ -1,0 +1,187 @@
+//! VirtIO guest drivers.
+//!
+//! These drivers can be used by bare-metal code (such as a bootloader or OS kernel) running in a VM
+//! to interact with VirtIO devices provided by the VMM (such as QEMU or crosvm).
+//!
+//! # Usage
+//!
+//! You must first implement the [`Hal`] trait, to allocate DMA regions and translate between
+//! physical addresses (as seen by devices) and virtual addresses (as seen by your program). You can
+//! then construct the appropriate transport for the VirtIO device, e.g. for an MMIO device (perhaps
+//! discovered from the device tree):
+//!
+//! ```
+//! use core::ptr::NonNull;
+//! use virtio_drivers_and_devices::transport::mmio::{MmioTransport, VirtIOHeader};
+//!
+//! # fn example(mmio_device_address: usize, mmio_size: usize) {
+//! let header = NonNull::new(mmio_device_address as *mut VirtIOHeader).unwrap();
+//! let transport = unsafe { MmioTransport::new(header, mmio_size) }.unwrap();
+//! # }
+//! ```
+//!
+//! You can then check what kind of VirtIO device it is and construct the appropriate driver:
+//!
+//! ```
+//! # use virtio_drivers_and_devices::Hal;
+//! use virtio_drivers_and_devices::{
+//!     device::console::VirtIOConsole,
+//!     transport::{mmio::MmioTransport, DeviceType, Transport},
+//! };
+
+//!
+//! # fn example<HalImpl: Hal>(transport: MmioTransport) {
+//! if transport.device_type() == DeviceType::Console {
+//!     let mut console = VirtIOConsole::<HalImpl, _>::new(transport).unwrap();
+//!     // Send a byte to the console.
+//!     console.send(b'H').unwrap();
+//! }
+//! # }
+//! ```
+
+#![cfg_attr(not(test), no_std)]
+#![deny(unused_must_use, missing_docs, clippy::undocumented_unsafe_blocks)]
+#![allow(clippy::identity_op)]
+#![allow(dead_code)]
+
+extern crate alloc;
+
+mod config;
+pub mod device;
+#[cfg(feature = "embedded-io")]
+mod embedded_io;
+mod hal;
+mod queue;
+pub mod transport;
+mod volatile;
+
+use core::ptr::{self, NonNull};
+use device::socket::SocketError;
+use thiserror::Error;
+
+pub use self::hal::{BufferDirection, DeviceHal, Hal, PhysAddr};
+
+/// The page size in bytes supported by the library (4 KiB).
+pub const PAGE_SIZE: usize = 0x1000;
+
+/// The type returned by driver methods.
+pub type Result<T = ()> = core::result::Result<T, Error>;
+
+/// The error type of VirtIO drivers.
+#[derive(Copy, Clone, Debug, Eq, Error, PartialEq)]
+pub enum Error {
+    /// There are not enough descriptors available in the virtqueue, try again later.
+    #[error("Virtqueue is full")]
+    QueueFull,
+    /// The device is not ready.
+    #[error("Device not ready")]
+    NotReady,
+    /// The device used a different descriptor chain to the one we were expecting.
+    #[error("Device used a different descriptor chain to the one we were expecting")]
+    WrongToken,
+    /// The queue is already in use.
+    #[error("Virtqueue is already in use")]
+    AlreadyUsed,
+    /// Invalid parameter.
+    #[error("Invalid parameter")]
+    InvalidParam,
+    /// Failed to allocate DMA memory.
+    #[error("Failed to allocate DMA memory")]
+    DmaError,
+    /// I/O error
+    #[error("I/O error")]
+    IoError,
+    /// The request was not supported by the device.
+    #[error("Request not supported by device")]
+    Unsupported,
+    /// The config space advertised by the device is smaller than the driver expected.
+    #[error("Config space advertised by the device is smaller than expected")]
+    ConfigSpaceTooSmall,
+    /// The device doesn't have any config space, but the driver expects some.
+    #[error("The device doesn't have any config space, but the driver expects some")]
+    ConfigSpaceMissing,
+    /// Error from the socket device.
+    #[error("Error from the socket device: {0}")]
+    SocketDeviceError(#[from] SocketError),
+    /// Invalid descriptor or descriptor chain.
+    #[error("Popped an invalid descriptor or descriptor chain")]
+    InvalidDescriptor,
+}
+
+impl From<alloc::string::FromUtf8Error> for Error {
+    fn from(_value: alloc::string::FromUtf8Error) -> Self {
+        Self::IoError
+    }
+}
+
+/// A generic lock trait which protects a value of type `T`.
+pub trait Lock<T>: Send + Sync {
+    /// A guard which releases the lock when dropped.
+    type Guard<'a>: core::ops::DerefMut<Target = T>
+    where
+        Self: 'a,
+        T: 'a;
+
+    /// Wraps the given value in a new lock.
+    fn new(data: T) -> Self;
+
+    /// Locks the value and returns a mutable guard to it.
+    fn lock(&self) -> Self::Guard<'_>;
+}
+
+/// A generic factory trait allowing one lock type parameter to wrap multiple distinct inner types.
+pub trait LockFactory {
+    /// The lock type used to protect values of type `T`.
+    type Lock<T>: Lock<T>
+    where
+        T: Send;
+}
+
+/// A [`Lock`] backed by a [`spin::mutex::SpinMutex`].
+#[cfg(feature = "spin")]
+pub struct SpinLock<T>(spin::mutex::SpinMutex<T>);
+
+#[cfg(feature = "spin")]
+impl<T: Send> Lock<T> for SpinLock<T> {
+    type Guard<'a>
+        = spin::mutex::SpinMutexGuard<'a, T>
+    where
+        Self: 'a,
+        T: 'a;
+
+    fn new(data: T) -> Self {
+        Self(spin::mutex::SpinMutex::new(data))
+    }
+
+    fn lock(&self) -> Self::Guard<'_> {
+        self.0.lock()
+    }
+}
+
+/// A [`LockFactory`] which produces [`SpinLock`]s.
+#[cfg(feature = "spin")]
+pub struct SpinLockFactory;
+
+#[cfg(feature = "spin")]
+impl LockFactory for SpinLockFactory {
+    type Lock<T>
+        = SpinLock<T>
+    where
+        T: Send;
+}
+
+/// Align `size` up to a page.
+fn align_up(size: usize) -> usize {
+    (size + PAGE_SIZE) & !(PAGE_SIZE - 1)
+}
+
+/// The number of pages required to store `size` bytes, rounded up to a whole number of pages.
+fn pages(size: usize) -> usize {
+    size.div_ceil(PAGE_SIZE)
+}
+
+// TODO: Use NonNull::slice_from_raw_parts once it is stable.
+/// Creates a non-null raw slice from a non-null thin pointer and length.
+fn nonnull_slice_from_raw_parts<T>(data: NonNull<T>, len: usize) -> NonNull<[T]> {
+    NonNull::new(ptr::slice_from_raw_parts_mut(data.as_ptr(), len)).unwrap()
+}

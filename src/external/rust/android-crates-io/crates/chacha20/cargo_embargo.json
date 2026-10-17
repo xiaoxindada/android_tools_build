@@ -1,0 +1,13 @@
+{
+  "features": [
+    "rng"
+  ],
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "ota_recovery_ramdisk_available": true,
+  "package": {
+    "chacha20": {
+      "add_module_block": "target_deps.bp.fragment"
+    }
+  }
+}

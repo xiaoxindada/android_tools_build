@@ -1,0 +1,17 @@
+name: "serde_derive"
+description: "Macros 1.1 implementation of #[derive(Serialize, Deserialize)]"
+third_party {
+  version: "1.0.228"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 12
+  }
+  homepage: "https://crates.io/crates/serde_derive"
+  identifier {
+    type: "crates.io"
+    value: "serde_derive"
+    version: "1.0.228"
+  }
+}

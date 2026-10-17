@@ -1,0 +1,17 @@
+name: "httpdate"
+description: "HTTP date parsing and formatting"
+third_party {
+  version: "1.0.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 5
+    day: 27
+  }
+  homepage: "https://crates.io/crates/httpdate"
+  identifier {
+    type: "crates.io"
+    value: "httpdate"
+    version: "1.0.3"
+  }
+}

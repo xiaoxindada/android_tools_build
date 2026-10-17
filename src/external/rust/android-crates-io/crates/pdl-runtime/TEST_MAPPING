@@ -1,0 +1,31 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/pdl-compiler"
+    },
+    {
+      "path": "external/rust/pica"
+    },
+    {
+      "path": "packages/modules/Bluetooth/system/rust"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/src"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/src/rust"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/tools/casimir"
+    },
+    {
+      "path": "packages/modules/Uwb/libuwb-uci/src"
+    },
+    {
+      "path": "tools/netsim"
+    },
+    {
+      "path": "tools/rootcanal/rust"
+    }
+  ]
+}

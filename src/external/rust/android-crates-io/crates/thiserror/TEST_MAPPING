@@ -1,0 +1,289 @@
+{
+  "imports": [
+    {
+      "path": "external/flatbuffers/rust/reflection"
+    },
+    {
+      "path": "external/mesa3d/src/util/rust"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/anyhow"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/arm-ffa"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/arm-gic"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/arm-pl011-uart"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/arm-psci"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/caps"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/cargo_metadata"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/command-fds"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/crates-index"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/dc_bundle"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/dc_layout"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/handlebars"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ipp"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/jni"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/kobject-uevent"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mls-rs"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mls-rs-codec"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mls-rs-core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/named-lock"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/netlink-packet-utils"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/netlink-proto"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pdl-runtime"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pest"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-codegen"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-json-mapping"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-parse"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-support"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rtnetlink"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/selinux"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde-xml-rs"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/smccc"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tungstenite"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/userfaultfd"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/virtio-drivers"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vm-memory"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/jni"
+    },
+    {
+      "path": "external/rust/beto-rust/betosync"
+    },
+    {
+      "path": "external/rust/beto-rust/nearby"
+    },
+    {
+      "path": "external/rust/crates/v4l2r/lib"
+    },
+    {
+      "path": "external/rust/crates/v4l2r/utils"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vhost-device-vsock"
+    },
+    {
+      "path": "external/rust/cros-libva/lib"
+    },
+    {
+      "path": "external/rust/cxx"
+    },
+    {
+      "path": "external/rust/pica"
+    },
+    {
+      "path": "external/rust/rutabaga_gfx"
+    },
+    {
+      "path": "external/rust/rutabaga_gfx/kumquat/server"
+    },
+    {
+      "path": "external/rust/rutabaga_gfx/third_party/mesa3d/src/util/rust"
+    },
+    {
+      "path": "external/virtio-media/device"
+    },
+    {
+      "path": "packages/modules/ConfigInfrastructure/aconfigd"
+    },
+    {
+      "path": "packages/modules/Connectivity/remoteauth/service/jni"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/src/rust"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/src/rust/test"
+    },
+    {
+      "path": "packages/modules/Uwb/libuwb-uci/src"
+    },
+    {
+      "path": "packages/modules/Uwb/service/uci/jni"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/authfs"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apexutil"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/dice/driver"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvmbase"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvmclient"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/statslog_virtualization"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/vbmeta"
+    },
+    {
+      "path": "system/core/debuggerd/rust/tombstoned_client"
+    },
+    {
+      "path": "system/core/init/libprefetch/prefetch"
+    },
+    {
+      "path": "system/desktop/cros-codecs"
+    },
+    {
+      "path": "system/desktop/ec/src/ec_crash_collector"
+    },
+    {
+      "path": "system/desktop/ec/src/ectool"
+    },
+    {
+      "path": "system/desktop/ec/src/libec"
+    },
+    {
+      "path": "system/desktop/ec/src/timberslide"
+    },
+    {
+      "path": "system/desktop/fingerprint/hal"
+    },
+    {
+      "path": "system/desktop/fingerprint/libcrosfp"
+    },
+    {
+      "path": "system/desktop/fingerprint/libfmap"
+    },
+    {
+      "path": "system/desktop/security/pinweaver/storage"
+    },
+    {
+      "path": "system/keymint/hal"
+    },
+    {
+      "path": "system/librustutils"
+    },
+    {
+      "path": "system/libueventd-rs"
+    },
+    {
+      "path": "system/memory/mmd"
+    },
+    {
+      "path": "system/secure_element/omapi"
+    },
+    {
+      "path": "system/security/keystore2"
+    },
+    {
+      "path": "system/security/keystore2/legacykeystore"
+    },
+    {
+      "path": "system/security/keystore2/postprocessor_client"
+    },
+    {
+      "path": "system/security/keystore2/rkpd_client"
+    },
+    {
+      "path": "system/security/keystore2/selinux"
+    },
+    {
+      "path": "system/security/keystore2/src/crypto"
+    },
+    {
+      "path": "system/security/keystore2/test_utils"
+    },
+    {
+      "path": "system/security/keystore2/tests/legacy_blobs"
+    },
+    {
+      "path": "system/security/mls/mls-rs-crypto-boringssl"
+    },
+    {
+      "path": "system/see/authmgr/authmgr-be"
+    },
+    {
+      "path": "system/see/authmgr/authmgr-common"
+    },
+    {
+      "path": "system/server_configurable_flags/aconfigd"
+    },
+    {
+      "path": "tools/rootcanal/rust"
+    },
+    {
+      "path": "tools/security/remote_provisioning/hwtrust"
+    }
+  ]
+}

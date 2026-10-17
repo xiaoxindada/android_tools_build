@@ -1,0 +1,17 @@
+name: "portable-atomic"
+description: "Portable atomic types including support for 128-bit atomics, atomic float, etc."
+third_party {
+  version: "1.15.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 19
+  }
+  homepage: "https://crates.io/crates/portable-atomic"
+  identifier {
+    type: "crates.io"
+    value: "portable-atomic"
+    version: "1.15.0"
+  }
+}

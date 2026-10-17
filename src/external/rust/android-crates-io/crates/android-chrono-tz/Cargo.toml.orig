@@ -1,0 +1,15 @@
+[package]
+name = "android-chrono-tz"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "Chrono timezone support for Android."
+authors = ["Andrew Walbran <qwandor@google.com>"]
+repository = "https://github.com/google/android-chrono-tz"
+keywords = ["date", "time", "timezone", "android", "chrono"]
+categories = ["date-and-time"]
+
+[dependencies]
+chrono = { version = "0.4.44", default-features = false, features = ["now"] }
+libc = "0.2.184"
+thiserror = "2.0.18"

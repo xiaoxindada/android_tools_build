@@ -1,0 +1,22 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/parking_lot"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rand_xorshift"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/uuid"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vmm-sys-util"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/rand_xorshift"
+    },
+    {
+      "path": "system/desktop/security/pinweaver/storage"
+    }
+  ]
+}

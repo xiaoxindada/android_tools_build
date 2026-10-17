@@ -1,0 +1,17 @@
+name: "jni-macros"
+description: "Procedural macros for the jni crate"
+third_party {
+  version: "0.22.4"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 1
+  }
+  homepage: "https://crates.io/crates/jni-macros"
+  identifier {
+    type: "crates.io"
+    value: "jni-macros"
+    version: "0.22.4"
+  }
+}

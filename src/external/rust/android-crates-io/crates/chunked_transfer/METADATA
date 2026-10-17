@@ -1,0 +1,17 @@
+name: "chunked_transfer"
+description: "Encoder and decoder for HTTP chunked transfer coding (RFC 7230 \302\247 4.1)"
+third_party {
+  version: "1.5.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 3
+    day: 27
+  }
+  homepage: "https://crates.io/crates/chunked_transfer"
+  identifier {
+    type: "crates.io"
+    value: "chunked_transfer"
+    version: "1.5.0"
+  }
+}

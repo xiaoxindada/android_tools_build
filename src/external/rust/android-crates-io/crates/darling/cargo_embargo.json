@@ -1,0 +1,12 @@
+{
+  "tests": true,
+  "features": [],
+  "package": {
+    "darling": {
+      "device_supported": false,
+      "host_first_multilib": true,
+      "host_cross_supported": false
+    }
+  },
+  "min_sdk_version": "29"
+}

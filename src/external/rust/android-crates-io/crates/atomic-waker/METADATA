@@ -1,0 +1,17 @@
+name: "atomic-waker"
+description: "A synchronization primitive for task wakeup"
+third_party {
+  version: "1.1.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 11
+  }
+  homepage: "https://crates.io/crates/atomic-waker"
+  identifier {
+    type: "crates.io"
+    value: "atomic-waker"
+    version: "1.1.2"
+  }
+}

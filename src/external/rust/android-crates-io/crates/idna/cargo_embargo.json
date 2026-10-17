@@ -1,0 +1,10 @@
+{
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.bettertogether",
+    "com.android.resolv",
+    "com.android.tethering"
+  ],
+  "min_sdk_version": "29",
+  "run_cargo": false
+}

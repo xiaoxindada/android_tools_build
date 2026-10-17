@@ -1,0 +1,59 @@
+diff --git a/src/de.rs b/src/de.rs
+index bf1d1ecc4..3639a7386 100644
+--- a/src/de.rs
++++ b/src/de.rs
+@@ -4,10 +4,10 @@ use crate::{
+ };
+ use core::{
+     fmt,
+-    hash::{Hash, Hasher},
++    hash::{BuildHasherDefault, Hash, Hasher},
+     marker::PhantomData,
+ };
+-use hash32::BuildHasherDefault;
++
+ use serde_core::de::{self, Deserialize, Deserializer, Error, MapAccess, SeqAccess};
+ 
+ // Sequential containers
+diff --git a/src/index_map.rs b/src/index_map.rs
+index cd6e30b4c..05641c08a 100644
+--- a/src/index_map.rs
++++ b/src/index_map.rs
+@@ -2,7 +2,7 @@
+ use core::{
+     borrow::Borrow,
+     fmt,
+-    hash::{BuildHasher, Hash},
++    hash::{BuildHasher, BuildHasherDefault, Hash},
+     iter::FusedIterator,
+     mem,
+     num::NonZeroU32,
+@@ -12,7 +12,7 @@ use core::{
+ #[cfg(feature = "zeroize")]
+ use zeroize::Zeroize;
+ 
+-use hash32::{BuildHasherDefault, FnvHasher};
++use hash32::FnvHasher;
+ 
+ use crate::Vec;
+ 
+diff --git a/src/index_set.rs b/src/index_set.rs
+index 803fa2910..b4da1cfc1 100644
+--- a/src/index_set.rs
++++ b/src/index_set.rs
+@@ -2,13 +2,13 @@
+ use core::{
+     borrow::Borrow,
+     fmt,
+-    hash::{BuildHasher, Hash},
++    hash::{BuildHasher, BuildHasherDefault, Hash},
+ };
+ 
+ #[cfg(feature = "zeroize")]
+ use zeroize::Zeroize;
+ 
+-use hash32::{BuildHasherDefault, FnvHasher};
++use hash32::FnvHasher;
+ 
+ use crate::index_map::{self, IndexMap};
+ 

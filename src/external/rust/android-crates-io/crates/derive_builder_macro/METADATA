@@ -1,0 +1,17 @@
+name: "derive_builder_macro"
+description: "Rust macro to automatically implement the builder pattern for arbitrary structs."
+third_party {
+  version: "0.20.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 8
+    day: 5
+  }
+  homepage: "https://crates.io/crates/derive_builder_macro"
+  identifier {
+    type: "crates.io"
+    value: "derive_builder_macro"
+    version: "0.20.2"
+  }
+}

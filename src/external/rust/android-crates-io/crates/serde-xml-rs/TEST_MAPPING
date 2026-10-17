@@ -1,0 +1,23 @@
+{
+  "imports": [
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtualizationservice"
+    },
+    {
+      "path": "system/secure_element/omapi"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "serde-xml-rs_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "serde-xml-rs_test_src_lib"
+    }
+  ]
+}

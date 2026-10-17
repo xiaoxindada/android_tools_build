@@ -1,0 +1,17 @@
+name: "clap_complete"
+description: "Generate shell completion scripts for your clap::Command"
+third_party {
+  version: "4.6.8"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 28
+  }
+  homepage: "https://crates.io/crates/clap_complete"
+  identifier {
+    type: "crates.io"
+    value: "clap_complete"
+    version: "4.6.8"
+  }
+}

@@ -1,0 +1,17 @@
+name: "num-order"
+description: "Numerically consistent `Eq`, `Ord` and `Hash` implementations for various `num` types (`u32`, `f64`, `num_bigint::BigInt`, etc.)"
+third_party {
+  version: "1.2.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 8
+    day: 5
+  }
+  homepage: "https://crates.io/crates/num-order"
+  identifier {
+    type: "crates.io"
+    value: "num-order"
+    version: "1.2.0"
+  }
+}

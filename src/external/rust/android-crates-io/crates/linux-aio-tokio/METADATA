@@ -1,0 +1,17 @@
+name: "linux-aio-tokio"
+description: "Tokio bindings for Linux kernel AIO"
+third_party {
+  version: "0.4.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 8
+  }
+  homepage: "https://crates.io/crates/linux-aio-tokio"
+  identifier {
+    type: "crates.io"
+    value: "linux-aio-tokio"
+    version: "0.4.1"
+  }
+}

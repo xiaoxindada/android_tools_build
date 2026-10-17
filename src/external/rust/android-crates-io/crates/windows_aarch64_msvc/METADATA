@@ -1,0 +1,17 @@
+name: "windows_aarch64_msvc"
+description: "Import lib for Windows"
+third_party {
+  version: "0.53.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 7
+  }
+  homepage: "https://crates.io/crates/windows_aarch64_msvc"
+  identifier {
+    type: "crates.io"
+    value: "windows_aarch64_msvc"
+    version: "0.53.1"
+  }
+}

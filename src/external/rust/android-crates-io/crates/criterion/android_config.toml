@@ -1,0 +1,7 @@
+deletions = [
+    ".cargo_vcs_info.json",
+    ".editorconfig",
+    ".github",
+    ".typos.toml",
+    "Cargo.toml.orig",
+]

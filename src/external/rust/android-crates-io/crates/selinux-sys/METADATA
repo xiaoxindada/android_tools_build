@@ -1,0 +1,17 @@
+name: "selinux-sys"
+description: "Flexible Mandatory Access Control (MAC) for Linux"
+third_party {
+  version: "0.7.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 16
+  }
+  homepage: "https://crates.io/crates/selinux-sys"
+  identifier {
+    type: "crates.io"
+    value: "selinux-sys"
+    version: "0.7.0"
+  }
+}

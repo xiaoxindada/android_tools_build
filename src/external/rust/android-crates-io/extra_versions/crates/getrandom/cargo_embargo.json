@@ -1,0 +1,19 @@
+{
+  "module_name_overrides": {
+    "external_rust_crates_getrandom_license": "external_rust_crates_getrandom-0.2_license",
+    "getrandom_test_src_lib": "getrandom_test_src_lib-0.2",
+    "getrandom_test_tests_normal": "getrandom_test_tests_normal-0.2",
+    "getrandom_test_tests_rdrand": "getrandom_test_tests_rdrand-0.2",
+    "libgetrandom": "libgetrandom-0.2"
+  },
+  "package": {
+    "getrandom": {
+      "license_text": ["LICENSE"]
+    }
+  },
+  "features": [
+    "std"
+  ],
+  "tests": true,
+  "min_sdk_version": "29"
+}

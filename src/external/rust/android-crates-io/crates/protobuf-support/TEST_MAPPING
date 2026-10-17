@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-json-mapping"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-parse"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/inotify"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "system/libueventd-rs"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "inotify_test_src_lib"
+    },
+    {
+      "name": "inotify_test_tests_main"
+    }
+  ]
+}

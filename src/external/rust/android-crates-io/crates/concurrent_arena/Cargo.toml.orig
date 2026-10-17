@@ -1,0 +1,24 @@
+[package]
+name = "concurrent_arena"
+version = "0.1.11"
+edition = "2018"
+rust-version = "1.79"
+
+license = "MIT"
+description = "u32 concurrent insertion/removal arena that returns ArenaArc"
+repository = "https://github.com/NobodyXu/concurrent_arena"
+
+keywords = ["concurrency", "arena", "shared", "slotmap"]
+categories = ["concurrency"]
+
+[features]
+thread-sanitizer = []
+
+[dependencies]
+parking_lot = "0.12.0"
+triomphe = { version = "0.1.5", features = ["arc-swap"] }
+arc-swap = "1.5.0"
+
+[dev-dependencies]
+bitvec = "1.0"
+rayon = "1.5.1"

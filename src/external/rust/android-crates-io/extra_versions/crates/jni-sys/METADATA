@@ -1,0 +1,17 @@
+name: "jni-sys"
+description: "Rust definitions corresponding to jni.h"
+third_party {
+  version: "0.3.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 1
+  }
+  homepage: "https://crates.io/crates/jni-sys"
+  identifier {
+    type: "crates.io"
+    value: "jni-sys"
+    version: "0.3.0"
+  }
+}

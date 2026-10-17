@@ -1,0 +1,116 @@
+{
+  "imports": [
+    {
+      "path": "external/flatbuffers/rust/reflection"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/chrono"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/criterion"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/enum-primitive-derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/gdbstub"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/gdbstub_arch"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/googletest"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/image"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ipp"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/merge"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/num-bigint"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/num-complex"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/num-integer"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/num-traits"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pdl-compiler"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/plotters"
+    },
+    {
+      "path": "external/rust/beto-rust/betosync"
+    },
+    {
+      "path": "external/rust/pica"
+    },
+    {
+      "path": "packages/modules/Connectivity/remoteauth/service/jni"
+    },
+    {
+      "path": "packages/modules/Uwb/libuwb-uci/src"
+    },
+    {
+      "path": "packages/modules/Uwb/service/uci/jni"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/apkdmverity"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apkverify"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libcompos_common"
+    },
+    {
+      "path": "system/desktop/ec/src/ec_crash_collector"
+    },
+    {
+      "path": "system/desktop/ec/src/ectool"
+    },
+    {
+      "path": "system/desktop/ec/src/libec"
+    },
+    {
+      "path": "system/desktop/fingerprint/bio_wash"
+    },
+    {
+      "path": "system/desktop/fingerprint/libcrosfp"
+    },
+    {
+      "path": "system/see/authmgr/authmgr-common"
+    },
+    {
+      "path": "tools/rootcanal/rust"
+    },
+    {
+      "path": "tools/security/fuzzing/orphans/smallvec"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "num-traits_test_src_lib"
+    },
+    {
+      "name": "num-traits_test_tests_cast"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "num-traits_test_src_lib"
+    },
+    {
+      "name": "num-traits_test_tests_cast"
+    }
+  ]
+}

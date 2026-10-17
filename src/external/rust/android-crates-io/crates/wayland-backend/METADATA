@@ -1,0 +1,17 @@
+name: "wayland-backend"
+description: "Low-level bindings to the Wayland protocol"
+third_party {
+  version: "0.3.17"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 19
+  }
+  homepage: "https://crates.io/crates/wayland-backend"
+  identifier {
+    type: "crates.io"
+    value: "wayland-backend"
+    version: "0.3.17"
+  }
+}

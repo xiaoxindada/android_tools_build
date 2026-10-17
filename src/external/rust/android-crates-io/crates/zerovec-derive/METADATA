@@ -1,0 +1,17 @@
+name: "zerovec-derive"
+description: "Custom derive for the zerovec crate"
+third_party {
+  version: "0.11.6"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 21
+  }
+  homepage: "https://crates.io/crates/zerovec-derive"
+  identifier {
+    type: "crates.io"
+    value: "zerovec-derive"
+    version: "0.11.6"
+  }
+}

@@ -1,0 +1,17 @@
+name: "arm-pl011-uart"
+description: "Arm PrimeCell UART (PL011) driver"
+third_party {
+  version: "0.5.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 22
+  }
+  homepage: "https://crates.io/crates/arm-pl011-uart"
+  identifier {
+    type: "crates.io"
+    value: "arm-pl011-uart"
+    version: "0.5.0"
+  }
+}

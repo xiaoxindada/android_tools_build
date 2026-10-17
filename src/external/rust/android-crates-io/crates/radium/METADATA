@@ -1,0 +1,17 @@
+name: "radium"
+description: "Portable interfaces for maybe-atomic types"
+third_party {
+  version: "0.7.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 7
+    day: 8
+  }
+  homepage: "https://crates.io/crates/radium"
+  identifier {
+    type: "crates.io"
+    value: "radium"
+    version: "0.7.0"
+  }
+}

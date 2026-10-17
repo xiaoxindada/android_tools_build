@@ -1,0 +1,17 @@
+name: "base64"
+description: "encodes and decodes base64 as bytes or utf8"
+third_party {
+  version: "0.23.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 21
+  }
+  homepage: "https://crates.io/crates/base64"
+  identifier {
+    type: "crates.io"
+    value: "base64"
+    version: "0.23.1"
+  }
+}

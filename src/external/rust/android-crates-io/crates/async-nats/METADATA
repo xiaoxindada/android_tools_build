@@ -1,0 +1,17 @@
+name: "async-nats"
+description: "A async Rust NATS client"
+third_party {
+  version: "0.50.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 21
+  }
+  homepage: "https://crates.io/crates/async-nats"
+  identifier {
+    type: "crates.io"
+    value: "async-nats"
+    version: "0.50.0"
+  }
+}

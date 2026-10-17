@@ -1,0 +1,17 @@
+name: "quickcheck"
+description: "Automatic property based testing with shrinking."
+third_party {
+  version: "1.0.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2021
+    month: 10
+    day: 19
+  }
+  homepage: "https://crates.io/crates/quickcheck"
+  identifier {
+    type: "crates.io"
+    value: "quickcheck"
+    version: "1.0.3"
+  }
+}

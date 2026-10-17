@@ -1,0 +1,7 @@
+{
+  "run_cargo": false,
+  "generate_rulesmk": true,
+  "features": [],
+  "min_sdk_version": "29",
+  "recovery_available": true
+}

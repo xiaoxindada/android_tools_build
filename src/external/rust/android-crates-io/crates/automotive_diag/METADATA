@@ -1,0 +1,17 @@
+name: "automotive_diag"
+description: "Unified Diagnostic Services/UDS (ISO-14229-1), KWP2000 (ISO-142330), OBD-II (ISO-9141), and DoIP (ISO-13400) definitions to communicate with the road vehicle ECUs in Rust."
+third_party {
+  version: "0.1.29"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 21
+  }
+  homepage: "https://crates.io/crates/automotive_diag"
+  identifier {
+    type: "crates.io"
+    value: "automotive_diag"
+    version: "0.1.29"
+  }
+}

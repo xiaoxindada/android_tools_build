@@ -1,0 +1,17 @@
+name: "serde_core"
+description: "Serde traits only, with no support for derive -- use the `serde` crate instead"
+third_party {
+  version: "1.0.228"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 12
+  }
+  homepage: "https://crates.io/crates/serde_core"
+  identifier {
+    type: "crates.io"
+    value: "serde_core"
+    version: "1.0.228"
+  }
+}

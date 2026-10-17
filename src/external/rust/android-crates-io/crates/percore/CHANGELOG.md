@@ -1,0 +1,74 @@
+# Changelog
+
+## 0.3.0
+
+### Bugfixes
+
+- Fixed undefined behaviour in `LinkedPerCore::get` due to pointer provenance.
+
+### Breaking changes
+
+- Don't allow unsafe code in initialisation expression of `#[percore]` variables.
+- Renamed `__PERCORE_START__`, `__PERCORE_END`, `__PERCORE_SECONDARD_START__` and
+  `__PERCORE_SECONDARY_END` static variables to `START_PERCORE`, `STOP_PERCORE`,
+  `START_PERCORE_SECONDARY` and `STOP_PERCORE_SECONDARY`. Renamed the corresponding symbols to
+  `__start_percore`, `__stop_percore` and so on on most platforms.
+- Renamed the `.percore` linker section to `percore`, and `.percore_secondary` to
+  `percore_secondary`. This lets the linker automatically generate the start and stop symbols as
+  above.
+
+## 0.2.5
+
+### New features
+
+- Added `derive` feature. This provides the `#[percore]` macro for another approach to per-core
+  variables.
+
+## 0.2.4
+
+### New features
+
+- Added `into_inner` methods for `ExceptionLock` and `PerCore`.
+
+## 0.2.3
+
+### Bugfixes
+
+- Fixed broken build on aarch32.
+
+## 0.2.2
+
+### New features
+
+- Added `PerCore::get_mut`.
+- Added support for AArch32.
+
+## 0.2.1
+
+### New features
+
+- Made `ExceptionLock` `repr(transparent)`.
+- Derive zerocopy traits for `PerCore` and `ExceptionLock`. This is behind the new `zerocopy`
+  feature, which is enabled by default.
+
+## 0.2.0
+
+### Breaking changes
+
+- Changed type from `PerCore<T, C, CORE_COUNT>` to `PerCore<[T; CORE_COUNT], C>`.
+
+### New features
+
+- Added support for `PerCore<Box<[T]>, C>`. This lets you determine the number of cores at runtime
+  rather than having to have it be a compile-time constant. This is only available with the new
+  `alloc` feature.
+- `ExceptionLock` and `PerCore` now implement `Default`.
+
+### Bugfixes
+
+- `exception_free` will restore the exception mask state even if the function passed to it panics,
+  if built with `panic = "unwind"`.
+
+## 0.1.0
+
+Initial release.

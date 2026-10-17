@@ -1,0 +1,17 @@
+name: "tinystr"
+description: "A small ASCII-only bounded length string representation."
+third_party {
+  version: "0.8.4"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 14
+  }
+  homepage: "https://crates.io/crates/tinystr"
+  identifier {
+    type: "crates.io"
+    value: "tinystr"
+    version: "0.8.4"
+  }
+}

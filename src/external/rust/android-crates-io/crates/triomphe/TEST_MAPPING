@@ -1,0 +1,7 @@
+{
+  "postsubmit": [
+    {
+      "name": "triomphe_test_src_lib"
+    }
+  ]
+}

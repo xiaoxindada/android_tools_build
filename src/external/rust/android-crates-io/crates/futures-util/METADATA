@@ -1,0 +1,17 @@
+name: "futures-util"
+description: "Common utilities and extension traits for the futures-rs library."
+third_party {
+  version: "0.3.34"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 21
+  }
+  homepage: "https://crates.io/crates/futures-util"
+  identifier {
+    type: "crates.io"
+    value: "futures-util"
+    version: "0.3.34"
+  }
+}

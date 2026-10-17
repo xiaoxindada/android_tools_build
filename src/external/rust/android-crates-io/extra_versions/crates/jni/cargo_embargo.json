@@ -1,0 +1,8 @@
+{
+  "module_name_overrides": {
+    "libjni": "libjni_legacy",
+    "libjni_sys": "libjni_sys_legacy",
+    "external_rust_crates_jni_license": "external_rust_crates_jni-0.21.1_license"
+  },
+  "min_sdk_version": "29"
+}

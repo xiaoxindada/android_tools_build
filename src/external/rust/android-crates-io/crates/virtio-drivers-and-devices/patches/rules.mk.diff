@@ -1,0 +1,20 @@
+diff --git a/rules.mk b/rules.mk
+index f15a8d6bc..ac00f110f 100644
+--- a/rules.mk
++++ b/rules.mk
+@@ -11,12 +11,14 @@ MODULE_SRCS := $(LOCAL_DIR)/src/lib.rs
+ MODULE_ADD_IMPLICIT_DEPS := false
+ MODULE_RUST_EDITION := 2021
+ MODULE_LIBRARY_DEPS := \
++	trusty/user/base/lib/liballoc-rust \
+ 	$(call FIND_CRATE,bitflags) \
+ 	$(call FIND_CRATE,enumn) \
+ 	$(call FIND_CRATE,log) \
+ 	$(call FIND_CRATE,thiserror) \
+ 	$(call FIND_CRATE,zerocopy) \
+ 	trusty/user/base/lib/libcompiler_builtins-rust \
+-	trusty/user/base/lib/libcore-rust
++	trusty/user/base/lib/libcore-rust \
++	external/trusty/lk/lib/rust_support \
+ 
+ include make/library.mk

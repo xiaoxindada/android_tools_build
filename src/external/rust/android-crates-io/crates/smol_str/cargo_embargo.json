@@ -1,0 +1,20 @@
+{
+  "package": {
+    "smol_str": {
+      "srcs": [
+        "src/*.rs",
+        "src/gdb_smolstr_printer.py"
+      ]
+    }
+  },
+  "variants": [
+    {
+      "features": [
+	"default",
+	"serde"
+      ]
+    }
+  ],
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

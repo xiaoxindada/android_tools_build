@@ -1,0 +1,17 @@
+name: "serde_bytes"
+description: "Optimized handling of `&[u8]` and `Vec<u8>` for Serde"
+third_party {
+  version: "0.11.19"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 13
+  }
+  homepage: "https://crates.io/crates/serde_bytes"
+  identifier {
+    type: "crates.io"
+    value: "serde_bytes"
+    version: "0.11.19"
+  }
+}

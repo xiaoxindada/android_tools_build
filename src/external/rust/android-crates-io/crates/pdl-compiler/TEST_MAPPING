@@ -1,0 +1,21 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/pdl-compiler"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "pdl_generated_files_compile"
+    },
+    {
+      "name": "pdl_rust_generator_tests_be"
+    },
+    {
+      "name": "pdl_rust_generator_tests_le"
+    },
+    {
+      "name": "pdl_tests"
+    }
+  ]
+}

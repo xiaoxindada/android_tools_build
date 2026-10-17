@@ -1,0 +1,16 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/axum"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/hyper-timeout"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ippusb"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tonic"
+    }
+  ]
+}

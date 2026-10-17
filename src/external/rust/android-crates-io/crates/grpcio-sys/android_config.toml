@@ -1,0 +1,3 @@
+deletions = [
+  "grpc",  # We use external/grpc-grpc instead
+]

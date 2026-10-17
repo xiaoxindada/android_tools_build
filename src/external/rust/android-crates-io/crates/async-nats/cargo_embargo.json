@@ -1,0 +1,23 @@
+{
+  "features": [
+    "chrono",
+    "crypto",
+    "kv",
+    "object-store",
+    "ring",
+    "server_2_10",
+    "server_2_11",
+    "server_2_12",
+    "server_2_14",
+    "service"
+  ],
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "package": {
+    "async-nats": {
+      "dep_blocklist": [
+        "libtime"
+      ]
+    }
+  }
+}

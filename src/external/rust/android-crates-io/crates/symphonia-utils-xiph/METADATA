@@ -1,0 +1,17 @@
+name: "symphonia-utils-xiph"
+description: "Project Symphonia utilities for Xiph codecs and formats."
+third_party {
+  version: "0.5.5"
+  license_type: RECIPROCAL
+  last_upgrade_date {
+    year: 2026
+    month: 2
+    day: 16
+  }
+  homepage: "https://crates.io/crates/symphonia-utils-xiph"
+  identifier {
+    type: "crates.io"
+    value: "symphonia-utils-xiph"
+    version: "0.5.5"
+  }
+}

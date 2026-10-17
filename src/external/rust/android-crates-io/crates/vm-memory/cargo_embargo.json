@@ -1,0 +1,21 @@
+{
+  "features": [
+    "default",
+    "backend-bitmap",
+    "backend-mmap",
+    "backend-atomic",
+    "arc-swap"
+  ],
+  "module_name_overrides": {
+    "libvm_memory": "libvm_memory_android"
+  },
+  "package": {
+    "vm-memory": {
+      "device_supported": true,
+      "host_first_multilib": true,
+      "add_module_block": "cargo2android_module.bp.fragment"
+    }
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

@@ -1,0 +1,17 @@
+name: "potential_utf"
+description: "Unvalidated string and character types"
+third_party {
+  version: "0.1.6"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 21
+  }
+  homepage: "https://crates.io/crates/potential_utf"
+  identifier {
+    type: "crates.io"
+    value: "potential_utf"
+    version: "0.1.6"
+  }
+}

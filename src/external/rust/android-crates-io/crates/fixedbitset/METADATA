@@ -1,0 +1,17 @@
+name: "fixedbitset"
+description: "FixedBitSet is a simple bitset collection"
+third_party {
+  version: "0.5.7"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 8
+    day: 9
+  }
+  homepage: "https://crates.io/crates/fixedbitset"
+  identifier {
+    type: "crates.io"
+    value: "fixedbitset"
+    version: "0.5.7"
+  }
+}

@@ -1,0 +1,15 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index 58e360ef3a..15649a27b5 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -234,10 +234,4 @@ unused_qualifications = "warn"
+ level = "warn"
+ priority = -1
+ 
+-[profile.dev]
+-panic = "abort"
+ 
+-[profile.release]
+-lto = true
+-codegen-units = 1
+-panic = "abort"

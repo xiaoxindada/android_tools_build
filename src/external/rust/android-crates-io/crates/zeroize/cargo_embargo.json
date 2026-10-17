@@ -1,0 +1,33 @@
+{
+  "features": [
+    "alloc",
+    "zeroize_derive"
+  ],
+  "min_sdk_version": "Tiramisu",
+  "variants": [
+    {
+      "tests": true
+    },
+    {
+      "package": {
+        "zeroize": {
+          "alloc": true,
+          "force_rlib": true,
+          "host_supported": false,
+          "no_std": true
+        }
+      }
+    },
+    {
+      "package": {
+        "zeroize": {
+          "alloc": true,
+          "no_std": true
+        }
+      },
+      "tests": false,
+      "generate_androidbp": false,
+      "generate_rulesmk": true
+    }
+  ]
+}

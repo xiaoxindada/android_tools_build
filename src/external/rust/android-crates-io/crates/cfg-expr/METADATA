@@ -1,0 +1,17 @@
+name: "cfg-expr"
+description: "A parser and evaluator for Rust `cfg()` expressions."
+third_party {
+  version: "0.20.9"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 2
+  }
+  homepage: "https://crates.io/crates/cfg-expr"
+  identifier {
+    type: "crates.io"
+    value: "cfg-expr"
+    version: "0.20.9"
+  }
+}

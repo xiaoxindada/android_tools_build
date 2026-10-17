@@ -1,0 +1,44 @@
+diff --git a/src/queue.rs b/src/queue.rs
+index 895f363..cab670b 100644
+--- a/src/queue.rs
++++ b/src/queue.rs
+@@ -14,6 +14,7 @@ use bitflags::bitflags;
+ #[cfg(test)]
+ use core::cmp::min;
+ use core::convert::TryInto;
++#[cfg(any(test, not(feature = "trusty_sleep")))]
+ use core::hint::spin_loop;
+ use core::mem::{forget, size_of, take};
+ #[cfg(test)]
+@@ -22,6 +23,8 @@ use core::ptr::NonNull;
+ use core::sync::atomic::{fence, AtomicU16, Ordering};
+ use zerocopy::{FromBytes, FromZeros, Immutable, IntoBytes, KnownLayout};
+
++use rust_support::thread::sleep;
++
+ /// The mechanism for bulk data transport on virtio devices.
+ ///
+ /// Each device can have zero or more virtqueues.
+@@ -321,5 +324,10 @@ impl<H: Hal, const SIZE: usize> VirtQueue<H, SIZE> {
+         // Wait until there is at least one element in the used ring.
+         while !self.can_pop() {
++            // SAFETY: Trusty kernel booted and we're on a valid trusty thread.
++            #[cfg(feature = "trusty_sleep")]
++            unsafe { sleep(core::time::Duration::from_millis(10)); }
++
++            #[cfg(not(feature = "trusty_sleep"))]
+             spin_loop();
+         }
+ 
+@@ -674,6 +682,11 @@ impl<H: DeviceHal, const SIZE: usize> DeviceVirtQueue<H, SIZE> {
+         #[cfg(feature = "alloc")]
+         {
+             while !self.can_pop() {
++                // SAFETY: Trusty kernel booted and we're on a valid trusty thread.
++                #[cfg(feature = "trusty_sleep")]
++                unsafe { sleep(core::time::Duration::from_millis(10)); }
++
++                #[cfg(not(feature = "trusty_sleep"))]
+                 spin_loop();
+             }
+             // SAFETY: inputs is copied into the first write buffer then they are returned to the

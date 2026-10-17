@@ -1,0 +1,132 @@
+diff --git a/crates/rustc-demangle-capi/src/lib.rs b/crates/rustc-demangle-capi/src/lib.rs
+index b1a4f73a8..220f890bd 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -1,8 +1,13 @@
++#![cfg_attr(not(test), no_std)]
++
++#[cfg(test)]
++use std as core;
++
+ extern crate rustc_demangle;
+ 
+-use std::alloc::{GlobalAlloc, Layout, System};
+-use std::io::Write;
+-use std::os::raw::{c_char, c_int};
+-use std::ptr;
+-use std::result;
++use core::alloc::GlobalAlloc;
++use core::ffi::{c_char, c_int};
++use core::fmt::Write;
++use core::ptr;
++use core::result;
+ 
+@@ -15,6 +20,36 @@ unsafe fn set_status(status: *mut c_int, val: c_int) {
+     }
+ }
+ 
++struct Writer<'a> {
++    buf: &'a mut SystemBuffer,
++    head: usize,
++}
++
++impl<'a> Writer<'a> {
++    fn new(buf: &'a mut SystemBuffer) -> Self {
++        Self { buf, head: 0 }
++    }
++}
++
++impl<'a> Write for Writer<'a> {
++    fn write_str(&mut self, s: &str) -> core::fmt::Result {
++        let target = &mut self.buf.as_mut_slice()[self.head..];
++        let src = s.as_bytes();
++        if src.len() > target.len() {
++            return Err(core::fmt::Error);
++        }
++        target[..src.len()].copy_from_slice(src);
++        self.head += src.len();
++        Ok(())
++    }
++}
++
++extern "C" {
++    fn calloc(size: usize, count: usize) -> *mut u8;
++    fn free(ptr: *mut u8);
++    fn realloc(ptr: *mut u8, new_size: usize) -> *mut u8;
++}
++
+ /// Region from the system allocator for demangler output. We use the
+ /// system allocator because the intended client is C/C++ code which
+ /// may not be using the Rust allocator.
+@@ -27,7 +62,7 @@ struct SystemBuffer {
+ impl SystemBuffer {
+     const DEFAULT_BUFFER_SIZE: usize = 1024;
+     fn new(size: usize) -> Result<Self> {
+-        let buf = unsafe { System.alloc_zeroed(Layout::from_size_align_unchecked(size, 1)) };
++        let buf = unsafe { calloc(size, 1) };
+         if buf.is_null() {
+             Err(Status::AllocFailure)
+         } else {
+@@ -61,17 +96,11 @@ impl SystemBuffer {
+         }
+     }
+     fn as_mut_slice(&mut self) -> &mut [u8] {
+-        unsafe { std::slice::from_raw_parts_mut(self.buf, self.size) }
++        unsafe { core::slice::from_raw_parts_mut(self.buf, self.size) }
+     }
+     fn resize(&mut self) -> Result<()> {
+         let new_size = self.size * 2;
+-        let new_buf = unsafe {
+-            System.realloc(
+-                self.buf,
+-                Layout::from_size_align_unchecked(self.size, 1),
+-                new_size,
+-            )
+-        };
++        let new_buf = unsafe { realloc(self.buf, new_size) };
+         if new_buf.is_null() {
+             Err(Status::AllocFailure)
+         } else {
+@@ -149,7 +178,7 @@ unsafe fn rustc_demangle_native(
+     if mangled.is_null() {
+         return Err(Status::InvalidArgs);
+     }
+-    let mangled_str = match std::ffi::CStr::from_ptr(mangled).to_str() {
++    let mangled_str = match core::ffi::CStr::from_ptr(mangled).to_str() {
+         Ok(s) => s,
+         Err(_) => return Err(Status::InvalidArgs),
+     };
+@@ -166,7 +195,7 @@ unsafe fn rustc_demangle_native(
+     match rustc_demangle::try_demangle(mangled_str) {
+         Ok(demangle) => {
+             let mut out_buf = SystemBuffer::from_raw(out, out_size)?;
+-            while write!(out_buf.as_mut_slice(), "{:#}\0", demangle).is_err() {
++            while write!(Writer::new(&mut out_buf), "{:#}\0", demangle).is_err() {
+                 out_buf.resize()?;
+             }
+             Ok(out_buf.as_mut_slice().as_mut_ptr() as *mut c_char)
+@@ -194,7 +223,7 @@ mod tests {
+                     System.dealloc(
+                         self.out_buf,
+                         Layout::from_size_align_unchecked(self.out_size, 1),
+-                    );
++                    )
+                 }
+             }
+         }
+-- 
+2.51.0.618.g983fd99d29-goog
+
+diff --git a/crates/rustc-demangle-capi/Cargo.toml b/crates/rustc-demangle-capi/Cargo.toml
+index 9ab660e14..075d83197 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -19,7 +19,7 @@ license = "MIT/Apache-2.0"
+ repository = "https://github.com/alexcrichton/rustc-demangle"
+ 
+ [lib]
+-name = "rustc_demangle"
++name = "rustc_demangle_static"
+ crate-type = ["lib"]
+ [dependencies.rustc-demangle]
+ version = "0.1.16"

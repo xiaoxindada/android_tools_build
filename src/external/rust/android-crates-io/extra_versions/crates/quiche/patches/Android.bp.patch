@@ -1,0 +1,181 @@
+diff --git a/Android.bp b/Android.bp
+index eea670450..fe047fba3 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -9,7 +9,11 @@ package {
+ license {
+     name: "external_rust_crates_quiche-0.17_license",
+     visibility: [":__subpackages__"],
+-    license_kinds: ["SPDX-license-identifier-BSD-2-Clause"],
++    license_kinds: [
++        "SPDX-license-identifier-BSD-2-Clause",
++        "SPDX-license-identifier-ISC",
++        "SPDX-license-identifier-OpenSSL",
++    ],
+     license_text: ["LICENSE"],
+ }
+ 
+@@ -21,11 +25,7 @@ rust_library {
+     cargo_pkg_version: "0.17.1",
+     crate_root: "src/lib.rs",
+     edition: "2018",
+-    features: [
+-        "boringssl-vendored",
+-        "default",
+-    ],
+-    rustlibs: [
++    rlibs: [
+         "liblazy_static",
+         "liblibc",
+         "liblibm",
+@@ -35,7 +35,8 @@ rust_library {
+         "libslab",
+         "libsmallvec",
+     ],
+-    static_libs: [
++    prefer_rlib: true,
++    shared_libs: [
+         "libcrypto",
+         "libssl",
+     ],
+@@ -49,7 +50,7 @@ rust_library {
+     min_sdk_version: "29",
+ }
+ 
+-rust_ffi_shared {
++rust_ffi {
+     name: "libquiche_ffi-0.17",
+     host_supported: true,
+     crate_name: "quiche",
+@@ -57,11 +58,7 @@ rust_ffi_shared {
+     cargo_pkg_version: "0.17.1",
+     crate_root: "src/lib.rs",
+     edition: "2018",
+-    features: [
+-        "boringssl-vendored",
+-        "default",
+-    ],
+-    rustlibs: [
++    rlibs: [
+         "liblazy_static",
+         "liblibc",
+         "liblibm",
+@@ -71,7 +68,8 @@ rust_ffi_shared {
+         "libslab",
+         "libsmallvec",
+     ],
+-    static_libs: [
++    prefer_rlib: true,
++    shared_libs: [
+         "libcrypto",
+         "libssl",
+     ],
+@@ -85,13 +83,17 @@ rust_ffi_shared {
+     min_sdk_version: "29",
+ }
+ 
+-rust_library_rlib {
+-    name: "libquiche_static-0.17",
+-    host_supported: true,
++rust_test_host {
++    name: "quiche_host_test_src_lib-0.17",
+     crate_name: "quiche",
+     cargo_env_compat: true,
+     cargo_pkg_version: "0.17.1",
+     crate_root: "src/lib.rs",
++    test_suites: ["general-tests"],
++    auto_gen_config: true,
++    test_options: {
++        unit_test: true,
++    },
+     edition: "2018",
+     features: [
+         "boringssl-vendored",
+@@ -102,21 +104,23 @@ rust_library_rlib {
+         "liblibc",
+         "liblibm",
+         "liblog_rust",
++        "libmio",
+         "liboctets",
+         "libring",
+         "libslab",
+         "libsmallvec",
++        "liburl",
+     ],
+-    static_libs: [
+-        "libcrypto_static_for_legacy_quiche",
++    shared_libs: [
++        "libcrypto",
+         "libssl",
+     ],
+-    apex_available: [
+-        "//apex_available:platform",
+-        "com.android.resolv",
+-        "com.android.tethering",
++    data: [
++        "examples/cert.crt",
++        "examples/cert.key",
++        "examples/cert-big.crt",
++        "examples/rootca.crt",
+     ],
+-    min_sdk_version: "29",
+ }
+ 
+ rust_test {
+@@ -156,46 +158,37 @@ rust_test {
+         "examples/cert-big.crt",
+         "examples/rootca.crt",
+     ],
++    shared_libs: ["libc++"],
+ }
+ 
+-rust_test_host {
+-    name: "quiche_host_test_src_lib-0.17",
++rust_library_rlib {
++    name: "libquiche_static-0.17",
++    host_supported: true,
+     crate_name: "quiche",
+     cargo_env_compat: true,
+     cargo_pkg_version: "0.17.1",
+     crate_root: "src/lib.rs",
+-    test_suites: ["general-tests"],
+-    auto_gen_config: true,
+-    test_options: {
+-        unit_test: true,
+-    },
+     edition: "2018",
+-    features: [
+-        "boringssl-vendored",
+-        "default",
+-    ],
+     rustlibs: [
+         "liblazy_static",
+         "liblibc",
+         "liblibm",
+         "liblog_rust",
+-        "libmio",
+         "liboctets",
+         "libring",
+         "libslab",
+         "libsmallvec",
+-        "liburl",
+     ],
+     static_libs: [
+-        "libcrypto",
++        "libcrypto_static_for_legacy_quiche",
+         "libssl",
+     ],
+-    data: [
+-        "examples/cert.crt",
+-        "examples/cert.key",
+-        "examples/cert-big.crt",
+-        "examples/rootca.crt",
++    apex_available: [
++        "//apex_available:platform",
++        "com.android.resolv",
++        "com.android.tethering",
+     ],
++    min_sdk_version: "29",
+ }
+ 
+ cc_library_headers {

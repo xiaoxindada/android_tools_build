@@ -1,0 +1,17 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/quiche"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "libm_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "libm_test_src_lib"
+    }
+  ]
+}

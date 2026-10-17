@@ -1,0 +1,22 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/criterion"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/handlebars"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/bitflags"
+    },
+    {
+      "path": "system/core/init/libprefetch/prefetch"
+    },
+    {
+      "path": "system/usb_info_tools/dumpsys_to_lsusb"
+    },
+    {
+      "path": "tools/asuite/adevice"
+    }
+  ]
+}

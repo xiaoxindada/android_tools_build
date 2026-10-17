@@ -1,0 +1,22 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/bindgen-cli"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/bindgen/android/bindgen_cmd"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/libbpf-sys"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/libsqlite3-sys/android"
+    },
+    {
+      "path": "external/rust/crates/v4l2r/android"
+    },
+    {
+      "path": "external/rust/cros-libva/android"
+    }
+  ]
+}

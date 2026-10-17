@@ -1,0 +1,202 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/argh_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/async-stream-impl"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/async-trait"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/bindgen"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/bytemuck_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/clap_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/darling"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/darling_core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/darling_macro"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/der_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/derive-where"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/derive_arbitrary"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/derive_builder_core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/diplomat"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/diplomat_core"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/displaydoc"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/enum-as-inner"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/enum-primitive-derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/enumn"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/futures-macro"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/genco-macros"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/googletest_macro"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/linkme-impl"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/maybe-async"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/merge_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/miette-derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mls-rs-codec-derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mockall_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mockall_double"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/no-panic"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/num-derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/num_enum_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/open-enum-derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/openssl-macros"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/p9_wire_format_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pdl-compiler"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pest_generator"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/pin-project-internal"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/poll_token_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ptr_meta_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/remain"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/serde_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/strum_macros"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/syn"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/syn-mid"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/synstructure"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/thiserror-impl"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tokio-macros"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/tracing-attributes"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/uefi-macros"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/yoke-derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/zerocopy-derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/zerofrom-derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/zeroize_derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/zerovec-derive"
+    },
+    {
+      "path": "external/rust/android-crates-io/extra_versions/crates/zerocopy-derive"
+    },
+    {
+      "path": "external/rust/beto-rust/common"
+    },
+    {
+      "path": "external/rust/cxx/gen/cmd"
+    },
+    {
+      "path": "external/rust/cxx/gen/lib"
+    },
+    {
+      "path": "external/rust/cxx/macro"
+    },
+    {
+      "path": "packages/modules/Bluetooth/floss/rust/topshim/macros"
+    },
+    {
+      "path": "packages/modules/Bluetooth/offload/hci"
+    },
+    {
+      "path": "system/authgraph/derive"
+    },
+    {
+      "path": "system/keymint/derive"
+    },
+    {
+      "path": "system/security/hals/derive"
+    },
+    {
+      "path": "system/zygote/zygote-proc-macros"
+    }
+  ]
+}

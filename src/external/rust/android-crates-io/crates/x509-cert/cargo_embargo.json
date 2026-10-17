@@ -1,0 +1,40 @@
+{
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.virt"
+  ],
+  "features": [],
+  "module_visibility": {
+    "libx509_cert": [
+      "//packages/modules/Virtualization:__subpackages__",
+      "//system/core/trusty/keymint/provisioning:__subpackages__",
+      "//system/keymint:__subpackages__",
+      "//system/security/keystore2/tests:__subpackages__",
+      "//system/security/keystore2/test_utils:__subpackages__"
+    ]
+  },
+  "run_cargo": false,
+  "variants": [
+    {},
+    {
+      "package": {
+        "x509-cert": {
+          "force_rlib": true,
+          "host_supported": false,
+          "no_std": true
+        }
+      }
+    },
+    {
+      "package": {
+        "x509-cert": {
+          "alloc": true,
+          "no_std": true
+        }
+      },
+      "generate_androidbp": false,
+      "generate_rulesmk": true
+    }
+  ],
+  "min_sdk_version": "29"
+}

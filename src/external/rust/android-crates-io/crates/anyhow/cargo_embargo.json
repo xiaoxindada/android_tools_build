@@ -1,0 +1,31 @@
+{
+  "tests": true,
+  "min_sdk_version": "29",
+  "sdk_version": "current",
+  "ota_recovery_ramdisk_available": true,
+  "package": {
+    "anyhow": {
+      "dep_blocklist": [
+        "libsyn",
+        "libtrybuild"
+      ],
+      "target_windows": true
+    }
+  },
+  "module_blocklist": [
+    "anyhow_test_tests_compiletest",
+    "anyhow_test_tests_test_ensure",
+    "anyhow_test_tests_test_ffi"
+  ],
+  "variants": [
+    {},
+    {
+      "generate_rulesmk": true,
+      "generate_androidbp": false,
+      "tests": false
+    }
+  ],
+  "run_cargo": true,
+  "native_bridge_supported": true,
+  "recovery_available": true
+}

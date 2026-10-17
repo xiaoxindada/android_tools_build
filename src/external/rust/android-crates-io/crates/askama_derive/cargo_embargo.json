@@ -1,0 +1,19 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "features": [
+      "alloc",
+      "config",
+      "external-sources",
+      "proc-macro",
+      "serde_json",
+      "std",
+      "urlencode"
+  ],
+  "package": {
+    "askama_derive": {
+      "device_supported": false,
+      "host_first_multilib": true
+    }
+  }
+}

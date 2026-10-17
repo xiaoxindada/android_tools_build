@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/hashlink"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rusqlite"
+    },
+    {
+      "path": "tools/security/fuzzing/orphans/hashlink"
+    }
+  ]
+}

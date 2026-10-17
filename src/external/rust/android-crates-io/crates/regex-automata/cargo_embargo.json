@@ -1,0 +1,11 @@
+{
+  "min_sdk_version": "29",
+  "package": {
+    "regex-automata": {
+      "target_windows": true,
+      "add_module_block": "cargo_embargo_x86_opt_level_0.bp.fragment"
+
+    }
+  },
+  "recovery_available": true
+}

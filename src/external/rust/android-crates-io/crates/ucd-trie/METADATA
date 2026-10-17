@@ -1,0 +1,17 @@
+name: "ucd-trie"
+description: "A trie for storing Unicode codepoint sets and maps."
+third_party {
+  version: "0.1.7"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 12
+    day: 20
+  }
+  homepage: "https://crates.io/crates/ucd-trie"
+  identifier {
+    type: "crates.io"
+    value: "ucd-trie"
+    version: "0.1.7"
+  }
+}

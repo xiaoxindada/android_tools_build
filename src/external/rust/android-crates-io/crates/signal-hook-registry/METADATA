@@ -1,0 +1,17 @@
+name: "signal-hook-registry"
+description: "Backend crate for signal-hook"
+third_party {
+  version: "1.4.8"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 1
+    day: 3
+  }
+  homepage: "https://crates.io/crates/signal-hook-registry"
+  identifier {
+    type: "crates.io"
+    value: "signal-hook-registry"
+    version: "1.4.8"
+  }
+}

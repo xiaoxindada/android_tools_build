@@ -1,0 +1,11 @@
+{
+  "features": [
+    "serde-1"
+  ],
+  "module_name_overrides": {
+    "libindexmap": "libindexmap-1.9.3",
+    "external_rust_crates_indexmap_license": "external_rust_crates_indexmap-1.9.3_license",
+    "libhashbrown": "libhashbrown-0.12.3"
+  },
+  "min_sdk_version": "29"
+}

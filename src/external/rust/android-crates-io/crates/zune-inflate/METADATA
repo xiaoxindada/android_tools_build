@@ -1,0 +1,17 @@
+name: "zune-inflate"
+description: "A heavily optimized deflate decompressor in Pure Rust"
+third_party {
+  version: "0.2.54"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 6
+  }
+  homepage: "https://crates.io/crates/zune-inflate"
+  identifier {
+    type: "crates.io"
+    value: "zune-inflate"
+    version: "0.2.54"
+  }
+}

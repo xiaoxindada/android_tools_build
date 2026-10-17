@@ -1,0 +1,18 @@
+{
+  "package": {
+    "wayland-protocols-wlr": {
+      "srcs": [
+        "src/*.rs",
+        "wlr-protocols/**/*.xml"
+      ]
+    }
+  },
+  "features": [
+    "server"
+  ],
+  "module_name_overrides": {
+    "libwayland_server": "libwayland_server_rs"
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

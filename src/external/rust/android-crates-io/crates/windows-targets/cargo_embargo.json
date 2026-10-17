@@ -1,0 +1,11 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "package": {
+    "windows-targets": {
+      "add_module_block": "extra_deps.bp.fragment",
+      "device_supported": false,
+      "enabled": false
+    }
+  }
+}

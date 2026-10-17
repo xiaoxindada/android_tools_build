@@ -1,0 +1,14 @@
+--- a/src/util/macros.rs
++++ b/src/util/macros.rs
+@@ -910,2 +910,1 @@
+-                #[doc = include_str!(concat!("../benches/formats/", $format, ".rs"))]
+                 pub mod $format {}
+@@ -917,2 +916,1 @@
+-                #[doc = include_str!(concat!("../benches/", $bench, ".rs"))]
+                 pub mod $bench {}
+@@ -925,2 +923,1 @@
+-                #[doc = include_str!(concat!("../benches/", $bench, ".x86-64"))]
+                 pub mod x86_64 {}
+@@ -932,2 +929,1 @@
+-                #[doc = include_str!(concat!("../benches/", $bench, ".x86-64.mca"))]
+                 pub mod x86_64_mca {}

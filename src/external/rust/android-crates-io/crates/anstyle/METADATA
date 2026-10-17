@@ -1,0 +1,17 @@
+name: "anstyle"
+description: "ANSI text styling"
+third_party {
+  version: "1.0.14"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 3
+    day: 17
+  }
+  homepage: "https://crates.io/crates/anstyle"
+  identifier {
+    type: "crates.io"
+    value: "anstyle"
+    version: "1.0.14"
+  }
+}

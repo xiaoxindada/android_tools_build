@@ -1,0 +1,23 @@
+diff --git a/crates/libc/Android.bp b/crates/libc/Android.bp
+index 02881b45a..064e97da1 100644
+--- a/crates/libc/Android.bp
++++ b/crates/libc/Android.bp
+@@ -58,6 +58,18 @@ rust_library {
+         windows: {
+             enabled: true,
+         },
++        linux_musl_arm: {
++            cfgs: [
++                "musl32_time64",
++                "linux_time_bits64",
++            ],
++        },
++        linux_musl_x86: {
++            cfgs: [
++                "musl32_time64",
++                "linux_time_bits64",
++            ],
++        },
+     },
+     apex_available: [
+         "//apex_available:platform",

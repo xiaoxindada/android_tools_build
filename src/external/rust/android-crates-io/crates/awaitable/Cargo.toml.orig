@@ -1,0 +1,29 @@
+[package]
+name = "awaitable"
+version = "0.4.0"
+edition = "2018"
+
+authors = ["Jiahao XU <Jiahao_XU@outlook.com>"]
+
+license = "MIT"
+description = "Awaitable type with input and output that can be stored in container."
+repository = "https://github.com/NobodyXu/awaitable"
+
+keywords = ["async", "utilities"]
+categories = ["asynchronous"]
+
+[workspace]
+members = ["awaitable-error"]
+
+[dependencies]
+awaitable-error = { version = "0.1.0", path = "awaitable-error" }
+cfg-if = "1.0.0"
+parking_lot = { version = "0.12.0", optional = true }
+
+# docs.rs-specific configuration, shamelessly copied from
+# https://stackoverflow.com/a/61417700/8375400.
+[package.metadata.docs.rs]
+# document all features
+all-features = true
+# defines the configuration attribute `docsrs`
+rustdoc-args = ["--cfg", "docsrs"]

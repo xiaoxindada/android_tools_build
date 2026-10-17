@@ -1,0 +1,38 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/crossbeam-deque"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/rayon-core"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "crossbeam-deque_test_tests_fifo"
+    },
+    {
+      "name": "crossbeam-deque_test_tests_injector"
+    },
+    {
+      "name": "crossbeam-deque_test_tests_lifo"
+    },
+    {
+      "name": "crossbeam-deque_test_tests_steal"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "crossbeam-deque_test_tests_fifo"
+    },
+    {
+      "name": "crossbeam-deque_test_tests_injector"
+    },
+    {
+      "name": "crossbeam-deque_test_tests_lifo"
+    },
+    {
+      "name": "crossbeam-deque_test_tests_steal"
+    }
+  ]
+}

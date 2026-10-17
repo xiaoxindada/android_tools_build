@@ -1,0 +1,17 @@
+name: "configparser"
+description: "A simple configuration parsing utility with no dependencies that allows you to parse INI and ini-style syntax. You can use this to write Rust programs which can be customized by end users easily."
+third_party {
+  version: "3.2.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 9
+  }
+  homepage: "https://crates.io/crates/configparser"
+  identifier {
+    type: "crates.io"
+    value: "configparser"
+    version: "3.2.0"
+  }
+}

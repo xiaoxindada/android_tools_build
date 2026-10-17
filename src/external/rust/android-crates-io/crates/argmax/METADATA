@@ -1,0 +1,17 @@
+name: "argmax"
+description: "Rust library to deal with \'argument too long\' errors"
+third_party {
+  version: "0.4.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 11
+    day: 26
+  }
+  homepage: "https://crates.io/crates/argmax"
+  identifier {
+    type: "crates.io"
+    value: "argmax"
+    version: "0.4.0"
+  }
+}

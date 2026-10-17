@@ -1,0 +1,22 @@
+diff --git a/bindings/bindings.rs b/bindings/bindings.rs
+index b503a167f..0975e66a6 100644
+--- a/bindings/bindings.rs
++++ b/bindings/bindings.rs
+@@ -697,7 +697,7 @@ extern "C" {
+     pub fn grpc_slice_to_c_string(s: grpc_slice) -> *mut ::std::os::raw::c_char;
+ }
+ pub mod grpc_status_code {
+-    pub type Type = ::std::os::raw::c_int;
++    pub type Type = ::std::os::raw::c_uint;
+     #[doc = " Not an error; returned on success"]
+     pub const GRPC_STATUS_OK: Type = 0;
+     #[doc = " The operation was cancelled (typically by the caller)."]
+@@ -801,7 +801,7 @@ pub mod grpc_status_code {
+     #[doc = " Unrecoverable data loss or corruption."]
+     pub const GRPC_STATUS_DATA_LOSS: Type = 15;
+     #[doc = " Force users to include a default branch:"]
+-    pub const GRPC_STATUS__DO_NOT_USE: Type = -1;
++    pub const GRPC_STATUS__DO_NOT_USE: Type = 2147483647;
+ }
+ #[repr(u32)]
+ #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]

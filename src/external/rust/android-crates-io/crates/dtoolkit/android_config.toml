@@ -1,0 +1,4 @@
+deletions = [
+    "LICENSE-APACHE",
+    "LICENSE-MIT",
+]

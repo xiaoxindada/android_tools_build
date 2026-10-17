@@ -1,0 +1,14 @@
+per-file runtime_libart.mk = file:platform/art:main:/OWNERS
+per-file default_art_config.mk = file:platform/art:main:/OWNERS
+
+# GSI
+per-file gsi_release.mk = file:/target/product/gsi/OWNERS
+per-file developer_gsi_keys.mk = file:/target/product/gsi/OWNERS
+
+# Android Go
+per-file go_defaults.mk = gkaiser@google.com, kushg@google.com, rajekumar@google.com
+per-file go_defaults_512.mk = gkaiser@google.com, kushg@google.com, rajekumar@google.com
+per-file go_defaults_common.mk = gkaiser@google.com, kushg@google.com, rajekumar@google.com
+
+# Translation
+per-file languages_default.mk = aapple@google.com

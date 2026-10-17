@@ -1,0 +1,48 @@
+{
+  "imports": [
+    {
+      "path": "external/avb/rust"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/arm-ffa"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vhost"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/virtmgr"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/apkdmverity"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/pvmfw"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/devicemapper"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libvmbase"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/vmconfig"
+    },
+    {
+      "path": "packages/services/DroidfoodAttestationFixer"
+    },
+    {
+      "path": "system/extras/profcollectd/libprofcollectd"
+    },
+    {
+      "path": "tools/asuite/adevice"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "uuid_test_src_lib"
+    }
+  ]
+}

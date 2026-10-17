@@ -1,0 +1,17 @@
+name: "tower-service"
+description: "Trait representing an asynchronous, request / response based, client or server."
+third_party {
+  version: "0.3.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2024
+    month: 12
+    day: 20
+  }
+  homepage: "https://crates.io/crates/tower-service"
+  identifier {
+    type: "crates.io"
+    value: "tower-service"
+    version: "0.3.3"
+  }
+}

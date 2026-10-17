@@ -1,0 +1,9 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "module_name_overrides": {
+    "libhttp_body": "libhttp_body-0.4",
+    "libhttp": "libhttp-0.2.12",
+    "external_rust_crates_http-body_license": "external_rust_crates_http-body-0.14_license"
+  }
+}

@@ -1,0 +1,17 @@
+name: "cargo-platform"
+description: "Cargo\'s representation of a target platform."
+third_party {
+  version: "0.3.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 20
+  }
+  homepage: "https://crates.io/crates/cargo-platform"
+  identifier {
+    type: "crates.io"
+    value: "cargo-platform"
+    version: "0.3.3"
+  }
+}

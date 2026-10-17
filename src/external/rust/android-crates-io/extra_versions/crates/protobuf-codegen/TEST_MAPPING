@@ -1,0 +1,7 @@
+{
+  "postsubmit": [
+    {
+      "name": "protobuf-codegen_deprecated_test_src_lib"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+name: "fuser"
+description: "Filesystem in Userspace (FUSE) for Rust"
+third_party {
+  version: "0.17.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 20
+  }
+  homepage: "https://crates.io/crates/fuser"
+  identifier {
+    type: "crates.io"
+    value: "fuser"
+    version: "0.17.0"
+  }
+}

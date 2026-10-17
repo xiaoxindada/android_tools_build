@@ -1,0 +1,17 @@
+name: "is_terminal_polyfill"
+description: "Polyfill for `is_terminal` stdlib feature for use with older MSRVs"
+third_party {
+  version: "1.70.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 29
+  }
+  homepage: "https://crates.io/crates/is_terminal_polyfill"
+  identifier {
+    type: "crates.io"
+    value: "is_terminal_polyfill"
+    version: "1.70.2"
+  }
+}

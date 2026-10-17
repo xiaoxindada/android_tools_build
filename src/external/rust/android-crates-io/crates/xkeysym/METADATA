@@ -1,0 +1,17 @@
+name: "xkeysym"
+description: "A library for working with X11 keysyms"
+third_party {
+  version: "0.2.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 6
+    day: 25
+  }
+  homepage: "https://crates.io/crates/xkeysym"
+  identifier {
+    type: "crates.io"
+    value: "xkeysym"
+    version: "0.2.1"
+  }
+}

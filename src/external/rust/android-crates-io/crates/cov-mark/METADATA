@@ -1,0 +1,17 @@
+name: "cov-mark"
+description: "Manual coverage marks."
+third_party {
+  version: "2.2.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 10
+    day: 29
+  }
+  homepage: "https://crates.io/crates/cov-mark"
+  identifier {
+    type: "crates.io"
+    value: "cov-mark"
+    version: "2.2.0"
+  }
+}

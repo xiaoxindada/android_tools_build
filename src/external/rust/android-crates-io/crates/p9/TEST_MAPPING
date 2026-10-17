@@ -1,0 +1,7 @@
+{
+  "postsubmit": [
+    {
+      "name": "p9_test_src_lib"
+    }
+  ]
+}

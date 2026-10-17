@@ -1,0 +1,17 @@
+name: "uncased"
+description: "Case-preserving, ASCII case-insensitive, no_std string types."
+third_party {
+  version: "0.9.10"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 4
+    day: 15
+  }
+  homepage: "https://crates.io/crates/uncased"
+  identifier {
+    type: "crates.io"
+    value: "uncased"
+    version: "0.9.10"
+  }
+}

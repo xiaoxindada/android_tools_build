@@ -1,0 +1,307 @@
+/*
+ * Copyright 2024 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+use crate::figma_schema;
+use dc_bundle::color::FloatColor;
+use dc_bundle::variable::num_or_var::{NumOrVarType, NumVar};
+use dc_bundle::variable::variable::{VariableType, VariableValueMap};
+use dc_bundle::variable::{
+    color_or_var, variable_value, ColorOrVar, NumOrVar, Variable, VariableValue,
+};
+use log::warn;
+use std::collections::HashMap;
+
+// Trait to create a XOrVar from Figma data
+pub(crate) trait FromFigmaVar<VarType> {
+    fn from_var(
+        bound_variables: &figma_schema::BoundVariables,
+        var_name: &str,
+        var_value: VarType,
+        key_to_global_id_map: &mut HashMap<String, String>,
+    ) -> Self;
+
+    fn from_var_hash(
+        bound_variables: &figma_schema::BoundVariables,
+        hash_name: &str,
+        var_name: &str,
+        var_value: VarType,
+        key_to_global_id_map: &mut HashMap<String, String>,
+    ) -> Self;
+}
+// Create a NumOrVar from Figma variable name and number value
+impl FromFigmaVar<f32> for NumOrVarType {
+    fn from_var(
+        bound_variables: &figma_schema::BoundVariables,
+        var_name: &str,
+        var_value: f32,
+        key_to_global_id_map: &mut HashMap<String, String>,
+    ) -> Self {
+        let var = bound_variables.get_variable(var_name);
+        if let Some(var) = var {
+            let key_part = var.strip_prefix("VariableID:").unwrap_or(&var);
+            let key = key_part.split('/').next().unwrap_or(key_part);
+            key_to_global_id_map.insert(key.to_string(), var.clone());
+            NumOrVarType::Var(NumVar { id: var, fallback: var_value, ..Default::default() })
+        } else {
+            NumOrVarType::Num(var_value)
+        }
+    }
+    fn from_var_hash(
+        bound_variables: &figma_schema::BoundVariables,
+        hash_name: &str,
+        var_name: &str,
+        var_value: f32,
+        key_to_global_id_map: &mut HashMap<String, String>,
+    ) -> Self {
+        let var = bound_variables.get_var_from_hash(hash_name, var_name);
+        if let Some(var) = var {
+            let key_part = var.strip_prefix("VariableID:").unwrap_or(&var);
+            let key = key_part.split('/').next().unwrap_or(key_part);
+            key_to_global_id_map.insert(key.to_string(), var.clone());
+            NumOrVarType::Var(NumVar { id: var, fallback: var_value, ..Default::default() })
+        } else {
+            NumOrVarType::Num(var_value)
+        }
+    }
+}
+
+impl FromFigmaVar<f32> for NumOrVar {
+    fn from_var(
+        bound_variables: &figma_schema::BoundVariables,
+        var_name: &str,
+        var_value: f32,
+        key_to_global_id_map: &mut HashMap<String, String>,
+    ) -> NumOrVar {
+        NumOrVar {
+            NumOrVarType: Some(NumOrVarType::from_var(
+                bound_variables,
+                var_name,
+                var_value,
+                key_to_global_id_map,
+            )),
+            ..Default::default()
+        }
+    }
+    fn from_var_hash(
+        bound_variables: &figma_schema::BoundVariables,
+        hash_name: &str,
+        var_name: &str,
+        var_value: f32,
+        key_to_global_id_map: &mut HashMap<String, String>,
+    ) -> NumOrVar {
+        NumOrVar {
+            NumOrVarType: Some(NumOrVarType::from_var_hash(
+                bound_variables,
+                hash_name,
+                var_name,
+                var_value,
+                key_to_global_id_map,
+            )),
+            ..Default::default()
+        }
+    }
+}
+
+// Create a ColorOrVar from Figma variable name and color value
+impl FromFigmaVar<&FloatColor> for ColorOrVar {
+    fn from_var(
+        bound_variables: &figma_schema::BoundVariables,
+        var_name: &str,
+        color: &FloatColor,
+        key_to_global_id_map: &mut HashMap<String, String>,
+    ) -> Self {
+        let var = bound_variables.get_variable(var_name);
+        if let Some(var) = var {
+            let key_part = var.strip_prefix("VariableID:").unwrap_or(&var);
+            let key = key_part.split('/').next().unwrap_or(key_part);
+            key_to_global_id_map.insert(key.to_string(), var.clone());
+            ColorOrVar::new_var(var, Some(color.into()))
+        } else {
+            ColorOrVar::new_color(color.into())
+        }
+    }
+    fn from_var_hash(
+        _bound_variables: &figma_schema::BoundVariables,
+        _hash_name: &str,
+        _var_name: &str,
+        color: &FloatColor,
+        _key_to_global_id_map: &mut HashMap<String, String>,
+    ) -> Self {
+        // Currently, no color variables from a hash are yet supported
+        ColorOrVar::new_color(color.into())
+    }
+}
+
+// Create a VariableValue from figma_schema::VariableValue
+fn create_variable_value(v: &figma_schema::VariableValue) -> VariableValue {
+    match v {
+        figma_schema::VariableValue::Boolean(b) => VariableValue {
+            Value: Some(variable_value::Value::Bool(b.clone())),
+            ..Default::default()
+        },
+        figma_schema::VariableValue::Float(f) => VariableValue {
+            Value: Some(variable_value::Value::Number(f.clone())),
+            ..Default::default()
+        },
+        figma_schema::VariableValue::String(s) => VariableValue {
+            Value: Some(variable_value::Value::Text(s.clone())),
+            ..Default::default()
+        },
+        figma_schema::VariableValue::Color(c) => VariableValue {
+            Value: Some(variable_value::Value::Color(c.into())),
+            ..Default::default()
+        },
+        figma_schema::VariableValue::Alias(a) => {
+            // Alias variables reference another variable by ID. The runtime client
+            // (VariableManager) resolves these by looking up the alias target in the
+            // merged variable map. If the target variable lives in a library that wasn't
+            // fetched (no component instances referenced it), resolution will fail at runtime.
+            warn!(
+                "Variable alias {} stored. If the alias target is in an un-fetched library, \
+                 it will not resolve at runtime.",
+                a.id
+            );
+            VariableValue {
+                Value: Some(variable_value::Value::Alias(a.id.clone())),
+                ..Default::default()
+            }
+        }
+    }
+}
+
+// Create a VariableValueMap from a hash of mode IDs to Figma VariableValues
+fn create_variable_value_map(
+    map: &HashMap<String, figma_schema::VariableValue>,
+) -> Option<VariableValueMap> {
+    let mut values_by_mode: HashMap<String, VariableValue> = HashMap::new();
+    for (mode_id, value) in map.iter() {
+        values_by_mode.insert(mode_id.clone(), create_variable_value(value));
+    }
+    Some(VariableValueMap { values_by_mode, ..Default::default() })
+}
+
+// Helper function to create a Variable
+fn create_variable_helper(
+    var_type: VariableType,
+    common: &figma_schema::VariableCommon,
+    values_by_mode: &HashMap<String, figma_schema::VariableValue>,
+) -> Variable {
+    Variable {
+        id: common.id.clone(),
+        name: common.name.clone(),
+        remote: common.remote,
+        key: common.key.clone(),
+        variable_collection_id: common.variable_collection_id.clone(),
+        var_type: var_type.into(),
+        values_by_mode: create_variable_value_map(values_by_mode).into(),
+        ..Default::default()
+    }
+}
+
+// Create a variable from figma_schema::Variable
+pub(crate) fn create_variable(v: &figma_schema::Variable) -> Variable {
+    match v {
+        figma_schema::Variable::Boolean { common, values_by_mode } => {
+            create_variable_helper(VariableType::VARIABLE_TYPE_BOOL, common, values_by_mode)
+        }
+        figma_schema::Variable::Float { common, values_by_mode } => {
+            create_variable_helper(VariableType::VARIABLE_TYPE_NUMBER, common, values_by_mode)
+        }
+        figma_schema::Variable::String { common, values_by_mode } => {
+            create_variable_helper(VariableType::VARIABLE_TYPE_TEXT, common, values_by_mode)
+        }
+        figma_schema::Variable::Color { common, values_by_mode } => {
+            create_variable_helper(VariableType::VARIABLE_TYPE_COLOR, common, values_by_mode)
+        }
+    }
+}
+
+// Extract the color out of bound_variables if it exists, or use the default color if not.
+// Convert the color into a ColorOrVar.
+pub(crate) fn bound_variables_color(
+    bound_variables: &Option<figma_schema::BoundVariables>,
+    default_color: &figma_schema::FigmaColor,
+    last_opacity: f32,
+    key_to_global_id_map: &mut HashMap<String, String>,
+) -> ColorOrVar {
+    if let Some(vars) = bound_variables {
+        let fallback_color = FloatColor {
+            r: default_color.r,
+            g: default_color.g,
+            b: default_color.b,
+            a: default_color.a * last_opacity,
+            ..Default::default()
+        };
+        ColorOrVar::from_var(vars, "color", &fallback_color, key_to_global_id_map)
+    } else {
+        ColorOrVar {
+            ColorOrVarType: Some(color_or_var::ColorOrVarType::Color(crate::Color::from_f32s(
+                default_color.r,
+                default_color.g,
+                default_color.b,
+                default_color.a * last_opacity,
+            ))),
+            ..Default::default()
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::figma_schema::{BoundVariables, FigmaColor};
+    use dc_bundle::variable::color_or_var;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_bound_variables_color_fallback_opacity() {
+        let json = serde_json::json!({
+            "color": {
+                "type": "VARIABLE_ALIAS",
+                "id": "VariableID:test_opacity_var"
+            }
+        });
+        let bound_variables = Some(serde_json::from_value::<BoundVariables>(json).unwrap());
+
+        let default_color = FigmaColor { r: 0.8, g: 0.6, b: 0.4, a: 1.0 };
+
+        let last_opacity = 0.5;
+
+        let mut key_map = HashMap::new();
+        let result =
+            bound_variables_color(&bound_variables, &default_color, last_opacity, &mut key_map);
+
+        match result.ColorOrVarType {
+            Some(color_or_var::ColorOrVarType::Var(var)) => {
+                assert_eq!(var.id, "VariableID:test_opacity_var");
+
+                let fallback = var.fallback.0.expect("Fallback color must be provided");
+
+                let expected_alpha = (1.0 * 0.5 * 255.0) as u32;
+                let expected_r = (0.8 * 255.0) as u32;
+
+                assert_eq!(fallback.a, expected_alpha);
+                assert_eq!(fallback.r, expected_r);
+            }
+            _ => panic!("Expected a ColorVar type, got something else"),
+        }
+
+        assert_eq!(
+            key_map.get("test_opacity_var"),
+            Some(&"VariableID:test_opacity_var".to_string())
+        );
+    }
+}

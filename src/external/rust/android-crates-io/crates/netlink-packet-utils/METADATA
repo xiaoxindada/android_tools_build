@@ -1,0 +1,17 @@
+name: "netlink-packet-utils"
+description: "macros and helpers for parsing netlink messages"
+third_party {
+  version: "0.6.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 5
+    day: 20
+  }
+  homepage: "https://crates.io/crates/netlink-packet-utils"
+  identifier {
+    type: "crates.io"
+    value: "netlink-packet-utils"
+    version: "0.6.0"
+  }
+}

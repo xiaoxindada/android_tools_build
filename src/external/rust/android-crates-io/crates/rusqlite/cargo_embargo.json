@@ -1,0 +1,10 @@
+{
+  "features": [
+    "fallible_uint",
+    "trace"
+  ],
+  "min_sdk_version": "29",
+  "product_available": true,
+  "run_cargo": false,
+  "vendor_available": true
+}

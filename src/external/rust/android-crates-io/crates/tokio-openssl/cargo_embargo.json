@@ -1,0 +1,13 @@
+{
+  "run_cargo": false,
+  "cfg_blocklist": ["ossl111"],
+  "module_name_overrides": {
+    "libopenssl_sys": "libbssl_sys"
+  },
+  "module_visibility": {
+    "libtokio_openssl": [
+      "//system/software_defined_vehicle/middleware/sdv_comms:__subpackages__"
+    ]
+  },
+  "min_sdk_version": "29"
+}

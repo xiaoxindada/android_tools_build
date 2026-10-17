@@ -1,0 +1,13 @@
+{
+  "tests": true,
+  "apex_available": [
+    "//apex_available:platform",
+    "com.android.virt"
+  ],
+  "module_name_overrides": {
+    "libash": "libash_rust-0.38.0",
+    "external_rust_crates_ash_license": "external_rust_crates_ash-0.38.0_license"
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29"
+}

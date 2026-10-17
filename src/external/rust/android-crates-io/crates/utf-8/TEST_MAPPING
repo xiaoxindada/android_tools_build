@@ -1,0 +1,15 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/tungstenite"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/utf-8"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "utf-8_test_tests_unit"
+    }
+  ]
+}

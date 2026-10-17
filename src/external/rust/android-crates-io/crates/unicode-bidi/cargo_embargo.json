@@ -1,0 +1,22 @@
+{
+  "sdk_version": "29",
+  "min_sdk_version": "29",
+  "run_cargo": false,
+  "tests": true,
+  "ramdisk_available": true,
+  "recovery_available": true,
+  "vendor_ramdisk_available": true,
+  "native_bridge_supported": true,
+  "variants": [
+    {},
+    {
+      "features": ["hardcoded-data"],
+      "tests": false,
+      "package": {
+        "unicode-bidi": {
+          "no_std": true
+        }
+      }
+    }
+  ]
+}

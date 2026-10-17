@@ -1,0 +1,21 @@
+{
+  "features": [
+    "ahash",
+    "default",
+    "inline-more",
+    "raw"
+  ],
+  "module_name_overrides": {
+    "external_rust_crates_hashbrown_license": "external_rust_crates_hashbrown-0.12.3_license",
+    "libhashbrown": "libhashbrown-0.12.3"
+  },
+  "package": {
+    "hashbrown": {
+      "dep_blocklist": [
+        "libdoc_comment"
+      ]
+    }
+  },
+  "tests": false,
+  "min_sdk_version": "29"
+}

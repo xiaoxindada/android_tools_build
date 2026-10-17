@@ -1,0 +1,17 @@
+name: "litemap"
+description: "A key-value Map implementation based on a flat, sorted Vec."
+third_party {
+  version: "0.8.3"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 14
+  }
+  homepage: "https://crates.io/crates/litemap"
+  identifier {
+    type: "crates.io"
+    value: "litemap"
+    version: "0.8.3"
+  }
+}

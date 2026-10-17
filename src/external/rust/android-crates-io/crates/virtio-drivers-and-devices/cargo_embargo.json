@@ -1,0 +1,18 @@
+{
+  "features": [],
+  "package": {
+    "virtio-drivers-and-devices": {
+      "force_rlib": true,
+      "host_supported": false,
+      "no_std": true,
+      "rulesmk_patch": "patches/rules.mk.diff"
+    }
+  },
+  "product_available": false,
+  "run_cargo": false,
+  "tests": false,
+  "vendor_available": false,
+  "generate_androidbp": false,
+  "generate_rulesmk": true,
+  "min_sdk_version": "29"
+}

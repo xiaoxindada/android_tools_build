@@ -1,0 +1,79 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/dc_bundle"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/dc_layout"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/grpcio"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-codegen"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-json-mapping"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-parse"
+    },
+    {
+      "path": "external/rust/beto-rust/betosync"
+    },
+    {
+      "path": "external/rust/beto-rust/nearby"
+    },
+    {
+      "path": "packages/modules/ConfigInfrastructure/aconfigd"
+    },
+    {
+      "path": "packages/modules/ConfigInfrastructure/aconfigd/proto"
+    },
+    {
+      "path": "packages/modules/ConfigInfrastructure/aflags"
+    },
+    {
+      "path": "packages/modules/UprobeStats/rust/src"
+    },
+    {
+      "path": "packages/modules/Uwb/libuwb-uci/src"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/composd"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/authfs"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/compsvc"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/microdroid_manager"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/apexutil"
+    },
+    {
+      "path": "packages/modules/Virtualization/libs/libmicrodroid_payload_metadata/metadata"
+    },
+    {
+      "path": "system/apex/libs/libapexsupport"
+    },
+    {
+      "path": "system/desktop/security/udsattestation"
+    },
+    {
+      "path": "system/server_configurable_flags/aconfigd"
+    },
+    {
+      "path": "system/usb_info_tools/dumpsys_to_lsusb"
+    },
+    {
+      "path": "tools/asuite/adevice"
+    },
+    {
+      "path": "tools/netsim"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "package": {
+      "arm-pl011-uart": {
+          "force_rlib": true,
+          "no_std": true,
+          "host_supported": false
+      }
+  },
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "features": [],
+  "tests": false
+}

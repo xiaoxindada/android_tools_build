@@ -1,0 +1,17 @@
+name: "rust-fuzzy-search"
+description: "Fuzzy Search with trigrams implemented in Rust"
+third_party {
+  version: "0.1.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 1
+    day: 23
+  }
+  homepage: "https://crates.io/crates/rust-fuzzy-search"
+  identifier {
+    type: "crates.io"
+    value: "rust-fuzzy-search"
+    version: "0.1.1"
+  }
+}

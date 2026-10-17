@@ -1,0 +1,17 @@
+name: "arm-sysregs-el1"
+description: "Armv8-A system register helper crate for EL1"
+third_party {
+  version: "0.4.0"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 8
+    day: 10
+  }
+  homepage: "https://crates.io/crates/arm-sysregs-el1"
+  identifier {
+    type: "crates.io"
+    value: "arm-sysregs-el1"
+    version: "0.4.0"
+  }
+}

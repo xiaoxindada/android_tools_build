@@ -1,0 +1,17 @@
+name: "inotify-sys"
+description: "inotify bindings for the Rust programming language"
+third_party {
+  version: "0.1.8"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 7
+    day: 8
+  }
+  homepage: "https://crates.io/crates/inotify-sys"
+  identifier {
+    type: "crates.io"
+    value: "inotify-sys"
+    version: "0.1.8"
+  }
+}

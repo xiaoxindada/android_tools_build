@@ -1,0 +1,49 @@
+From b10380a08a68a34639fa31af31e47a3db368fdbf Mon Sep 17 00:00:00 2001
+From: Chris Wailes <chriswailes@google.com>
+Date: Thu, 25 Jun 2026 15:06:35 -0700
+Subject: [PATCH] Update jni crate to use std::assert_matches
+
+Test: mm
+Change-Id: I9390eecceb9cd4a1a7466eccd0696e9af785d356
+---
+ src/lib.rs                                | 1 +
+ src/vm/init_args/char_encoding_generic.rs | 5 ++---
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/lib.rs b/src/lib.rs
+index a27530537..e8725578b 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -3,6 +3,7 @@
+ // TODO: https://github.com/jni-rs/jni-rs/issues/348
+ #![allow(clippy::not_unsafe_ptr_arg_deref)]
+ #![deny(missing_debug_implementations)]
++#![feature(assert_matches)]
+ 
+ //! # Safe JNI Bindings in Rust
+ //!
+diff --git a/src/vm/init_args/char_encoding_generic.rs b/src/vm/init_args/char_encoding_generic.rs
+index 8193c1662..e90b9b277 100644
+--- a/src/vm/init_args/char_encoding_generic.rs
++++ b/src/vm/init_args/char_encoding_generic.rs
+@@ -89,7 +89,7 @@ pub(super) fn utf8_to_cstr<'a>(s: Cow<'a, str>) -> Result<Cow<'a, CStr>, JvmErro
+ 
+ #[test]
+ fn test() {
+-    use assert_matches::assert_matches;
++    use std::assert_matches;
+ 
+     {
+         let result = utf8_to_cstr("Hello, world 😎".into()).unwrap();
+@@ -111,7 +111,6 @@ fn test() {
+ 
+     {
+         let result = utf8_to_cstr("Hello,\0world".into()).unwrap_err();
+-        let error_string = assert_matches!(result, JvmError::NullOptString(string) => string);
+-        assert_eq!(error_string, "Hello,\0world");
++        assert_matches!(result, JvmError::NullOptString(string) if string == "Hello,\0world");
+     }
+ }
+-- 
+2.55.0.rc0.799.gd6f94ed593-goog
+

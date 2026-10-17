@@ -1,0 +1,7 @@
+diff --git a/OWNERS.android b/OWNERS.android
+new file mode 100644
+index 0000000..381e641
+--- /dev/null
++++ b/OWNERS.android
+@@ -0,0 +1,1 @@
++include platform/prebuilts/rust:main:/OWNERS

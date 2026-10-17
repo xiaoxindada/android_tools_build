@@ -1,0 +1,12 @@
+{
+    "module_name_overrides": {
+        "libpng": "libpng_rust"
+    },
+    "min_sdk_version": "29",
+    "package": {
+        "png": {
+            "target_windows": true
+        }
+    },
+    "ota_recovery_ramdisk_available": true
+}

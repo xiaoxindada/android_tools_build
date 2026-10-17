@@ -1,0 +1,19 @@
+{
+  "run_cargo": false,
+  "features": [
+    "bytemuck",
+    "serde"
+  ],
+  "module_name_overrides": {
+    "libbytemuck": "libbytemuck_nostd",
+    "libuguid": "libuguid_nostd"
+  },
+  "package": {
+    "uguid": {
+      "force_rlib": true,
+      "host_supported": false,
+      "no_std": true
+    }
+  },
+  "min_sdk_version": "29"
+}

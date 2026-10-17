@@ -1,0 +1,19 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "variants": [
+    {},
+    {
+      "features": [],
+      "generate_rulesmk": true,
+      "package": {
+        "dtoolkit": {
+          "force_rlib": true,
+          "host_supported": false,
+          "no_std": true
+        }
+      },
+      "tests": false
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "package": {
+    "openssl-probe": {
+      "device_supported": false
+    }
+  }
+}
+

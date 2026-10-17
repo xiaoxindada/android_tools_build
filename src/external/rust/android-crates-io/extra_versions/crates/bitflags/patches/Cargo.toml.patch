@@ -1,0 +1,12 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index 9d54c72..59ad06b 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -39,6 +39,7 @@ version = "1.0"
+ 
+ [dev-dependencies.serde]
+ version = "1.0"
++features = ["serde_derive"]
+ 
+ [dev-dependencies.serde_derive]
+ version = "1.0"

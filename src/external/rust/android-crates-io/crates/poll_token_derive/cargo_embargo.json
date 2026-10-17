@@ -1,0 +1,11 @@
+{
+  "package": {
+    "poll_token_derive": {
+      "device_supported": false,
+      "host_first_multilib": true
+    }
+  },
+  "run_cargo": false,
+  "tests": true,
+  "min_sdk_version": "29"
+}

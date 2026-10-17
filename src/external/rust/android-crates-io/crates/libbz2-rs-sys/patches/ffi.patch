@@ -1,0 +1,16 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index 6d0bc2860..1c77b68a7 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -45,6 +45,11 @@ testing-prefix = ["export-symbols"]
+ [lib]
+ name = "libbz2_rs_sys"
+ path = "src/lib.rs"
++crate-type = [
++    "lib",
++    "staticlib",
++    "cdylib",
++]
+ 
+ [dependencies.libc]
+ version = "0.2"

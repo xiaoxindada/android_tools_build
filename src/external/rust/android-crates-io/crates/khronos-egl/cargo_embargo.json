@@ -1,0 +1,4 @@
+{
+  "features": ["dynamic", "default"],
+  "min_sdk_version": "29"
+}

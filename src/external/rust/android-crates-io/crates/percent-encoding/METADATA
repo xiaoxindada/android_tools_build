@@ -1,0 +1,17 @@
+name: "percent-encoding"
+description: "Percent encoding and decoding"
+third_party {
+  version: "2.3.2"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2025
+    month: 8
+    day: 26
+  }
+  homepage: "https://crates.io/crates/percent-encoding"
+  identifier {
+    type: "crates.io"
+    value: "percent-encoding"
+    version: "2.3.2"
+  }
+}

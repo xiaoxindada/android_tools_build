@@ -1,0 +1,12 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/protobuf-codegen"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "protobuf-codegen_test_src_lib"
+    }
+  ]
+}

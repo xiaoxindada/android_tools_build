@@ -1,0 +1,7 @@
+{
+  "run_cargo": false,
+  "min_sdk_version": "29",
+  "module_name_overrides": {
+    "libaws_lc_sys": "libbssl_sys"
+  }
+}

@@ -1,0 +1,17 @@
+name: "macaddr"
+description: "MAC address types"
+third_party {
+  version: "1.0.1"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2021
+    month: 3
+    day: 17
+  }
+  homepage: "https://crates.io/crates/macaddr"
+  identifier {
+    type: "crates.io"
+    value: "macaddr"
+    version: "1.0.1"
+  }
+}

@@ -1,0 +1,17 @@
+name: "crossbeam-deque"
+description: "Concurrent work-stealing deque"
+third_party {
+  version: "0.8.8"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 9
+    day: 15
+  }
+  homepage: "https://crates.io/crates/crossbeam-deque"
+  identifier {
+    type: "crates.io"
+    value: "crossbeam-deque"
+    version: "0.8.8"
+  }
+}

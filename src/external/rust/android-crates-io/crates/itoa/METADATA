@@ -1,0 +1,17 @@
+name: "itoa"
+description: "Fast integer primitive to string conversion"
+third_party {
+  version: "1.0.18"
+  license_type: NOTICE
+  last_upgrade_date {
+    year: 2026
+    month: 3
+    day: 24
+  }
+  homepage: "https://crates.io/crates/itoa"
+  identifier {
+    type: "crates.io"
+    value: "itoa"
+    version: "1.0.18"
+  }
+}

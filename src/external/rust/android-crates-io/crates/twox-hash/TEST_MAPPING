@@ -1,0 +1,12 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/lz4_flex"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "twox-hash_test_src_lib"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "features": [
+    "std",
+    "string",
+    "help",
+    "usage",
+    "error-context",
+    "suggestions"
+  ],
+  "min_sdk_version": "29",
+  "package": {
+    "clap_builder": {
+      "target_windows": true
+    }
+  },
+  "recovery_available": true
+}

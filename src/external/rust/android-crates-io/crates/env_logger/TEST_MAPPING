@@ -1,0 +1,74 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/bindgen-cli"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/bindgen/android/bindgen_cmd"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/mio"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/quickcheck"
+    },
+    {
+      "path": "external/rust/crates/v4l2r/ffi"
+    },
+    {
+      "path": "external/rust/crates/v4l2r/lib"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/vhost-device-vsock"
+    },
+    {
+      "path": "external/rust/pica"
+    },
+    {
+      "path": "packages/modules/Nfc/libnfc-nci/tools/casimir"
+    },
+    {
+      "path": "packages/modules/Uwb/libuwb-uci/src"
+    },
+    {
+      "path": "packages/modules/Virtualization/android/vm"
+    },
+    {
+      "path": "packages/modules/Virtualization/tests/vm_accessor/accessor"
+    },
+    {
+      "path": "system/desktop/cros-codecs"
+    },
+    {
+      "path": "system/desktop/security/gscutil"
+    },
+    {
+      "path": "system/desktop/security/pinweaver/storage"
+    },
+    {
+      "path": "system/gatekeeper/rust/tests"
+    },
+    {
+      "path": "system/keymint/tests"
+    },
+    {
+      "path": "system/libueventd-rs"
+    },
+    {
+      "path": "system/logging/rust"
+    },
+    {
+      "path": "tools/netsim"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "env_logger_test_src_lib"
+    }
+  ],
+  "presubmit-rust": [
+    {
+      "name": "env_logger_test_src_lib"
+    }
+  ]
+}

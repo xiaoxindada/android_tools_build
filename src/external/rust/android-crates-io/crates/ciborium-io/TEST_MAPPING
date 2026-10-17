@@ -1,0 +1,52 @@
+{
+  "imports": [
+    {
+      "path": "external/rust/android-crates-io/crates/ciborium"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/ciborium-ll"
+    },
+    {
+      "path": "external/rust/android-crates-io/crates/coset"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/pvmfw"
+    },
+    {
+      "path": "packages/modules/Virtualization/guest/service_vm"
+    },
+    {
+      "path": "system/authgraph/hal"
+    },
+    {
+      "path": "system/authgraph/wire"
+    },
+    {
+      "path": "system/gatekeeper/rust/hal"
+    },
+    {
+      "path": "system/gatekeeper/rust/ta"
+    },
+    {
+      "path": "system/gatekeeper/rust/wire"
+    },
+    {
+      "path": "system/keymint/common"
+    },
+    {
+      "path": "system/keymint/derive"
+    },
+    {
+      "path": "system/keymint/hal"
+    },
+    {
+      "path": "system/keymint/ta"
+    },
+    {
+      "path": "system/keymint/wire"
+    },
+    {
+      "path": "system/security/hals/wire"
+    }
+  ]
+}

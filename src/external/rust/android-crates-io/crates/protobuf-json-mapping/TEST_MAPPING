@@ -1,0 +1,12 @@
+{
+  "imports": [
+    {
+      "path": "tools/netsim"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "protobuf-json-mapping_test_src_lib"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+--default-enum-style moduleconsts
+--default-macro-constant-type signed
+--with-derive-eq
+--with-derive-ord
+--impl-debug
+
+--blocklist-function (avc_init|security_load_booleans|checkPasswdAccess|rpm_execcon)
+--blocklist-function selinux_(booleans_path|users_path|check_passwd_access)
+--blocklist-function security_compute_user(_raw)?
+--blocklist-function sid(get|put)
+--blocklist-function matchpathcon(_init|_init_prefix|_fini|_index)?
+--blocklist-type security_context_t
+--blocklist-type ^__u?int[0-9]+_t$
+
+--allowlist-function (f|l)?(g|s)et(file|exec|fscreate|keycreate|sockcreate|peer|pid|prev)?con(_raw)?
+--allowlist-function freecon(ary)?
+--allowlist-function (set_)?match(path|media)con(_.+)?
+--allowlist-function (is_)?(security|selabel|selinux|avc|context)_.+
+--allowlist-function (init|fini|set)_selinuxmnt
+--allowlist-function get_(default|ordered)_(context|type).*
+--allowlist-function (string|mode)_to_(security_class|av_perm)
+--allowlist-function getseuser(byname)?
+--allowlist-function manual_user_enter_context
+--allowlist-function print_access_vector
+--allowlist-function query_user_context
+--allowlist-type (security|selinux|access|av|avc|SEL)_.+
+--allowlist-var (SELINUX|SELABEL|MATCHPATHCON|SECSID|AVC)_.+
