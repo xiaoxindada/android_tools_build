@@ -32,11 +32,16 @@ add_custom_command(
 )
 add_custom_target(gen_dtc_dec_srcs ALL DEPENDS ${dtc_dec_srcs})
 
-# get dtc version from Android.bp
+# get dtc version from METADATA
+# After the external_updater upgrade the version lives in
+# identifier { closest_version: "vX.Y.Z" }; the "version" field is a git
+# commit hash, so only closest_version carries the version. The pattern
+# allows arbitrary leading whitespace, i.e. any nesting depth, and keeps the
+# leading "v" so the version reads vX.Y.Z like upstream.
 execute_process(
   COMMAND
     bash -c
-    "echo $(sed -f ${dtc_srcs_dir}/METADATA_version.sed -n ${dtc_srcs_dir}/METADATA)"
+    "echo $(sed -n 's/^[[:space:]]*closest_version:[[:space:]]*\"\\(v\\{0,1\\}[[:digit:]][[:digit:]]*\\.[[:digit:]][[:digit:]]*\\.[[:digit:]][[:digit:]]*\\)\".*/\\1/p' ${dtc_srcs_dir}/METADATA)"
   OUTPUT_VARIABLE dtc_version
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
