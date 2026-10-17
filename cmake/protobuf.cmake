@@ -40,8 +40,9 @@ set(absl_libs
     absl_log
     absl_strings
     absl_synchronization
-    # abseil-cpp 新版本已把 low_level_hash 合并进 absl_hash(internal/hash.cc)，
-    # 不再有独立的 absl_low_level_hash 目标；此处保留会退化成 -labsl_low_level_hash 链接失败。
+    # newer abseil-cpp merged low_level_hash into absl_hash (internal/hash.cc),
+    # so the standalone absl_low_level_hash target is gone and keeping it here
+    # would degrade into a failing -labsl_low_level_hash link
     absl_hash
     absl_raw_hash_set
     absl_status
@@ -406,3 +407,4 @@ target_link_libraries(aprotoc PRIVATE
     protoc
     zlib
 )
+add_custom_target(aprotoc_gen ALL DEPENDS aprotoc)

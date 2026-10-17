@@ -54,7 +54,7 @@ add_custom_command(
         ${prebuilt_aprotoc} dynamic_partitions_device_info.proto -I${partition_tools_dir} --cpp_out=${partition_tools_dir}
     DEPENDS
         ${partition_tools_dir}/dynamic_partitions_device_info.proto
-        aprotoc
+        aprotoc_gen
 )
 add_custom_target(gen_dynamic_partitions_device_info_srcs ALL DEPENDS ${dynamic_partitions_device_info_srcs})
 
@@ -65,7 +65,7 @@ add_custom_command(
         ${prebuilt_aprotoc} snapshot.proto -I${libsnapshot_srcs_dir}/android/snapshot --cpp_out=${libsnapshot_srcs_dir}/android/snapshot
     DEPENDS
         ${libsnapshot_srcs_dir}/android/snapshot/snapshot.proto
-        aprotoc
+        aprotoc_gen
 )
 add_custom_target(gen_snapshot_protos_srcs ALL DEPENDS ${snapshot_protos_srcs})
 
@@ -76,7 +76,7 @@ add_custom_command(
         ${prebuilt_aprotoc} puffin.proto -I${puffin_dir}/src --cpp_out=${puffin_dir}/src
     DEPENDS
         ${puffin_dir}/src/puffin.proto
-        aprotoc
+        aprotoc_gen
 )
 add_custom_target(gen_puffin_protos_srcs ALL DEPENDS ${puffin_protos_srcs})
 
@@ -87,7 +87,7 @@ add_custom_command(
         ${prebuilt_aprotoc} update_metadata.proto -I${update_engine_dir}/update_engine --cpp_out=${update_engine_dir}/update_engine
     DEPENDS
         ${update_engine_dir}/update_engine/update_metadata.proto
-        aprotoc
+        aprotoc_gen
 )
 add_custom_target(gen_update_metadata_srcs ALL DEPENDS ${update_metadata_protos_srcs})
 
@@ -98,11 +98,12 @@ add_custom_command(
         ${prebuilt_aprotoc} lz4diff.proto -I${update_engine_dir}/lz4diff --cpp_out=${update_engine_dir}/lz4diff
     DEPENDS
         ${update_engine_dir}/lz4diff/lz4diff.proto
-        aprotoc
+        aprotoc_gen
 )
 add_custom_target(gen_lz4diff_protos_srcs ALL DEPENDS ${lz4diff_protos_srcs})
 
 add_library(update_metadata-protos STATIC ${update_metadata_protos_srcs})
+add_dependencies(update_metadata-protos gen_update_metadata_srcs)
 target_compile_options(update_metadata-protos PRIVATE "-Wall")
 target_include_directories(update_metadata-protos PUBLIC
     ${protobuf_headers}
@@ -113,6 +114,7 @@ target_link_libraries(update_metadata-protos PUBLIC
 )
 
 add_library(lz4diff-protos STATIC ${lz4diff_protos_srcs})
+add_dependencies(lz4diff-protos gen_lz4diff_protos_srcs)
 target_compile_options(lz4diff-protos PRIVATE "-Wall")
 target_include_directories(lz4diff-protos PUBLIC
     ${protobuf_headers}

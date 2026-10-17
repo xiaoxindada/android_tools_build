@@ -91,6 +91,8 @@ target_link_libraries(lpunpack PRIVATE
 )
 
 add_executable(lpdump ${lpdump_srcs})
+add_dependencies(lpdump gen_dynamic_partitions_device_info_srcs
+        gen_snapshot_protos_srcs gen_update_metadata_srcs)
 target_compile_options(lpdump PRIVATE ${cflags})
 target_include_directories(lpdump PRIVATE
     ${libbase_headers}

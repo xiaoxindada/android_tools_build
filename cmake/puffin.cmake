@@ -41,6 +41,7 @@ set(libpuffpatch_srcs
 )
 
 add_library(puffpatch STATIC ${libpuffpatch_srcs})
+add_dependencies(puffpatch gen_puffin_protos_srcs)
 target_compile_options(puffpatch PRIVATE ${cflags})
 target_include_directories(puffpatch PUBLIC
     ${common_headers}
@@ -53,6 +54,7 @@ target_link_libraries(puffpatch PUBLIC
 )
 
 add_library(puffdiff STATIC ${libpuffdiff_srcs})
+add_dependencies(puffdiff gen_puffin_protos_srcs)
 target_compile_options(puffdiff PRIVATE ${cflags})
 target_include_directories(puffdiff PUBLIC
     ${common_headers}
