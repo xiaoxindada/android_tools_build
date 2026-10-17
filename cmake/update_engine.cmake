@@ -304,7 +304,6 @@ add_dependencies(payload_generator gen_update_metadata_srcs gen_lz4diff_protos_s
 target_compile_options(payload_generator PRIVATE
         ${cflags} 
         ${cppflags}
-        "-std=gnu++23"
         "-Wall"
         "-Wno-error=#warnings"
         "-Wno-ignored-qualifiers"
