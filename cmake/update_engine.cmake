@@ -383,7 +383,6 @@ target_link_libraries(payload_generator PUBLIC
 add_executable(delta_generator ${delta_generator_srcs})
 add_dependencies(delta_generator gen_update_metadata_srcs)
 target_compile_options(delta_generator PRIVATE ${cflags} ${cppflags})
-target_link_options(delta_generator PRIVATE "-Wl,--allow-multiple-definition")
 target_include_directories(delta_generator PRIVATE
     ${common_headers}
     ${core_headers}

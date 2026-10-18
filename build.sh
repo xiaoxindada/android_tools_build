@@ -88,6 +88,7 @@ function build_x86_64_aconfig() {
 	local aconfig_dir="$1"
 	local target_dir="$2"
 
+	rm -rf "$aconfig_dir/target"
 	echo "Building x86_64 aconfig ..."
 	if ! (cd "$aconfig_dir" && cargo build --release --package aconfig); then
 		echo "failed to build x86_64 aconfig" >&2
