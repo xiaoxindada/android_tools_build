@@ -35,21 +35,15 @@ function install_rust() {
 }
 
 function download_ndk_toolchains() {
-	local ndk_version="$1"
-	local ondk_version="$2"
+	local ondk_version="$1"
 
 	if grep -qo "debian" /etc/os-release; then
-		if [[ ! -e "ndk" ]] && [[ ! -e "ondk-$ondk_version-linux.tar.xz" ]] && [[ ! -e "android-ndk-$ndk_version-linux.zip" ]]; then
+		if [[ ! -e "ndk" ]] && [[ ! -e "ondk-$ondk_version-linux.tar.xz" ]]; then
 			wget https://github.com/topjohnwu/ondk/releases/download/$ondk_version/ondk-$ondk_version-linux.tar.xz
 		fi
 		if [[ ! -e "ndk" ]]; then
-			if [[ -e "ondk-$ondk_version-linux.tar.xz" ]]; then
-				tar -xf "ondk-$ondk_version-linux.tar.xz" -C "."
-				mv "ondk-$ondk_version" "ndk"
-			elif [[ -e "android-ndk-$ndk_version-linux.zip" ]]; then
-				unzip -q -o "android-ndk-$ndk_version-linux.zip" -d "."
-				mv "android-ndk-$ndk_version" "ndk"
-			fi
+			tar -xf "ondk-$ondk_version-linux.tar.xz" -C "."
+			mv "ondk-$ondk_version" "ndk"
 		fi
 	fi
 }
@@ -63,7 +57,15 @@ function setup_android_rust_toolchains() {
 
 	local ndk_dir="$LOCALDIR/ndk"
 	local toolchain_bin="$ndk_dir/toolchains/llvm/prebuilt/linux-x86_64/bin"
-	rustup target add aarch64-linux-android
+	if [[ -e "$ndk_dir/toolchains/rust" ]]; then
+		# ondk bundles its own nightly rustc, but no prebuilt std
+		rustup toolchain link ondk "$ndk_dir/toolchains/rust"
+		export RUSTUP_TOOLCHAIN="ondk"
+	else
+		rustup toolchain install nightly --profile minimal
+		rustup component add rust-src --toolchain nightly
+		export RUSTUP_TOOLCHAIN="nightly"
+	fi
 	export ANDROID_NDK_HOME="$ndk_dir"
 	export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$toolchain_bin/aarch64-linux-android${android_platform}-clang"
 }
@@ -187,6 +189,6 @@ fi
 
 install_deps
 install_rust
-download_ndk_toolchains "r30-beta2" "r30.1"
+download_ndk_toolchains "r30.1"
 set_ndk_toolchains
 build $@

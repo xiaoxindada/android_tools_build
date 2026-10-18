@@ -4,7 +4,7 @@
 ### build environment
 > Use ubuntu or debian or wsl  
 ### build toolchains
-> Use android [ndk](https://developer.android.com/ndk/downloads) or magisk [ondk](https://github.com/topjohnwu/ondk) (Support cross compile x86_64 arm64-v8a)
+> Use magisk [ondk](https://github.com/topjohnwu/ondk), it bundles the nightly rust toolchain used by the android build (Support cross compile x86_64 arm64-v8a)
 ### build usage
 > ./build.sh [linux|android] [release|debug]  
 > The arguments can be given in any order and the build type defaults to release  
